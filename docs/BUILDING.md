@@ -151,7 +151,7 @@ with `--work work` and the Game options: a start for the download-and-run releas
 
 ## CI and releases
 
-The pipeline is GitLab's (`.gitlab-ci.yml`). It has no disc, so it builds the disc-free `ci` preset
+The pipeline is GitLab's (`.gitlab-ci.yml`); the GitHub mirror runs the same jobs (below). It has no disc, so it builds the disc-free `ci` preset
 (every hand-written file compiled, the tests that need no game data run) and the launcher, on
 Windows, Linux and macOS. The parity tests need the disc, so they stay on developers' machines: run
 them (`ctest`, or `build.sh --test`) before committing.
@@ -170,6 +170,15 @@ The Windows and macOS jobs need GitLab's hosted runners for those systems (`saas
 wait for it: if it passes, its download is added to the release. **This pipeline was written without
 a GitLab runner to try it on: run it by hand once and read each job's log before trusting it with a
 release.**
+
+### The GitHub mirror
+
+GitLab is the project's home; `main` and the tags are mirrored to GitHub. `.github/workflows/ci.yml`
+(with `build.yml`, one system's build) runs the same jobs there: by hand (**Actions > CI > Run
+workflow**) and when a tag `v<VERSION>` arrives, which makes the GitHub release from that commit's
+builds, with the same notes and downloads. It never runs for a push to `main`, never on a schedule,
+and never makes a tag itself: tagging on GitLab is still the one way to release. A change to a job in
+`.gitlab-ci.yml` belongs in the workflow too. The actions it uses are pinned by commit.
 
 ### Built once and kept
 

@@ -1,0 +1,118 @@
+# One system's build, called by ci.yml for each system: the same steps as that system's build job in
+# .gitlab-ci.yml. The disc-free build (CMake preset "ci") and its tests, the build without the
+# extensions, and the downloads (the a3mx-<system> artifact: tools/package_launcher.py).
+#
+# Built once and kept: SDL3 (tools/sdl3.py, compiled), librashader (tools/librashader.py, compiled with
+# Rust, which GitHub's runners already have) and the FILTER shaders (tools/shaders.py, downloaded) live
+# in .tools/ and are cached per system, keyed on pins.json and the script, so a run only makes again
+# what has changed. Each script does nothing when its folder is already right. librashader goes into
+# each download; if its build fails the run carries on and the download goes out without it (FILTER
+# then does nothing).
+name: Build
+on:
+  workflow_call:
+    inputs:
+      os: { type: string, required: true }
+      system: { type: string, required: true }
+      exe: { type: string, default: '' }
+permissions:
+  contents: read
+jobs:
+  build:
+    name: build
+    runs-on: ${{ inputs.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065   # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Tools (Linux)
+        if: runner.os == 'Linux'
+        timeout-minutes: 10             # apt has hung for 40 minutes before: fail fast and re-run instead
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q cmake ninja-build clang libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxi-dev libxss-dev libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev libgl-dev \
+            libasound2-dev libpulse-dev libudev-dev libxtst-dev libxfixes-dev
+      - name: Tools cache (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830   # v4.3.0
+        with:
+          path: |
+            .tools/llvm-mingw
+            .tools/cmake
+            .tools/ninja
+          key: tools-${{ inputs.system }}-${{ hashFiles('tools/data/pins.json', 'tools/build.py') }}
+      # The pinned LLVM-MinGW, CMake and Ninja into .tools\ (each checked against its SHA-256), as on a
+      # player's PC
+      - name: Tools (Windows, as build.cmd fetches them)
+        if: runner.os == 'Windows'
+        run: |
+          python tools/build.py --tools-only
+          { echo "$PWD/.tools/llvm-mingw/bin"; echo "$PWD/.tools/ninja"; echo "$PWD/.tools/cmake/bin"; } | cygpath -w -f - >> "$GITHUB_PATH"
+      - name: Tools (macOS, as build.sh fetches them into .tools/)
+        if: runner.os == 'macOS'
+        run: |
+          python tools/build.py --tools-only
+          { echo "$PWD/.tools/ninja-macos"; echo "$PWD/.tools/cmake-macos/CMake.app/Contents/bin"; } >> "$GITHUB_PATH"
+      - name: Kept between runs (SDL3, librashader, the shaders)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830   # v4.3.0
+        with:
+          path: |
+            .tools/sdl3
+            .tools/librashader
+            .tools/slang-shaders
+          key: kept-${{ inputs.system }}-${{ hashFiles('tools/data/pins.json', 'tools/librashader.py', 'tools/sdl3.py', 'tools/shaders.py') }}
+      - name: SDL3
+        run: python tools/sdl3.py
+      - name: librashader (built only when it isn't kept, or its pin changed)
+        run: |
+          if ! python tools/librashader.py --check; then
+            python tools/librashader.py || echo "::warning::librashader was not built: the download goes out without it"
+          fi
+      - name: FILTER's shaders
+        run: python tools/shaders.py
+      - name: Configure
+        run: cmake --preset ci
+      - name: Build
+        run: cmake --build --preset ci
+      - name: Test
+        run: ctest --preset ci
+      - name: Build without the extensions
+        if: runner.os != 'macOS'
+        run: |
+          cmake --preset ci -B build-ci-noext -DA3MX_EXTENSIONS=OFF
+          cmake --build build-ci-noext
+      # The launcher, prebuilt (it holds no game code), packed with the source into the download a
+      # player unzips and opens, and on its own. Made on every run, so a change that breaks it on one
+      # system shows up before a release; ci.yml attaches the downloads to a release.
+      - name: The downloads
+        run: python tools/package_launcher.py --system ${{ inputs.system }} --launcher build-ci/a3mx-launcher${{ inputs.exe }} --out dist --standalone --librashader .tools/librashader
+      # macOS: native Apple silicon only, and for macOS 11 and later (a binary that needs a newer macOS
+      # than the player's makes macOS offer Rosetta, which can't help); the app in the download opens
+      # (signed, a valid Info.plist).
+      - name: 'macOS: arm64, macOS 11+, the app signed'
+        if: runner.os == 'macOS'
+        run: |
+          set -e
+          for b in build-ci/a3mx-launcher; do
+            archs=$(lipo -archs "$b"); minos=$(otool -l "$b" | awk '/LC_BUILD_VERSION/ {f=1} f && /minos/ {print $2; exit}')
+            echo "$b: $archs, minos $minos"
+            [ "$archs" = arm64 ] || { echo "::error::$b is $archs, not arm64"; exit 1; }
+            [ "$minos" = 11.0 ] || { echo "::error::$b needs macOS $minos, not 11.0"; exit 1; }
+          done
+          rm -rf /tmp/app && mkdir /tmp/app && unzip -q dist/a3mx-launcher-*.zip -d /tmp/app
+          app=$(find /tmp/app -maxdepth 2 -name '*.app' | head -n 1)
+          [ -n "$app" ] || { echo "::error::no .app in the download"; exit 1; }
+          plutil -lint "$app/Contents/Info.plist"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          ls -la "$app/Contents/MacOS" "$app/Contents/Resources"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        with:
+          name: a3mx-${{ inputs.system }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

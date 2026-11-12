@@ -23,14 +23,24 @@ import argparse, os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
+def on_github():
+    """In a GitHub Actions run (the mirror's workflow, .github/workflows/ci.yml)."""
+    return os.environ.get('GITHUB_ACTIONS') == 'true' and bool(os.environ.get('GITHUB_REPOSITORY'))
+
+
 def project_url():
-    """The project's address: CI_PROJECT_URL in a GitLab pipeline, otherwise the project's own."""
+    """The project's address: CI_PROJECT_URL in a GitLab pipeline, the mirror's in a GitHub Actions run
+    (so a GitHub release's links stay on GitHub), otherwise the project's own."""
+    if on_github():
+        return (os.environ.get('GITHUB_SERVER_URL', 'https://github.com') + '/' + os.environ['GITHUB_REPOSITORY']).rstrip('/')
     return os.environ.get('CI_PROJECT_URL', 'https://gitlab.com/theweathervane-group/a3mx').rstrip('/')
 
 
 def header(url, name, ref):
-    """HEADER for this release: the project's address, file names and ref."""
-    return HEADER.replace('{url}', url).replace('{name}', name).replace('{ref}', ref)
+    """HEADER for this release: the project's address, file names and ref. HEADER's links to files are
+    written GitLab's way (/-/blob/); GitHub's have no /-/."""
+    text = HEADER.replace('{url}/-/blob/', '{url}/blob/') if on_github() else HEADER
+    return text.replace('{url}', url).replace('{name}', name).replace('{ref}', ref)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

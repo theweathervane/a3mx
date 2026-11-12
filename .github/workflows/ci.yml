@@ -1,0 +1,136 @@
+# GitHub Actions for a3mx: the same pipeline as GitLab's (.gitlab-ci.yml), for the GitHub mirror.
+#
+# The project's home is GitLab; GitHub receives main and the tags by mirroring. This workflow builds
+# and tests there exactly what the GitLab pipeline does, so a release is made on both. No game data is
+# ever used here: the disc-free build (CMake preset "ci") compiles every hand-written file against a
+# stand-in for the generated code, builds the launcher, and runs the tests that need no disc. The
+# parity tests need the disc and run on developers' machines (docs/TESTS.md).
+#
+# When it runs: by hand (Actions > CI > Run workflow) and when a tag v<VERSION> arrives, which also
+# makes the GitHub release. Not on pushes to main, not on pull requests and not on a schedule:
+# committing (or mirroring) often must not mean building and releasing often. There is no nightly.
+#
+# Releasing is the maintainer's choice, made in one place: he tags the commit on main as v<VERSION> and
+# pushes the tag to GitLab; the mirror brings the tag here. Nothing in this workflow creates or moves a
+# tag. Windows and Linux must have built; macOS's downloads are added if and when its build passes.
+#
+# What each build leaves (build.yml; docs/BUILDING.md, "CI and releases"):
+#   a3mx-<version>-<system>.zip            the source with the prebuilt launcher in it
+#   a3mx-launcher-<version>-<system>[.exe] the launcher alone (.zip holding the .app on macOS)
+# <system>: windows-x64, linux-x64, macos-arm64.
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+# Runs never wait for each other (one stuck on a macOS runner mustn't hold up a release).
+concurrency:
+  group: ci-${{ github.run_id }}
+permissions:
+  contents: read
+jobs:
+  # Every pinned dependency (tools/data/pins.json): the same URL and SHA-256 wherever it is used and
+  # docs/DEPENDENCIES.md up to date; the Python tools compile; for a tag, VERSION and its CHANGELOG.md
+  # section are in order.
+  pins:
+    name: Pinned dependencies
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+      - name: Every pin agrees everywhere it is used
+        run: python3 tools/pins.py --check
+      - name: Python tools compile
+        run: python3 -m compileall -q tools tests
+      - name: .recomp.json (the recomp.fyi listing) is valid JSON, under the board's 8 KB
+        run: python3 -c "import json, os; json.load(open('.recomp.json', encoding='utf-8')); assert os.path.getsize('.recomp.json') < 8192"
+      - name: The release's version and changelog section (tags only)
+        if: github.ref_type == 'tag'
+        run: python3 tools/release_notes.py --check "$(tr -d ' \r\n' < VERSION)"
+
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: Windows x64, system: windows-x64, exe: .exe }
+          - { os: ubuntu-24.04, name: Linux x64, system: linux-x64, exe: '' }
+    uses: ./.github/workflows/build.yml
+    with:
+      os: ${{ matrix.os }}
+      system: ${{ matrix.system }}
+      exe: ${{ matrix.exe }}
+
+  # macOS on its own: GitHub's macOS runners can take hours to start, so a release doesn't wait for
+  # it; its downloads are added when it passes (release-macos).
+  build-macos:
+    name: macOS Apple Silicon
+    uses: ./.github/workflows/build.yml
+    with:
+      os: macos-15
+      system: macos-arm64
+
+  # A tag v<VERSION> on main: the GitHub release, with notes from CHANGELOG.md and the downloads of
+  # this very commit's builds.
+  release:
+    needs: [pins, build]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+        with:
+          fetch-depth: 0               # the history and every tag: the previous release
+      - name: Version
+        id: v
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          V="${TAG#v}"
+          [ "$V" = "$(tr -d ' \r\n' < VERSION)" ] || { echo "::error::the tag $TAG is not VERSION ($(cat VERSION))"; exit 1; }
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$TAG is not on main"; exit 1; }
+          PREV=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --merged HEAD --sort=-v:refname | sed -n 2p)
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "previous=${PREV#v}" >> "$GITHUB_OUTPUT"
+          echo "Releasing v$V${PREV:+ (the last release: $PREV)}"
+      - name: The downloads (from the build jobs)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093   # v4.3.0
+        with:
+          pattern: a3mx-*
+          path: dist
+          merge-multiple: true
+      - name: Notes
+        env:
+          V: ${{ steps.v.outputs.version }}
+          PREV: ${{ steps.v.outputs.previous }}
+        run: |
+          ls -l dist
+          ls "dist/a3mx-$V-windows-x64.zip" "dist/a3mx-$V-linux-x64.zip"    # both must be there (macOS's are added later)
+          python3 tools/release_notes.py "$V" ${PREV:+--since "$PREV"} > notes.md
+          wc -c notes.md
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          V: ${{ steps.v.outputs.version }}
+        run: gh release create "$TAG" --verify-tag --title "A3MX v$V" --notes-file notes.md dist/*
+
+  # The macOS downloads, added to the release once its build passes, however late. A release goes out
+  # without them if it never builds.
+  release-macos:
+    needs: [build-macos, release]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093   # v4.3.0
+        with:
+          name: a3mx-macos-arm64
+          path: dist
+      - name: Add them to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"

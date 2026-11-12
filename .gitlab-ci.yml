@@ -1,4 +1,5 @@
-# GitLab CI for a3mx (since 0.60.0): the project's only pipeline.
+# GitLab CI for a3mx (since 0.60.0): the project's pipeline. The GitHub mirror runs the same jobs
+# (.github/workflows/ci.yml and build.yml): a change to a job here belongs there too.
 #
 # No game data is ever used here: the disc-free build (CMake preset "ci") compiles every hand-written
 # file against a stand-in for the generated code, builds the launcher, and runs the tests that need no
