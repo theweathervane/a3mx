@@ -1,1 +1,78 @@
-## README
+
+# a3mx
+![a3mx](docs/images/a3mx.png){width=300 height=150}
+
+a3mx is a source decompilation of Street Fighter Alpha 3 MAX (PSP): the game rewritten, function by function, as readable C, running natively on PC.
+
+## Vision
+
+The end goal is a responsive, accurate and convenient way to play the game on modern platforms, with some extensions.
+
+## Roadmap
+
+The road map for version 1.0:
+
+- 100% decompilation
+- Stable local experience on PC platform
+
+For more, see the roadmap: [docs/ROADMAP.md](docs/ROADMAP.md).
+
+### Decomp
+
+<!-- progress:start -->
+```
+Functions                                [░░░░░░░░░░]   2.78%  414 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   4.80%  23,255 / 484,213 instructions
+
+By area (instructions):
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  10.80%  22,027 / 203,929
+  wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   0.05%  134 / 257,012
+  system: save data, graphics, music     [░░░░░░░░░░]   0.00%  0 / 2,574
+  system: C library, sound, OS glue      [░░░░░░░░░░]   6.44%  1,094 / 16,977
+```
+<!-- progress:end -->
+
+Every decompiled function is verified by the tests before it is merged: see [docs/TESTS.md](docs/TESTS.md).
+
+## Prerequisites
+
+> [!IMPORTANT]
+> A3MX requires you to own a legally obtained copy of Street Fighter Alpha 3 MAX (PSP) (ULUS-10062). No game is included: you build it from your own disc. Do not support piracy, support your second-hand retro shops instead!
+
+- Windows 10 (1803 or later) or 11 (x64), Linux (x64) or macOS 11 or later (Apple Silicon)
+- Your own Street Fighter Alpha 3 MAX PSP disc image (ISO), US release `ULUS-10062`
+- An internet connection for the first build
+- ~2 GB of free disk space to download and use build tools to enable you to build your image
+
+## How to play (Quick guide)
+
+1. Download the latest release for your system from the [Releases](https://gitlab.com/theweathervane-group/a3mx/-/releases) page.
+2. Unzip it into a folder of your choice.
+3. Open `a3mx-launcher.exe` (Windows), `a3mx-launcher` (Linux) or `A3MX Launcher.app` (macOS).
+4. Follow the prompts, and download the build tools if asked.
+5. Choose your own disc image on the **Paths** tab.
+6. Set any options, then press **Run**: the launcher builds the game and starts it.
+
+The first build takes a few minutes; after that, Run starts the game much more quickly. The detailed
+guide, including building from a clone: [docs/BUILDING.md](docs/BUILDING.md).
+
+## Documentation
+
+Please refer to the [docs folder](docs) for more details.
+
+## Acknowledgments
+
+The projects that inspired this one, others working on Street Fighter Alpha 3, and the code and
+tools it's built with, for more details see [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md).
+
+## Licence
+
+The project's own code is licensed under the **GNU General Public License v3.0 or later** ([LICENSE](LICENSE)).
+It covers the tools, runtime, decompiled code and documentation only and grants nothing over the game
+itself.
+
+## Legal
+
+You must own the game. Disc images, extracted files, assets and generated code are never committed.
+Not affiliated with Capcom. *Street Fighter* is a trademark of Capcom Co., Ltd.
