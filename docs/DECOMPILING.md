@@ -47,7 +47,7 @@ function at a time, each one proven identical before it goes in.
    only touch their arguments), or keep it for later.
 5. **Name what you learnt.** Structs, fields, enums and function names go in the headers of
    `src/core/`; addresses and findings in [PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md).
-6. **Update the progress bars.** `python tools/progress.py --update-docs` rewrites the totals,
+6. **Update the progress bars.** `python tools/progress.py --update-docs` rewrites the overall bar, the totals,
    percentages and bars in the README and the roadmap. Commit the result with your functions.
 
 ## Rules

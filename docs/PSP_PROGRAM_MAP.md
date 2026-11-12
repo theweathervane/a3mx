@@ -403,6 +403,26 @@ runs at a time: they hand the CPU over with sceKernelWakeupThread / sceKernelSle
 | 0x088D7C1C | a continuing match: NETWORK (mode 12) or GAME + 146 (`fight.c`) |
 | 0x092E3F10 / 0x092E43A8 | fighters 1 and 2's health (s16). Set to 1 at a round's start, the next hit is a KO (the `arcade_match` scenario does this with `--poke`); held at 1 through the KO, it stalls the KO sequence. BATTLE + 46 and 0x09524A68 hold the round's starting time, not the running clock |
 
+## Step dispatchers, text and small helpers (decompiled 0.61.0)
+
+**Step dispatchers** (`src/core/object/step.h`, `steps.c`). Objects, fighters, effects, tasks and screens keep
+their progress in step numbers (a routine number, then steps within it: usually the bytes at +4 to +7 of
+the object; fighters also use +128, +236, +488 and +692), and each level is run by a 13-instruction
+function that calls `table[step]` with the arguments it was given. The program has 1,160 of this exact
+shape; the 268 the scenarios run are decompiled, one line each with the step read and the table. The
+handler and the table are left in a1 / a2 (or a2 / a3), which some handlers read.
+
+| Address | What |
+|---|---|
+| 0x0880A6CC | text(string, font, x, y, colour) (`src/core/text/queue.c`): takes the first free of 96 requests at 0x092DF240 (16 bytes: +0 used, +1 font, +2 colour, +3 kind = 7, +4 x, +6 y, +8 string, +12 cleared); returns the request, or 0 when the queue is full. Drawn and emptied by the text passes 0x0880B098 / 0x08812520 |
+| 0x0880A3C4 | a draw depth (`src/core/stage/depth.c`): u16 at 0x08A03B10 + column × 4 + row × 2 (a0 row, a1 column) |
+| 0x08861D5C / 0x088622C0 / 0x088623BC | a fighter's held directions, fighter + 752 (`src/core/fighter/buttons.c`): left / right unless up or down is held; left / right; down |
+| 0x088639C0 / 0x0886A2D8 | a fighter's buttons, fighter + 760: the six attack buttons (0x3F0); SELECT (0x4000) as 0 / 1 |
+| 0x088D7CE0 / 0x088D5E7C | a network battle (mode 12 or 0x09523980 + 34) whose session has started (+ 42 = 1) / that waits for the host's choice (+ 43 = 2 or 4) (`src/core/network/state.c`) |
+| 0x088D7E80 / 0x088D7E90 / 0x088D7F18 / 0x088D7F28 | the network state 0x09523980: + 59 read; + 60 cleared (the end of every frame); + 8 read (the session's failure); + 267 read, setting + 61 when it is set |
+| 0x088E3FE0 | 0x09523960 + 25 cleared |
+| `src/core/empty.c` | 40 functions that only return (steps with nothing to do, routines compiled away) |
+
 ## The loader
 
 Decompiled in `src/core/loader/` (format: [PAC_FORMAT.md](PAC_FORMAT.md)).

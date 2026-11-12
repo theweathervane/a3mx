@@ -5,7 +5,8 @@
 Usage: python tools/progress.py [--work work] [--build build] [--by-region] [--markdown] [--list] [--update-docs]
 
 --update-docs rewrites the progress block (between the <!-- progress --> markers) in README.md and
-docs/ROADMAP.md: run it in every PR that decompiles functions.
+docs/ROADMAP.md: run it with every change that decompiles functions. The block starts with the overall
+bar: the share of the program's instructions that is hand-written C.
 
 "Verified" means checked against the original by the last test run: called in a parity scenario
 (build/parity/*/decomp/decomp_report.txt) or passed the difftest (build/difftest.log).
@@ -30,8 +31,12 @@ DOCS = ['README.md', os.path.join('docs', 'ROADMAP.md')]
 START, END = '<!-- progress:start -->', '<!-- progress:end -->'
 
 
+OVERALL_WIDTH = 40   # blocks in the overall bar: 2.5% each
+
+
 def bar(done, total, width=10):
-    """[███████░░░] for 75%: a block for each full tenth, so the bar is full only when everything is."""
+    """[███████░░░] for 75%: a block for each full tenth (or full 1 / width), so the bar is full only
+    when everything is."""
     full = done * width // total if total else 0
     return '[' + '\u2588' * full + '\u2591' * (width - full) + ']'
 
@@ -42,7 +47,11 @@ def progress_block(funcs, done, size):
         return '%-40s %s %6.2f%%  %s / %s %s' % (label, bar(d, t), 100.0 * d / t if t else 0, f'{d:,}', f'{t:,}', unit)
     fs = [f['addr'] for f in funcs]
     total_i = sum(size.values()); done_i = sum(size.get(x, 0) for x in done)
-    lines = [row('Functions', len(done), len(fs), 'functions'),
+    # The overall figure is the share of the program's instructions: a long function counts for more
+    # than a short one, as it does in the work. Its bar is wider (2.5% a block) so progress shows sooner.
+    overall = 'Overall  %s  %.2f%% decompiled' % (bar(done_i, total_i, OVERALL_WIDTH), 100.0 * done_i / total_i if total_i else 0)
+    lines = [overall, '',
+             row('Functions', len(done), len(fs), 'functions'),
              row('Instructions', done_i, total_i, 'instructions'), '', 'By area (instructions):']
     for lo, hi, name in REGIONS:
         a = [x for x in fs if lo <= x < hi]
@@ -83,6 +92,7 @@ def main():
     line = '%d / %d functions (%.2f%%), %d / %d instructions (%.2f%%)' % (
         len(done), len(funcs), 100.0 * len(done) / len(funcs), done_i, total_i, 100.0 * done_i / total_i)
     print(('**Decompiled:** ' if a.markdown else 'decompiled: ') + line)
+    print(('**Overall:** ' if a.markdown else 'overall:    ') + bar(done_i, total_i, OVERALL_WIDTH) + ' %.2f%%' % (100.0 * done_i / total_i))
     print(('**Progress:** ' if a.markdown else 'progress:   ') + bar(len(done), len(funcs)) + ' functions, ' + bar(done_i, total_i) + ' instructions')
     if a.update_docs:
         update_docs(progress_block(funcs, done, size))

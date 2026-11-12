@@ -3,26 +3,31 @@
 **Where things stand:** the boot, title, MODE MENU, task scheduler, loader thread, the fight's
 loop, set-up, most of its screens and its per-frame steps, the end of every frame, the sprite and object
 drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
-OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, and the stage's background tile drawers are
+OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers,
+the step dispatchers the tests run, the text queue and the small questions about a fighter's buttons and the network state are
 native C. Everything else still runs as translated code. The extracted assets are laid out by character, stage and screen ([assets/LAYOUT.md](../assets/LAYOUT.md)). How much is done is in the box below.
 
 ## Progress
 
 How much of the PSP program is decompiled into hand-written C (`python tools/progress.py --by-region`).
-Updated by `python tools/progress.py --update-docs` with every PR that decompiles functions; a block on
-the bar is a full tenth. Every decompiled function is verified by the tests before it is merged.
+Updated by `python tools/progress.py --update-docs` with every change that decompiles functions. The
+overall bar is the share of the program's instructions that is decompiled (a long function counts for
+more than a short one), 2.5% a block; on the other bars a block is a full tenth. Every decompiled
+function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Functions                                [░░░░░░░░░░]   2.78%  414 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   4.80%  23,255 / 484,213 instructions
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.57% decompiled
+
+Functions                                [░░░░░░░░░░]   4.95%  737 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   5.57%  26,962 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  10.80%  22,027 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.21%  24,902 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   0.05%  134 / 257,012
-  system: save data, graphics, music     [░░░░░░░░░░]   0.00%  0 / 2,574
-  system: C library, sound, OS glue      [░░░░░░░░░░]   6.44%  1,094 / 16,977
+  game (to be mapped)                    [░░░░░░░░░░]   0.37%  960 / 257,012
+  system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
+  system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
 <!-- progress:end -->
 
@@ -87,8 +92,14 @@ Done:
       frame, the per-frame effects, the network's per-frame steps (0.22.0)
 - [x] Fight screen 5 (a mode's end), the save error question (the MODE MENU's last function), the
       pause check with `hooks.c`'s pause on top of it; scenario `arcade_ending` (0.23.0)
+- [x] The step dispatchers the scenarios run (268 of the program's 1,160: `src/core/object/steps.c`),
+      the text queue (0x0880A6CC), the draw depth table (0x0880A3C4), a fighter's held directions and
+      buttons (`src/core/fighter/buttons.c`), the network state's questions (`src/core/network/state.c`)
+      and 40 empty functions (0.61.0)
 
 To do, in rough order:
+- [ ] The other 892 step dispatchers, as scenarios reach them (each is one line in `steps.c`; the
+      modes no scenario plays yet hold most of them)
 - [ ] Object kinds 3 (0x0880F820, a many-polygon shape) and 4 (0x08810128, a shaded rectangle). Need a
       scenario that draws one.
 - [ ] Screen 10's network frame (0x0882485C). Needs a network battle scenario (phase 12).

@@ -21,19 +21,21 @@ For more, see the roadmap: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 <!-- progress:start -->
 ```
-Functions                                [░░░░░░░░░░]   2.78%  414 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   4.80%  23,255 / 484,213 instructions
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.57% decompiled
+
+Functions                                [░░░░░░░░░░]   4.95%  737 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   5.57%  26,962 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  10.80%  22,027 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.21%  24,902 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   0.05%  134 / 257,012
-  system: save data, graphics, music     [░░░░░░░░░░]   0.00%  0 / 2,574
-  system: C library, sound, OS glue      [░░░░░░░░░░]   6.44%  1,094 / 16,977
+  game (to be mapped)                    [░░░░░░░░░░]   0.37%  960 / 257,012
+  system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
+  system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
 <!-- progress:end -->
 
-Every decompiled function is verified by the tests before it is merged: see [docs/TESTS.md](docs/TESTS.md).
+The overall bar is the share of the program's instructions that is now hand-written C. Every decompiled function is verified by the tests before it is merged: see [docs/TESTS.md](docs/TESTS.md).
 
 ## Prerequisites
 
