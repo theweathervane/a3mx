@@ -1,0 +1,5 @@
+# The character select's choices: Arcade, the cursor round the grid onto player 1's random box (a
+# character drawn each frame), chosen with Square; the styles stepped through with Down / Up and one
+# chosen; the speed switched and chosen; into the first fight.
+frames 3600
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=;2100=right;2106=;2130=right;2136=;2160=up;2166=;2190=up;2196=;2220=up;2226=;2300=square;2306=;2450=down;2456=;2480=down;2486=;2510=down;2516=;2540=up;2546=;2570=cross;2576=;2700=down;2706=;2730=up;2736=;2760=down;2766=;2800=cross;2806=

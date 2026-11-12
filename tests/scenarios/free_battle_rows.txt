@@ -1,0 +1,5 @@
+# Free Battle with every row of its select screen moved before it is chosen: the cursor off Ryu on
+# the grid, then Down, Down, Up on the character, the style, the ISM, the speed, the difficulty and
+# the stage, each confirmed with Cross; into the fight.
+frames 4600
+input 1200=start;1206=;1500=start;1506=;1560=down;1566=;1590=down;1596=;1620=down;1626=;1660=cross;1666=;1900=cross;1906=;1970=down;1976=;2000=down;2006=;2030=right;2036=;2030=up;2036=;2060=down;2066=;2100=cross;2106=;2170=down;2176=;2200=down;2206=;2230=up;2236=;2300=cross;2306=;2370=down;2376=;2400=down;2406=;2430=up;2436=;2500=cross;2506=;2570=down;2576=;2600=down;2606=;2630=up;2636=;2700=cross;2706=;2770=down;2776=;2800=down;2806=;2830=up;2836=;2900=cross;2906=;2970=down;2976=;3000=down;3006=;3030=up;3036=;3100=cross;3106=;3170=down;3176=;3200=down;3206=;3230=up;3236=;3300=cross;3306=;3370=down;3376=;3400=down;3406=;3430=up;3436=;3500=cross;3506=;3570=down;3576=;3600=down;3606=;3630=up;3636=;3700=cross;3706=;3770=down;3776=;3800=down;3806=;3830=up;3836=;3900=cross;3906=

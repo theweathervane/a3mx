@@ -1,0 +1,4 @@
+# Arcade into the first fight, then pause > MODE MENU > QUIT GAME? YES: back to the MODE MENU,
+# with the auto-save on the way (screen 4, kept off screen by sysdata.c), and the menu again.
+frames 5000
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=;2100=cross;2106=;2190=cross;2196=;2280=cross;2286=;2370=cross;2376=;2460=cross;2466=;2550=cross;2556=;2640=cross;2646=;2730=cross;2736=;2820=cross;2826=;2910=cross;2916=;3000=cross;3006=;3090=cross;3096=;3180=cross;3186=;3270=cross;3276=;3360=cross;3366=;3450=cross;3456=;3540=cross;3546=;4300=start;4306=;4360=down;4366=;4380=down;4386=;4400=cross;4406=;4440=up;4446=;4460=cross;4466=

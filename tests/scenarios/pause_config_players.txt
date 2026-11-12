@@ -1,0 +1,7 @@
+# The pause BUTTON CONFIG for players 2 and 3, in a Free Battle fight (free_battle's way in): player 2
+# pauses (p2:start), BUTTON CONFIG, a few rows, out with Circle, Up, CONTINUE; then player 1 pauses
+# and opens it, and the config's player (0x08B02E28) is poked to player 3's, so the third player's
+# input (0x088B9208) runs too, with an idle pad.
+frames 6680
+args --poke 6440-6460:08B02E28=2
+input 1200=start;1206=;1500=start;1506=;1560=down;1566=;1590=down;1596=;1620=down;1626=;1660=cross;1666=;1900=cross;1906=;2100=cross;2106=;2300=cross;2306=;2500=cross;2506=;2700=cross;2706=;2900=cross;2906=;3100=cross;3106=;3300=cross;3306=;3500=cross;3506=;3700=cross;3706=;3900=cross;3906=;4600=p2:start;4606=;4700=p2:down;4706=;4760=p2:cross;4766=;4910=p2:square;4916=;4960=p2:down;4966=;5010=p2:triangle;5016=;5060=p2:down;5066=;5110=p2:right;5116=;5160=p2:left;5166=;5210=p2:down;5216=;5260=p2:right;5266=;5310=p2:left;5316=;5360=p2:down;5366=;5410=p2:right;5416=;5460=p2:left;5466=;5510=p2:down;5516=;5560=p2:right;5566=;5610=p2:left;5616=;5660=p2:circle;5666=;5860=p2:up;5866=;5920=p2:cross;5926=;6220=start;6226=;6320=down;6326=;6380=cross;6386=

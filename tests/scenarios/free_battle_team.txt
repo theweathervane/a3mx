@@ -1,0 +1,4 @@
+# Free Battle > TEAM (0x088A5600 and 0x088A60F8 with the team lines, 0x088A2480): free_battle with one
+# down on the kind menu; the rows confirmed one after another.
+frames 4200
+input 1200=start;1206=;1500=start;1506=;1560=down;1566=;1590=down;1596=;1620=down;1626=;1660=cross;1666=;1760=down;1766=;1900=cross;1906=;2100=cross;2106=;2300=cross;2306=;2500=cross;2506=;2700=cross;2706=;2900=cross;2906=;3100=cross;3106=;3300=cross;3306=;3500=cross;3506=;3700=cross;3706=;3900=cross;3906=

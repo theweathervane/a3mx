@@ -1,0 +1,3 @@
+# Boot, the logos and attract mode, title screen, MODE MENU, Arcade into the character select.
+frames 3000
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=

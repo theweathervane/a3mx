@@ -1,0 +1,2043 @@
+{
+ "format": 1,
+ "about": "Where the colours of each indexed texture are, found by tools/pair_palettes.py from what the game draws (US program). offset: bytes into the entry; program: the address in the program. Index 0 is drawn transparent. others: how many other palettes it was also drawn with (palette animation, fade steps); the one kept is the most varied and brightest, then the most drawn.",
+ "paired": 297,
+ "indexed_textures": 356,
+ "textures": {
+  "end00_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1723,
+   "others": 85
+  },
+  "end00_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 798,
+   "others": 56
+  },
+  "end00_u/8": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 1628,
+   "others": 56
+  },
+  "end01_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1723,
+   "others": 85
+  },
+  "end01_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 2094,
+   "others": 57
+  },
+  "end02_u/3": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1723,
+   "others": 85
+  },
+  "end02_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 2094,
+   "others": 57
+  },
+  "end03_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 2782,
+   "others": 85
+  },
+  "end03_u/10": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1622,
+   "others": 28
+  },
+  "end04_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 2782,
+   "others": 85
+  },
+  "end04_u/8": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 144,
+   "others": 56
+  },
+  "end04_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 68,
+   "others": 28
+  },
+  "end05_u/3": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end05_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 80,
+   "others": 57
+  },
+  "end07_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end07_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 80,
+   "others": 57
+  },
+  "end08_u/6": {
+   "program": "0x08A08EC8",
+   "draws": 20670,
+   "others": 0
+  },
+  "end0a_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 88,
+   "others": 27
+  },
+  "end0a_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 68,
+   "others": 28
+  },
+  "end0b_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end0b_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 80,
+   "others": 57
+  },
+  "end0c_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end0c_u/6": {
+   "program": "0x08ACA9A0",
+   "draws": 128,
+   "others": 29
+  },
+  "end0d_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1723,
+   "others": 85
+  },
+  "end0d_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 2094,
+   "others": 57
+  },
+  "end0e_u/7": {
+   "archive": "end0e_u",
+   "entry": 8,
+   "offset": 2242,
+   "draws": 21528,
+   "others": 1
+  },
+  "end10_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 10893,
+   "others": 83
+  },
+  "end10_u/8": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 1809,
+   "others": 83
+  },
+  "end10_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 965,
+   "others": 55
+  },
+  "end10_u/10": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 5710,
+   "others": 56
+  },
+  "end11_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 19136,
+   "others": 28
+  },
+  "end11_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 14287,
+   "others": 55
+  },
+  "end12_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 2782,
+   "others": 85
+  },
+  "end12_u/8": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 144,
+   "others": 56
+  },
+  "end12_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 68,
+   "others": 28
+  },
+  "end13_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 19136,
+   "others": 28
+  },
+  "end13_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 14287,
+   "others": 55
+  },
+  "end18_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 2782,
+   "others": 85
+  },
+  "end18_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 144,
+   "others": 56
+  },
+  "end18_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 252,
+   "others": 56
+  },
+  "end18_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 32,
+   "others": 56
+  },
+  "end18_u/8": {
+   "archive": "end18_u",
+   "entry": 11,
+   "offset": 2848,
+   "draws": 30336,
+   "others": 0
+  },
+  "end1a_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 32,
+   "others": 56
+  },
+  "end1b_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end1b_u/6": {
+   "program": "0x08ACA9A0",
+   "draws": 128,
+   "others": 29
+  },
+  "end1c_u/7": {
+   "archive": "end1c_u",
+   "entry": 8,
+   "offset": 5802,
+   "draws": 21528,
+   "others": 1
+  },
+  "end1d_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1723,
+   "others": 85
+  },
+  "end1d_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 2094,
+   "others": 57
+  },
+  "end1f_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end1f_u/5": {
+   "program": "0x08ACA9A0",
+   "draws": 128,
+   "others": 29
+  },
+  "end20_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end21_u/6": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 1809,
+   "others": 83
+  },
+  "end24_u/3": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 3072,
+   "draws": 1723,
+   "others": 85
+  },
+  "end24_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2112,
+   "draws": 2094,
+   "others": 57
+  },
+  "end26_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 10893,
+   "others": 83
+  },
+  "end26_u/8": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 1809,
+   "others": 83
+  },
+  "end26_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 965,
+   "others": 55
+  },
+  "end26_u/10": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 5710,
+   "others": 56
+  },
+  "end27_u/4": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end27_u/5": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 80,
+   "others": 57
+  },
+  "end28_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 5440,
+   "others": 57
+  },
+  "end28_u/10": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 80,
+   "others": 57
+  },
+  "end29_u/7": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 10893,
+   "others": 83
+  },
+  "end29_u/8": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 1809,
+   "others": 83
+  },
+  "end29_u/9": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2016,
+   "draws": 965,
+   "others": 55
+  },
+  "end29_u/10": {
+   "archive": "ake",
+   "entry": 1,
+   "offset": 2080,
+   "draws": 5710,
+   "others": 56
+  },
+  "endcom/1": {
+   "archive": "end03_u",
+   "entry": 13,
+   "offset": 4896,
+   "draws": 289350,
+   "others": 1
+  },
+  "endcom/2": {
+   "archive": "end03_u",
+   "entry": 13,
+   "offset": 4928,
+   "draws": 108024,
+   "others": 1
+  },
+  "endcom/3": {
+   "archive": "end03_u",
+   "entry": 13,
+   "offset": 4960,
+   "draws": 181326,
+   "others": 1
+  },
+  "endcom/4": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 86043,
+   "others": 8
+  },
+  "endcom/5": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 29143,
+   "others": 8
+  },
+  "endcom/6": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 102695,
+   "others": 8
+  },
+  "endcom/7": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25152,
+   "draws": 6018,
+   "others": 7
+  },
+  "endcom/8": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25280,
+   "draws": 1534590,
+   "others": 4
+  },
+  "endcom/9": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25280,
+   "draws": 1354050,
+   "others": 4
+  },
+  "endcom/10": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 93645,
+   "others": 8
+  },
+  "endcom/11": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 57200,
+   "others": 8
+  },
+  "endcom/12": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 50393,
+   "others": 8
+  },
+  "endcom/13": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 50751,
+   "others": 8
+  },
+  "endcom/14": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 34701,
+   "others": 8
+  },
+  "endcom/15": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 19779,
+   "others": 8
+  },
+  "endcom/16": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 27530,
+   "others": 8
+  },
+  "endcom/17": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 23372,
+   "others": 8
+  },
+  "endcom/18": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25864,
+   "others": 8
+  },
+  "endcom/19": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 18037,
+   "others": 8
+  },
+  "endcom/20": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25527,
+   "others": 8
+  },
+  "endcom/21": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 27357,
+   "others": 8
+  },
+  "endcom/22": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25610,
+   "others": 8
+  },
+  "endcom/23": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 6459,
+   "others": 8
+  },
+  "msel_u/7": {
+   "program": "0x08A08D88",
+   "draws": 251243,
+   "others": 9
+  },
+  "msel_u/8": {
+   "program": "0x08A08D88",
+   "draws": 236464,
+   "others": 9
+  },
+  "msel_u/9": {
+   "program": "0x08A08D88",
+   "draws": 236464,
+   "others": 9
+  },
+  "msel_u/10": {
+   "program": "0x08A08D88",
+   "draws": 14779,
+   "others": 9
+  },
+  "msel_u/11": {
+   "program": "0x08A08E68",
+   "draws": 923695,
+   "others": 9
+  },
+  "msel_u/12": {
+   "program": "0x08A08E68",
+   "draws": 206473,
+   "others": 9
+  },
+  "open_u/26": {
+   "archive": "open_u",
+   "entry": 16,
+   "offset": 25568,
+   "draws": 60658,
+   "others": 3
+  },
+  "open_u/27": {
+   "archive": "open_u",
+   "entry": 16,
+   "offset": 25632,
+   "draws": 51948,
+   "others": 2
+  },
+  "open_u/28": {
+   "archive": "open_u",
+   "entry": 29,
+   "offset": 0,
+   "draws": 16749,
+   "others": 0
+  },
+  "rkcom_u/2": {
+   "program": "0x08A08D88",
+   "draws": 251243,
+   "others": 9
+  },
+  "rkcom_u/3": {
+   "program": "0x08A08D88",
+   "draws": 236464,
+   "others": 9
+  },
+  "rkcom_u/4": {
+   "program": "0x08A08D88",
+   "draws": 236464,
+   "others": 9
+  },
+  "rkcom_u/5": {
+   "program": "0x08A08D88",
+   "draws": 14779,
+   "others": 9
+  },
+  "rkcom_u/6": {
+   "program": "0x08A08E68",
+   "draws": 923695,
+   "others": 9
+  },
+  "rkcom_u/7": {
+   "program": "0x08A08E68",
+   "draws": 206473,
+   "others": 9
+  },
+  "select_u/5": {
+   "program": "0x08A08D88",
+   "draws": 251243,
+   "others": 9
+  },
+  "select_u/6": {
+   "program": "0x08A08D88",
+   "draws": 236464,
+   "others": 9
+  },
+  "select_u/7": {
+   "program": "0x08A08D88",
+   "draws": 236464,
+   "others": 9
+  },
+  "select_u/8": {
+   "program": "0x08A08D88",
+   "draws": 14779,
+   "others": 9
+  },
+  "select_u/9": {
+   "program": "0x08A08E68",
+   "draws": 923695,
+   "others": 9
+  },
+  "select_u/10": {
+   "program": "0x08A08E68",
+   "draws": 206473,
+   "others": 9
+  },
+  "st00/6": {
+   "archive": "st00",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 240396,
+   "others": 3
+  },
+  "st00/7": {
+   "archive": "st00",
+   "entry": 0,
+   "offset": 24704,
+   "draws": 381101,
+   "others": 3
+  },
+  "st02/5": {
+   "archive": "st02",
+   "entry": 0,
+   "offset": 24640,
+   "draws": 614792,
+   "others": 5
+  },
+  "st02/6": {
+   "archive": "st02",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 1018946,
+   "others": 5
+  },
+  "st06/6": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 24800,
+   "draws": 56874096,
+   "others": 2
+  },
+  "st06/7": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 24864,
+   "draws": 13313712,
+   "others": 2
+  },
+  "st06/8": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 1557248,
+   "others": 11
+  },
+  "st06/9": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25728,
+   "draws": 374550,
+   "others": 1
+  },
+  "st06/10": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25792,
+   "draws": 2990883,
+   "others": 1
+  },
+  "st06/11": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25856,
+   "draws": 2504837,
+   "others": 1
+  },
+  "st06/12": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25600,
+   "draws": 756692,
+   "others": 1
+  },
+  "st06/13": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25664,
+   "draws": 1509373,
+   "others": 1
+  },
+  "st06/14": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25920,
+   "draws": 2253399,
+   "others": 1
+  },
+  "st06/15": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25984,
+   "draws": 2245998,
+   "others": 1
+  },
+  "st06/16": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25184,
+   "draws": 2790414,
+   "others": 2
+  },
+  "st06/17": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25280,
+   "draws": 3277337,
+   "others": 2
+  },
+  "st06/18": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25376,
+   "draws": 4099598,
+   "others": 2
+  },
+  "st06/19": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25472,
+   "draws": 5185795,
+   "others": 2
+  },
+  "st06/20": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 25024,
+   "draws": 3071127,
+   "others": 4
+  },
+  "st06/21": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 13395760,
+   "others": 2
+  },
+  "st06/22": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 26112,
+   "draws": 9905628,
+   "others": 1
+  },
+  "st06/23": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 26144,
+   "draws": 13302109,
+   "others": 2
+  },
+  "st06/24": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 26592,
+   "draws": 2452345,
+   "others": 1
+  },
+  "st06/25": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 26656,
+   "draws": 1699860,
+   "others": 1
+  },
+  "st06/26": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 26752,
+   "draws": 4517874,
+   "others": 1
+  },
+  "st06/27": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 26816,
+   "draws": 1696154,
+   "others": 1
+  },
+  "st06/28": {
+   "archive": "st06",
+   "entry": 0,
+   "offset": 24800,
+   "draws": 4406436,
+   "others": 2
+  },
+  "st09/6": {
+   "archive": "st09",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 38845122,
+   "others": 1
+  },
+  "st09/7": {
+   "archive": "st09",
+   "entry": 0,
+   "offset": 24640,
+   "draws": 15865971,
+   "others": 1
+  },
+  "st0a/7": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25152,
+   "draws": 6018,
+   "others": 7
+  },
+  "st0a/8": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25280,
+   "draws": 1534590,
+   "others": 4
+  },
+  "st0a/9": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25280,
+   "draws": 1354050,
+   "others": 4
+  },
+  "st0a/10": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 86043,
+   "others": 8
+  },
+  "st0a/11": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 29143,
+   "others": 8
+  },
+  "st0a/12": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 102695,
+   "others": 8
+  },
+  "st0a/13": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 93645,
+   "others": 8
+  },
+  "st0a/14": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 57200,
+   "others": 8
+  },
+  "st0a/15": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 50393,
+   "others": 8
+  },
+  "st0a/16": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 50751,
+   "others": 8
+  },
+  "st0a/17": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 34701,
+   "others": 8
+  },
+  "st0a/18": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 19779,
+   "others": 8
+  },
+  "st0a/19": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 27530,
+   "others": 8
+  },
+  "st0a/20": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 23372,
+   "others": 8
+  },
+  "st0a/21": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25864,
+   "others": 8
+  },
+  "st0a/22": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 18037,
+   "others": 8
+  },
+  "st0a/23": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25527,
+   "others": 8
+  },
+  "st0a/24": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 27357,
+   "others": 8
+  },
+  "st0a/25": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25610,
+   "others": 8
+  },
+  "st0a/26": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 6459,
+   "others": 8
+  },
+  "st0e/4": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 27312,
+   "others": 11
+  },
+  "st0e/5": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 25008,
+   "others": 11
+  },
+  "st0e/6": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 27002,
+   "others": 11
+  },
+  "st0e/7": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 10908,
+   "others": 11
+  },
+  "st0e/8": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 18518,
+   "others": 11
+  },
+  "st0e/9": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 11154,
+   "others": 11
+  },
+  "st0e/10": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 15056,
+   "others": 11
+  },
+  "st0e/11": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 15136,
+   "others": 11
+  },
+  "st0e/12": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 15140,
+   "others": 11
+  },
+  "st0e/13": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 15092,
+   "others": 11
+  },
+  "st0e/14": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 14568,
+   "others": 11
+  },
+  "st0e/15": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 14548,
+   "others": 11
+  },
+  "st0e/16": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 11508,
+   "others": 11
+  },
+  "st0e/17": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 12576,
+   "others": 11
+  },
+  "st0e/18": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 13782,
+   "others": 11
+  },
+  "st0e/19": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 14796,
+   "others": 11
+  },
+  "st0e/20": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 16041,
+   "others": 11
+  },
+  "st0e/21": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 22944,
+   "others": 11
+  },
+  "st0e/22": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 17079,
+   "others": 11
+  },
+  "st0e/23": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 17025,
+   "others": 11
+  },
+  "st0e/24": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 17055,
+   "others": 11
+  },
+  "st0e/25": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 17091,
+   "others": 11
+  },
+  "st0e/26": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 17046,
+   "others": 11
+  },
+  "st0e/27": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 45220,
+   "others": 11
+  },
+  "st0e/28": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 38125,
+   "others": 11
+  },
+  "st0e/29": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 25109,
+   "others": 11
+  },
+  "st0e/30": {
+   "archive": "st0e",
+   "entry": 0,
+   "offset": 24992,
+   "draws": 26308,
+   "others": 2
+  },
+  "st10/4": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25248,
+   "draws": 4234375,
+   "others": 2
+  },
+  "st10/5": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25280,
+   "draws": 444116,
+   "others": 2
+  },
+  "st10/6": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25312,
+   "draws": 922184,
+   "others": 2
+  },
+  "st10/7": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25728,
+   "draws": 483420,
+   "others": 2
+  },
+  "st10/8": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25760,
+   "draws": 757049,
+   "others": 2
+  },
+  "st10/9": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25792,
+   "draws": 414672,
+   "others": 2
+  },
+  "st10/10": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25824,
+   "draws": 588770,
+   "others": 2
+  },
+  "st10/11": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25824,
+   "draws": 98194,
+   "others": 2
+  },
+  "st10/12": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25856,
+   "draws": 510631,
+   "others": 2
+  },
+  "st10/13": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25888,
+   "draws": 472802,
+   "others": 2
+  },
+  "st10/14": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25920,
+   "draws": 92468,
+   "others": 2
+  },
+  "st10/15": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25952,
+   "draws": 637864,
+   "others": 2
+  },
+  "st10/16": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25984,
+   "draws": 1052136,
+   "others": 2
+  },
+  "st10/17": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 25984,
+   "draws": 425519,
+   "others": 2
+  },
+  "st10/18": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27328,
+   "draws": 54088,
+   "others": 2
+  },
+  "st10/19": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27328,
+   "draws": 60675,
+   "others": 2
+  },
+  "st10/20": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27328,
+   "draws": 49091,
+   "others": 2
+  },
+  "st10/21": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27328,
+   "draws": 78702,
+   "others": 2
+  },
+  "st10/22": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27360,
+   "draws": 54088,
+   "others": 2
+  },
+  "st10/23": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27360,
+   "draws": 60675,
+   "others": 2
+  },
+  "st10/24": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27360,
+   "draws": 44847,
+   "others": 2
+  },
+  "st10/25": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27360,
+   "draws": 58775,
+   "others": 2
+  },
+  "st10/26": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27392,
+   "draws": 72513,
+   "others": 2
+  },
+  "st10/27": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27424,
+   "draws": 72513,
+   "others": 2
+  },
+  "st10/28": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27456,
+   "draws": 165891,
+   "others": 2
+  },
+  "st10/29": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27488,
+   "draws": 224765,
+   "others": 2
+  },
+  "st10/30": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27520,
+   "draws": 47382,
+   "others": 2
+  },
+  "st10/31": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27552,
+   "draws": 46902,
+   "others": 2
+  },
+  "st10/32": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 27584,
+   "draws": 41206,
+   "others": 2
+  },
+  "st10/33": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 26528,
+   "draws": 22133,
+   "others": 9
+  },
+  "st10/34": {
+   "archive": "st10",
+   "entry": 0,
+   "offset": 26720,
+   "draws": 7764,
+   "others": 11
+  },
+  "st15/4": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25504,
+   "draws": 8865,
+   "others": 1
+  },
+  "st15/5": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25632,
+   "draws": 4723,
+   "others": 1
+  },
+  "st15/6": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 24928,
+   "draws": 61843,
+   "others": 2
+  },
+  "st15/7": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25440,
+   "draws": 26027,
+   "others": 1
+  },
+  "st15/8": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 24800,
+   "draws": 5313,
+   "others": 2
+  },
+  "st15/9": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25344,
+   "draws": 8392,
+   "others": 1
+  },
+  "st15/10": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25888,
+   "draws": 1023,
+   "others": 1
+  },
+  "st15/11": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25824,
+   "draws": 4958,
+   "others": 1
+  },
+  "st15/12": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25568,
+   "draws": 12883,
+   "others": 1
+  },
+  "st15/13": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25024,
+   "draws": 296014,
+   "others": 0
+  },
+  "st15/14": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25696,
+   "draws": 89991,
+   "others": 1
+  },
+  "st15/15": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25760,
+   "draws": 5260,
+   "others": 1
+  },
+  "st15/16": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25952,
+   "draws": 30889,
+   "others": 1
+  },
+  "st15/17": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26080,
+   "draws": 83586,
+   "others": 1
+  },
+  "st15/18": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 24832,
+   "draws": 138183,
+   "others": 2
+  },
+  "st15/19": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26272,
+   "draws": 97008,
+   "others": 1
+  },
+  "st15/20": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26336,
+   "draws": 131706,
+   "others": 1
+  },
+  "st15/21": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26016,
+   "draws": 83554,
+   "others": 1
+  },
+  "st15/22": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26144,
+   "draws": 167142,
+   "others": 1
+  },
+  "st15/23": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26208,
+   "draws": 59700,
+   "others": 1
+  },
+  "st15/24": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 301959,
+   "others": 2
+  },
+  "st15/25": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 25312,
+   "draws": 113430,
+   "others": 4
+  },
+  "st15/26": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26560,
+   "draws": 4011,
+   "others": 1
+  },
+  "st15/27": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26400,
+   "draws": 3391,
+   "others": 2
+  },
+  "st15/28": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26400,
+   "draws": 415,
+   "others": 2
+  },
+  "st15/29": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 27104,
+   "draws": 34820,
+   "others": 1
+  },
+  "st15/30": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 27168,
+   "draws": 68452,
+   "others": 1
+  },
+  "st15/31": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 27040,
+   "draws": 44090,
+   "others": 1
+  },
+  "st15/32": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 27296,
+   "draws": 11841,
+   "others": 1
+  },
+  "st15/33": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26880,
+   "draws": 28454,
+   "others": 3
+  },
+  "st15/34": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26720,
+   "draws": 135560,
+   "others": 4
+  },
+  "st15/35": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 26720,
+   "draws": 57484,
+   "others": 4
+  },
+  "st15/36": {
+   "archive": "st15",
+   "entry": 0,
+   "offset": 27360,
+   "draws": 35533,
+   "others": 1
+  },
+  "st16/8": {
+   "archive": "st16",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 229992,
+   "others": 5
+  },
+  "st16/9": {
+   "archive": "st16",
+   "entry": 0,
+   "offset": 24768,
+   "draws": 67930,
+   "others": 5
+  },
+  "st16/10": {
+   "archive": "st16",
+   "entry": 0,
+   "offset": 24960,
+   "draws": 13586,
+   "others": 5
+  },
+  "st16/11": {
+   "archive": "st16",
+   "entry": 0,
+   "offset": 25152,
+   "draws": 33965,
+   "others": 5
+  },
+  "st17/5": {
+   "archive": "st02",
+   "entry": 0,
+   "offset": 24640,
+   "draws": 614792,
+   "others": 5
+  },
+  "st17/6": {
+   "archive": "st02",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 1018946,
+   "others": 5
+  },
+  "st18/4": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 26112,
+   "draws": 85361,
+   "others": 6
+  },
+  "st18/5": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 25024,
+   "draws": 739570,
+   "others": 11
+  },
+  "st18/6": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 25056,
+   "draws": 169495,
+   "others": 5
+  },
+  "st18/7": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 25088,
+   "draws": 123258,
+   "others": 5
+  },
+  "st18/8": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 25120,
+   "draws": 178051,
+   "others": 12
+  },
+  "st18/9": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 26240,
+   "draws": 57531,
+   "others": 2
+  },
+  "st18/10": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 26336,
+   "draws": 38354,
+   "others": 2
+  },
+  "st18/11": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 26432,
+   "draws": 763470,
+   "others": 2
+  },
+  "st18/12": {
+   "archive": "st18",
+   "entry": 0,
+   "offset": 26528,
+   "draws": 384702,
+   "others": 2
+  },
+  "st1e/7": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25152,
+   "draws": 6018,
+   "others": 7
+  },
+  "st1e/8": {
+   "archive": "st1e",
+   "entry": 0,
+   "offset": 25248,
+   "draws": 1127100,
+   "others": 3
+  },
+  "st1e/9": {
+   "archive": "st1e",
+   "entry": 0,
+   "offset": 25248,
+   "draws": 994500,
+   "others": 3
+  },
+  "st1e/10": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 86043,
+   "others": 8
+  },
+  "st1e/11": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 29143,
+   "others": 8
+  },
+  "st1e/12": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 102695,
+   "others": 8
+  },
+  "st1e/13": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 93645,
+   "others": 8
+  },
+  "st1e/14": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 57200,
+   "others": 8
+  },
+  "st1e/15": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 50393,
+   "others": 8
+  },
+  "st1e/16": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 50751,
+   "others": 8
+  },
+  "st1e/17": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 34701,
+   "others": 8
+  },
+  "st1e/18": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 19779,
+   "others": 8
+  },
+  "st1e/19": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 27530,
+   "others": 8
+  },
+  "st1e/20": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 23372,
+   "others": 8
+  },
+  "st1e/21": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25864,
+   "others": 8
+  },
+  "st1e/22": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 18037,
+   "others": 8
+  },
+  "st1e/23": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25527,
+   "others": 8
+  },
+  "st1e/24": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 27357,
+   "others": 8
+  },
+  "st1e/25": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 25610,
+   "others": 8
+  },
+  "st1e/26": {
+   "archive": "st0a",
+   "entry": 0,
+   "offset": 25408,
+   "draws": 6459,
+   "others": 8
+  },
+  "st22/6": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 24832,
+   "draws": 3762,
+   "others": 4
+  },
+  "st22/7": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 24640,
+   "draws": 50055,
+   "others": 4
+  },
+  "st22/8": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 25824,
+   "draws": 65935,
+   "others": 3
+  },
+  "st22/9": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 25312,
+   "draws": 22771,
+   "others": 3
+  },
+  "st22/10": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 25440,
+   "draws": 19359,
+   "others": 3
+  },
+  "st22/11": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 25568,
+   "draws": 51367,
+   "others": 3
+  },
+  "st22/12": {
+   "archive": "st22",
+   "entry": 0,
+   "offset": 25696,
+   "draws": 71560,
+   "others": 3
+  },
+  "st24/5": {
+   "archive": "st02",
+   "entry": 0,
+   "offset": 24640,
+   "draws": 614792,
+   "others": 5
+  },
+  "st24/6": {
+   "archive": "st02",
+   "entry": 0,
+   "offset": 24576,
+   "draws": 1018946,
+   "others": 5
+  },
+  "title_u/9": {
+   "archive": "title_u",
+   "entry": 10,
+   "offset": 0,
+   "draws": 16749,
+   "others": 0
+  },
+  "zett/1": {
+   "archive": "select_u",
+   "entry": 2,
+   "offset": 53600,
+   "draws": 2369223,
+   "others": 0
+  },
+  "zett/2": {
+   "archive": "select_u",
+   "entry": 2,
+   "offset": 53600,
+   "draws": 1074180,
+   "others": 0
+  }
+ }
+}

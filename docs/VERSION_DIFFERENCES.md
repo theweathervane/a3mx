@@ -1,0 +1,36 @@
+# Street Fighter Alpha 3 - Version Differences
+This outlines the major arcade, home console, compilation, and handheld releases of *Street Fighter Alpha 3*, detailing their core differences, pros, cons, and unique characteristics.
+
+## Comparison Table
+
+| Version | Hardware / Platform | Release Year | Overview | Pros | Cons |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Arcade (CPS2)** | Arcade (CPS2) | 1998 | The original arcade release running on Capcom's CP System II hardware. Introduced the three "Ism" fighting styles (A-ism, X-ism, V-ism) and the Guard Meter. | • Definitive baseline experience with pixel-perfect graphics and tightest arcade timing.<br>• Fast, responsive performance natively intended for the hardware. | • Smaller initial roster compared to later home/updated versions (console characters like Dee Jay, Fei Long, and Guile were initially missing/hidden).<br>• Limited home-style modes (no deep World Tour mode). |
+| **PlayStation** | PlayStation | 1998 | The first home console port, which added several fan-favorite console characters (Guile, Dee Jay, Fei Long, Evil Ryu) and introduced the *World Tour* RPG mode. | • Expanded character roster.<br>• Incredible extra modes like World Tour and hidden secret modes. | • Hardware limitations forced minor animation frame cuts.<br>• Sprites feel slightly scaled back with noticeable load times compared to arcade. |
+| **Saturn (Japan)** | Sega Saturn | 1999 | Sega Saturn port released exclusively in Japan, widely considered by enthusiasts to be one of the best 2D home conversions. | • Utilized the Saturn's 4MB RAM cart for smoother character animations and closer arcade accuracy.<br>• Complete Dramatic Battle modes (including reverse variants).<br>• Ideal 6-button controller pad layout. | • Released exclusively in Japan.<br>• Expensive collector item requiring extra RAM cart hardware. |
+| **Dreamcast** | Sega Dreamcast | 1999 | Ported to Sega Dreamcast, largely built upon the base of the PlayStation version (later updated in Japan as *Saikyō-ryū Dōjō* with online matching). | • Includes console characters.<br>• Crisp VGA display output support.<br>• Modified Dramatic Battle features. | • Inherited some cut animation frames from PS1 codebase rather than building from pure arcade source.<br>• Standard controller layout less ideal for 6-button fighters. |
+| **Upper (NAOMI Arcade)** | Arcade (NAOMI) | 2001 | Updated arcade version on Sega NAOMI hardware. Incorporated the console characters directly into the arcade meta and made balance adjustments. | • Smoother performance and higher resolution rendering.<br>• Balanced roster closing the gap between console additions and arcade play.<br>• Removed the "crouch canceling" glitch that allowed V-ism infinite combos. | • Deviated slightly from pure 1998 CPS2 meta preferred by V-ism purists. |
+| **Upper (GBA)** | Game Boy Advance | 2002 | Technical handheld port attempt to cram *Alpha 3 Upper* into Nintendo's Game Boy Advance cartridge format. | • Incredible technical achievement packing a massive character roster onto a portable cartridge. | • Heavily compressed and downsized sprite artwork.<br>• Butchered audio and missing voice samples.<br>• Awkward control layout requiring dual-button mappings. |
+| **MAX (PSP)** | PlayStation Portable | 2006 | Portable iteration on PSP adding extra characters (Ingrid, Maki, Yun, Eagle) and bonus modes. | • Largest roster in series history (39 playable characters).<br>• Arcade-accurate frames, widescreen support, and wireless multiplayer. | • PSP directional pad could feel stiff for complex motion inputs. |
+| **Alpha Anthology / Hyper Alpha** | PlayStation 2 | 2006 | Compilation release featuring *Alpha 3 Upper* as an unlockable, alongside an exclusive secret game mode titled *Hyper Street Fighter Alpha*. | • Virtually zero load times (supports PS2 HDD installation).<br>• *Hyper Alpha* lets players cross-select different sub-versions of characters across the entire SFA series. | • Excludes PS1/DC *World Tour* mode and handheld-exclusive characters (Maki, Eagle, Yun, Ingrid). |
+| **30th Anniversary Collection** | Modern Consoles / PC | 2018 | Emulated port of the original 1998 CPS2 arcade version included in the multi-game collection. | • Features native online ranked/casual play and rollback netcode.<br>• Pixel-perfect preservation of original CPS2 arcade physics and graphics. | • Only contains original CPS2 arcade roster (missing console additions, Upper balance changes, and MAX characters). |
+| **Capcom Fighting Collection 2** | PS4 / Switch / Xbox / PC | 2025 | Modern compilation featuring the NAOMI *Alpha 3 Upper* arcade ROM with quality-of-life enhancements and post-launch updates. | • Updated via patch to include MAX characters (Ingrid, Maki, Yun, Eagle) in an arcade format.<br>• Modern online netcode, EX training settings, and internal resolution options. | • MAX bonus characters are restricted from official casual/ranked online matches. |
+
+## Interesting Facts
+
+* **The "Ism" Name Origins:** The three lettered styles directly pay homage to predecessors in Capcom’s history: **A-ism** stands for *Street Fighter Alpha*, **V-ism** stands for *Street Fighter Alpha 2* (referencing its Custom Combo system), and **X-ism** stands for *Super Street Fighter II Turbo*.
+* **The Crouch-Cancel Glitch:** In the original CPS2 arcade version, V-ism allowed players to perform notoriously broken infinite combos using a "crouch-canceling" technique. This was explicitly patched out in the NAOMI *Upper* revisions.
+* **Ingrid's Origin:** *Alpha 3 MAX* on the PSP marked the strange crossover debut of Ingrid (originally conceptualized for the cancelled Capcom fighting game *Capcom Fighting All-Stars* and later introduced in *Capcom Fighting Evolution*), tying her bizarre cosmic storyline directly into M. Bison's Psycho Drive.
+* **Hyper Street Fighter Alpha:** Exclusive to *Street Fighter Alpha Anthology* on PS2, this hidden mode acts as an ultimate crossover sandbox where players can pit *Alpha 1*, *Alpha 2*, and *Alpha 3* versions of characters against one another.
+
+## Sources & References
+
+- [Street Fighter Alpha 3 - Simple Wikipedia Release History](https://simple.wikipedia.org/wiki/Street_Fighter_Alpha_3)
+- [Street Fighter Alpha 3 Wiki - Fandom (Releases & Port History)](https://video-games.fandom.com/wiki/Street_Fighter_Alpha_3)
+- [Street Fighter Alpha 3 Fandom Wiki (Characters & Compilation Updates)](https://streetfighter.fandom.com/wiki/Street_Fighter_Alpha_3)
+- [Wikipedia - Street Fighter Alpha 3](https://en.wikipedia.org/wiki/Street_Fighter_Alpha_3)
+- [Wikipedia - Capcom Fighting Collection 2](https://en.wikipedia.org/wiki/Capcom_Fighting_Collection_2)
+- [The Cutting Room Floor - SFA3 (Arcade)](https://tcrf.net/Street_Fighter_Alpha_3_(Arcade))
+- [Data Crystal - SFA3 (CPS2)](https://datacrystal.tcrf.net/wiki/Street_Fighter_Alpha_3_(CPS2))
+- [The Fighters Generation - Alpha 3 MAX](https://www.fightersgeneration.com/games/sfa3-upperupper.html)
+- [GameFAQs - Alpha 3 vs Alpha 3 MAX](https://gamefaqs.gamespot.com/psp/575578-street-fighter-alpha-3-max/answers/656754-what-are-the-differences-between-alpha-3-vs-alpha-3-max)

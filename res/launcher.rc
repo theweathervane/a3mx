@@ -1,0 +1,4 @@
+// Windows resources for a3mx-launcher.exe
+// IDI 1 is the first icon in the exe: Explorer shows it, and SDL uses it for the window and taskbar.
+// The spanner is drawn by tools/make_launcher_icon.py; the game keeps a3mx.ico.
+1 ICON "launcher.ico"

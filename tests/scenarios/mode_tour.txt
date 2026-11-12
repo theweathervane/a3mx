@@ -1,0 +1,5 @@
+# Into one mode after another from the MODE MENU and straight back with F2 (menukey): Variable
+# Battle, Training, Free Battle, VS 100 Kumite, Entry, R.Dramatic, Dramatic, Survival, World Tour,
+# Edit, and Dramatic again with L + R held (its variant). NETWORK is left out.
+frames 5500
+input 1200=start;1206=;1500=start;1506=;1560=down;1566=;1590=cross;1596=;1760=menukey;1766=;1910=down;1916=;1940=cross;1946=;2110=menukey;2116=;2260=down;2266=;2290=cross;2296=;2460=menukey;2466=;2610=right;2616=;2640=cross;2646=;2810=menukey;2816=;2960=up;2966=;2990=cross;2996=;3160=menukey;3166=;3310=right;3316=;3340=cross;3346=;3510=menukey;3516=;3660=up;3666=;3690=cross;3696=;3860=menukey;3866=;4010=up;4016=;4040=cross;4046=;4210=menukey;4216=;4360=left;4366=;4390=cross;4396=;4560=menukey;4566=;4710=down;4716=;4740=cross;4746=;4910=menukey;4916=;5060=right;5066=;5080=l+r;5090=l+r+cross;5096=l+r;5120=;5260=menukey;5266=

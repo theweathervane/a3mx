@@ -1,0 +1,154 @@
+{
+  "_about": "The screenshots in the documentation. tools/screenshots.py takes them (each program saves its own with --screenshot) and records sources_sha256, a hash of the files each depends on; tools/screenshots.py --check fails when those files have changed since, when an image is missing, or when no document links to it. \"artwork\" lists the other images in docs/images/ (drawn, not taken), so --check knows them. Take one again whenever what it shows changes (CONTRIBUTING.md).",
+  "artwork": ["docs/images/a3mx.png", "docs/images/a3mx_square.png"],
+  "screenshots": [
+    {
+      "id": "launcher-dark",
+      "image": "docs/images/launcher-dark.png",
+      "shows": "the launcher, dark theme, default settings",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "adf50c8da81f84891b3656c798de1ec5ddfcfb3fc71388040c40f49e0052cb9f",
+      "size": [
+        1000,
+        740
+      ]
+    },
+    {
+      "id": "launcher-light",
+      "image": "docs/images/launcher-light.png",
+      "shows": "the launcher, light theme, default settings",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "light"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "adf50c8da81f84891b3656c798de1ec5ddfcfb3fc71388040c40f49e0052cb9f",
+      "size": [
+        1000,
+        740
+      ]
+    },
+    {
+      "id": "launcher-paths",
+      "image": "docs/images/launcher-paths.png",
+      "shows": "the launcher's Paths tab",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark",
+          "--tab",
+          "paths"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "adf50c8da81f84891b3656c798de1ec5ddfcfb3fc71388040c40f49e0052cb9f",
+      "size": [
+        1000,
+        740
+      ]
+    },
+    {
+      "id": "launcher-dependencies",
+      "image": "docs/images/launcher-dependencies.png",
+      "shows": "the launcher's Dependencies tab, before anything is downloaded",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark",
+          "--tab",
+          "dependencies"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h",
+        "tools/data/pins.json#downloads",
+        "tools/data/pins.json#sources"
+      ],
+      "sources_sha256": "51b22cf83146157033c7c08c0c94ec0c4d605364b91bd34c2834cc90d51ca694",
+      "size": [
+        1000,
+        740
+      ]
+    },
+    {
+      "id": "launcher-controllers",
+      "image": "docs/images/launcher-controllers.png",
+      "shows": "the launcher's Controllers tab, nothing set up yet",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark",
+          "--tab",
+          "controllers"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "adf50c8da81f84891b3656c798de1ec5ddfcfb3fc71388040c40f49e0052cb9f",
+      "size": [
+        1000,
+        740
+      ]
+    },
+    {
+      "id": "launcher-extensions",
+      "image": "docs/images/launcher-extensions.png",
+      "shows": "the launcher's Extensions tab, the defaults",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark",
+          "--tab",
+          "extensions"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "adf50c8da81f84891b3656c798de1ec5ddfcfb3fc71388040c40f49e0052cb9f",
+      "size": [
+        1000,
+        740
+      ]
+    }
+  ]
+}

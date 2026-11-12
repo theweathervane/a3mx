@@ -1,0 +1,6 @@
+# Boot to the character select with a disc that misbehaves: background reads sometimes report the
+# drive busy or fail, polls sometimes say "not yet", plain reads sometimes fail. The loaders' retry
+# paths (reopen, seek back, read again) must behave exactly as the PSP code does.
+frames 3000
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=
+args --io-faults busy=7,error=13,poll=3,read=11

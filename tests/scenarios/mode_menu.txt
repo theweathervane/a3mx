@@ -1,0 +1,5 @@
+# The MODE MENU: left alone at "press Start" until it gives up (back to the title), then in again
+# from the attract mode; the cursor pressed down and up, then each direction held so it repeats and
+# wraps round, and cancel (back to the title once more).
+frames 4800
+input 1200=start;1206=;3600=start;3606=;3900=start;3906=;3960=down;3966=;3980=down;3986=;4000=down;4006=;4020=up;4026=;4040=up;4046=;4060=up;4066=;4100=down;4160=;4180=up;4240=;4260=right;4320=;4340=left;4400=;4440=circle;4446=;4460=triangle;4466=

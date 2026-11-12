@@ -1,0 +1,45 @@
+# Game data you own: never committed
+/imports/
+*.iso
+*.cso
+*.chd
+*.bin
+*.cue
+*.img
+*.ccd
+*.sub
+*.zip
+*.7z
+*.gba
+*.pak
+*.pac
+*.at3
+*.arc
+*.elf
+*.prx
+*.BIN
+# Extracted / generated / build output
+/work
+/work-*
+# your saves and settings (the game makes it; src/platform/main.c)
+/saves/
+# the player's folders when the system's per-user folder can't be written (src/platform/userdir.h)
+/configs/
+/logs/
+/launcher/
+/assets/*
+!/assets/README.md
+!/assets/LAYOUT.md
+!/assets/extensions/
+/build/
+/build-*/
+/dist/
+# the prebuilt launcher a release download has at its top (tools/package_launcher.py)
+/a3mx-launcher
+/a3mx-launcher.exe
+/out/
+/.tools/
+.vs/
+*.user
+x64/
+__pycache__/

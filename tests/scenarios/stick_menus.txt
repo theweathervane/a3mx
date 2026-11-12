@@ -1,0 +1,5 @@
+# The analogue stick through the menus and the character select: each direction, diagonals, the
+# opposite button already held (stick up while DOWN is pressed), and back to centre.
+frames 3200
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=;2400=down;2440=;3000=cross;3006=
+stick 1560=128,255;1572=128,128;1600=128,255;1612=128,128;1640=128,0;1652=128,128;1680=128,0;1692=128,128;2100=255,128;2112=128,128;2140=0,128;2152=128,128;2200=255,255;2215=128,128;2260=0,0;2275=128,128;2400=128,0;2440=128,128;2500=192,64;2520=128,128;2560=193,63;2580=128,128

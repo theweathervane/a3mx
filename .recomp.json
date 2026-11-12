@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Street Fighter Alpha 3 MAX",
+  "system": "PSP",
+  "type": ["port", "recomp"],
+  "project": "A3MX",
+  "approach": "Hand-written C replacing a static recompilation one function at a time, each verified frame for frame against the original",
+  "original": [
+    { "region": "USA", "revision": "1.00", "serial": "ULUS10062", "sha1": "321ff2143b4c3e8aa24efcf52ffe577c9739f57b" },
+    { "region": "Japan", "revision": "1.01", "serial": "ULJM05082", "sha1": "86b75c0e299400722d5e4e1f7077730da0fbac11" }
+  ],
+  "status": "in-progress",
+  "targets": ["Windows", "Linux", "macOS"],
+  "started": "2026-11-01",
+  "maintainers": [
+    { "name": "theweathervane", "link": "https://gitlab.com/theweathervane-group/a3mx" }
+  ],
+  "links": [
+    { "label": "Releases (stable, and a nightly pre-release)", "url": "https://gitlab.com/theweathervane-group/a3mx/-/releases" },
+    { "label": "Report a problem", "url": "https://gitlab.com/theweathervane-group/a3mx/-/work_items/new?type=Issue&initialCreationContext=list-route" }
+  ],
+  "tags": ["fighting", "capcom", "widescreen", "local-multiplayer"],
+  "notes": "Plays from day one: functions not yet decompiled run as translated code, which will disappear as the C replaces it. Decomp is the priority right now."
+}

@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "environment": {
+        "PATH": "${sourceDir}/.tools/llvm-mingw/bin${pathListSep}${sourceDir}/.tools/ninja${pathListSep}${sourceDir}/.tools/cmake/bin${pathListSep}${sourceDir}/.tools/python${pathListSep}$penv{PATH}"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release: the game (needs your disc in work/)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug: the game with debug info, unoptimised",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "headless",
+      "displayName": "Headless: no window or sound (tests, servers)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-headless",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "A3MX_SDL": "OFF" }
+    },
+    {
+      "name": "launcher",
+      "displayName": "Launcher: only the launcher (no disc or Python needed)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-launcher",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "A3MX_LAUNCHER_ONLY": "ON" }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI: no disc; compile every hand-written file, run the tests that need no game data",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-ci",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "A3MX_DISC_FREE": "ON" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "release" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "headless", "configurePreset": "headless" },
+    { "name": "launcher", "configurePreset": "launcher" },
+    { "name": "ci", "configurePreset": "ci" }
+  ],
+  "testPresets": [
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
+    { "name": "headless", "configurePreset": "headless", "output": { "outputOnFailure": true } },
+    { "name": "ci", "configurePreset": "ci", "output": { "outputOnFailure": true } }
+  ]
+}

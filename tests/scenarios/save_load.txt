@@ -1,0 +1,4 @@
+# OPTION MODE > SAVE/LOAD (exsetting.c): SAVE, LOAD and DELETE, each run off screen with its line at the
+# bottom (SYSTEM DATA SAVED / LOADED / DELETED), then back out with Circle.
+frames 2900
+input 1200=start;1206=;1500=start;1506=;1560=down;1566=;1590=down;1596=;1620=down;1626=;1650=down;1656=;1690=cross;1696=;1900=down;1906=;1930=down;1936=;1960=down;1966=;1990=down;1996=;2050=cross;2056=;2250=cross;2256=;2450=down;2456=;2550=cross;2556=;2650=down;2656=;2700=cross;2706=;2850=circle;2856=

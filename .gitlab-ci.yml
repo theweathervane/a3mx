@@ -1,0 +1,207 @@
+# GitLab CI for a3mx (since 0.60.0): the project's only pipeline.
+#
+# No game data is ever used here: the disc-free build (CMake preset "ci") compiles every hand-written
+# file against a stand-in for the generated code, builds the launcher, and runs the tests that need no
+# disc. The parity tests need the disc and run on developers' machines (docs/TESTS.md).
+#
+# When it runs: by hand (Build > Pipelines > New pipeline) and for a tag v<VERSION>, which also makes
+# the release. The nightly (a schedule) is switched off for now: releases are made by hand. Not on
+# every push: committing often must not mean building and releasing often.
+#
+# What each build job leaves (docs/BUILDING.md, "CI and releases"):
+#   dist/a3mx-<version>-<system>.zip            the source with the prebuilt launcher in it
+#   dist/a3mx-launcher-<version>-<system>[.exe] the launcher alone (.zip holding the .app on macOS)
+# <system>: windows-x64, linux-x64, macos-arm64. A scheduled run's <version> is
+# <VERSION>-nightly.<date>+<commit>.
+#
+# Built once and kept: SDL3 (tools/sdl3.py, compiled), librashader (tools/librashader.py, compiled with
+# Rust) and the FILTER shaders (tools/shaders.py, downloaded) live in .tools/ and are cached per system,
+# keyed on pins.json and the scripts, so a pipeline only makes again what has changed. Each script
+# does nothing when its folder is already right. librashader goes into each download; if its build
+# fails the pipeline carries on and the download goes out without it (FILTER then does nothing).
+#
+# Runners: Linux uses a Docker image; Windows and macOS use GitLab's hosted runners
+# (saas-windows-medium-amd64, saas-macos-medium-m1) or your own with those tags.
+
+stages: [check, build, release]
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # The nightly is switched off: releases are made by hand. To turn it back on, put back
+    #   - if: $CI_PIPELINE_SOURCE == "schedule"
+    # and add a schedule (Build > Pipeline schedules). .stamp-nightly below is ready for it.
+    - if: $CI_PIPELINE_SOURCE == "api"
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+
+variables:
+  GIT_DEPTH: "0"                       # the tags: release notes cover everything since the last release
+  PACKAGE_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/a3mx"
+
+# A nightly stamps VERSION before anything is built, so the game, the launcher and the downloads all say so.
+.kept: &kept
+  key:
+    files: [tools/data/pins.json, tools/librashader.py]
+    prefix: kept-$CI_JOB_NAME_SLUG
+  paths: [.tools/sdl3/, .tools/librashader/, .tools/slang-shaders/]
+
+.stamp-nightly: &stamp-nightly |
+  if [ "$CI_PIPELINE_SOURCE" = "schedule" ]; then
+    echo "$(tr -d ' \r\n' < VERSION)-nightly.$(date -u +%Y%m%d)+${CI_COMMIT_SHORT_SHA}" > VERSION
+  fi
+  echo "Building version $(cat VERSION)"
+
+pins:
+  stage: check
+  image: python:3.12-slim
+  before_script:
+    - apt-get update -q && apt-get install -y -q git
+  script:
+    - python3 tools/pins.py --check
+    - python3 -m compileall -q tools tests
+    - python3 -c "import json, os; json.load(open('.recomp.json', encoding='utf-8')); assert os.path.getsize('.recomp.json') < 8192"
+    - if [ -n "$CI_COMMIT_TAG" ]; then python3 tools/release_notes.py --check "$(tr -d ' \r\n' < VERSION)"; fi
+
+build:linux-x64:
+  stage: build
+  image: ubuntu:24.04
+  variables:
+    DEBIAN_FRONTEND: noninteractive
+  before_script:
+    - apt-get update -q
+    - apt-get install -y -q git curl python3 cmake ninja-build clang libx11-dev libxext-dev libxrandr-dev libxcursor-dev
+        libxi-dev libxss-dev libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev libgl-dev
+        libasound2-dev libpulse-dev libudev-dev libxtst-dev libxfixes-dev
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  cache: *kept
+  script:
+    - *stamp-nightly
+    - python3 tools/sdl3.py
+    # Rust only when librashader has to be built (not in the cache yet, or its pin changed)
+    - |
+      if ! python3 tools/librashader.py --check; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+        . "$HOME/.cargo/env"
+        python3 tools/librashader.py || echo "librashader was not built: the download goes out without it"
+      fi
+    - python3 tools/shaders.py
+    - cmake --preset ci
+    - cmake --build --preset ci
+    - ctest --preset ci
+    - cmake --preset ci -B build-ci-noext -DA3MX_EXTENSIONS=OFF
+    - cmake --build build-ci-noext
+    - python3 tools/package_launcher.py --system linux-x64 --launcher build-ci/a3mx-launcher --out dist --standalone --librashader .tools/librashader
+  artifacts:
+    name: "a3mx-linux-x64-$CI_COMMIT_SHORT_SHA"
+    paths: [dist/]
+    expire_in: 2 weeks
+
+build:windows-x64:
+  stage: build
+  tags: [saas-windows-medium-amd64]
+  cache:
+    - key: tools-windows-$CI_COMMIT_REF_SLUG
+      paths: [.tools/llvm-mingw/, .tools/cmake/, .tools/ninja/, .tools/python/]
+    - *kept
+  script:
+    # build.cmd finds or downloads Python, then tools/build.py downloads the pinned LLVM-MinGW, CMake and
+    # Ninja into .tools\ (each checked against its SHA-256) exactly as on a player's PC
+    - cmd /c "build.cmd --tools-only"
+    - $env:PATH = "$PWD\.tools\llvm-mingw\bin;$PWD\.tools\ninja;$PWD\.tools\cmake\bin;$PWD\.tools\python;$env:PATH"
+    - if ($env:CI_PIPELINE_SOURCE -eq "schedule") { $v = (Get-Content VERSION -Raw).Trim(); "$v-nightly.$(Get-Date -Format yyyyMMdd -AsUTC)+$env:CI_COMMIT_SHORT_SHA" | Set-Content -NoNewline VERSION }
+    - python tools/sdl3.py
+    # librashader needs Rust (and the runner's Visual Studio build tools): fetched only when it has to be built
+    - |
+      python tools/librashader.py --check
+      if ($LASTEXITCODE -ne 0) {
+        if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
+          Invoke-WebRequest https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+          .\rustup-init.exe -y --profile minimal
+          $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+        }
+        python tools/librashader.py
+        if ($LASTEXITCODE -ne 0) { Write-Host "librashader was not built: the download goes out without it"; $global:LASTEXITCODE = 0 }
+      }
+    - python tools/shaders.py
+    - cmake --preset ci
+    - cmake --build --preset ci
+    - ctest --preset ci
+    - cmake --preset ci -B build-ci-noext -DA3MX_EXTENSIONS=OFF
+    - cmake --build build-ci-noext
+    - python tools/package_launcher.py --system windows-x64 --launcher build-ci/a3mx-launcher.exe --out dist --standalone --librashader .tools/librashader
+  artifacts:
+    name: "a3mx-windows-x64-$CI_COMMIT_SHORT_SHA"
+    paths: [dist/]
+    expire_in: 2 weeks
+
+build:macos-arm64:
+  stage: build
+  tags: [saas-macos-medium-m1]
+  image: macos-15-xcode-16
+  allow_failure: true                  # hosted Mac runners can be slow to start: a release doesn't wait for them
+  cache: *kept
+  script:
+    - *stamp-nightly
+    - python3 tools/build.py --tools-only
+    - export PATH="$PWD/.tools/ninja-macos:$PWD/.tools/cmake-macos/CMake.app/Contents/bin:$PATH"
+    - python3 tools/sdl3.py
+    - |
+      if ! python3 tools/librashader.py --check; then
+        command -v cargo > /dev/null || { curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal; . "$HOME/.cargo/env"; }
+        python3 tools/librashader.py || echo "librashader was not built: the download goes out without it"
+      fi
+    - python3 tools/shaders.py
+    - cmake --preset ci
+    - cmake --build --preset ci
+    - ctest --preset ci
+    - python3 tools/package_launcher.py --system macos-arm64 --launcher build-ci/a3mx-launcher --out dist --standalone --librashader .tools/librashader
+    # native Apple silicon, for macOS 11 and later, and the app in the download opens (signed, a valid Info.plist)
+    - |
+      for b in build-ci/a3mx-launcher; do
+        archs=$(lipo -archs "$b"); minos=$(otool -l "$b" | awk '/LC_BUILD_VERSION/ {f=1} f && /minos/ {print $2; exit}')
+        echo "$b: $archs, minos $minos"
+        [ "$archs" = arm64 ] || { echo "$b is $archs, not arm64"; exit 1; }
+        [ "$minos" = 11.0 ] || { echo "$b needs macOS $minos, not 11.0"; exit 1; }
+      done
+      rm -rf /tmp/app && mkdir /tmp/app && unzip -q dist/a3mx-launcher-*.zip -d /tmp/app
+      app=$(find /tmp/app -maxdepth 2 -name '*.app' | head -n 1)
+      plutil -lint "$app/Contents/Info.plist"
+      codesign --verify --deep --strict --verbose=2 "$app"
+  artifacts:
+    name: "a3mx-macos-arm64-$CI_COMMIT_SHORT_SHA"
+    paths: [dist/]
+    expire_in: 2 weeks
+
+# A tag v<VERSION> on main: the downloads go to the project's package registry and a release is made
+# with notes from CHANGELOG.md. Windows and Linux must have built; macOS's files are added if its job passed.
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+  needs:
+    - job: pins
+    - job: build:linux-x64
+      artifacts: true
+    - job: build:windows-x64
+      artifacts: true
+    - job: build:macos-arm64
+      artifacts: true
+      optional: true
+  before_script:
+    - apk add --no-cache curl python3 git
+  script:
+    - V="${CI_COMMIT_TAG#v}"
+    - '[ "$V" = "$(tr -d " \r\n" < VERSION)" ] || { echo "the tag $CI_COMMIT_TAG is not VERSION ($(cat VERSION))"; exit 1; }'
+    - ls -l dist
+    - ls dist/a3mx-$V-windows-x64.zip dist/a3mx-$V-linux-x64.zip        # both must be there
+    - PREV=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --merged HEAD --sort=-v:refname | sed -n 2p)
+    - python3 tools/release_notes.py "$V" ${PREV:+--since "${PREV#v}"} > notes.md
+    - |
+      ASSETS=""
+      for f in dist/*; do
+        n=$(basename "$f")
+        curl --fail --silent --show-error --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$f" "$PACKAGE_URL/$V/$n"
+        ASSETS="$ASSETS --assets-link {\"name\":\"$n\",\"url\":\"$PACKAGE_URL/$V/$n\",\"link_type\":\"package\"}"
+      done
+      eval release-cli create --name "\"A3MX v$V\"" --tag-name "$CI_COMMIT_TAG" --description notes.md $ASSETS

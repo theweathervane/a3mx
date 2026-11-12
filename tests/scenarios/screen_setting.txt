@@ -1,0 +1,4 @@
+# OPTION MODE > SCREEN SETTING with its VSYNC and FRAME TIMING rows (screensetting.c): down over the six
+# rows, VSYNC OFF, FRAME TIMING, DEFAULT, up and down again, wrapping round, then back out with Circle.
+frames 3050
+input 1200=start;1206=;1500=start;1506=;1560=down;1566=;1590=down;1596=;1620=down;1626=;1650=down;1656=;1690=cross;1696=;1900=down;1906=;1930=down;1936=;1990=cross;1996=;2200=down;2206=;2230=down;2236=;2300=right;2306=;2400=down;2406=;2460=cross;2466=;2560=up;2566=;2620=up;2626=;2680=down;2686=;2740=down;2746=;2800=down;2806=;2830=down;2836=;2860=up;2866=;2900=up;2906=;2930=right;2936=;2990=circle;2996=

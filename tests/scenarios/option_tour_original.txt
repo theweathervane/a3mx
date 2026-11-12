@@ -1,0 +1,8 @@
+# OPTION MODE without the extensions (--no-extensions), so the game's own screens run where ours take
+# over: GAME OPTION (DIFFICULTY and S.E. VOLUME each way), BUTTON CONFIG (buttons on the first rows, a
+# held Down, COMMAND / TYPE / RAPID each way, DEFAULT, EXIT), SCREEN SETTING (both rows each way,
+# DEFAULT, EXIT), SAVE/LOAD (SAVE: Yes to a new SYSTEM DATA, Circle past "Save completed.", Circle
+# out), EXIT to the MODE MENU.
+frames 7490
+args --no-extensions
+input 900=up;906=;960=cross;966=;2300=start;2320=;2400=start;2410=;2700=start;2720=;2800=down;2806=;2830=down;2836=;2860=down;2866=;2890=down;2896=;2930=cross;2936=;3140=cross;3146=;3220=right;3226=;3270=left;3276=;3320=down;3326=;3370=down;3376=;3420=down;3426=;3470=down;3476=;3520=down;3526=;3570=down;3576=;3620=down;3626=;3670=down;3676=;3720=down;3726=;3770=right;3776=;3820=left;3826=;3870=circle;3876=;3990=down;3996=;4040=cross;4046=;4160=square;4166=;4210=down;4216=;4260=triangle;4266=;4310=down;4316=;4360=right;4366=;4410=left;4416=;4460=down;4500=;4520=down;4526=;4570=right;4576=;4620=left;4626=;4670=down;4676=;4720=right;4726=;4770=left;4776=;4820=down;4826=;4870=right;4876=;4920=left;4926=;4970=down;4976=;5020=cross;5026=;5060=down;5066=;5110=cross;5116=;5230=down;5236=;5280=cross;5286=;5400=right;5406=;5450=right;5456=;5500=left;5506=;5550=down;5556=;5600=right;5606=;5650=left;5656=;5700=down;5706=;5750=cross;5756=;5790=down;5796=;5840=cross;5846=;5960=down;5966=;6010=cross;6016=;6130=cross;6136=;6430=up;6436=;6490=cross;6496=;6940=circle;6946=;7090=circle;7096=;7240=down;7246=;7290=cross;7296=

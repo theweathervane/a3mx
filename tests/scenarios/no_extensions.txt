@@ -1,0 +1,7 @@
+# The game without the extensions (--no-extensions): the PSP program alone. No save on the memory
+# stick, so the boot asks "Do you wish to begin the game without auto-loading?" (Up to Yes, Cross);
+# attract mode, the title screen, the game's own MODE MENU (no pad icons), Arcade into the character
+# select.
+frames 3000
+args --no-extensions
+input 900=up;906=;960=cross;966=;2300=start;2320=;2400=start;2410=;2600=cross;2610=
