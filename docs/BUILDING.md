@@ -208,9 +208,12 @@ Each build job makes two files, named by version and system:
 
 - `a3mx-<version>-<system>.zip`: the source tree (`git archive`) with the **prebuilt launcher** at its
   top and an empty `imports/psp/` for the ISO. This is what a player unzips and opens: the launcher
-  finds `tools/build.py` beside it, so they pick their ISO and press Run.
+  finds `tools/build.py` beside it, so they pick their ISO and press Run. On macOS, Gatekeeper runs an
+  app from a downloaded folder from a temporary copy elsewhere (App Translocation); the launcher asks
+  macOS where the original is, so it still finds the folder.
 - `a3mx-launcher-<version>-<system>` (`.exe` on Windows, a `.zip` holding the `.app` on macOS): the
-  launcher alone.
+  launcher alone. Kept as a build artifact (macOS's job checks the `.app` in it) but not added to a
+  release since 0.65.2: on its own it has no folder to build in.
 
 `<system>` is `windows-x64`, `linux-x64` or `macos-arm64`. Shipping the launcher is allowed because it
 holds no game code; the game itself is always built on the player's machine from their disc. To make

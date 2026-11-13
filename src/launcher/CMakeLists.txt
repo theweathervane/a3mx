@@ -26,6 +26,9 @@ target_link_libraries(a3mx-launcher PRIVATE imgui SDL3::SDL3-static)
 set_target_properties(a3mx-launcher PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")   # beside a3mx
 target_compile_definitions(a3mx-launcher PRIVATE "A3MX_VERSION=\"v${A3MX_VER}\"")
 target_compile_options(a3mx-launcher PRIVATE -Wall -Wextra -Wno-unused-parameter)
+if(APPLE)
+  target_link_libraries(a3mx-launcher PRIVATE "-framework CoreFoundation")       # launcher.cpp: untranslocated()
+endif()
 if(WIN32)
   target_sources(a3mx-launcher PRIVATE "${CMAKE_SOURCE_DIR}/res/launcher.rc")   # its own icon (res/launcher.ico)
   target_link_libraries(a3mx-launcher PRIVATE ole32 uuid shell32)                 # shortcut.cpp: a .lnk through IShellLink

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.65.2
+- **macOS: the launcher finds its folder again:** opened from the unzipped download, macOS ran it from a temporary copy elsewhere (App Translocation), so it found no folder to build in and said nothing was needed. It now asks macOS where it really is. If it still can't find its folder, the Dependencies tab and the console say what to do instead of "nothing is needed".
+- **Releases hold only the full downloads:** the launcher on its own (`a3mx-launcher-...`) is no longer added to a release or the nightly on GitHub, since it can't build anything without the folder around it. Download `a3mx-<version>-<system>.zip`.
+
 ## 0.65.1
 - **Linux: missing libraries named before the build (issue #2):** the build and the launcher's Dependencies tab now check for pkg-config and the window (X11 or Wayland) and sound (ALSA, PulseAudio or PipeWire) development libraries, and say which are missing with the line that installs them, instead of stopping in SDL's configure with "SDL could not find X11 or Wayland development libraries".
 - **Files dated in the future no longer break the build (issue #2):** files unpacked on a PC whose clock or time zone is behind the one that made them are dated now before CMake runs, so Ninja no longer finds the build out of date every time. Your ISOs, `assets/` and `saves/` are never touched.

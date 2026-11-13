@@ -56,6 +56,11 @@
 #ifndef _WIN32
 #include <csignal>
 #endif
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#include <dlfcn.h>
+#include <climits>
+#endif
 
 #include "disc_check.h"
 #include "game_options.h"
@@ -120,6 +125,42 @@ static std::string parent(const std::string &p) {
 static std::string base_name(const std::string &p) {
     size_t k = p.find_last_of("/\\");
     return k == std::string::npos ? p : p.substr(k + 1);
+}
+
+/* macOS: an app opened from a downloaded (quarantined) folder is run by Gatekeeper from a read-only copy
+ * under /private/var/folders/.../AppTranslocation/, away from the folder it was unzipped into, so the
+ * checkout above it can't be found. Security.framework says where the original is (looked up at run
+ * time: the call is not in the public headers, though every macOS since 10.12 has it). */
+static bool g_translocated = false;                   /* still translocated after asking: see no_folder_hint */
+static std::string untranslocated(const std::string &path) {
+#ifdef __APPLE__
+    if (path.find("/AppTranslocation/") == std::string::npos) return path;
+    g_translocated = true;
+    size_t app = path.find(".app/");
+    std::string bundle = app == std::string::npos ? path : path.substr(0, app + 4), rest = app == std::string::npos ? "" : path.substr(app + 4);
+    typedef CFURLRef (*Original)(CFURLRef, CFErrorRef *);
+    void *sec = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY);
+    Original original = sec ? (Original)dlsym(sec, "SecTranslocateCreateOriginalPathForURL") : nullptr;
+    if (!original) return path;
+    std::string out = path;
+    CFURLRef in = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (const UInt8 *)bundle.c_str(), (CFIndex)bundle.size(), true);
+    CFURLRef was = in ? original(in, nullptr) : nullptr;
+    char buf[PATH_MAX];
+    if (was && CFURLGetFileSystemRepresentation(was, true, (UInt8 *)buf, sizeof buf)) { out = std::string(buf) + rest; g_translocated = false; }
+    if (was) CFRelease(was);
+    if (in) CFRelease(in);
+    return out;
+#else
+    return path;
+#endif
+}
+/* why there is no checkout to build in, and what to do about it */
+static std::string no_folder_hint() {
+    if (g_translocated)
+        return "macOS opened the launcher from a temporary copy (App Translocation), away from the folder you unzipped. "
+               "In Terminal, run: xattr -dr com.apple.quarantine <that folder>, then open the launcher again.";
+    return "The launcher can't find its a3mx folder (tools/build.py). Keep it in the folder you unzipped the "
+           "a3mx-<version>-<system>.zip download into, and open it from there.";
 }
 static std::string read_text(const std::string &p) {
     size_t n = 0;
@@ -646,7 +687,7 @@ struct App {
 
     /* ---- Dependencies: what the build needs, and which of it is here */
     void check_deps(bool say) {
-        if (root.empty()) { deps.clear(); deps_err = "No source checkout: nothing is built here, so nothing is needed."; deps_checked = true; return; }
+        if (root.empty()) { deps.clear(); deps_err = no_folder_hint(); deps_checked = true; return; }
         deps = deps_list(root, set.tools_dir, deps_err);
         deps_checked = true;
         if (!say) return;
@@ -792,7 +833,7 @@ struct App {
             return;
         }
         if (root.empty() && !is_file(game_exe())) {
-            console.note("No source checkout (tools/build.py) and no " + game_exe() + " beside the launcher.", K_ERROR);
+            console.note("No source checkout (tools/build.py) and no " + game_exe() + " beside the launcher. " + no_folder_hint(), K_ERROR);
             status = "Nothing to run"; status_kind = K_ERROR;
             return;
         }
@@ -2210,7 +2251,7 @@ int main(int argc, char **argv) {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) { fprintf(stderr, "SDL_Init: %s\n", SDL_GetError()); return 1; }
     App app;
     const char *b = SDL_GetBasePath();
-    app.base = b ? b : "";
+    app.base = untranslocated(b ? b : "");
     app.root = root_arg.empty() ? find_root(app.base) : root_arg;
     /* Your a3mx folder (src/platform/userdir.h): the system's per-user folder, or beside the game if
      * that can't be written. The game is started with the same one (--user-dir). The launcher's own
@@ -2308,7 +2349,7 @@ int main(int argc, char **argv) {
     app.check_work();
     app.choose_disc();
     app.check_deps(false);
-    if (app.root.empty()) app.console.note("No source checkout found above " + app.base + ": Build is off; Run starts the game beside the launcher.", K_WARN);
+    if (app.root.empty()) app.console.note("No source checkout found above " + app.base + ": Build is off; Run starts the game beside the launcher. " + no_folder_hint(), K_WARN);
     else app.console.note("Source checkout: " + app.root, K_NOTE);
     app.console.note(std::string(app.user_kind == 1 ? "Your a3mx folder: " : app.user_kind == 2 ? "Your user folder can't be written: saves, configs and logs are beside the game, in " : "No folder to keep settings in could be written: ") + app.user_root,
                      app.user_kind == 1 ? K_NOTE : K_WARN);
