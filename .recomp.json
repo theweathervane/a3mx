@@ -16,7 +16,10 @@
     { "name": "theweathervane", "link": "https://gitlab.com/theweathervane-group/a3mx" }
   ],
   "links": [
+    { "label": "Source (GitLab, the project's home)", "url": "https://gitlab.com/theweathervane-group/a3mx" },
+    { "label": "Source (GitHub mirror)", "url": "https://github.com/theweathervane/a3mx" },
     { "label": "Releases (stable, and a nightly pre-release)", "url": "https://gitlab.com/theweathervane-group/a3mx/-/releases" },
+    { "label": "Releases (GitHub mirror)", "url": "https://github.com/theweathervane/a3mx/releases" },
     { "label": "Report a problem", "url": "https://gitlab.com/theweathervane-group/a3mx/-/work_items/new?type=Issue&initialCreationContext=list-route" }
   ],
   "tags": ["fighting", "capcom", "widescreen", "local-multiplayer"],
