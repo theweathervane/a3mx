@@ -20,6 +20,7 @@
 #define F_ACTIVE      0      /* u8: 1 while in play */
 #define F_FACING      11     /* u8: 0 facing right */
 #define F_X           18     /* s16 */
+#define F_YY          22     /* s16 */
 #define F_OPPONENT    92     /* u32: the fighter it is fighting */
 #define F_SIDE        337    /* s8: bit 0 set for the second side */
 #define F_HELD_366    366    /* s16 */
@@ -165,24 +166,176 @@ SFA_FUNC(08859238, fighter_distance) {
 }
 
 #define F_ISM       386          /* s8: 1 is V-ISM */
-#define F_BUTTONS   760          /* u16: buttons held */
-#define F_BUTTONS_2 762          /* u16 */
-#define F_PRESSED   764          /* u16 */
+#define F_PRESSED   760          /* u16: the bits of + 752 that came on this frame */
+#define F_RELEASED  762          /* u16: those that went off */
+#define F_OTHER     764          /* u16: a second set of bits (bits 0 and 1 turn with the fighter) */
 
-/* A punch and the kick of the same strength are held (0x90, 0x120 or 0x240, and nothing else) with
-   +366 at 72 or more and +777 clear, by a V-ISM fighter or one with 0x80080 in +792. */
-SFA_FUNC(0886A1E4, fighter_holds_punch_and_kick) {
+/* A punch and the kick of the same strength changed together this frame (pressed or released: 0x90,
+   0x120 or 0x240, and nothing else) with +366 at 72 or more and +777 clear, for a V-ISM fighter or one
+   with 0x80080 in +792. */
+SFA_FUNC(0886A1E4, fighter_punch_and_kick_alone) {
     gaddr f = ARG(0);
     if (S8(f + F_ISM) != 1 && (*W(f + 792) & 0x80080) == 0) { RETURN(0); return; }
     if (S16(f + F_HELD_366) < 72 || S8(f + 777) != 0) { RETURN(0); return; }
-    uint16_t held = (uint16_t)(*H(f + F_BUTTONS) | *H(f + F_BUTTONS_2));
-    RETURN(held == 0x90 || held == 0x120 || held == 0x240);
+    uint16_t changed = (uint16_t)(*H(f + F_PRESSED) | *H(f + F_RELEASED));
+    RETURN(changed == 0x90 || changed == 0x120 || changed == 0x240);
 }
 
-/* A punch and the kick of the same strength are among the buttons held, and bit 1 of +764 is set. */
-SFA_FUNC(0886A264, fighter_pressed_punch_and_kick) {
+/* A punch and the kick of the same strength are among the buttons that changed this frame, and bit 1
+   of +764 is set. */
+SFA_FUNC(0886A264, fighter_punch_and_kick_among) {
     gaddr f = ARG(0);
-    uint16_t held = (uint16_t)(*H(f + F_BUTTONS) | *H(f + F_BUTTONS_2));
+    uint16_t held = (uint16_t)(*H(f + F_PRESSED) | *H(f + F_RELEASED));
     int pair = ((held & 0x10) && (held & 0x80)) || ((held & 0x20) && (held & 0x100)) || ((held & 0x40) && (held & 0x200));
-    RETURN(pair && (*H(f + F_PRESSED) & 2) != 0);
+    RETURN(pair && (*H(f + F_OTHER) & 2) != 0);
+}
+
+#define FIGHTER_3 0x092E47D0u
+#define FIGHTER_4 0x092E4C68u
+#define F_FRAME_DATA 296         /* u32: the current frame's data */
+
+static int frame_byte_1_clear(gaddr f) { return *B(f) != 0 && *B(*W(f + F_FRAME_DATA) + 1) == 0; }
+
+/* Each fighter in play whose frame's byte 1 is clear clears a flag on the fighters across from it:
+   fighters 1 and 3 clear +570, fighters 2 and 4 clear +571 (1 and 2 spare each other unless the layout
+   is 0). */
+SFA_FUNC(0885911C, fighters_clear_570) {
+    int two_sided = S16(BATTLE + BT_LAYOUT) == 0;
+    if (frame_byte_1_clear(FIGHTER_1)) {
+        if (two_sided) *B(FIGHTER_2 + 570) = 0;
+        *B(FIGHTER_3 + 570) = 0; *B(FIGHTER_4 + 570) = 0;
+    }
+    if (frame_byte_1_clear(FIGHTER_2)) {
+        if (two_sided) *B(FIGHTER_1 + 571) = 0;
+        *B(FIGHTER_3 + 571) = 0; *B(FIGHTER_4 + 571) = 0;
+    }
+    if (frame_byte_1_clear(FIGHTER_3)) { *B(FIGHTER_1 + 570) = 0; *B(FIGHTER_2 + 570) = 0; }
+    if (frame_byte_1_clear(FIGHTER_4)) { *B(FIGHTER_1 + 571) = 0; *B(FIGHTER_2 + 571) = 0; }
+}
+
+static uint16_t swap_left_right(uint16_t bits) { return (uint16_t)((bits & ~3u) | ((bits & 2) >> 1) | ((bits & 1) << 1)); }
+
+/* The fighter's input for the frame, from the bits 0x08864DFC left in +752: left and right are turned
+   round for a fighter facing left, so 1 is always forward; then, against last frame's bits (+754), the
+   bits that came on (+760) and went off (+762), and in +666 everything that came on in any of the last
+   three frames (+754, +756, +758 are the frames before). +290 keeps the turned bits. +764's left and
+   right are turned by which side the opponent is on. */
+SFA_FUNC(08859650, fighter_input_edges) {
+    gaddr f = ARG(0);
+    uint16_t now = *H(f + 752);
+    if (*B(f + F_FACING) != 0) { now = swap_left_right(now); *H(f + 752) = now; }
+    uint16_t h1 = *H(f + 754), h2 = *H(f + 756), h3 = *H(f + 758);
+    uint16_t pressed = (uint16_t)(~h1 & now);
+    *H(f + 290) = now;
+    *H(f + F_PRESSED) = pressed;
+    *H(f + 666) = (uint16_t)((~h3 & h2) | (~h2 & h1) | pressed);
+    *H(f + F_RELEASED) = (uint16_t)(~now & h1);
+    if (S8(f + F_OPPONENT_SIDE) != 0) *H(f + F_OTHER) = swap_left_right(*H(f + F_OTHER));
+}
+
+/* ---- routines picked from tables ---- */
+
+void rt_call_indirect(Cpu *c, uint32_t addr);
+
+/* A fighter's move routine: the one for +656, or for +670 while +669 is set, called with the fighter and
+   that number; afterwards +657 remembers +656. */
+SFA_FUNC(0886EDA8, fighter_run_move) {
+    gaddr f = ARG(0), saved = c->r[16];
+    uint32_t n = (uint32_t)(S8(f + 669) != 0 ? S8(f + 670) : S8(f + 656));
+    gaddr fn = *W(0x08A1BFF0u + n * 4u);
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[4] = f; c->r[5] = n; c->r[6] = n; c->r[7] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+    *B(f + 657) = *B(f + 656);
+    c->r[16] = saved;
+}
+
+/* Runs the fighter's script: one command after another (the handler for the low four bits of +489,
+   each given what the last one answered, the first the second argument) until the count of commands
+   left to run this frame (0x08B0268E) is used up. */
+#define SCRIPT_BUDGET 0x08B0268Eu
+SFA_FUNC(08877564, fighter_run_script) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    uint32_t value = ARG(1);
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = 0x08A22498u; c->r[18] = 0x08B00000u;
+    uint16_t left = (uint16_t)(*H(SCRIPT_BUDGET) - 1);
+    for (;;) {
+        *H(SCRIPT_BUDGET) = left;
+        gaddr fn = *W(0x08A22498u + (uint32_t)(S8(f + 489) & 0xF) * 4u);
+        c->r[4] = f; c->r[5] = value; c->r[6] = fn;
+        rt_call_indirect(c, fn);
+        value = c->r[2];
+        left = *H(SCRIPT_BUDGET);
+        if (left == 0) break;
+        left--;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* Whether both leading fighters are in routine 1, step 6 (the two are found by the layout's routine,
+   which fills two pointers on the stack), and the fight is not at state 7 or 10 with BATTLE + 7 clear. */
+SFA_FUNC(088632C4, fighters_both_in_step_6) {
+    gaddr saved = c->r[16];
+    gaddr fn = *W(0x08A195A0u + (uint32_t)S16(BATTLE + BT_LAYOUT) * 4u);
+    c->r[29] -= 0x20;
+    gaddr sp = c->r[29];
+    c->r[16] = BATTLE; c->r[5] = sp + 16; c->r[6] = sp + 20; c->r[7] = fn; c->r[8] = 0x08A195A0u;
+    rt_call_indirect(c, fn);
+    gaddr a = *W(sp + 16), b = *W(sp + 20);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+    if (*B(a + 4) != 1 || *B(a + 5) != 6 || *B(b + 4) != 1 || *B(b + 5) != 6) { RETURN(0); return; }
+    int8_t state = S8(BATTLE + 79);
+    RETURN(!((state == 7 || state == 10) && S8(BATTLE + 7) == 0));
+}
+
+/* ---- more questions ---- */
+
+static int in_step_1_6(gaddr f) { return *B(f + 4) == 1 && *B(f + 5) == 6; }
+
+/* The fighter this one answers to is in routine 1, step 6: in layouts 1 and 2 the third fighter, for a
+   fighter whose +810 is 4; in layout 3 (while GAME + 137) the first fighter of the other side, for
+   fighters without bit 1 of their side. */
+SFA_FUNC(08862B84, fighter_partner_in_step_6) {
+    gaddr f = ARG(0);
+    int16_t layout = S16(BATTLE + BT_LAYOUT);
+    if (layout == 1 || layout == 2) { RETURN(S8(f + 810) == 4 && in_step_1_6(FIGHTER_3)); return; }
+    if (layout != 3 || S8(GAME + 137) == 0 || (S8(f + F_SIDE) & 2) != 0) { RETURN(0); return; }
+    RETURN(in_step_1_6(S8(f + F_SIDE) != 0 ? FIGHTER_1 : FIGHTER_2));
+}
+
+/* Pushes the opponent back by `push` (less the fighter's own speed when its +73 and +541 are set) while
+   the fighter is in routine 1, step 1 and nothing forbids it; then, for a fighter with +238 and bit 7 of
+   +73, sets +592 once. */
+SFA_FUNC(08862F28, fighter_push_opponent) {
+    gaddr f = ARG(0), opponent = ARG(1);
+    int16_t push = (int16_t)ARG(2);
+    if (*B(f + 4) == 1) {
+        int ok = *B(f + 5) == 1 && S8(f + 537) == 0;
+        if (ok && S8(f + 73) != 0) {
+            if (S8(f + 541) == 0) ok = 0;
+            else push = (int16_t)(push - ((int32_t)*W(f + 96) >> 16));
+        }
+        if (ok && S8(f + 239) != 0) ok = 0;
+        if (ok && S8(opponent + 713) == 0 && (S8(opponent + 73) != 0 || S8(opponent + 596) != 0)) ok = 0;
+        if (ok) *H(opponent + F_X) = (uint16_t)(S16(opponent + F_X) - push);
+    }
+    if (S8(f + 238) != 0 && (S8(f + 73) & 0x80) != 0 && S8(f + 592) == 0) *B(f + 592) = 1;
+}
+
+/* A jump off the wall: characters 4, 7, 0x12 and 0x1C, more than 32 above the floor, with +78 set, down
+   not held, touching a wall (+238: 1 or 2) while moving towards it and holding away from it. */
+SFA_FUNC(08864140, fighter_can_wall_jump) {
+    gaddr f = ARG(0);
+    int8_t who = S8(f + 338), wall = S8(f + 238);
+    uint16_t held = *H(f + 362);
+    int32_t speed = (int32_t)*W(f + 96);
+    if (who != 0x1C && who != 7 && who != 4 && who != 0x12) { RETURN(0); return; }
+    if (!(S16(f + 132) + 0x20 < S16(f + F_YY)) || S8(f + 78) == 0 || (held & 4) != 0 || wall == 0) { RETURN(0); return; }
+    if (speed > 0) RETURN(wall == 2 && (held & 2) != 0);
+    else if (speed < 0) RETURN(wall == 1 && (held & 1) != 0);
+    else RETURN(0);
 }

@@ -1,0 +1,77 @@
+/* Routines that pick a handler from a table, with a condition or a little work around the call. */
+#include "step.h"
+
+#define GAME   0x08E75910u
+#define BATTLE 0x092E1228u
+
+static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
+static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
+static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
+static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+
+/* A fighter's routine by +484 (table 0x08A22488), unless BATTLE + 14 or the fighter's +788 stops it;
+   +506 is first held to 255. */
+SFA_FUNC(088772C0, fighter_run_484) {
+    gaddr f = ARG(0);
+    if (S8(BATTLE + 14) != 0 || *B(f + 788) != 0) return;
+    if (S16(f + 506) >= 256) *H(f + 506) = 0xFF;
+    run_step(c, *B(f + 484), 0x08A22488u, 5, 0x0887731Cu);
+}
+
+/* An object shown (+1) and run by its step +5 (table 0x08A25A28) until BATTLE + 82 reaches 2: then it is
+   hidden and its routine steps on. */
+SFA_FUNC(08886F50, object_run_until_82) {
+    gaddr o = ARG(0);
+    *B(o + 1) = 1;
+    if (S8(BATTLE + 82) == 2) {
+        *B(o + 1) = 0;
+        *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+        return;
+    }
+    run_step(c, *B(o + 5), 0x08A25A28u, 5, 0x08886FB0u);
+}
+
+/* The object at 0x092E51C0, once a frame: its routine by +2 (table 0x08A26CB0) unless BATTLE + 23, then
+   its clock: +6 counts frames (not while GAME + 89 or + 145), +8 counts every fourth and +9 every third. */
+#define TICKER 0x092E51C0u
+SFA_FUNC(0888D64C, ticker_frame) {
+    gaddr s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = TICKER; c->r[17] = GAME;
+    if (S8(BATTLE + 23) == 0 && *B(TICKER) != 0) {
+        gaddr fn = *W(0x08A26CB0u + *B(TICKER + 2) * 4u);
+        c->r[4] = TICKER; c->r[5] = fn;
+        rt_call_indirect(c, fn);
+    }
+    if (S8(GAME + 89) == 0 && S8(GAME + 145) == 0) {
+        uint16_t t = (uint16_t)(*H(TICKER + 6) + 1);
+        *H(TICKER + 6) = t;
+        if ((t & 3) == 0) *B(TICKER + 8) = (uint8_t)(*B(TICKER + 8) + 1);
+        if (t % 3 == 0) *B(TICKER + 9) = (uint8_t)(*B(TICKER + 9) + 1);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* An object with two parts (at +12 and +32, each starting with a pointer to its fighter and with its
+   own step at +4): each part's routine (table 0x08A26CBC) is called with the part, its fighter and 0 or
+   1, unless that fighter's +313 is set. */
+SFA_FUNC(0888DA7C, object_run_two_parts) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    gaddr first = *W(o + 12), second = *W(o + 32);
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = second;
+    if (S8(first + 313) == 0) {
+        gaddr fn = *W(0x08A26CBCu + (uint32_t)S8(o + 16) * 4u);
+        c->r[4] = o + 12; c->r[5] = first; c->r[6] = 0; c->r[7] = fn;
+        rt_call_indirect(c, fn);
+    }
+    if (S8(c->r[17] + 313) == 0) {
+        gaddr fn = *W(0x08A26CBCu + (uint32_t)S8(c->r[16] + 36) * 4u);
+        c->r[4] = c->r[16] + 32; c->r[5] = c->r[17]; c->r[6] = 1; c->r[7] = fn;
+        rt_call_indirect(c, fn);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

@@ -47,3 +47,33 @@ SFA_FUNC(088AC4D8, layer_flags_from_object) {
     gaddr o = ARG(0);
     *B(CAMERA_LAYER + 123) = (uint8_t)((*B(o + 78) != 0) | (*B(o + 79) != 0) << 1 | (*B(o + 80) != 0) << 2);
 }
+
+void f_0880A6CC(Cpu *c);   /* text(string, font, x, y, colour) (text/queue.c) */
+
+/* Three lines of text at the bottom of a screen: 0x089FEFE0 at (120, 186) when asked (0) and GAME + 33
+   has bit 6, then 0x089FEFF4 at (68, 206) and 0x089FF014 at (112, 214). */
+SFA_FUNC(0888BB24, bottom_text) {
+    int8_t skip_first = (int8_t)ARG(0);
+    c->r[29] -= 0x30;
+    if (skip_first == 0 && (*B(GAME + 33) & 0x40) != 0) CALL5(f_0880A6CC, 0x089FEFE0u, 0, 0x78, 0xBA, 2);
+    CALL5(f_0880A6CC, 0x089FEFF4u, 0, 0x44, 0xCE, 4);
+    CALL5(f_0880A6CC, 0x089FF014u, 0, 0x70, 0xD6, 4);
+    c->r[29] += 0x30;
+}
+
+/* A sequence that sets the low byte of GAME + 16 from a table, each entry held for a number of frames:
+   0x08B02840 counts the frames left and 0x08B02844 is the entry. An entry lasts seven times the s16 at
+   0x08A2C1A8[entry] less the s8 at 0x08A2C20A[entry]; the value is the s16 at 0x08A2C536[entry]. */
+#define SEQ_LEFT  0x08B02840u
+#define SEQ_ENTRY 0x08B02844u
+SFA_FUNC(088A96B8, sequence_game_16) {
+    uint32_t left = *W(SEQ_LEFT) - 1, entry = *W(SEQ_ENTRY);
+    *W(SEQ_LEFT) = left;
+    if (left == 0) {
+        entry++;
+        *W(SEQ_ENTRY) = entry;
+        int32_t n = (int16_t)*H(0x08A2C1A8u + entry * 2u);
+        *W(SEQ_LEFT) = (uint32_t)(n * 7 - (int8_t)*B(0x08A2C20Au + entry));
+    }
+    *H(GAME + 16) = (uint16_t)((*H(GAME + 16) & 0xFF00) | *H(0x08A2C536u + entry * 2u));
+}

@@ -417,7 +417,7 @@ handler and the table are left in a1 / a2 (or a2 / a3), which some handlers read
 | 0x0880A6CC | text(string, font, x, y, colour) (`src/core/text/queue.c`): takes the first free of 96 requests at 0x092DF240 (16 bytes: +0 used, +1 font, +2 colour, +3 kind = 7, +4 x, +6 y, +8 string, +12 cleared); returns the request, or 0 when the queue is full. Drawn and emptied by the text passes 0x0880B098 / 0x08812520 |
 | 0x0880A3C4 | a draw depth (`src/core/stage/depth.c`): u16 at 0x08A03B10 + column × 4 + row × 2 (a0 row, a1 column) |
 | 0x08861D5C / 0x088622C0 / 0x088623BC | a fighter's held directions, fighter + 752 (`src/core/fighter/buttons.c`): left / right unless up or down is held; left / right; down |
-| 0x088639C0 / 0x0886A2D8 | a fighter's buttons, fighter + 760: the six attack buttons (0x3F0); SELECT (0x4000) as 0 / 1 |
+| 0x088639C0 / 0x0886A2D8 | what a fighter pressed this frame, fighter + 760: the six attack buttons (0x3F0); SELECT (0x4000) as 0 / 1 |
 | 0x088D7CE0 / 0x088D5E7C | a network battle (mode 12 or 0x09523980 + 34) whose session has started (+ 42 = 1) / that waits for the host's choice (+ 43 = 2 or 4) (`src/core/network/state.c`) |
 | 0x088D7E80 / 0x088D7E90 / 0x088D7F18 / 0x088D7F28 | the network state 0x09523980: + 59 read; + 60 cleared (the end of every frame); + 8 read (the session's failure); + 267 read, setting + 61 when it is set |
 | 0x088E3FE0 | 0x09523960 + 25 cleared |
@@ -476,7 +476,29 @@ owner at + 88, and frame data at + 296.
 | 0x0888D8BC | the clock's digits from BATTLE + 9 (the round's clock as shown) |
 | 0x0883727C | fighter + 485 = 0 - 3, the worse of the clock (under 80 / 60 / 40) and health + 112 (under 112 / 72 / 32) |
 | 0x08859238 | fighter + 508 = the distance to the near edge of the opponent's box |
-| 0x0886A1E4 / 0x0886A264 | a punch and the same-strength kick held alone (0x90, 0x120, 0x240) with + 366 ≥ 72, for V-ISM (+ 386 = 1) / held among others with + 764 bit 1 |
+| 0x0886A1E4 / 0x0886A264 | a punch and the same-strength kick changed together this frame (+ 760 \| + 762 = 0x90, 0x120, 0x240) with + 366 ≥ 72, for V-ISM (+ 386 = 1) / among the changes, with + 764 bit 1 |
+
+**A fighter's input, script and hits** (0.65.0).
+
+| Address | What |
+|---|---|
+| 0x08859650 | a fighter's input for the frame (`fighter/state.c`): + 752's left / right swapped when facing left (+ 11); + 760 = bits that came on against last frame (+ 754), + 762 = bits that went off, + 666 = bits that came on in any of the last three frames (+ 754, + 756, + 758), + 290 = the turned bits; + 764's left / right swapped by + 697 |
+| 0x08877564 | the fighter's script run: handler 0x08A22498[+ 489 & 0xF](fighter, value), each given the last one's answer, until the budget 0x08B0268E is used up |
+| 0x0886EDA8 | a fighter's move routine 0x08A1BFF0[+ 656, or + 670 while + 669]; then + 657 = + 656 |
+| 0x088772C0 | a fighter's routine 0x08A22488[+ 484] unless BATTLE + 14 or + 788; + 506 held to 255 |
+| 0x08862F28 | (fighter, opponent, push): the opponent's x less the push while the fighter is in routine 1 step 1 (conditions on + 537, + 73, + 541, + 239 and the opponent's + 713, + 73, + 596) |
+| 0x08864140 | the wall jump check: characters 4, 7, 0x12, 0x1C, 32 above the floor, + 238 the wall touched (1 / 2), moving into it, holding away |
+| 0x08862B84 / 0x088632C4 | the partner / both leading fighters in routine 1 step 6 |
+| 0x0885911C | fighters whose frame data byte 1 is clear clear + 570 / + 571 on the fighters across |
+| `fighter/hit.c` | 0x08830384 (one of 48 flags at + 400), 0x08872174, 0x088723D4, 0x08872540, 0x08872CD8, 0x08873054 (damage less for the fighter ahead on health), 0x08873448, 0x0887347C, 0x08874C90, 0x08877F44 (back to routine 1), 0x08864620, 0x08864D40 (+ 13 from 0x08A19622 by layout and side), 0x0886DC3C. The hit's working record is 0x09358410 (+ 24 the other fighter, + 44 a flag) |
+| 0x0881E760 / 0x0881EB14 | the camera's span / height routine for a pair of fighters, from 0x08A09438 / 0x08A09458 by which of them has + 579 (left out) |
+| 0x08854C10 / 0x08886E18 | object lists 5 and 6: 0x09512170 (8 of 0xC0, routines 0x08A16D18), 0x092E3E08 (3 of 0x30, 0x08A259F8) |
+| 0x08823304 | list 3 emptied (0x1280 bytes at 0x092E2B88; free count 0x095176F9 = 32) |
+| 0x0888D64C | the object at 0x092E51C0 each frame: its routine 0x08A26CB0[+ 2], then + 6 counts frames, + 8 every fourth, + 9 every third |
+| 0x0888DA7C | an object's two parts (+ 12, + 32) run through 0x08A26CBC |
+| 0x088A96B8 | a sequence writing GAME + 16's low byte from 0x08A2C536, timed by 0x08A2C1A8 and 0x08A2C20A (state 0x08B02840 / 44) |
+| 0x0888BB24 | three lines of text: 0x089FEFE0, 0x089FEFF4, 0x089FF014 |
+| `object/motion.c` | BATTLE + 44 is the fight intro's counter: 0x088560EC (at 2), 0x088562A0 / 0x08857550 (at 1), 0x08856650 (5 on), 0x08854F10 (sets it to 2); also 0x08854ED8, 0x0885661C, 0x08857D70, 0x08857E24, 0x0887E10C, 0x0887D990, 0x08881E2C, 0x08899430, 0x0889995C (an 8 × 8 grid), 0x0889BD9C, 0x088A0464, 0x08887018 |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):

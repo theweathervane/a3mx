@@ -9,6 +9,8 @@
  *   0x088379B8  0x09514B70     0x10   0xC0  +0      +2    0x08A101F0
  *   0x08887AFC  0x092E2B88     0x20   0x94  +90     +91   0x08A25AA0
  *   0x0883771C  0x09515770     0x2A   0xC0  +0      +2    0x08A10040
+ *   0x08854C10  0x09512170     8      0xC0  +0      +2    0x08A16D18
+ *   0x08886E18  0x092E3E08     3      0x30  +0      +2    0x08A259F8
  */
 #include "../decomp.h"
 
@@ -47,6 +49,8 @@ static const ObjectList LIST_1 = { 0x09512770u, 0x20, 0xC0, 0, 2, 0x08A0FDC8u };
 static const ObjectList LIST_2 = { 0x09514B70u, 0x10, 0xC0, 0, 2, 0x08A101F0u };
 static const ObjectList LIST_3 = { 0x092E2B88u, 0x20, 0x94, 90, 91, 0x08A25AA0u };
 static const ObjectList LIST_4 = { 0x09515770u, 0x2A, 0xC0, 0, 2, 0x08A10040u };
+static const ObjectList LIST_5 = { 0x09512170u, 8, 0xC0, 0, 2, 0x08A16D18u };
+static const ObjectList LIST_6 = { 0x092E3E08u, 3, 0x30, 0, 2, 0x08A259F8u };
 
 /* The text pass at a frame's end (unless the frame is skipped), then the sprites finished: the halted
    way while GAME + 0x59 halts the fight (and + 0x92 is clear). */
@@ -66,6 +70,8 @@ SFA_FUNC_WRAPPED(08837690, game_objects_1, bootmsg_objects) { FRAME(0x20, run_li
 SFA_FUNC(088379B8, game_objects_2)    { FRAME(0x20, run_list(c, &LIST_2)); }
 SFA_FUNC(08887AFC, game_objects_3)    { FRAME(0x20, run_list(c, &LIST_3)); }
 SFA_FUNC(0883771C, game_objects_4)    { FRAME(0x20, run_list(c, &LIST_4)); }
+SFA_FUNC(08854C10, game_objects_5)    { FRAME(0x20, run_list(c, &LIST_5)); }
+SFA_FUNC(08886E18, game_objects_6)    { FRAME(0x20, run_list(c, &LIST_6)); }
 
 /* Two small tables of callbacks, run once a frame unless BATTLE + 37 or + 52 stops them: each used
    entry's routine (kept in the entry itself) is called with the entry. */
@@ -85,3 +91,10 @@ static const CallbackTable CALLBACKS_12 = { 0x09517868u, 12, 0x18, 20 };
 SFA_FUNC(08819BBC, game_callbacks_8)  { FRAME(0x20, run_callbacks(c, &CALLBACKS_8)); }
 SFA_FUNC(0881EE84, game_callbacks_12) { FRAME(0x20, run_callbacks(c, &CALLBACKS_12)); }
 SFA_FUNC(0880B6CC, game_end_of_frame) { FRAME(0x20, end_of_frame(c)); }
+
+/* Empties the third list: every byte of its 32 objects, and its count of free ones (0x095176F9) back
+   to 32. */
+SFA_FUNC(08823304, game_objects_3_clear) {
+    *B(0x095176F9u) = 0x20;
+    for (uint32_t i = 0; i < 0x1280u; i++) *B(LIST_3.first + i) = 0;
+}

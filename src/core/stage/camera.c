@@ -77,3 +77,32 @@ SFA_FUNC(0881E7DC, camera_fighters_span) {
     *S(ARG(2)) = bl < al ? bl : al;
     *S(ARG(3)) = ar < br ? br : ar;
 }
+
+/* ---- routines by which fighters the camera leaves out ---- */
+
+void rt_call_indirect(Cpu *c, uint32_t addr);
+#define F_LEFT_OUT 579     /* s8: the camera does not follow this fighter */
+
+static uint32_t left_out(gaddr a, gaddr b) {
+    return (uint32_t)(*(int8_t *)guest_ptr(b + F_LEFT_OUT) != 0) + (*(int8_t *)guest_ptr(a + F_LEFT_OUT) != 0 ? 2u : 0u);
+}
+
+/* (a, b, lo, hi): the span routine for the pair, one of four by which of the two is left out. */
+SFA_FUNC(0881E760, camera_span_by_pair) {
+    gaddr a = ARG(0), b = ARG(1), lo = ARG(2), hi = ARG(3);
+    gaddr fn = *(uint32_t *)guest_ptr(0x08A09438u + left_out(a, b) * 4u);
+    c->r[29] -= 0x20;
+    c->r[4] = a; c->r[5] = b; c->r[6] = lo; c->r[7] = hi; c->r[8] = fn; c->r[9] = lo; c->r[10] = hi;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* (a, b, out): the height routine for the pair, chosen the same way. */
+SFA_FUNC(0881EB14, camera_height_by_pair) {
+    gaddr a = ARG(0), b = ARG(1), out = ARG(2);
+    gaddr fn = *(uint32_t *)guest_ptr(0x08A09458u + left_out(a, b) * 4u);
+    c->r[29] -= 0x20;
+    c->r[4] = a; c->r[5] = b; c->r[6] = out; c->r[7] = fn; c->r[8] = out;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
