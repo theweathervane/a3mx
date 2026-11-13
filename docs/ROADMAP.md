@@ -18,13 +18,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.77% decompiled
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.85% decompiled
 
-Functions                                [░░░░░░░░░░]   5.34%  795 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   5.77%  27,915 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   5.49%  817 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   5.85%  28,318 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.61%  25,710 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.80%  26,113 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -101,6 +101,9 @@ Done:
       drawing); the camera's sideways steps (0x0881E49C, 0x0881E4E4, 0x0881EB78), an object's animation
       start (0x0882196C), the fighters' trail (0x0882D95C), falling objects (`src/core/object/drift.c`)
       and thirteen fighter steps (`src/core/fighter/state.c`); scenario `arcade_other_fighter` (0.62.0)
+- [x] Seventeen steps objects' routines share (`src/core/object/motion.c`: speed and acceleration,
+      targets, the floor, timers, the owner's place, the stage's colour) and five helpers
+      (`src/core/misc.c`) (0.63.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

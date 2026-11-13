@@ -435,6 +435,28 @@ handler and the table are left in a1 / a2 (or a2 / a3), which some handlers read
 | 0x0887BA84 | a fighter in routine 1, step 0 (+ 4, + 5) whose part (+ 6) is not 3, 5, 7 or 8 |
 | 0x0885971C, 0x08872994, 0x08873D30, 0x088741C8, 0x0887BD00, 0x088347B4 | fighter fields not named yet (+ 366, + 248, + 722 - 748, + 270 / + 272 / + 296, + 251 / + 262 / + 528, + 412): see `state.c` |
 
+**Objects' shared steps** (0.63.0, `src/core/object/motion.c`). The 0xC0-byte objects (and fighters, which begin
+the same way) keep x and y as 16.16 at + 16 / + 20, speed at + 96 / + 100, acceleration at + 104 / + 108, a
+goal at + 112 and the target being worked towards at + 114, a timer at + 82, the floor's y at + 132, the
+owner at + 88, and frame data at + 296.
+
+| Address | What |
+|---|---|
+| 0x08862004 | x, y by speed, speed by acceleration; 1 while y + frame data byte 3 is above the floor |
+| 0x0889CE64 / 0x0889CEA4 | x / y by its speed, the speed by its acceleration; 1 once the speed points away from the target |
+| 0x0889E704 | y by its speed, wrapped into 0 to the height in + 76 / + 77 |
+| 0x088ADA3C / 0x088ADA8C | left, braking to speed 2.0 (then substep on, timer \| 0xC00) / left while the timer's high byte counts down |
+| 0x088BBB88 / 0x088BBDC8 / 0x088BBBBC | right by 4 to x 48 / down by 2 to the floor (then timer 150, step on) / the timer counted down, step on at 0 |
+| 0x0889E674, 0x0889F01C / 0x0889BE20 / 0x088B1454 / 0x088B2634 | waits on GAME + 20 (negative), + 22 (high byte), + 20 bit 15, + 20 bit 8 before aiming at the goal or stepping on |
+| 0x0887DA58 | (object, table): the owner's place and facing, plus the table's s8 pair for the owner's frame (frame data byte 9), x mirrored |
+| 0x0887DF88 | (object, n): animation 0x08A24120[n] started |
+| 0x08887C24 | the object's corner colours (+ 36, + 42, + 48, four bytes each) from the 15-bit colour 0x08A25B38[BATTLE + 102] |
+| 0x08809A08 | four u16 into the next of 64 entries at 0x092D9EF0 (index 0x092D9EED) (`src/core/misc.c`) |
+| 0x088232B0 | a record cleared, its kind (+ 8) set |
+| 0x088939AC | the mode is neither 8 nor 15 |
+| 0x088ABA0C | once GAME + 16's low byte reaches 7: object + 17 on, 0x08B02800 = -0x180 |
+| 0x088AC4D8 | the fighters' layer + 123 bits 0 - 2 from an object's + 78, + 79, + 80 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11
