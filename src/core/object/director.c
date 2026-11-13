@@ -85,3 +85,39 @@ SFA_FUNC(088AA808, scroll_a_by_game_10) {
     uint32_t n = *H(GAME + 10) & 0xFF;
     *W(SCROLL_A + 4) = (uint32_t)(int16_t)((int16_t)(n << 6) + (int16_t)(n << 3));
 }
+
+/* ---- 0.69.0 ---- */
+
+void f_088AA90C(Cpu *c);   /* run_by_game_22_high_arg */
+void f_088AA980(Cpu *c);   /* next_pair_from_table (screen_steps.c) */
+
+/* The handler for GAME + 22's high byte, then the one for the director's step +9 (0x08A2C654). */
+SFA_FUNC(088AA6B0, director_run_22_then_9) {
+    gaddr d = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = d;
+    f_088AA90C(c);
+    gaddr fn = *W(0x08A2C654u + *B(d + 9) * 4u);
+    c->r[4] = d; c->r[5] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* The pair of bytes at +72 / +73 (a count of frames and the next entry of the table 0x08A2C67C): started
+   from entry 0 on the director, and stepped on an object when its count runs out. */
+SFA_FUNC(088AA890, director_start_pairs) {
+    *B(DIRECTOR + 73) = 0;
+    c->r[29] -= 0x20;
+    c->r[4] = DIRECTOR;
+    f_088AA980(c);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(088AA950, count_pair) {
+    gaddr o = ARG(0);
+    *B(o + 72) = (uint8_t)(*B(o + 72) - 1);
+    if (*B(o + 72) != 0) return;
+    c->r[29] -= 0x20;
+    f_088AA980(c);
+    c->r[29] += 0x20;
+}

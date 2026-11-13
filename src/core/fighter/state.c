@@ -598,3 +598,153 @@ SFA_FUNC(08879D1C, script_skip_block) {
     f_0887A10C(c);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.69.0: the CPU's scripts ---- */
+
+void f_088D5E44(Cpu *c);   /* game_network_battle (task/fight.c) */
+void f_08877258(Cpu *c);   /* fighter_chance_by_level */
+void f_08876BE4(Cpu *c);   /* fighter_run_by_layout */
+void f_08822AEC(Cpu *c);   /* fighter_reset_steps (reset.c) */
+
+static uint32_t random32(Cpu *c) { f_08821368(c); return c->r[2]; }
+
+/* In a network battle with +815 set, a script is chosen by chance instead of by the fighter's pressure:
+   one time in four the first, otherwise the second, third or fourth, each only if the character's byte
+   for this opponent (the table's +172, by the opponent's character) allows it (bits 0 to 2). */
+static int network_choice(Cpu *c, gaddr f, uint32_t *choice) {
+    f_088D5E44(c);
+    if (c->r[2] == 0 || S8(f + 815) == 0) return 0;
+    gaddr table = *W(f + 416);
+    int8_t allowed = S8(*W(table + 172) + (uint32_t)S8(*W(f + F_OPPONENT) + 338));
+    uint32_t r = random32(c) & 3;
+    *choice = (r != 0 && (allowed & (1 << (r - 1)))) ? r : 0;
+    return 1;
+}
+
+static void start_script(gaddr f, gaddr script) {
+    *H(f + 486) = *H(script);
+    *B(f + 565) = 0; *B(f + 501) = 0;
+}
+
+/* Picks the fighter's script from the character's first list (+48: one for each pressure, +485; or +156
+   in the network case) and starts it; +511 keeps which. */
+SFA_FUNC(0887B1B8, fighter_pick_script) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    uint32_t n;
+    c->r[29] -= 0x10;
+    c->r[16] = f;
+    *B(f + 550) = 0; *B(f + 511) = 0;
+    gaddr table = *W(f + 416), script;
+    if (network_choice(c, f, &n)) script = *W(*W(table + 156) + n * 4u);
+    else { n = *B(f + 485); script = *W(*W(table + 48) + n * 4u); }
+    *B(f + 511) = (uint8_t)n;
+    *W(f + 512) = script + 2;
+    *W(f + 532) = script + 2;
+    start_script(f, script);
+    RETURN(script + 2);
+    c->r[29] += 0x10;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* Picks from the second list (+52, or +160 in the network case): each entry is a table of 32 bytes and a
+   list of scripts, and a random byte of the table (moved on by +499 offline) picks the script. */
+SFA_FUNC(0887C25C, fighter_pick_script_at_random) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    uint32_t n;
+    c->r[29] -= 0x10;
+    c->r[16] = f;
+    *B(f + 550) = 0;
+    gaddr table = *W(f + 416), script;
+    if (network_choice(c, f, &n)) {
+        gaddr entry = *W(table + 160) + n * 8u;
+        *B(f + 511) = (uint8_t)n;
+        gaddr bytes = *W(entry), scripts = *W(entry + 4);
+        script = *W(scripts + (uint32_t)(S8(bytes + (random32(c) & 0x1F)) << 2));
+    } else {
+        gaddr list = *W(table + 52), bytes = *W(list + *B(f + 485) * 8u);
+        int8_t at = (int8_t)((random32(c) & 0x1F) + (uint32_t)S8(f + 499));
+        int8_t pick = S8(bytes + (uint32_t)at);
+        *B(f + 511) = (uint8_t)pick;
+        script = *W(*W(list + *B(f + 485) * 8u + 4) + (uint32_t)(pick << 2));
+    }
+    *W(f + 516) = script + 2;
+    start_script(f, script);
+    RETURN(script + 2);
+    c->r[29] += 0x10;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* Whether a CPU fighter acts now: not with +503 or +251; then by chance for its level (the table
+   0x08A22A20; a random number is drawn and thrown away first), and if the layout's routine agrees. */
+SFA_FUNC(088771DC, fighter_cpu_acts) {
+    gaddr f = ARG(0), saved = c->r[16];
+    uint32_t yes = 0;
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    if (S8(f + 503) == 0 && S8(f + 251) == 0) {
+        f_08821368(c);
+        c->r[4] = f; c->r[5] = 0x08A22A20u;
+        f_08877258(c);
+        if (c->r[2] != 0) {
+            c->r[4] = f;
+            f_08876BE4(c);
+            yes = c->r[2] != 0;
+        }
+    }
+    RETURN(yes);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* The CPU's wait before it acts (+506): its level's value from 0x08A2271C plus a random one of the 32
+   at 0x08A226DC, never under 0. */
+SFA_FUNC(0887B48C, fighter_cpu_set_wait) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x10;
+    c->r[16] = f;
+    *H(f + 506) = *H(0x08A2271Cu + (uint32_t)(S8(f + 375) * 2));
+    int16_t base = S16(f + 506);
+    c->r[17] = (uint32_t)base;
+    int16_t v = (int16_t)(base + S16(0x08A226DCu + (random32(c) & 0x1F) * 2u));
+    *H(f + 506) = (uint16_t)(v < 0 ? 0 : v);
+    c->r[29] += 0x10;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Three fields of a script word: bits 4 - 9 into +236, bit 10 into +193, bits 13 - 15 into +194. */
+SFA_FUNC(0887B648, fighter_unpack_script_word) {
+    gaddr f = ARG(0);
+    uint32_t w = ARG(1) & 0xFFFF;
+    *B(f + 236) = (uint8_t)((w >> 4) & 0x3F);
+    *B(f + 193) = (uint8_t)((w >> 10) & 1);
+    *B(f + 194) = (uint8_t)((w >> 13) & 7);
+}
+
+/* All four fighters' steps reset (3, 4, 1, 2). */
+SFA_FUNC(08822AA8, fighters_reset_steps) {
+    static const gaddr ORDER[4] = { FIGHTER_3, FIGHTER_4, FIGHTER_1, FIGHTER_2 };
+    c->r[29] -= 0x20;
+    for (int i = 0; i < 4; i++) { c->r[4] = ORDER[i]; f_08822AEC(c); }
+    c->r[29] += 0x20;
+}
+
+void f_0887B1B8(Cpu *c);   /* fighter_pick_script */
+void f_0887A154(Cpu *c);   /* the script command's handler (object/steps.c) */
+
+/* The CPU's script restarted from where it was kept (+512, with +504 as its first word); a command
+   whose high byte is -1 picks a new script first. */
+SFA_FUNC(0887A350, fighter_restart_script) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    *B(f + 565) = 0; *B(f + 501) = 0; *B(f + 484) = 0;
+    *H(f + 486) = (uint16_t)S16(f + 504);
+    *W(f + 528) = *W(f + 512);
+    *H(f + 488) = *H(*W(f + 512));
+    if (S8(f + 489) == -1) {
+        c->r[4] = f; f_0887B1B8(c);
+        c->r[4] = f; c->r[5] = c->r[2]; f_0887A154(c);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

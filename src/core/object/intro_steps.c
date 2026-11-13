@@ -217,3 +217,23 @@ SFA_FUNC(0885515C, intro_bounce) {
     if (left == 0) { next_substep(o); *H(o + 82) = 0x10; *H(o + 22) = 0x80; }
     draw(c, o);
 }
+
+void f_08823338(Cpu *c);   /* object_make_list_3 (pool.c) */
+
+/* Drawn while the timer runs; when it has run out the object steps on, the intro moves to stage 5 and a
+   third-list object of kind 5 is made, pointing back at this one (+124). */
+SFA_FUNC(088551D0, intro_wait_then_stage_5) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    if (!timer_ran_out(o)) { c->r[4] = o; f_088215C4(c); }
+    else {
+        next_substep(o);
+        *B(BATTLE + BT_INTRO) = 5;
+        c->r[4] = 5; c->r[5] = 0;
+        f_08823338(c);
+        if (c->r[2] != 0) *W(c->r[2] + 124) = o;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

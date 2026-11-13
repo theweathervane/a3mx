@@ -51,3 +51,45 @@ SFA_FUNC(088D7F28, net_flag_267) {
 }
 
 SFA_FUNC(088E3FE0, net_step_clear_25) { *B(NET_STEP + NS_FLAG_25) = 0; }
+
+/* ---- 0.69.0 ---- */
+
+void f_089F3470(Cpu *c);   /* memset */
+
+SFA_FUNC(088D55D0, net_clear) { c->r[29] -= 0x20; CALL3(f_089F3470, NET, 0, 0x10C); c->r[29] += 0x20; }
+
+/* A network battle in which this side waits for the host (role 2 or 4) and +36 is set. */
+SFA_FUNC(088D5ECC, net_waits_and_36) {
+    RETURN(network_battle() && (*B(NET + N_ROLE) == 2 || *B(NET + N_ROLE) == 4) && S8(NET + 36) != 0);
+}
+
+/* A network battle with +35 set. */
+SFA_FUNC(088D7C4C, net_battle_and_35) { RETURN(network_battle() && *B(NET + 35) != 0); }
+
+/* +264 up by one (argument not 0) or down by one, never under 0. */
+SFA_FUNC(088D7EA0, net_count_264) {
+    int8_t v = (int8_t)(S8(NET + 264) + ((int8_t)ARG(0) != 0 ? 1 : -1));
+    *B(NET + 264) = (uint8_t)(v < 0 ? 0 : v);
+}
+
+/* The 64 bytes at 0x09523C20 and the word at 0x08B02EA8 cleared. */
+SFA_FUNC(088DD81C, net_clear_09523C20) {
+    c->r[29] -= 0x20;
+    CALL3(f_089F3470, 0x09523C20u, 0, 0x40);
+    *W(0x08B02EA8u) = 0;
+    c->r[29] += 0x20;
+}
+
+/* The 64 KB block 0x08B02EA0 points at is cleared and given its header: a mark (0x1AE49CF0) and where
+   it ends. */
+SFA_FUNC(088DC080, net_block_reset) {
+    gaddr s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    gaddr block = *W(0x08B02EA0u);
+    c->r[29] -= 0x20;
+    c->r[16] = 0x08B00000u; c->r[17] = block; c->r[18] = 0x10000;
+    CALL3(f_089F3470, block, 0, 0x10000);
+    *W(block) = 0x1AE49CF0u;
+    *W(block + 4) = *W(0x08B02EA0u) + 0x10000;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}

@@ -691,3 +691,307 @@ SFA_FUNC(088AA980, next_pair_from_table) {
     *B(o + 72) = (uint8_t)(w >> 8);
     *B(o + 73) = (uint8_t)w;
 }
+
+/* ---- 0.69.0 ---- */
+
+void f_0887DF88(Cpu *c);   /* object_set_animation_n (motion.c) */
+void f_08887C24(Cpu *c);   /* object_take_stage_colour */
+void f_08889F7C(Cpu *c);   /* setup_from_description */
+
+/* An owned object starts: shown, routine 1, and its animation by number (+78); number 0x4F instead
+   takes its owner's side and +164 and the animation at +176 of the owner's character table. */
+SFA_FUNC(0887E094, owned_start_animation) {
+    gaddr o = ARG(0);
+    *B(o + 72) = 1; *B(o + 4) = 1; *H(o + 86) = 5;
+    if (S8(o + 78) == 0x4F) {
+        gaddr owner = *W(o + 88);
+        *H(o + 86) = (uint16_t)S8(owner + 337);
+        *W(o + 164) = *W(owner + 164);
+        set_animation(c, *W(*W(owner + 416) + 176));
+    } else {
+        c->r[29] -= 0x20;
+        c->r[5] = (uint32_t)S8(o + 78) & 0xFFFF;
+        f_0887DF88(c);
+        c->r[29] += 0x20;
+    }
+}
+
+/* One frame of a part's animation (the part keeps its entry at +12 and its count at +6, as an object
+   does at +28 and +74): at the count's end the next entry, or -1 in +7 when the entry ends the animation
+   (also set a frame early, when the object's own count is at 1). */
+SFA_FUNC(08885950, part_animate) {
+    gaddr o = ARG(0), part = ARG(1), entry = *W(part + 12);
+    *B(part + 6) = (uint8_t)(*B(part + 6) - 1);
+    int ends = (S8(entry + 1) & 0x40) != 0;
+    if (*B(part + 6) != 0) {
+        if (S8(o + 74) == 1 && ends) *B(part + 7) = 0xFF;
+        return;
+    }
+    if (ends) { *B(part + 7) = 0xFF; return; }
+    gaddr next = entry + (uint32_t)(S16(entry + 6) << 3);
+    *W(part + 12) = next;
+    *B(part + 6) = *B(next);
+}
+
+/* A counter's start: the next routine step, BATTLE + 82 cleared, hidden, 8 lower, and its length (+34)
+   read from the bytes +44 points at (a first byte of 0 means the length is the next), plus one; +36
+   keeps the place after it. */
+SFA_FUNC(08886EE4, counter_start) {
+    gaddr o = ARG(0);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *B(BATTLE + 82) = 0;
+    *B(o + 9) = 0; *B(o + 1) = 0; *B(o + 10) = 7;
+    *H(o + 26) = (uint16_t)(S16(o + 26) + 8);
+    *B(o + 35) = 0;
+    gaddr p = *W(o + 44);
+    uint8_t length = *B(p++);
+    if (length == 0) length = *B(p++);
+    *W(o + 36) = p;
+    *B(o + 34) = (uint8_t)(length + 1);
+}
+
+SFA_FUNC(08887BBC, setup_08887BBC) {
+    gaddr o = ARG(0);
+    *B(o + 128) = (uint8_t)(*B(o + 128) + 1);
+    *B(o + 93) = 1; *B(o + 55) = 7; *B(o + 3) = 1; *B(o + 56) = 3; *B(o + 2) = 0; *B(o + 136) = 0xA0;
+    *H(o + 12) = 0; *H(o + 14) = 0x180; *H(o + 24) = 0xE8; *H(o + 26) = 0x30;
+    call_on(c, f_08887C24, o, 0x20);
+}
+
+SFA_FUNC(08889E80, setup_08889E80) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = 1;
+    *B(o + 54) = 0x12; *B(o + 88) = 1; *B(o + 55) = 7;
+    *H(o + 6) = 0x20; *H(o + 10) = 0x178; *B(o + 56) = 2; *B(o + 136) = 0xC0;
+    c->r[4] = o; c->r[5] = 0x08A26660u;
+    f_08889F7C(c);
+    *B(o + 93) = 1;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* A marker beside the object +124 points at: 48 to its right at its height, with one of two pictures
+   and sizes by the marker's type. */
+SFA_FUNC(088BBF48, marker_follow) {
+    gaddr o = ARG(0), target = *W(o + 124);
+    *H(o + 12) = (uint16_t)(S16(target + 18) + 0x30);
+    *H(o + 24) = (uint16_t)S16(target + 22);
+    if (*B(o + 92) == 0) { *H(o + 14) = 0x70; *H(o + 26) = 0x20; }
+    else { *H(o + 14) = 0x130; *H(o + 26) = 0x30; }
+}
+
+/* Third-list objects of types 14 to 17 fading out: +98 counts frames and +136 (how solid it is) drops
+   by a step for part of that time; when +136 reaches 0 the object's step (+128) moves on. Type 14
+   waits 14 frames and then drops by 18; 15 drops by 10 for 14 frames; 16 by 18 for 21 frames; 17 by 3.
+   A drop that would land exactly on 0 is not stored (the original stores only what is above 0, and 0
+   only for what is below). */
+static void fade_step(gaddr o, int by) {
+    int v = *B(o + 136) - by;
+    if (v > 0) *B(o + 136) = (uint8_t)v;
+    else if (v < 0) *B(o + 136) = 0;
+}
+SFA_FUNC(088B2C8C, list_3_fade_out) {
+    gaddr o = ARG(0);
+    uint8_t type = *B(o + 92);
+    if (type < 14 || type > 17) return;
+    *H(o + 98) = (uint16_t)(*H(o + 98) + 1);
+    uint16_t frames = *H(o + 98);
+    if (type >= 16) *B(o + 55) = 7;
+    if (type == 17) *B(o + 56) = 7;
+    if (type == 14) { if (frames >= 14) fade_step(o, 18); }
+    else if (type == 15) { if (frames < 14) fade_step(o, 10); }
+    else if (type == 16) { if (frames < 21) fade_step(o, 18); }
+    else if (frames < 256) fade_step(o, 3);
+    if (*B(o + 136) == 0) *B(o + 128) = (uint8_t)(*B(o + 128) + 1);
+}
+
+/* ---- 0.69.0: the versus screen's objects ---- */
+
+void f_0889995C(Cpu *c);   /* object_place_on_grid (motion.c) */
+void f_0889CE34(Cpu *c);   /* set_animation_b */
+#define FIGHTER_1 0x092E3EA0u
+#define FIGHTER_2 0x092E4338u
+
+/* The fighter's side is one of those GAME + 41 and + 57 mark (a bit a side). */
+static int side_marked(gaddr f, int low_16) {
+    uint32_t marks = (uint32_t)(S8(GAME + 57) | S8(GAME + 41));
+    if (low_16) marks &= 0xFFFF;
+    return (marks & (1u << (S8(f + 337) & 31))) != 0;
+}
+
+/* The substep's handler with the fighter, for a marked side (the third also for objects with bit 7 of
+   +10). */
+SFA_FUNC(08899AC8, run_for_marked_side_a) { if (side_marked(ARG(1), 0)) run_step_with(c, *B(ARG(0) + 5), 0x08A2A8DCu, ARG(1), 0x08899B2Cu); }
+SFA_FUNC(0889A818, run_for_marked_side_b) { if (side_marked(ARG(1), 1)) run_step_with(c, *B(ARG(0) + 5), 0x08A2A9A4u, ARG(1), 0x0889A880u); }
+SFA_FUNC(0889B0A4, run_for_marked_side_c) {
+    if (side_marked(ARG(1), 1) || (*B(ARG(0) + 10) & 0x80)) run_step_with(c, *B(ARG(0) + 5), 0x08A2AA08u, ARG(1), 0x0889B11Cu);
+}
+SFA_FUNC(0889BFA4, run_for_marked_side_d) { if (side_marked(ARG(1), 1)) run_step_with(c, *B(ARG(0) + 5), 0x08A2AAE4u, ARG(1), 0x0889C00Cu); }
+
+/* Arrives (0x0889CE64 / 0x0889CEA4, or at once while BATTLE + 81) and stops on its target; drawn. The y
+   one reports bit 2 in GAME + 20. Both only in substep 0. */
+static void arrive_then_draw(Cpu *c, gaddr o, GuestFunc move, uint32_t position, int report) {
+    gaddr saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    if (*B(o + 5) == 0) {
+        int there = S8(BATTLE + 81) != 0;
+        if (!there) { c->r[4] = o; move(c); there = c->r[2] != 0; }
+        if (there) {
+            *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+            *W(o + position) = (uint32_t)S16(o + 114) << 16;
+            if (report) *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | 4);
+        }
+    }
+    c->r[4] = o;
+    f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+SFA_FUNC(08897D78, arrive_y_then_draw) { arrive_then_draw(c, ARG(0), f_0889CEA4, 20, 1); }
+SFA_FUNC(08898308, arrive_x_then_draw) { arrive_then_draw(c, ARG(0), f_0889CE64, 16, 0); }
+
+/* Arrives in x (or at once while BATTLE + 81): the next substep, on its target, reporting its bit (by
+   type) in GAME + 20. */
+SFA_FUNC(0889E5FC, arrive_x_and_report) {
+    gaddr o = ARG(0);
+    if (S8(BATTLE + 81) == 0 && !call_keeping(c, f_0889CE64, o)) return;
+    *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+    *H(o + 18) = (uint16_t)S16(o + 114);
+    *H(o + 16) = 0;
+    *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | (1 << (*B(o + 3) & 31)));
+}
+
+/* The two speeds until +32 comes up to 0: then the next substep with +32 to +36 cleared, reporting its
+   bit (by +10) in GAME + 22. */
+SFA_FUNC(088993C8, move_two_speeds_to_0) {
+    gaddr o = ARG(0);
+    call_keeping(c, f_08899514, o);
+    *H(o + 34) = (uint16_t)S16(o + 32);
+    if (S16(o + 32) < 0) return;
+    *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+    *H(o + 36) = 0; *H(o + 34) = 0; *H(o + 32) = 0;
+    *H(GAME + 22) = (uint16_t)(S16(GAME + 22) | (1 << (*B(o + 10) & 31)));
+}
+
+/* Placed on the grid by its fighter, with the animation for the fighter's side, and drawn; the next
+   routine step once the high byte of GAME + 22 is set. */
+SFA_FUNC(08899810, place_animate_draw) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    if (S16(GAME + 22) & 0xFF00) *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    c->r[4] = o; c->r[5] = f; f_0889995C(c);
+    c->r[4] = o; c->r[5] = f; c->r[6] = 0; f_08899A30(c);
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Animated and drawn at the x kept in +36; while GAME + 20's low byte names this object (+10) it is
+   lit (+12 = 0, else -1) and nudged 4 towards the middle, by its fighter's side. */
+SFA_FUNC(0889A754, animate_draw_lit) {
+    gaddr o = ARG(0), saved = c->r[16];
+    uint16_t x = *H(o + 36);
+    uint8_t dim = 0xFF;
+    if ((uint32_t)(S16(GAME + 20) & 0xFF) == *B(o + 10)) {
+        dim = 0;
+        x = (uint16_t)(x + (S8(ARG(1) + 337) != 0 ? -4 : 4));
+    }
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 12) = dim;
+    *H(o + 18) = x;
+    c->r[4] = o; f_088219B0(c);
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* Animation 8 of the second table for objects with +10 set past their substep 0; otherwise x from the
+   whole part of +96 and animation 4 or 5 by the fighter's side. */
+SFA_FUNC(0889BEC4, set_animation_by_side_or_8) {
+    gaddr o = ARG(0), f = ARG(1);
+    c->r[29] -= 0x20;
+    c->r[4] = o;
+    if (*B(o + 10) != 0 && *B(o + 5) != 0) c->r[5] = 8;
+    else {
+        *H(o + 18) = (uint16_t)((int32_t)*W(o + 96) >> 16);
+        c->r[5] = (uint32_t)(S8(f + 337) + 4) & 0xFFFF;
+    }
+    f_0889CE34(c);
+    c->r[29] += 0x20;
+}
+
+/* (object, fighter, n): row n: +80 = n, y from the table 0x08A2AB4C (entry n + 1), and entry n + 1 of
+   animation 12 or 14 by the fighter's side. */
+SFA_FUNC(0889C6A0, set_row) {
+    gaddr o = ARG(0);
+    uint32_t n = ((ARG(2) & 0xFFFF) + 1) & 0xFFFF;
+    *B(o + 80) = (uint8_t)ARG(2);
+    *H(o + 22) = *H(0x08A2AB4Cu + n * 2u);
+    uint32_t side = (uint32_t)S8(ARG(1) + 337) & 0xFFFF;
+    c->r[29] -= 0x20;
+    c->r[5] = (((side * 2) & 0xFFFF) + 0xC) & 0xFFFF; c->r[6] = n;
+    f_0889CDF8(c);
+    c->r[29] += 0x20;
+}
+
+/* The substep's handler (0x08A2B164); objects with +10 = 2 then scroll down one a frame, round from 96
+   to 0; drawn. */
+SFA_FUNC(0889EF1C, step_scroll_96_draw) {
+    gaddr o = ARG(0), saved = c->r[16];
+    gaddr fn = *W(0x08A2B164u + *B(o + 5) * 4u);
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[4] = o; c->r[5] = fn;
+    rt_call_indirect(c, fn);
+    if (*B(o + 10) == 2) {
+        int32_t y = (int32_t)(*W(o + 20) + 0x10000);
+        if (y >= 0x600000) y -= 0x600000;
+        *W(o + 20) = (uint32_t)y;
+    }
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* 54 parts (0x40 bytes each from +0x34) slide while +4 counts down by 2: those in use move +10 up by 2,
+   the others down. When the count is at 0 the step (+2) moves on. */
+SFA_FUNC(0888D71C, parts_slide) {
+    gaddr o = ARG(0);
+    if (S16(o + 4) != 0) {
+        *H(o + 4) = (uint16_t)(S16(o + 4) - 2);
+        for (int i = 0; i < 54; i++) {
+            gaddr part = o + 0x34 + (uint32_t)i * 0x40u;
+            *H(part + 10) = (uint16_t)(S16(part + 10) + (*B(part) != 0 ? 2 : -2));
+        }
+    }
+    if (S16(o + 4) == 0) *B(o + 2) = (uint8_t)(*B(o + 2) + 1);
+}
+
+/* Counts +22 down; when it runs out the counter +10 goes up and the second record shows a character:
+   +18 = 127, +66 = fighter 1's or 2's character by bit 0 of +57. */
+SFA_FUNC(088958C0, count_22_then_show_character) {
+    gaddr o = ARG(0), p = ARG(1);
+    int16_t left = (int16_t)(S16(o + 22) - 1);
+    *H(o + 22) = (uint16_t)left;
+    if (left >= 0) return;
+    *B(o + 43) = 0;
+    *H(o + 10) = (uint16_t)(*H(o + 10) + 1);
+    *B(p + 65) = 0;
+    *H(p + 18) = 0x7F;
+    *B(p + 66) = *B(((S8(o + 57) & 1) ? FIGHTER_1 : FIGHTER_2) + 338);
+}
+
+SFA_FUNC(08889E00, setup_08889E00) {
+    gaddr o = ARG(0);
+    *B(o + 88) = 0; *B(o + 55) = 7;
+    *H(o + 6) = 0; *H(o + 10) = 9; *H(o + 24) = 0; *H(o + 12) = 0; *H(o + 14) = 0x282; *H(o + 26) = 0x20;
+    *B(o + 56) = 1; *B(o + 136) = 0xC0;
+    for (int i = 3; i >= 0; i--) *B(o + 36 + i) = 0x76;
+    for (int i = 3; i >= 0; i--) *B(o + 42 + i) = 0x76;
+    for (int i = 3; i >= 0; i--) *B(o + 48 + i) = 0xBC;
+    *B(o + 93) = 1;
+}

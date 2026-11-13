@@ -558,6 +558,26 @@ owner at + 88, and frame data at + 296.
 | 0x08819020 | the save question's cursor (0x09523C69) shown by an object |
 | 0x088550E8 / 0x0885515C | intro objects: settles at y 128 (intro stage 4); bounces by the table 0x08A16D88 |
 
+**The CPU's scripts and the versus screen's objects** (0.69.0).
+
+| Address | What |
+|---|---|
+| 0x0887B1B8 / 0x0887C25C | a script picked for the CPU from its character's lists; the pick at random |
+| 0x0887A350 | the CPU's script restarted from where it was kept (+ 512, first word + 504); a command whose high byte is -1 picks a new script first |
+| 0x088771DC / 0x0887B48C / 0x0887B648 | the CPU acts; its wait set; a script word unpacked |
+| 0x08822AA8 | every fighter's steps reset |
+| 0x088D55D0 | the network record (0x09523980) cleared; 0x088D5ECC, 0x088D7C4C, 0x088D7EA0, 0x088DD81C, 0x088DC080 are its small steps |
+| 0x088AA6B0 / 0x088AA890 / 0x088AA950 | three more of the director's routines |
+| 0x08899AC8 / 0x0889A818 / 0x0889B0A4 / 0x0889BFA4 | an object's substep handler run with its fighter, only for a side marked in GAME + 41 or + 57 (tables 0x08A2A8DC, 0x08A2A9A4, 0x08A2AA08, 0x08A2AAE4) |
+| 0x08897D78 / 0x08898308 / 0x0889E5FC | arrives in y / x (at once while BATTLE + 81) and stops on its target (+ 114); the y one sets bit 2 of GAME + 20, the last its bit by type |
+| 0x088993C8 | two speeds until + 32 reaches 0, then its bit (by + 10) in GAME + 22 |
+| 0x0889A754 | lit (+ 12 = 0) and nudged 4 towards the middle while GAME + 20's low byte names it |
+| 0x0889C6A0 / 0x0889BEC4 | a row: y from 0x08A2AB4C, animation 12 or 14 by side; animation 4 or 5 by side, or 8 |
+| 0x0889EF1C | handler by substep (0x08A2B164); objects with + 10 = 2 scroll down, round from 96 to 0 |
+| 0x0888D71C | 54 parts of 0x40 bytes slide while + 4 counts down: those in use up, the rest down |
+| 0x088958C0 | + 22 counted down, then the second record shows fighter 1's or 2's character (bit 0 of + 57) |
+| `object/screen_steps.c` | 0x0887E094, 0x08885950 (a part animated), 0x08886EE4 (a counter started), 0x08887BBC, 0x08889E80, 0x08889E00, 0x088BBF48 (a marker follows), 0x088B2C8C (the third list fades out); `intro_steps.c` 0x088551D0 waits, then intro stage 5 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11
