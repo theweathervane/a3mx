@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.66.0
+- **More of the game decompiled:** 72 more functions are hand-written C: the object pools (making and freeing objects), what is cleared before a screen or a fight, the camera's and the trails' routines by who is fighting whom, the stage's own routine, and thirty-nine steps of the objects on the screens around a fight (waiting on their fighter, moving to their place, starting animations). Nothing changes in play.
+
 ## 0.65.2
 - **macOS: the launcher finds its folder again:** opened from the unzipped download, macOS ran it from a temporary copy elsewhere (App Translocation), so it found no folder to build in and said nothing was needed. It now asks macOS where it really is. If it still can't find its folder, the Dependencies tab and the console say what to do instead of "nothing is needed".
 - **Releases hold only the full downloads:** the launcher on its own (`a3mx-launcher-...`) is no longer added to a release or the nightly on GitHub, since it can't build anything without the folder around it. Download `a3mx-<version>-<system>.zip`.

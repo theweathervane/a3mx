@@ -18,13 +18,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  6.26% decompiled
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  6.47% decompiled
 
-Functions                                [░░░░░░░░░░]   5.97%  888 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   6.26%  30,329 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   6.45%  960 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   6.47%  31,330 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  13.79%  28,124 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  14.28%  29,125 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -113,6 +113,10 @@ Done:
       (0x0886EDA8), pushing the opponent (0x08862F28), the wall jump check (0x08864140), twelve hit
       adjustments (`src/core/fighter/hit.c`), fifteen more object steps, object lists 5 and 6, the
       camera's routines by pair, conditional runners (`src/core/object/runners.c`) (0.65.0)
+- [x] The object pools (four of 0xC0-byte objects: make and free), the clears before a screen or a
+      fight (`src/core/reset.c`), the routines by layout and by stage (camera span and height, trails,
+      the stage's own), and thirty-nine steps of the screens' objects
+      (`src/core/object/screen_steps.c`) (0.66.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

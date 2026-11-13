@@ -75,3 +75,65 @@ SFA_FUNC(0888DA7C, object_run_two_parts) {
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* ---- by stage and by layout ---- */
+
+#define FIGHTER_1 0x092E3EA0u
+#define FIGHTER_2 0x092E4338u
+#define BT_STAGE  0
+#define BT_LAYOUT 56
+
+void f_0881E760(Cpu *c);   /* camera_span_by_pair (stage/camera.c) */
+void f_0881EB14(Cpu *c);   /* camera_height_by_pair */
+void f_0882D6FC(Cpu *c);   /* fighter_1_trail_step (fighter/trail.c) */
+void f_0882D794(Cpu *c);   /* fighter_2_trail_step */
+
+/* The stage's own routine (0x08A0893C by stage), if it has one. */
+SFA_FUNC(088192C0, stage_routine) {
+    gaddr fn = *W(0x08A0893Cu + (uint32_t)S16(BATTLE + BT_STAGE) * 4u);
+    c->r[5] = fn; c->r[6] = 0x08A0893Cu;
+    if (fn == 0) return;
+    c->r[29] -= 0x20;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* The camera's span and height routines for the layout (who fights whom). */
+SFA_FUNC(0881E64C, camera_span_by_layout)   { run_step(c, (uint32_t)S16(BATTLE + BT_LAYOUT), 0x08A09428u, 6, 0x0881E67Cu); }
+SFA_FUNC(0881EA10, camera_height_by_layout) { run_step(c, (uint32_t)S16(BATTLE + BT_LAYOUT), 0x08A09448u, 5, 0x0881EA40u); }
+
+/* The usual layout's: fighters 1 and 2. */
+SFA_FUNC(0881E688, camera_span_1_2) {
+    uint32_t lo = ARG(0), hi = ARG(1);
+    c->r[29] -= 0x20;
+    c->r[4] = FIGHTER_1; c->r[5] = FIGHTER_2; c->r[6] = lo; c->r[7] = hi;
+    f_0881E760(c);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(0881EA4C, camera_height_1_2) {
+    uint32_t out = ARG(0);
+    c->r[29] -= 0x20;
+    c->r[4] = FIGHTER_1; c->r[5] = FIGHTER_2; c->r[6] = out;
+    f_0881EB14(c);
+    c->r[29] += 0x20;
+}
+
+/* The trails' routine for the layout, and the usual one: fighter 1's trail at 0x09523CA8 and fighter
+   2's 0x480 after it. */
+SFA_FUNC(0882D5D8, trails_by_layout) {
+    gaddr fn = *W(0x08A0F1A4u + (uint32_t)S16(BATTLE + BT_LAYOUT) * 4u);
+    c->r[4] = fn; c->r[5] = 0x08A0F1A4u;
+    c->r[29] -= 0x10;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x10;
+}
+#define TRAILS 0x09523CA8u
+SFA_FUNC(0882D614, trails_1_2) {
+    gaddr saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = TRAILS;
+    c->r[4] = TRAILS; f_0882D6FC(c);
+    c->r[4] = c->r[16] + 0x480; f_0882D794(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

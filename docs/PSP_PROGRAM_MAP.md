@@ -500,6 +500,22 @@ owner at + 88, and frame data at + 296.
 | 0x0888BB24 | three lines of text: 0x089FEFE0, 0x089FEFF4, 0x089FF014 |
 | `object/motion.c` | BATTLE + 44 is the fight intro's counter: 0x088560EC (at 2), 0x088562A0 / 0x08857550 (at 1), 0x08856650 (5 on), 0x08854F10 (sets it to 2); also 0x08854ED8, 0x0885661C, 0x08857D70, 0x08857E24, 0x0887E10C, 0x0887D990, 0x08881E2C, 0x08899430, 0x0889995C (an 8 × 8 grid), 0x0889BD9C, 0x088A0464, 0x08887018 |
 
+**Pools, clears and the screens' objects** (0.66.0).
+
+| Address | What |
+|---|---|
+| 0x08822E74 / 0x08822EAC / 0x08822F1C / 0x08822F54 | an object made (kind, type) from the pool of 8 (0x09512170), 32 (0x09512770), 16 (0x09514B70) or 42 (0x09515770); free counts 0x095176F2 / F3 / F5 / F6 (`object/pool.c`) |
+| 0x0882319C / 0x088231C8 / 0x0882324C | an object freed to the pool of 8 / 32 / 42 (+ 8 = 3 / 4 / 6) |
+| 0x08823278 / 0x088233BC / 0x08823074 | a record freed (count 0x095176F8); a list-3 object freed (0x095176F9); the first free of the 12 callbacks taken |
+| 0x0880E998 | the picture cache's 512 entries (16 bytes at 0x092E6000) emptied |
+| `reset.c` | clears: BATTLE (0x08822D04), fighters 3 and 4 (0x08822C4C), 0x092E51C0 on (0x08822B60), 0x092E5100 (0x08822A64), the text queue (0x0880A87C) and two more queues (0x0880A8B8, 0x0880A8F4), 0x092DCA40 filled with 0xFF (0x0880A39C), 0x08E76068, 0x08E86E20 |
+| 0x0881D488 | the stage's three bytes from 0x08A09310 into + 122 of the layers 0x092E8800, 0x092E88A0, 0x092E8940 |
+| 0x088192C0 | the stage's own routine, 0x08A0893C[stage], if any |
+| 0x0881E64C / 0x0881EA10 / 0x0882D5D8 | by layout (BATTLE + 56): the camera's span routine 0x08A09428, its height routine 0x08A09448, the trails' routine 0x08A0F1A4; the usual ones are 0x0881E688, 0x0881EA4C and 0x0882D614 (fighters 1 and 2; trails at 0x09523CA8 and + 0x480) |
+| 0x0887A10C | a script command read: the word into fighter + 488, the place after it into + 528, the budget 0x08B0268E up by one; a command whose high byte is -1 goes to 0x0887A154 |
+| 0x0887B504 / 0x0887B7CC | a fighter's own routine (+ 416 → + 84); + 480 - + 484 reset and the + 484 routine run |
+| `object/screen_steps.c` | the screens' objects wait on their fighter's flags at + 424 (bits 1, 2, 4, 8: 0x08899DC8, 0x0889A194, 0x0889ADFC, 0x0889A478, 0x0889A728, 0x0889C604), start animations from 0x08A27744 (0x0889CDC8, 0x0889CDF8) and 0x08A28950 (0x0889CE34), and move to their targets (0x0889B888, 0x0889BE88, 0x08899514) |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11
