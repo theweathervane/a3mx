@@ -44,6 +44,7 @@ The overall bar is the share of the program's instructions that is now hand-writ
 
 - Windows 10 (1803 or later) or 11 (x64), Linux (x64) or macOS 11 or later (Apple Silicon)
 - Your own Street Fighter Alpha 3 MAX PSP disc image (ISO), US release `ULUS-10062`
+- On Linux, a few packages from your distribution: the launcher's **Dependencies** tab lists any that are missing, and the line that installs them is in [docs/BUILDING.md](docs/BUILDING.md#tools)
 - An internet connection for the first build
 - ~2 GB of free disk space to download and use build tools to enable you to build your image
 

@@ -65,6 +65,13 @@ std::string read_text(const std::string &p) {
     if (!d) return std::string();
     std::string s((const char *)d, n); SDL_free(d); return s;
 }
+#if !defined(_WIN32) && !defined(__APPLE__)
+/* a development library, found the way SDL's configure finds it */
+bool pkg_config(const char *name) {
+    std::string cmd = std::string("pkg-config --exists ") + name + " >/dev/null 2>&1";
+    return std::system(cmd.c_str()) == 0;
+}
+#endif
 #ifndef _WIN32
 /* a program on the PATH, as the build would find it */
 std::string on_path(const char *name) {
@@ -141,6 +148,7 @@ std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir
         { "Ninja", "ninja", "your package manager: ninja-build (Arch: ninja)" },
         { "Clang", "clang", "your package manager: clang" },
         { "Python 3.9 or later", "python3", "your package manager: python3" },
+        { "pkg-config", "pkg-config", "your package manager: pkg-config (Fedora: pkgconf-pkg-config, Arch: pkgconf)" },
 #endif
     };
     for (auto &s : SYS) {
@@ -151,6 +159,30 @@ std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir
         d.dest = "(your system)";
         out.push_back(d);
     }
+#ifndef __APPLE__
+    {   /* SDL3's development libraries: without them SDL's configure stops after the tools are all found
+           (issue #2). tools/build.py checks the same before CMake runs; the lines that install them are
+           in docs/BUILDING.md and in what build.py prints. */
+        const bool pc = !on_path("pkg-config").empty();
+        const bool x11 = pc && pkg_config("x11") && pkg_config("xext");
+        const bool wl = pc && pkg_config("wayland-client") && pkg_config("wayland-egl") && pkg_config("wayland-cursor") && pkg_config("xkbcommon");
+        Dep w; w.id = "window-libs"; w.name = "Window libraries (X11 or Wayland)"; w.system = true; w.dest = "(your system)";
+        w.here = x11 || wl;
+        w.detail = w.here ? std::string(x11 && wl ? "X11 and Wayland" : x11 ? "X11" : "Wayland")
+                 : !pc ? std::string("not checked: install pkg-config first")
+                 : std::string("not found: your package manager, e.g. libx11-dev libxext-dev libwayland-dev libxkbcommon-dev (docs/BUILDING.md)");
+        out.push_back(w);
+        std::string found;
+        for (auto &s : { std::make_pair("ALSA", "alsa"), std::make_pair("PulseAudio", "libpulse"), std::make_pair("PipeWire", "libpipewire-0.3") })
+            if (pc && pkg_config(s.second)) found += (found.empty() ? "" : ", ") + std::string(s.first);
+        Dep a; a.id = "sound-libs"; a.name = "Sound libraries (ALSA or PulseAudio)"; a.system = true; a.dest = "(your system)";
+        a.here = !found.empty();
+        a.detail = a.here ? found
+                 : !pc ? std::string("not checked: install pkg-config first")
+                 : std::string("not found: your package manager, e.g. libasound2-dev libpulse-dev (docs/BUILDING.md)");
+        out.push_back(a);
+    }
+#endif
 #endif
     for (const Want &w : WANTED) {
         auto it = pins.find(w.id);

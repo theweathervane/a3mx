@@ -11,7 +11,8 @@ Steps, stopping at the first that fails:
                 SHA-256), unless already there.
        macOS:   CMake and Ninja downloaded the same way (0.52.0); Clang is Apple's command line
                 tools, which it asks macOS to install if they're missing (xcode-select --install).
-       Linux:   yours (it says what to install if one is missing).
+       Linux:   yours (it says what to install if one is missing), and SDL3's development libraries
+                for the window and sound, checked with pkg-config before CMake runs (issue #2).
   2. your disc: python tools/extract_assets.py, the first time (or with --extract): checks the ISO
      in imports/psp/ (or --iso) and extracts it into work/ and assets/.
   3. cmake --preset <preset>, then cmake --build --preset <preset> (CMakePresets.json).
@@ -46,9 +47,11 @@ Options:
   --shaders           only download the FILTER setting's shaders (tools/shaders.py: libretro's
                       slang-shaders at the pinned commit, about 85 MB), then stop
   --tools-only        just step 1
+Before CMake runs, any file in the checkout dated in the future (a clock or time zone behind the
+machine that made the files) is dated now, or Ninja would never see the build as up to date (issue #2).
 Standard library only.
 """
-import argparse, hashlib, json, os, platform, shutil, subprocess, sys, zipfile
+import argparse, hashlib, json, os, platform, shutil, subprocess, sys, time, zipfile
 import fetch                     # tools/fetch.py: downloads that work with any Python (issue #52)
 import pins                      # tools/pins.py: every pinned download's URL and SHA-256 (tools/data/pins.json)
 
@@ -63,16 +66,17 @@ WINDOWS = os.name == 'nt'
 PROBES = {'llvm-mingw': 'bin/clang.exe', 'cmake': 'bin/cmake.exe', 'ninja': 'ninja.exe',
           'cmake-macos': 'CMake.app/Contents/bin/cmake', 'ninja-macos': 'ninja'}
 MACOS = sys.platform == 'darwin'
+LINUX = sys.platform.startswith('linux')
 
 INSTALL_HINTS = {
     'Linux': 'Debian / Ubuntu:\n'
-             '    sudo apt install cmake ninja-build clang python3 libx11-dev libxext-dev libxrandr-dev libxcursor-dev \\\n'
+             '    sudo apt install cmake ninja-build clang python3 pkg-config libx11-dev libxext-dev libxrandr-dev libxcursor-dev \\\n'
              '         libxi-dev libxss-dev libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev libgl-dev \\\n'
              '         libasound2-dev libpulse-dev libudev-dev libxtst-dev libxfixes-dev\n'
-             'Fedora:  sudo dnf install cmake ninja-build clang python3 libX11-devel libXext-devel libXrandr-devel \\\n'
+             'Fedora:  sudo dnf install cmake ninja-build clang python3 pkgconf-pkg-config libX11-devel libXext-devel libXrandr-devel \\\n'
              '         libXcursor-devel libXi-devel libXScrnSaver-devel libxkbcommon-devel wayland-devel mesa-libEGL-devel \\\n'
              '         mesa-libGL-devel alsa-lib-devel pulseaudio-libs-devel systemd-devel libXtst-devel libXfixes-devel\n'
-             'Arch:    sudo pacman -S cmake ninja clang python libx11 libxext libxrandr libxcursor libxi libxss libxkbcommon \\\n'
+             'Arch:    sudo pacman -S cmake ninja clang python pkgconf libx11 libxext libxrandr libxcursor libxi libxss libxkbcommon \\\n'
              '         wayland wayland-protocols mesa alsa-lib libpulse libxtst libxfixes',
     'Darwin': 'macOS:   xcode-select --install          (Apple\'s command line tools: Clang, Python 3)',
 }
@@ -177,6 +181,56 @@ def tools():
         fail('missing: %s. Install them, then run this again.\n%s' % (', '.join(missing), INSTALL_HINTS.get(platform.system(), '')))
     say('  CMake %d.%d, Ninja, Clang: found' % v)
     return env, cmake, shutil.which('ctest') or 'ctest'
+
+
+def pkg_config(name):
+    return subprocess.run(['pkg-config', '--exists', name], capture_output=True).returncode == 0
+
+
+def linux_libraries():
+    """Linux: SDL3's development libraries for the window and sound. Without them SDL's own configure
+    stops with \"SDL could not find X11 or Wayland development libraries\" after CMake, Ninja and
+    Clang have all been found, so nothing says what to install (issue #2). Checked here first, the
+    same way SDL looks for them (pkg-config)."""
+    hint = INSTALL_HINTS['Linux']
+    if not shutil.which('pkg-config'):
+        fail('missing: pkg-config, which the build uses to find the window and sound libraries. '
+             'Install it and the libraries, then run this again.\n' + hint)
+    x11 = pkg_config('x11') and pkg_config('xext')
+    wayland = all(pkg_config(n) for n in ('wayland-client', 'wayland-egl', 'wayland-cursor', 'xkbcommon'))
+    if not x11 and not wayland:
+        fail('missing: the window libraries (the X11 or Wayland development packages); without them the '
+             'game and the launcher can\'t open a window. Install them, then run this again.\n' + hint)
+    sound = [n for n, p in (('ALSA', 'alsa'), ('PulseAudio', 'libpulse'), ('PipeWire', 'libpipewire-0.3')) if pkg_config(p)]
+    if not sound:
+        fail('missing: the sound libraries (the ALSA or PulseAudio development packages); without them the '
+             'game would build with no sound. Install them, then run this again.\n' + hint)
+    say('  window: %s; sound: %s' % (' and '.join(n for n, ok in (('X11', x11), ('Wayland', wayland)) if ok),
+                                    ', '.join(sound)))
+
+
+def future_dates():
+    """Date now any file in the checkout dated in the future. Files unpacked on a PC whose clock or time
+    zone is behind the one that made them (a downloaded zip, a copied folder) can be, and Ninja then
+    finds the build out of date on every run and can stop with \"still dirty after 100 tries\" (issue
+    #2). Not touched: .git, the build folders, .tools/, imports/ (your ISOs: their date is how
+    work/'s extraction is recognised), assets/ and saves/ (an edited asset is told by its date)."""
+    now = time.time()
+    skip = {'.git', '.tools', 'imports', 'assets', 'saves'}
+    fixed = []
+    for d, dirs, files in os.walk(ROOT):
+        if d == ROOT: dirs[:] = [x for x in dirs if x not in skip and not x.startswith('build')]
+        for f in files + dirs:
+            p = os.path.join(d, f)
+            try:
+                if os.path.islink(p) or os.path.getmtime(p) <= now + 2: continue    # 2 s: FAT's and zip's steps
+                os.utime(p, (now, now))
+                fixed.append(p)
+            except OSError:
+                pass
+    if fixed:
+        say('  %d file%s dated in the future (this PC\'s clock or time zone is behind the one that made '
+            'them): dated now, e.g. %s' % (len(fixed), '' if len(fixed) == 1 else 's', os.path.relpath(fixed[0], ROOT)))
 
 
 # ---------------------------------------------------------------- the build
@@ -294,6 +348,8 @@ def launcher(env, cmake):
     if os.path.isfile(exe):
         say('\n==> The launcher: the prebuilt %s' % name)
     else:
+        if LINUX: linux_libraries()
+        future_dates()
         step('Configure and build the launcher (preset launcher: build-launcher/)')
         run([cmake, '--preset', 'launcher'], env)
         run([cmake, '--build', '--preset', 'launcher'], env)
@@ -333,6 +389,7 @@ def main():
     env, cmake, ctest = tools()
     if a.tools_only:
         return
+    if LINUX and not a.launcher and a.preset != 'headless': linux_libraries()     # headless has no window or sound
     if a.launcher:
         launcher(env, cmake)
         return
@@ -348,6 +405,7 @@ def main():
     else:
         say('\n==> Your disc: already extracted into work/ (--extract to do it again)')
 
+    future_dates()
     out = {'release': 'build', 'debug': 'build-debug', 'headless': 'build-headless'}[a.preset]
     if a.no_extensions:
         out += '-noext'

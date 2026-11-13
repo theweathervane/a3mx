@@ -15,12 +15,14 @@ CMake 3.25+, Ninja and Clang, and Python 3.9+, on every system. No Visual Studio
   fall back to Windows' own `curl.exe` (`tools/fetch.py`).
 - **Linux:** your distribution's packages, with SDL3's development libraries for the window and sound:
   ```
-  sudo apt install cmake ninja-build clang python3 libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+  sudo apt install cmake ninja-build clang python3 pkg-config libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
        libxi-dev libxss-dev libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev libgl-dev \
        libasound2-dev libpulse-dev libudev-dev libxtst-dev libxfixes-dev
   ```
-  (`tools/build.py` prints the Fedora and Arch equivalents when something is missing. For tests only,
-  the `headless` preset needs none of SDL's libraries.)
+  `tools/build.py` checks for these with pkg-config before CMake runs (the window needs X11 or Wayland,
+  the sound ALSA, PulseAudio or PipeWire) and stops with this line and the Fedora and Arch equivalents
+  when something is missing, as the launcher's **Dependencies** tab lists them. For tests only, the
+  `headless` preset needs none of SDL's libraries.
 - **macOS:** `xcode-select --install` (Apple's command line tools: Clang, the SDK, Python 3). CMake and Ninja are
   downloaded into `.tools/` the first time, pinned and checked like Windows' (0.52.0).
 - **VS Code** (optional): open the folder and accept the recommended extensions (CMake Tools, clangd).
@@ -38,7 +40,9 @@ cd a3mx
 Or open **the launcher** (below) and press Run.
 
 `build.cmd` / `build.sh` run `tools/build.py`: tools, then `tools/extract_assets.py` (the first time),
-then `cmake --preset release` and `cmake --build --preset release`. By hand, with the tools on your
+then `cmake --preset release` and `cmake --build --preset release`. Just before CMake, any file in the
+folder dated in the future (unpacked on a PC whose clock or time zone is behind) is dated now, or Ninja
+would never find the build up to date; your ISOs, `assets/` and `saves/` are left alone. By hand, with the tools on your
 PATH:
 
 ```
@@ -66,7 +70,8 @@ shortcut unless you ask. Nothing compiled is committed to the repository.
 |---|---|
 | left | the project's picture, the version right-aligned under it (`VERSION`, the one EX. SETTING shows), the **bug** icon (a new issue on GitLab, filled in: [below](#reporting-a-problem-from-the-launcher)) and **About**, then the tabs. The colours follow the system's light or dark setting. |
 | **Paths** | **Your ISO**, typed or picked with **Browse...** (empty: the US one in `imports/psp/`), with the disc's flag from its program's checksum; only the US disc builds. The folders for **Saves**, **Configs**, **Logs** and the **Build tools**: each can be typed or browsed for, **Open** shows it, and **Defaults** puts every path back. They're kept in `launcher.ini`; changing a folder doesn't move what was in the old one. **Create a Desktop shortcut** / **Start menu shortcut** make one only when pressed. ![Paths](images/launcher-paths.png) |
-| **Dependencies** | **Check build dependencies** lists what the build needs on this system (from `tools/data/pins.json`) with a green tick for each one that is here. Anything missing is listed with its address, its SHA-256 and the folder it goes into, and nothing is downloaded until you press **I agree** (asked again only if the pinned list changes). Run or Build with something missing sends you here first. The FILTER setting's shaders are a separate button, only if you want them. ![Dependencies](images/launcher-dependencies.png) |
+| **Dependencies** | **Check build dependencies** lists what the build needs on this system (from `tools/data/pins.json`) with a green tick for each one that is here (on Linux, also pkg-config and the window and sound
+libraries, which come from your package manager). Anything missing is listed with its address, its SHA-256 and the folder it goes into, and nothing is downloaded until you press **I agree** (asked again only if the pinned list changes). Run or Build with something missing sends you here first. The FILTER setting's shaders are a separate button, only if you want them. ![Dependencies](images/launcher-dependencies.png) |
 | **Controllers** | Bring your own device: for each of four players a **Control Type** (Automatic, Keyboard, Controller, Keyboard/Controller, None), the keys and controller buttons, the pad icon, and **Test**, which shows the pad icon beside each button pressed ([CONTROLLERS.md](CONTROLLERS.md)). ![Controllers](images/launcher-controllers.png) |
 | **Extensions** | Every extension on its own switch (`--features`, [below](#without-the-extensions)); all off is the PSP game as it was. Widescreen and Stage Extensions (Custom Assets before 0.60.0) are here. ![Extensions](images/launcher-extensions.png) |
 | **Build / Run** | the preset (Release / Debug), Extract the disc again (`--extract`), Run the tests (`--test`), Run after building; Full screen, Logging (`--log-level`), Renderer, Resolution (`--scale`), GPU, extra options. **Run** builds what changed and starts the game (F5); unchecked **Run after building**, it says **Build**. **Stop** ends a build or a download. |
