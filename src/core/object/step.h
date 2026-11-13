@@ -63,3 +63,20 @@ static inline void run_step_then(Cpu *c, gaddr obj, uint32_t step, gaddr table, 
     c->r[31] = *(uint32_t *)guest_ptr(c->r[29] + 20);
     c->r[29] += 0x20;
 }
+
+/* A routine's step that gives way to a halt: the handler for the object's +4, and then, while GAME + 38
+   is set, the object is sent to step 2. s0 holds the object across the call, saved at +16 with the
+   return address at +20. */
+static inline void run_step_or_halt(Cpu *c, gaddr obj, gaddr table, uint32_t back) {
+    gaddr handler = *(uint32_t *)guest_ptr(table + *(uint8_t *)guest_ptr(obj + 4) * 4u);
+    c->r[29] -= 0x20;
+    *(uint32_t *)guest_ptr(c->r[29] + 16) = c->r[16];
+    *(uint32_t *)guest_ptr(c->r[29] + 20) = c->r[31];
+    c->r[16] = obj; c->r[4] = obj; c->r[5] = handler;
+    c->r[31] = back;
+    rt_call_indirect(c, handler);
+    if (*(int8_t *)guest_ptr(0x08E75910u + 38) != 0) *(uint8_t *)guest_ptr(c->r[16] + 4) = 2;
+    c->r[16] = *(uint32_t *)guest_ptr(c->r[29] + 16);
+    c->r[31] = *(uint32_t *)guest_ptr(c->r[29] + 20);
+    c->r[29] += 0x20;
+}

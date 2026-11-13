@@ -140,3 +140,14 @@ SFA_FUNC(0880E998, cache_clear) {
         W(e)[1] = 0;
     }
 }
+
+/* (kind, type): one of the three 0x30-byte objects at 0x092E3E08 (list 6), looking from the last down;
+   their free count is 0x095176F8. Answers it, or 0. */
+SFA_FUNC(08822F8C, object_make_small) {
+    uint8_t kind = (uint8_t)ARG(0), type = (uint8_t)ARG(1);
+    gaddr o = 0x092E3E08u + 0x60;
+    for (int left = 3; *B(o) != 0; o -= 0x30) if (--left == 0) { RETURN(0); return; }
+    *B(0x095176F8u) = (uint8_t)((int8_t)*B(0x095176F8u) - 1);
+    *B(o) = 1; *B(o + 2) = kind; *B(o + 3) = type;
+    RETURN(o);
+}

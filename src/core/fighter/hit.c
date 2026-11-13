@@ -124,3 +124,15 @@ SFA_FUNC(0886DC3C, fighter_clear_644) {
     *B(f + 80) = S8(f + 251) != 0;
     *B(opponent + (S8(f + 122) != 0 ? 625 : 624)) = 0;
 }
+
+/* The other fighter (not an object with +8) has +73 set, and this one has +588. */
+SFA_FUNC(08871A44, hit_other_73_and_588) {
+    gaddr other = *W(HIT + 24);
+    RETURN(*B(other + 8) == 0 && S8(other + 73) != 0 && S8(ARG(0) + 588) != 0);
+}
+
+/* When the fighter at the record's +16 (not an object with +8) has +73 set, a +119 under 3 is cleared. */
+SFA_FUNC(08871A84, hit_clear_119) {
+    gaddr who = *W(HIT + 16), o = ARG(0);
+    if (*B(who + 8) == 0 && S8(who + 73) != 0 && *B(o + 119) < 3) *B(o + 119) = 0;
+}

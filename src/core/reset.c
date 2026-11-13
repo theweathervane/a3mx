@@ -84,3 +84,43 @@ SFA_FUNC(0881D488, stage_set_layers_122) {
     *B(0x092E88A0u + 122) = *B(t + 1);
     *B(0x092E8940u + 122) = *B(t + 2);
 }
+
+#define FIGHTER_1 0x092E3EA0u
+#define FIGHTER_2 0x092E4338u
+void f_08822C4C(Cpu *c);   /* fighters_3_4_clear, above */
+
+SFA_FUNC(08822C00, fighters_clear) {
+    for (uint32_t i = 0; i < 0x498u; i++) { *B(FIGHTER_1 + i) = 0; *B(FIGHTER_2 + i) = 0; }
+    c->r[29] -= 0x10;
+    f_08822C4C(c);
+    c->r[29] += 0x10;
+}
+
+/* The fade back to full: every slot's level (0x80 bytes at 0x092E11A0), the level for everything else,
+   and 0x08E75C44. */
+SFA_FUNC(0882E0D0, fade_reset) {
+    for (uint32_t i = 0; i < 0x80u; i++) *B(0x092E11A0u + i) = 0xFF;
+    *B(0x092E1220u) = 0xFF;
+    *H(0x08E75C44u) = 0xFF;
+}
+
+/* The stage's colour number (BATTLE + 102) from the byte table 0x08A0F1C4. */
+SFA_FUNC(0882E110, stage_set_colour_number) {
+    *H(BATTLE + 102) = (uint16_t)(int8_t)*B(0x08A0F1C4u + ARG(0));
+}
+
+/* The s16 at 0x09524A68 held to 0 - 255. */
+SFA_FUNC(08836E90, clamp_09524A68) {
+    int16_t v = (int16_t)*H(0x09524A68u);
+    if (v < 0) *H(0x09524A68u) = 0;
+    else if (v >= 256) *H(0x09524A68u) = 0xFF;
+}
+
+/* The same s16 changed by the amount given, and held to 0 - 255. */
+void f_08836E90(Cpu *c);
+SFA_FUNC(08836E60, add_to_09524A68) {
+    *H(0x09524A68u) = (uint16_t)((int16_t)*H(0x09524A68u) + (int16_t)ARG(0));
+    c->r[29] -= 0x10;
+    f_08836E90(c);
+    c->r[29] += 0x10;
+}

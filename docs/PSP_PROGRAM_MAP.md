@@ -516,6 +516,28 @@ owner at + 88, and frame data at + 296.
 | 0x0887B504 / 0x0887B7CC | a fighter's own routine (+ 416 → + 84); + 480 - + 484 reset and the + 484 routine run |
 | `object/screen_steps.c` | the screens' objects wait on their fighter's flags at + 424 (bits 1, 2, 4, 8: 0x08899DC8, 0x0889A194, 0x0889ADFC, 0x0889A478, 0x0889A728, 0x0889C604), start animations from 0x08A27744 (0x0889CDC8, 0x0889CDF8) and 0x08A28950 (0x0889CE34), and move to their targets (0x0889B888, 0x0889BE88, 0x08899514) |
 
+**The fight's intro, character routines and script commands** (0.67.0).
+
+| Address | What |
+|---|---|
+| 0x08854CD0, 0x08854F94, 0x08855EEC, 0x08856168, 0x08856364, 0x08856520, 0x08857364 | the intro objects' routines (`object/intro_steps.c`): the handler for + 4 from 0x08A16D40, 6D64, 6E58, 6E78, 6E94, 6EB4, 6FAC; while GAME + 38 the object goes to step 2 |
+| 0x08857AC8 | an owned object's routine 0x08A17110[+ 4](object, owner) unless BATTLE + 36 |
+| 0x08856058, 0x0885609C, 0x0885612C, 0x088562CC, 0x0885757C, 0x088575C8 | the intro's moves in x: until past a place or out of (into) a range, then the goal + 112 and the next step |
+| 0x08854E78 / 0x08854F54 | falls to y 128 (intro stage 1) / drops by 24 to y 288 (intro stage 3) |
+| 0x08855D44 / 0x08855D80 | an owned object made from the pool of 8; (object, layer, x, y) placed |
+| 0x0885F838, 0x08863918, 0x0885B7D4, 0x0885C1EC | a character's own routines, from the table fighter + 416 points at: + 76; + 80 (after + 564 = 0); + 64 (after the countdowns + 638, + 643, + 542); + 88, or + 92 while + 373 |
+| 0x08864494 | characters 0x11 and 0x13 swap when bit 0 of + 627 asks (the table's + 140 list is called) |
+| 0x08861DE4 | the walking speed: + 96 from the character's pair in the table at + 704 (forward unless back is held), by facing |
+| 0x08878A20 / 0x08879D98 / 0x08879FC4 | script commands: nested (depth + 501, handler 0x08A22598[+ 490]); its end; bits into + 544 for fighters above a level (+ 375) |
+| 0x08877258 | a chance by level: table[+ 375] & (1 << random 0 - 31) |
+| 0x08837238, 0x088591F4, 0x08872950 | once a frame for all four fighters: 0x0883727C, 0x08859238, 0x08872994 |
+| 0x088590E4 | the hit record's first word (0x09358410) = a random one of the 32 words at 0x08A18FC0 |
+| 0x088988FC | a fighter's display side: 0x08A2A116 by layout and side |
+| 0x08822F8C | one of the three 0x30-byte objects made (list 6) |
+| 0x0882E0D0 / 0x0882E110 | the fade back to full; BATTLE + 102 (the stage's colour number) from 0x08A0F1C4 |
+| 0x08836E60 / 0x08836E90 | the s16 at 0x09524A68 changed, and held to 0 - 255 |
+| `object/screen_steps.c` | objects report arriving with their bit (by type) in GAME + 20 (0x0889E6A8, 0x0889F894, 0x0889EBFC, 0x0889F050); 0x0889CF90 sets a y motion from 0x08A2A148; 0x0889610C drops the top layer (0x092E8800) to y 256 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

@@ -343,3 +343,198 @@ SFA_FUNC(0887A10C, fighter_script_read) {
     f_0887A154(c);
     c->r[29] += 0x20;
 }
+
+/* ---- more of the same (0.67.0) ---- */
+
+void f_0889B6BC(Cpu *c);   /* animate_and_draw */
+void f_08899514(Cpu *c);   /* move_two_speeds */
+void f_0889CDF8(Cpu *c);   /* set_animation_a_entry */
+void f_0882324C(Cpu *c);   /* object_free_42 */
+void f_0887DA58(Cpu *c);   /* object_follow_owner */
+void f_0887D990(Cpu *c);   /* object_set_animation_by_type */
+
+/* Runs `fn` on the object with s0 holding it, as the originals do; answers what it answered. */
+static uint32_t call_keeping(Cpu *c, GuestFunc fn, gaddr o) {
+    gaddr saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[4] = o;
+    fn(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+    return c->r[2];
+}
+static void snap_x_to_target(gaddr o) { *W(o + 16) = (uint32_t)S16(o + 114) << 16; }
+/* The object reports that it has arrived: its bit (by type, +3) in GAME + 20. */
+static void arrived(gaddr o) {
+    *B(o + 5) = 0; *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | (1 << (*B(o + 3) & 31)));
+}
+
+SFA_FUNC(0889E6A8, move_x_then_arrived_a) { if (call_keeping(c, f_0889CE64, ARG(0))) arrived(ARG(0)); }
+SFA_FUNC(0889F894, move_x_then_arrived_b) { if (call_keeping(c, f_0889CE64, ARG(0))) arrived(ARG(0)); }
+SFA_FUNC(0889EBFC, move_y_then_arrived)   { if (call_keeping(c, f_0889CEA4, ARG(0))) arrived(ARG(0)); }
+
+/* The same, reporting bit 4, and only for objects with +10 clear. */
+SFA_FUNC(0889F050, move_x_then_arrived_bit_4) {
+    gaddr o = ARG(0);
+    if (!call_keeping(c, f_0889CE64, o)) return;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1); *B(o + 5) = 0;
+    if (*B(o + 10) == 0) *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | 0x10);
+}
+
+/* Moves in x to the target (the next part on arriving), animates and draws; the first also snaps onto
+   the target. */
+SFA_FUNC(0889B5EC, move_x_snap_animate_draw) {
+    gaddr o = ARG(0);
+    if (call_keeping(c, f_0889CE64, o)) { next_part(o); snap_x_to_target(o); }
+    call_keeping(c, f_0889B6BC, o);
+}
+SFA_FUNC(0889B67C, move_x_animate_draw) {
+    gaddr o = ARG(0);
+    if (call_keeping(c, f_0889CE64, o)) next_part(o);
+    call_keeping(c, f_0889B6BC, o);
+}
+
+/* As 0x0889B888 (from the x kept in +36), snapping onto the target on arriving. */
+SFA_FUNC(0889B7E8, move_x_from_36_snap_draw) {
+    gaddr o = ARG(0);
+    *H(o + 18) = *H(o + 36);
+    if (call_keeping(c, f_0889CE64, o)) { next_part(o); snap_x_to_target(o); }
+    *H(o + 36) = (uint16_t)S16(o + 18);
+    call_keeping(c, f_088215C4, o);
+}
+
+/* Animated and drawn; before that, for an owner with bit 1 of +78, the next part, aiming at the goal. */
+SFA_FUNC(0889B638, animate_draw_and_aim_on_owner_78) {
+    gaddr o = ARG(0);
+    if (S8(ARG(1) + 78) & 2) {
+        next_part(o);
+        *H(o + 114) = (uint16_t)S16(o + 112);
+        *W(o + 96) = 0;
+    }
+    call_on(c, f_0889B6BC, o, 0x20);
+}
+
+/* y by its speed, wrapped up from below 0 by the height +76 / +77 give, and drawn. */
+SFA_FUNC(0889AFF4, scroll_up_and_draw) {
+    gaddr o = ARG(0);
+    int32_t y = (int32_t)(*W(o + 20) + *W(o + 100));
+    if (y < 0) {
+        uint32_t height = (uint32_t)((S8(o + 76) << 8) + (S8(o + 77) & 0xFF)) << 16;
+        do y = (int32_t)((uint32_t)y + height); while (y < 0);
+    }
+    *W(o + 20) = (uint32_t)y;
+    call_on(c, f_088215C4, o, 0x20);
+}
+
+/* The two speeds (0x08899514), +34 following +32; the next routine step once +32 reaches 0x4000. */
+SFA_FUNC(088994D0, move_two_speeds_to_4000) {
+    gaddr o = ARG(0);
+    call_keeping(c, f_08899514, o);
+    *H(o + 34) = (uint16_t)S16(o + 32);
+    if (S16(o + 32) >= 16384) *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+}
+
+/* On the owner's flag 1: the next substep, and the object at +48 (if any) freed. */
+SFA_FUNC(0889AB10, step_on_flag_1_and_free) {
+    gaddr o = ARG(0);
+    if ((S16(ARG(1) + 424) & 1) == 0) return;
+    next_substep(o);
+    if (*W(o + 48) == 0) return;
+    gaddr saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[4] = *W(o + 48);
+    f_0882324C(c);
+    *W(o + 48) = 0;
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, fighter, entry): the animation for the fighter's side, entry `entry`; for objects with +10
+   set the side is replaced by 2 or 3 (the side plus GAME + 32, odd or even). */
+SFA_FUNC(08899A30, set_animation_for_side) {
+    gaddr o = ARG(0);
+    uint32_t side = *B(ARG(1) + 337), entry = ARG(2) & 0xFFFF;
+    if (*B(o + 10) != 0) side = ((side + *B(GAME + 32)) & 1) + 2;
+    c->r[29] -= 0x20;
+    c->r[4] = o; c->r[5] = side; c->r[6] = entry;
+    f_0889CDF8(c);
+    c->r[29] += 0x20;
+}
+
+/* The goal, target, y speed and y acceleration from entry `n` of the table 0x08A2A148 (four s16: the
+   goal, which is also the y to start from; the target; the speed and acceleration in 256ths). */
+SFA_FUNC(0889CF90, setup_y_motion) {
+    gaddr o = ARG(0), t = 0x08A2A148u + (((ARG(1) & 0xFFFF) << 2) & 0xFFFF) * 2u;
+    *H(o + 112) = *H(t);
+    *H(o + 114) = *H(t + 2);
+    *W(o + 100) = (uint32_t)S16(t + 4) << 8;
+    *H(o + 22) = *H(t);
+    *W(o + 108) = (uint32_t)S16(t + 6) << 8;
+}
+
+SFA_FUNC(0889EDA8, setup_0889EDA8) {
+    gaddr o = ARG(0);
+    *W(o + 148) = 1; *H(o + 86) = 8; *H(o + 22) = 0x80;
+    if ((S16(BATTLE + 72) & 1) == 0) *H(o + 22) = (uint16_t)(S16(o + 22) + 8);
+    set_animation(c, *W(0x08A283ECu + 20));
+}
+
+/* The s16 the table 0x08A2B2D8 holds for BATTLE + 72. */
+SFA_FUNC(0889FB94, value_by_battle_72) { RETURN((uint32_t)S16(0x08A2B2D8u + (uint32_t)*H(BATTLE + 72) * 2u)); }
+
+/* The top layer (0x092E8800) falls: its y by the speed at +136, which grows by +144; at y 256 it stops
+   there and the object's counter (+10) goes up, with bit 7 set in its +20. */
+SFA_FUNC(0889610C, layer_fall_to_256) {
+    gaddr o = ARG(0), layer = 0x092E8800u;
+    int32_t y = (int32_t)(*W(layer + 20) + *W(layer + 136));
+    *W(layer + 136) += *W(layer + 144);
+    if (y >= 0x1000000) {
+        *H(o + 10) = (uint16_t)(*H(o + 10) + 1);
+        *H(o + 20) = (uint16_t)(S16(o + 20) | 0x80);
+        y = 0x1000000;
+    }
+    *W(layer + 20) = (uint32_t)y;
+}
+
+/* An object following its owner (a fighter): layer 2, the owner's place moved by the character's
+   offsets (its table's +24), the animation for its type; objects with +121 clear also get +12 = -1 and
+   +13 = 2. */
+SFA_FUNC(0887D8A0, owned_follow_and_animate) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = 2;
+    *B(o + 9) = 2;
+    c->r[4] = o; c->r[5] = *W(*W(*W(o + 88) + 416) + 24);
+    f_0887DA58(c);
+    if (S8(o + 121) == 0) { *B(o + 12) = 0xFF; *B(o + 13) = 2; }
+    c->r[4] = o;
+    f_0887D990(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Hidden while +33 counts down; then the next substep with +40 = +32, or, when +32 has bit 7, straight
+   to substep 2 with the counter +35 at its end (+34 - 1). */
+SFA_FUNC(08886FBC, count_33_then_start) {
+    gaddr o = ARG(0);
+    uint8_t n = *B(o + 33);
+    *B(o + 33) = (uint8_t)(n - 1);
+    if (n != 0) { *B(o + 1) = 0; return; }
+    *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+    *H(o + 40) = *B(o + 32);
+    if (*B(o + 32) & 0x80) { *B(o + 5) = 2; *B(o + 35) = (uint8_t)(*B(o + 34) - 1); }
+}
+
+/* Waits 24 frames (+18), or not at all when BATTLE + 2 is set, then the next routine step. */
+SFA_FUNC(0888710C, wait_24_unless_battle_2) {
+    gaddr o = ARG(0);
+    if (*B(o + 5) == 0) {
+        if (S16(BATTLE + 2) == 0) { *B(o + 5) = 1; *B(o + 18) = 0x18; return; }
+    } else {
+        *B(o + 18) = (uint8_t)(*B(o + 18) - 1);
+        if (*B(o + 18) != 0) return;
+    }
+    *B(o + 5) = 0;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+}

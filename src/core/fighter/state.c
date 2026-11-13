@@ -339,3 +339,174 @@ SFA_FUNC(08864140, fighter_can_wall_jump) {
     else if (speed < 0) RETURN(wall == 1 && (held & 1) != 0);
     else RETURN(0);
 }
+
+/* ---- once a frame, for all four ---- */
+
+void f_0883727C(Cpu *c);   /* fighter_pressure */
+void f_08859238(Cpu *c);   /* fighter_distance */
+void f_08821368(Cpu *c);   /* a random number */
+
+static void for_each_fighter(Cpu *c, GuestFunc fn) {
+    static const gaddr FIGHTERS[4] = { FIGHTER_1, FIGHTER_2, FIGHTER_3, FIGHTER_4 };
+    c->r[29] -= 0x20;
+    for (int i = 0; i < 4; i++) { c->r[4] = FIGHTERS[i]; fn(c); }
+    c->r[29] += 0x20;
+}
+SFA_FUNC(08837238, fighters_pressure) { for_each_fighter(c, f_0883727C); }
+SFA_FUNC(088591F4, fighters_distance) { for_each_fighter(c, f_08859238); }
+
+/* The frame's random entry: the hit record's first word points at one of the 32 words at 0x08A18FC0. */
+SFA_FUNC(088590E4, frame_random_entry) {
+    c->r[29] -= 0x10;
+    f_08821368(c);
+    *W(0x09358410u) = 0x08A18FC0u + (c->r[2] & 0x1F) * 4u;
+    c->r[29] += 0x10;
+}
+
+/* +254 set: for a fighter with +309 clear whose ISM is chosen (+386 not -1), or otherwise with bit 26 of
+   +792. */
+SFA_FUNC(088597AC, fighter_set_254) {
+    gaddr f = ARG(0);
+    if ((S8(f + 309) == 0 && S8(f + F_ISM) != -1) || (*W(f + 792) & 0x4000000u) != 0) *B(f + 254) = 1;
+}
+
+/* When the second argument's +4, +70 and +6 are all clear the fighter's +340 goes up by one; otherwise
+   its +412 is cleared. */
+SFA_FUNC(08833C58, fighter_count_340) {
+    gaddr b = ARG(1), f = ARG(2);
+    if ((S8(b + 4) | S8(b + 70) | S8(b + 6)) != 0) *B(f + 412) = 0;
+    else *B(f + 340) = (uint8_t)(S8(f + 340) + 1);
+}
+
+/* ---- the character's own routines (the table +416 points at) ---- */
+
+static void run_character_routine(Cpu *c, gaddr f, uint32_t which) {
+    gaddr fn = *W(*W(f + 416) + which);
+    c->r[29] -= 0x20;
+    c->r[5] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+SFA_FUNC(0885F838, fighter_character_routine_76) { run_character_routine(c, ARG(0), 76); }
+
+/* Three countdowns (+638, +643, +542) tick, then the character's routine at +64. */
+SFA_FUNC(0885B7D4, fighter_tick_and_routine_64) {
+    gaddr f = ARG(0);
+    int8_t a = S8(f + 638), b = S8(f + 643), d = S8(f + 542);
+    if (a != 0) *B(f + 638) = (uint8_t)(a - 1);
+    if (b != 0) *B(f + 643) = (uint8_t)(b - 1);
+    if (d != 0) *B(f + 542) = (uint8_t)(d - 1);
+    c->r[6] = (uint32_t)(b != 0 ? b - 1 : b);
+    run_character_routine(c, f, 64);
+}
+
+/* +551 and +539 cleared, then the character's routine at +88, or at +92 while +373 is set. */
+SFA_FUNC(0885C1EC, fighter_routine_88_or_92) {
+    gaddr f = ARG(0);
+    *B(f + 551) = 0; *B(f + 539) = 0;
+    c->r[6] = (uint32_t)S8(f + 373);
+    run_character_routine(c, f, S8(f + 373) != 0 ? 92 : 88);
+}
+
+/* ---- 0.67.0 ---- */
+
+void f_08872994(Cpu *c);   /* fighter_drop_flag_40 */
+void f_0887A10C(Cpu *c);   /* fighter_script_read (object/screen_steps.c) */
+SFA_FUNC(08872950, fighters_drop_flag_40) { for_each_fighter(c, f_08872994); }
+
+/* The fighter's walking speed: forward (+78 = 1) unless back is held, from the character's pair in the
+   table +704 points at (s16, in 256ths), towards where it faces. */
+SFA_FUNC(08861DE4, fighter_set_walk_speed) {
+    gaddr f = ARG(0);
+    uint32_t forward = (*H(f + 752) & 2) ? 0 : 1;
+    *B(f + 78) = (uint8_t)forward;
+    int32_t v = S16(*W(f + 704) + ((uint32_t)(S8(f + 338) << 1) + forward) * 2u) << 8;
+    *W(f + 96) = (uint32_t)(*B(f + F_FACING) != 0 ? -v : v);
+}
+
+/* +564 cleared, then the character's routine at +80. */
+SFA_FUNC(08863918, fighter_routine_80) { *B(ARG(0) + 564) = 0; run_character_routine(c, ARG(0), 80); }
+
+/* A change of character asked for (bit 0 of +627): characters 0x11 and 0x13 become each other, and the
+   first routine of the character table's +140 list is called with the new one. */
+SFA_FUNC(08864494, fighter_swap_11_13) {
+    gaddr f = ARG(0);
+    if ((S8(f + 627) & 1) == 0) return;
+    *B(f + 627) = 0;
+    int8_t who = S8(f + 338);
+    if (who != 0x11 && who != 0x13) return;
+    *B(f + 338) = (uint8_t)(who ^ 2);
+    gaddr fn = *W(*W(*W(f + 416) + 140));
+    c->r[29] -= 0x20;
+    c->r[5] = (uint32_t)S8(f + 338); c->r[6] = c->r[5]; c->r[7] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* +593 from the table 0x08A19632 by character and ISM. */
+SFA_FUNC(08864D70, fighter_set_593) {
+    gaddr f = ARG(0);
+    *B(f + 593) = *B(0x08A19632u + (uint32_t)(S8(f + 338) << 2) + (uint32_t)S8(f + F_ISM) + 1);
+}
+
+/* The second fighter is within 128 of the first (to either side) and its +551 is clear. */
+SFA_FUNC(08876F44, fighter_near_and_551_clear) {
+    gaddr a = ARG(0), b = ARG(1);
+    uint16_t d = (uint16_t)(S16(b + F_X) - S16(a + F_X) + 0x80);
+    RETURN(d < 257 && S8(b + 551) == 0);
+}
+
+/* A chance by the fighter's level (+375): a random one of the 32 bits of the table's word for that
+   level. Answers the bit, not 0 or 1. */
+SFA_FUNC(08877258, fighter_chance_by_level) {
+    gaddr f = ARG(0), table = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x10;
+    c->r[16] = table; c->r[17] = f;
+    f_08821368(c);
+    RETURN(*W(table + (uint32_t)S8(f + 375) * 4u) & (1u << (c->r[2] & 0x1F)));
+    c->r[29] += 0x10;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Script commands (each is given the fighter and the place in the script after its own word).
+   A nested command: the depth (+501) up by one, the next word into +490, and that command's handler
+   (0x08A22598) on what follows. */
+SFA_FUNC(08878A20, script_nested) {
+    gaddr f = ARG(0), p = ARG(1);
+    *B(f + 501) = (uint8_t)(S8(f + 501) + 1);
+    *H(f + 490) = *H(p);
+    gaddr fn = *W(0x08A22598u + (uint32_t)S16(f + 490) * 4u);
+    c->r[29] -= 0x20;
+    c->r[5] = p + 2; c->r[6] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* The end of a nested command: the depth down by one, and the next command read. */
+SFA_FUNC(08879D98, script_nested_end) {
+    gaddr f = ARG(0);
+    *B(f + 501) = (uint8_t)(S8(f + 501) - 1);
+    c->r[29] -= 0x20;
+    f_0887A10C(c);
+    c->r[29] += 0x20;
+}
+
+/* (level, bits): for a fighter above that level (+375) the bits are set in +544; then the next command. */
+SFA_FUNC(08879FC4, script_set_544_above_level) {
+    gaddr f = ARG(0), p = ARG(1);
+    if (S16(p) < S8(f + 375)) *H(f + 544) = (uint16_t)(S16(f + 544) | S16(p + 2));
+    c->r[29] -= 0x20;
+    c->r[4] = f; c->r[5] = p + 4; c->r[6] = p + 4;
+    f_0887A10C(c);
+    c->r[29] += 0x20;
+}
+
+/* Which side of the screen a fighter's display is on: the table 0x08A2A116 by layout and side, turned
+   round in layout 3 unless bit 0 of GAME + 57. */
+SFA_FUNC(088988FC, fighter_display_side) {
+    int16_t layout = S16(BATTLE + BT_LAYOUT);
+    uint32_t side = *B(0x08A2A116u + (uint32_t)(layout << 2) + (uint32_t)S8(ARG(0) + F_SIDE));
+    if (layout == 3 && (S8(GAME + 57) & 1) == 0) side = (side ^ 1) & 0xFF;
+    RETURN(side);
+}
