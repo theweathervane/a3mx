@@ -1,6 +1,6 @@
 
 # a3mx
-![a3mx](docs/images/a3mx.png){width=300 height=150}
+![a3mx](docs/images/a3mx_sm.png)
 
 a3mx is a source decompilation of Street Fighter Alpha 3 MAX (PSP): the game rewritten, function by function, as readable C, running natively on PC.
 
