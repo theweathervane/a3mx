@@ -124,3 +124,62 @@ SFA_FUNC(08836E60, add_to_09524A68) {
     f_08836E90(c);
     c->r[29] += 0x10;
 }
+
+/* Eight 12-byte entries at 0x08AD8FE8 cleared. */
+SFA_FUNC(08805318, clear_08AD8FE8) {
+    gaddr s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    for (int i = 0; i < 8; i++) {
+        gaddr e = 0x08AD8FE8u + (uint32_t)i * 0xCu;
+        c->r[16] = e; c->r[17] = (uint32_t)i;
+        CALL3(f_089F3470, e, 0, 0xC);
+        *H(e) = 0;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* The same s16 up by one for a fighter with +373 clear, unless GAME + 57 is 3. */
+void f_08836E60(Cpu *c);
+SFA_FUNC(08837098, add_one_for_fighter) {
+    if ((int8_t)*B(GAME + 57) == 3 || (int8_t)*B(ARG(0) + 373) != 0) return;
+    c->r[29] -= 0x20;
+    c->r[4] = 1;
+    f_08836E60(c);
+    c->r[29] += 0x20;
+}
+
+/* The three background layers (0x9C bytes each) cleared and numbered 0, 1, 2 at +2, with the 0x88
+   bytes at 0x092E5F78. */
+SFA_FUNC(08822C84, layers_clear) {
+    for (uint32_t i = 0; i < 0x9Cu; i++) { *B(0x092E8800u + i) = 0; *B(0x092E88A0u + i) = 0; *B(0x092E8940u + i) = 0; }
+    *B(0x092E88A0u + 2) = 1;
+    *B(0x092E8940u + 2) = 2;
+    clear(0x092E5F78u, 0x88);
+}
+
+/* A fighter's steps and work fields cleared for a new round. */
+SFA_FUNC(08822AEC, fighter_reset_steps) {
+    gaddr f = ARG(0);
+    *B(f + 125) = 0; *B(f + 356) = 0; *B(f + 126) = 0; *B(f + 135) = 0; *B(f + 73) = 0;
+    *B(f + 7) = 0; *B(f + 6) = 0; *B(f + 5) = 0; *B(f + 4) = 0; *B(f + 1) = 0;
+    for (int i = 0; i < 5; i++) W(f + 40)[i] = 0;
+    *B(f + 170) = 0; *W(f + 164) = 0;
+    *B(f + 163) = 0xFF; *B(f + 162) = 0xFF; *B(f + 161) = 0xFF; *B(f + 160) = 0xFF;
+    *B(f + 168) = 0; *B(f + 169) = 0;
+    *W(f + 108) = 0; *W(f + 104) = 0; *W(f + 100) = 0; *W(f + 96) = 0;
+}
+
+/* The s16 at 0x09524A68 grows on a timer (the u16 after it): by 8 every 1920 frames, or by 2 every 640
+   while GAME + 137. */
+SFA_FUNC(08836A3C, grow_09524A68_on_timer) {
+    uint16_t left = (uint16_t)(*H(0x09524A6Au) - 1);
+    *H(0x09524A6Au) = left;
+    if (left != 0) return;
+    int fast = (int8_t)*B(GAME + 137) != 0;
+    *H(0x09524A6Au) = fast ? 0x280 : 0x780;
+    c->r[29] -= 0x20;
+    c->r[4] = fast ? 2 : 8;
+    f_08836E60(c);
+    c->r[29] += 0x20;
+}

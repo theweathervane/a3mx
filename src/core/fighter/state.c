@@ -510,3 +510,91 @@ SFA_FUNC(088988FC, fighter_display_side) {
     if (layout == 3 && (S8(GAME + 57) & 1) == 0) side = (side ^ 1) & 0xFF;
     RETURN(side);
 }
+
+/* ---- 0.68.0 ---- */
+
+/* The fighter's character number as the voices and names use it: 4 and 6 become 0x12 and 0x14 for a
+   fighter whose ISM is negative, and anyone with +373 is 0x15 while BATTLE + 59 is 2. */
+SFA_FUNC(08812FD4, fighter_character_for_display) {
+    gaddr f = ARG(0);
+    uint32_t who = (uint32_t)S8(f + 338) & 0xFFFF;
+    if (who == 4 && S8(f + F_ISM) < 0) who = 0x12;
+    if (who == 6 && S8(f + F_ISM) < 0) who = 0x14;
+    if (S8(BATTLE + 59) == 2 && S8(f + 373) != 0) who = 0x15;
+    RETURN(who);
+}
+
+/* A countdown (+557, from +556) that walks +555 through its row (by +589) of the 32-wide table
+   0x08A1FD5C, never above +598; past the row's 32 entries it stays at +598. */
+SFA_FUNC(08859AD8, fighter_step_555) {
+    gaddr f = ARG(0);
+    int8_t left = S8(f + 557);
+    if (left == 0) return;
+    *B(f + 557) = (uint8_t)(left - 1);
+    int32_t done = S8(f + 556) - S8(f + 557);
+    int8_t cap = S8(f + 598), v = cap;
+    if (done < 32) {
+        int8_t t = S8(0x08A1FD5Cu + (uint32_t)((S8(f + 589) << 5) + done));
+        if (t < cap) v = t;
+    }
+    *B(f + 555) = (uint8_t)v;
+}
+
+/* The fighter's ISM data: the character table's +20 list holds a pointer for each ISM (after its first
+   word) to seven words, kept in +128 (the pointer), +208 to +224, +200 and +300. */
+SFA_FUNC(08862D88, fighter_load_ism_data) {
+    gaddr f = ARG(0);
+    gaddr p = *W(*W(*W(f + 416) + 20) + (uint32_t)(S8(f + F_ISM) << 2) + 4);
+    *W(f + 128) = p;
+    for (int i = 0; i < 5; i++) *W(f + 208 + (uint32_t)i * 4u) = W(p)[i];
+    *W(f + 200) = W(p)[5];
+    *W(f + 300) = W(p)[6];
+}
+
+/* An object moved by the character's offset (the s16 pair at 0x08A196DA): x towards where the fighter
+   faces, y as given. */
+SFA_FUNC(08864D98, fighter_offset_object) {
+    gaddr f = ARG(0), o = ARG(1);
+    gaddr t = 0x08A196DAu + (uint32_t)(S8(f + 338) << 2);
+    *H(o + 22) = (uint16_t)(S16(o + 22) + S16(t + 2));
+    *H(o + 18) = (uint16_t)(*B(f + F_FACING) != 0 ? S16(o + 18) - S16(t) : S16(o + 18) + S16(t));
+}
+
+/* One of BATTLE's two words at +136 and +140 for the fighter (by its +121), the other way round in
+   layouts other than 2 and (unless bit 0 of GAME + 57) 3. */
+SFA_FUNC(0886B4D4, fighter_battle_word) {
+    int second = S8(ARG(0) + 121) != 0;
+    int16_t layout = S16(BATTLE + BT_LAYOUT);
+    int straight = layout == 2 || (layout == 3 && (S8(GAME + 57) & 1) == 0);
+    RETURN(*W(BATTLE + ((second == straight) ? 140 : 136)));
+}
+
+/* By layout, a routine (0x08A22188) for a fighter with +251 and +816 both clear; otherwise 0. */
+#include "../object/step.h"
+SFA_FUNC(08876BE4, fighter_run_by_layout) {
+    gaddr f = ARG(0);
+    RETURN(0);
+    if (S8(f + 251) != 0 || *W(f + 816) != 0) return;
+    run_step(c, (uint32_t)S16(BATTLE + BT_LAYOUT), 0x08A22188u, 5, 0x08876C44u);
+}
+
+/* A script command that skips to the end of its block: words are passed over, 0x7600 opening a nested
+   block and 0x7602 closing one, until the close that ends this block; then the next command is read. */
+SFA_FUNC(08879D1C, script_skip_block) {
+    gaddr f = ARG(0), p = ARG(1), next;
+    int8_t start = S8(f + 501);
+    for (;;) {
+        int16_t w = S16(p);
+        next = p + 2;
+        if (w == 0x7600) *B(f + 501) = (uint8_t)(S8(f + 501) + 1);
+        if (w == 0x7602) {
+            *B(f + 501) = (uint8_t)(S8(f + 501) - 1);
+            if (start == S8(f + 501) + 1) break;
+        }
+        p = next;
+    }
+    c->r[29] -= 0x20;
+    c->r[5] = next;
+    f_0887A10C(c);
+    c->r[29] += 0x20;
+}

@@ -151,3 +151,17 @@ SFA_FUNC(08822F8C, object_make_small) {
     *B(o) = 1; *B(o + 2) = kind; *B(o + 3) = type;
     RETURN(o);
 }
+
+/* (kind, type): one of the third list's 32 objects (0x94 bytes, in use at +90), looking from the last
+   down; set up with its kind (+91) and type (+92). Answers it, or 0. */
+SFA_FUNC(08823338, object_make_list_3) {
+    uint8_t kind = (uint8_t)ARG(0), type = (uint8_t)ARG(1);
+    gaddr o = 0x092E2B88u + 0x11EC;
+    for (int left = 0x20; *B(o + 90) != 0; o -= 0x94) if (--left == 0) { RETURN(0); return; }
+    *B(0x095176F9u) = (uint8_t)((int8_t)*B(0x095176F9u) - 1);
+    *B(o + 90) = 1; *B(o + 91) = kind; *B(o + 92) = type;
+    *B(o + 137) = 0; *B(o + 136) = 0xFF;
+    *B(o + 131) = 0; *B(o + 130) = 0; *B(o + 129) = 0; *B(o + 128) = 0;
+    *B(o + 54) = 0xFF; *B(o + 89) = 0; *B(o + 88) = 0; *B(o + 138) = 0;
+    RETURN(o);
+}

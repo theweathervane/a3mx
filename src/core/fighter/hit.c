@@ -136,3 +136,80 @@ SFA_FUNC(08871A84, hit_clear_119) {
     gaddr who = *W(HIT + 16), o = ARG(0);
     if (*B(who + 8) == 0 && S8(who + 73) != 0 && *B(o + 119) < 3) *B(o + 119) = 0;
 }
+
+/* ---- 0.68.0 ---- */
+
+void f_088723D4(Cpu *c);   /* hit_check_235 */
+#define CAMERA_LAYER 0x092E88A0u
+
+/* Which way the one hit falls (+134 of the second argument): the attacker's facing; or, by byte 11 of
+   the hit's data: with bit 7, away from the attacker; at 2, by which half of the screen it is in;
+   otherwise the facing turned by that byte. */
+SFA_FUNC(088721B8, hit_set_fall_side) {
+    gaddr a = ARG(0), b = ARG(1);
+    uint8_t how = *B(ARG(2) + 11);
+    *B(b + 134) = *B(a + 11);
+    if (how & 0x80) *B(b + 134) = S16(a + 18) < S16(b + 18);
+    else if (how == 2) *B(b + 134) = S16(b + 18) - S16(CAMERA_LAYER + 18) < 193;
+    else *B(b + 134) = (uint8_t)(S8(b + 134) ^ how);
+}
+
+/* +575: 3 with +637, else 2 with bit 7 of +73, else 1 when 0x088723D4 says so, else 0. */
+SFA_FUNC(08872368, hit_set_575) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    uint32_t v = 0;
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    if (S8(f + 637) != 0) v = 3;
+    else if (S8(f + 73) & 0x80) v = 2;
+    else { c->r[17] = 0; c->r[4] = f; f_088723D4(c); if (c->r[2] != 0) v = 1; }
+    *B(f + 575) = (uint8_t)v;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* A hit by an object (+8 set): the one hit gets +661; and unless the object is of kind 0x17 or 0x22,
+   the other fighter's +537 = 1 and the one hit's = -1, and (for a hit with byte 117 not 0xFF, health
+   left, and the object's +271 set) BATTLE + 28 to + 30 = 15, 2, 2. */
+SFA_FUNC(088724C0, hit_by_object) {
+    gaddr o = ARG(0), f = ARG(1);
+    if (*B(o + 8) == 0) return;
+    *B(f + 661) = 1;
+    if (*B(o + 2) == 0x17 || *B(o + 2) == 0x22) return;
+    *B(*W(HIT + 24) + 537) = 1;
+    *B(f + 537) = 0xFF;
+    if (*B(f + 117) == 0xFF || S16(f + F_HEALTH) < 0 || S8(o + 271) == 0) return;
+    *B(BATTLE + 28) = 0xF; *B(BATTLE + 29) = 2; *B(BATTLE + 30) = 2;
+}
+
+/* Damage by the other fighter's ISM (+386): a fifth less for 1, the value never under
+   1, a fifth more for the others unless the hit's byte 19 is 2 (never over 127), unchanged for 0;
+   then one less while the other's +308 is set, never under 1. Values of 0 or less are left. */
+SFA_FUNC(08872C50, hit_damage_by_ism) {
+    gaddr other = *W(HIT + 24);
+    int32_t v = (int32_t)ARG(1);
+    if (v > 0) {
+        int32_t fifth = v / 5;
+        int8_t ism = S8(other + 386);
+        if (ism == 1) { v -= fifth; if (v <= 0) v = 1; }
+        else if (ism != 0 && *B(ARG(0) + 19) != 2) { v += fifth; if (v >= 128) v = 0x7F; }
+    }
+    if (S8(other + 308) != 0) { v -= 1; if (v <= 0) v = 1; }
+    RETURN(v);
+}
+
+/* The value scaled by +644 of the one hit (or of the first argument, when the one hit has +235 without
+   bit 7 of +307 and the first's is set): doubled for 1, a quarter more for 2, a half more for 3. Not
+   for objects (+8). */
+SFA_FUNC(088732E0, hit_scale_by_644) {
+    gaddr a = ARG(0), f = ARG(1);
+    int32_t v = (int32_t)ARG(2);
+    if (*B(a + 8) == 0) {
+        int8_t k = S8(f + 644);
+        if (S8(f + 235) != 0 && S8(a + 644) != 0 && (*B(f + 307) & 0x80) == 0) k = S8(a + 644);
+        if (k == 1) v = (int32_t)((uint32_t)v << 1);
+        else if (k == 2) v += v >> 2;
+        else if (k == 3) v += v >> 1;
+    }
+    RETURN(v);
+}

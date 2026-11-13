@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.68.0
+- **More of the game decompiled:** 58 more functions are hand-written C: the seeding of the game's random numbers, the record that directs a sequence of screens, damage adjusted by ISM and by the hit, which way a fighter falls when hit, a fighter's ISM data, sliding panels and list rows, and more of the intro's and the screens' objects. Nothing changes in play.
+
 ## 0.67.0
 - **More of the game decompiled:** 71 more functions are hand-written C, taking the total past a thousand: the objects of a fight's intro (the pieces that slide in before "FIGHT"), the calls into each character's own routines, more of the fighters' script commands, the walking speed, and more steps of the screens' objects. Nothing changes in play.
 

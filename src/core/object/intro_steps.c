@@ -191,3 +191,29 @@ SFA_FUNC(08856578, intro_setup_08856578) {
     *W(o + 148) = 1; *H(o + 86) = 6; *W(o + 164) = 1;
     set_animation(c, *W(0x08A16B0Cu));
 }
+
+/* Rises with a growing speed (y by the speed, the speed by 2.0) while above y 128; at 128 or less it
+   stops there for 16 frames, the intro moves to stage 4 and the object steps on. Drawn. */
+SFA_FUNC(088550E8, intro_settle_at_128) {
+    gaddr o = ARG(0);
+    uint32_t v = *W(o + 100) + 0x20000;
+    *W(o + 100) = v;
+    *W(o + 20) += v;
+    if ((int32_t)*W(o + 20) <= 0x800000) {
+        next_substep(o);
+        *H(o + 22) = 0x80; *H(o + 82) = 0x10;
+        *B(BATTLE + BT_INTRO) = 4;
+    }
+    draw(c, o);
+}
+
+/* Bounces: while the timer runs, y is the low byte of the table 0x08A16D88's word for the frames left;
+   then it rests at 128 for 16 frames and steps on. Drawn. */
+SFA_FUNC(0885515C, intro_bounce) {
+    gaddr o = ARG(0);
+    int16_t left = (int16_t)(S16(o + 82) - 1);
+    *H(o + 82) = (uint16_t)left;
+    *H(o + 22) = (uint16_t)(S16(0x08A16D88u + (uint32_t)(left * 2)) & 0xFF);
+    if (left == 0) { next_substep(o); *H(o + 82) = 0x10; *H(o + 22) = 0x80; }
+    draw(c, o);
+}

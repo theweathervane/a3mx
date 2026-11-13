@@ -77,3 +77,31 @@ SFA_FUNC(088A96B8, sequence_game_16) {
     }
     *H(GAME + 16) = (uint16_t)((*H(GAME + 16) & 0xFF00) | *H(0x08A2C536u + entry * 2u));
 }
+
+/* Seeds the game's random numbers (a Mersenne Twister: 624 words at 0x08B01564, then its place in them):
+   word 0 is the seed and each next is 1812433253 * (last ^ (last >> 30)) + its number. GAME + 64 keeps
+   the low half of the last word, which is also the answer. */
+#define RANDOM_STATE 0x08B01564u
+SFA_FUNC(08820B7C, random_seed) {
+    uint32_t *mt = guest_ptr(RANDOM_STATE), v = ARG(0);
+    mt[0] = v;
+    for (uint32_t i = 1; i < 624; i++) {
+        v = (v ^ (v >> 30)) * 0x6C078965u + i;
+        mt[i] = v;
+    }
+    *H(RANDOM_STATE + 2496) = 0;
+    *H(GAME + 64) = (uint16_t)v;
+    RETURN(v);
+}
+
+/* The save question's cursor (0x09523C69) shown by an object: hidden at 0, at picture 0x91 for 1 and
+   0x81 for -1 (both at +6 = 0xA0); other values leave it. */
+SFA_FUNC(08819020, save_cursor_object) {
+    gaddr o = ARG(0);
+    int8_t cursor = (int8_t)*B(0x09523C60u + 9);
+    if (cursor == 0) { *B(o + 93) = 0; return; }
+    if (cursor != 1 && cursor != -1) return;
+    *B(o + 93) = 1;
+    *H(o + 6) = 0xA0;
+    *H(o + 10) = cursor == 1 ? 0x91 : 0x81;
+}

@@ -538,6 +538,26 @@ owner at + 88, and frame data at + 296.
 | 0x08836E60 / 0x08836E90 | the s16 at 0x09524A68 changed, and held to 0 - 255 |
 | `object/screen_steps.c` | objects report arriving with their bit (by type) in GAME + 20 (0x0889E6A8, 0x0889F894, 0x0889EBFC, 0x0889F050); 0x0889CF90 sets a y motion from 0x08A2A148; 0x0889610C drops the top layer (0x092E8800) to y 256 |
 
+**Random numbers, the director and damage** (0.68.0).
+
+| Address | What |
+|---|---|
+| 0x08820B7C | the random numbers seeded (`misc.c`): a Mersenne Twister, 624 words at 0x08B01564 (then its index, u16 at + 2496); word i = 1812433253 × (last ^ last >> 30) + i; GAME + 64 = the last word's low half |
+| `object/director.c` | the record at 0x08B0274C that directs a sequence of screens: handlers by its + 2 (0x08A2C5A4), + 8 (0x08A2C5BC, C5E4, C644, C768) and + 16 (0x08A2C738), and by GAME + 4 (0x08A2C23C) and the high bytes of GAME + 16 (0x08A2C59C) and + 22 (0x08A2C664, C670); scroll records 0x08B027E0 and 0x08B02810 |
+| 0x08872C50 | damage by the other fighter's ISM: a fifth less for ISM 1, a fifth more for the rest (not ISM 0, not for hits with byte 19 = 2; 127 at most), one less while + 308, never under 1 |
+| 0x088732E0 | a value scaled by + 644: ×2 for 1, + ¼ for 2, + ½ for 3 |
+| 0x088721B8 | which way the one hit falls (+ 134): the attacker's facing, away from the attacker (hit byte 11 bit 7), by the screen's half (2), or turned by the byte |
+| 0x08872368 / 0x088724C0 | + 575 = 3 / 2 / 1 / 0 by + 637, + 73 bit 7, 0x088723D4; a hit by an object (+ 8): + 661, + 537, BATTLE + 28 - + 30 |
+| 0x08862D88 | a fighter's ISM data: seven words from the character table's + 20 list by ISM, into + 128 (the pointer), + 208 - + 224, + 200, + 300 |
+| 0x08812FD4 | the character number for display: 4 → 0x12 and 6 → 0x14 with a negative ISM; 0x15 with + 373 while BATTLE + 59 = 2 |
+| 0x08879D1C | a script's block skipped: words passed over (0x7600 opens a nested block, 0x7602 closes one) to the close that ends this one |
+| 0x08859AD8 | + 555 walked through its row of the table 0x08A1FD5C as + 557 counts down |
+| 0x08823338 | an object made in the third list (kind + 91, type + 92) |
+| 0x08822C84 / 0x08822AEC | the three layers cleared; a fighter's steps and work fields reset |
+| 0x08836A3C | the s16 at 0x09524A68 grows on a timer: + 8 every 1920 frames, or + 2 every 640 while GAME + 137 |
+| 0x08819020 | the save question's cursor (0x09523C69) shown by an object |
+| 0x088550E8 / 0x0885515C | intro objects: settles at y 128 (intro stage 4); bounces by the table 0x08A16D88 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11
