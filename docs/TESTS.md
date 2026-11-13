@@ -61,6 +61,7 @@ touches nothing the hashes cover.
 | `stick_menus` | the analogue stick through menus and the select | stick-to-direction handling | 4 min |
 | `select_choices` | the character select's cursor, random box, ISM and speed | the select screen's logic | 5 min |
 | `arcade_fight` | Arcade's first fight with moves, specials and a CPU opponent | the fight loop | 7 min |
+| `arcade_other_fighter` | the same fight as E. HONDA (one box right on the select screen) against DAN | fighter and stage code RYU's first fight doesn't run | 7 min |
 | `arcade_match` | a whole match and what follows it | round ends, win screens | 8 min |
 | `arcade_ending` | the final fight, the ending, the save error questions | endings and the save path's failures | 8 min |
 | `quit_to_menu` | pause, QUIT GAME, back to the MODE MENU | leaving a fight cleanly | 5 min |

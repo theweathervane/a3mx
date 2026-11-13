@@ -4,7 +4,8 @@
 loop, set-up, most of its screens and its per-frame steps, the end of every frame, the sprite and object
 drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
 OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers,
-the step dispatchers the tests run, the text queue and the small questions about a fighter's buttons and the network state are
+the step dispatchers the tests run, the text queue, the camera's sideways steps, the fighters' trail and the small steps and
+questions about a fighter's state, its buttons and the network state are
 native C. Everything else still runs as translated code. The extracted assets are laid out by character, stage and screen ([assets/LAYOUT.md](../assets/LAYOUT.md)). How much is done is in the box below.
 
 ## Progress
@@ -17,15 +18,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.57% decompiled
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.77% decompiled
 
-Functions                                [░░░░░░░░░░]   4.95%  737 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   5.57%  26,962 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   5.34%  795 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   5.77%  27,915 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.21%  24,902 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.61%  25,710 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   0.37%  960 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -96,9 +97,13 @@ Done:
       the text queue (0x0880A6CC), the draw depth table (0x0880A3C4), a fighter's held directions and
       buttons (`src/core/fighter/buttons.c`), the network state's questions (`src/core/network/state.c`)
       and 40 empty functions (0.61.0)
+- [x] 38 more dispatchers, among them the whole-frame kind (the step, then the object's animation and
+      drawing); the camera's sideways steps (0x0881E49C, 0x0881E4E4, 0x0881EB78), an object's animation
+      start (0x0882196C), the fighters' trail (0x0882D95C), falling objects (`src/core/object/drift.c`)
+      and thirteen fighter steps (`src/core/fighter/state.c`); scenario `arcade_other_fighter` (0.62.0)
 
 To do, in rough order:
-- [ ] The other 892 step dispatchers, as scenarios reach them (each is one line in `steps.c`; the
+- [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the
       modes no scenario plays yet hold most of them)
 - [ ] Object kinds 3 (0x0880F820, a many-polygon shape) and 4 (0x08810128, a shaded rectangle). Need a
       scenario that draws one.

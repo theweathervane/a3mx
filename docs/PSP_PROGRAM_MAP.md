@@ -422,6 +422,23 @@ handler and the table are left in a1 / a2 (or a2 / a3), which some handlers read
 | 0x088D7E80 / 0x088D7E90 / 0x088D7F18 / 0x088D7F28 | the network state 0x09523980: + 59 read; + 60 cleared (the end of every frame); + 8 read (the session's failure); + 267 read, setting + 61 when it is set |
 | 0x088E3FE0 | 0x09523960 + 25 cleared |
 | `src/core/empty.c` | 40 functions that only return (steps with nothing to do, routines compiled away) |
+| 0x0881E49C / 0x0881E4E4 | the camera's step right / left (`src/core/stage/camera.c`): layer + 34 moved by a1 (5 at most; a1 negative for left); answers the new x, or the limit (+ 70 right, + 68 left) once past it, leaving the stored x for the caller to correct |
+| 0x0881EB78 | the higher of two fighters' y (+ 22) into `*a2` |
+| 0x0882196C | an object's animation started (`src/core/object/animation.c`): + 28 = the entry, + 74 - 77 = its first four bytes, + 152 = 0 |
+| 0x0882D95C | a fighter recorded in a trail buffer (`src/core/fighter/trail.c`): (fighter, buffer, index): u32 [index] = fighter + 28 (animation), s16 [+ 512] = x, s16 [+ 768] = y, u8 [+ 1024] = facing (+ 11) |
+| 0x0888A1B0 / 0x0888A1EC | falling objects (0x94 bytes, `src/core/object/drift.c`): x (+ 4) += + 104, wrapping to 128.0 (256.0 for type + 92 = 0x11) at 0 or less; y (+ 8) += + 108, back to 0 at 240.0 |
+| 0x088593D8 / 0x088622CC | fighter + 697 = the opponent (+ 92) is to the right, noted only when more than 24 apart; the fighter faces away (+ 697 ≠ facing + 11) (`src/core/fighter/state.c`) |
+| 0x08859C10 | a fighter's slide: + 690 frames left, x moved by the s8 at 0x08A190F7 + frames, forward by facing |
+| 0x08861E94 | up held (+ 752 & 8) and nothing halting (BATTLE + 13, + 14, GAME + 38) |
+| 0x08863384 | the other side's first fighter (by + 337 bit 0) into `*a1` and `*a2` |
+| 0x08834604 | Start pressed this frame on the pad of the fighter's side (0x08E75BA0 + 12, or + 56), unless a1 + 6, a0 + 43 or a0 + 40 |
+| 0x0887BA84 | a fighter in routine 1, step 0 (+ 4, + 5) whose part (+ 6) is not 3, 5, 7 or 8 |
+| 0x0885971C, 0x08872994, 0x08873D30, 0x088741C8, 0x0887BD00, 0x088347B4 | fighter fields not named yet (+ 366, + 248, + 722 - 748, + 270 / + 272 / + 296, + 251 / + 262 / + 528, + 412): see `state.c` |
+
+**The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
+object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
+26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11
+decompiled.
 
 ## The loader
 
