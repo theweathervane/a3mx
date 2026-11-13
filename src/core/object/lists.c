@@ -8,6 +8,7 @@
  *   0x08837690  0x09512770     0x20   0xC0  +0      +2    0x08A0FDC8
  *   0x088379B8  0x09514B70     0x10   0xC0  +0      +2    0x08A101F0
  *   0x08887AFC  0x092E2B88     0x20   0x94  +90     +91   0x08A25AA0
+ *   0x0883771C  0x09515770     0x2A   0xC0  +0      +2    0x08A10040
  */
 #include "../decomp.h"
 
@@ -45,6 +46,7 @@ static void run_list(Cpu *c, const ObjectList *l) {
 static const ObjectList LIST_1 = { 0x09512770u, 0x20, 0xC0, 0, 2, 0x08A0FDC8u };
 static const ObjectList LIST_2 = { 0x09514B70u, 0x10, 0xC0, 0, 2, 0x08A101F0u };
 static const ObjectList LIST_3 = { 0x092E2B88u, 0x20, 0x94, 90, 91, 0x08A25AA0u };
+static const ObjectList LIST_4 = { 0x09515770u, 0x2A, 0xC0, 0, 2, 0x08A10040u };
 
 /* The text pass at a frame's end (unless the frame is skipped), then the sprites finished: the halted
    way while GAME + 0x59 halts the fight (and + 0x92 is clear). */
@@ -63,4 +65,23 @@ static void end_of_frame(Cpu *c) {
 SFA_FUNC_WRAPPED(08837690, game_objects_1, bootmsg_objects) { FRAME(0x20, run_list(c, &LIST_1)); }
 SFA_FUNC(088379B8, game_objects_2)    { FRAME(0x20, run_list(c, &LIST_2)); }
 SFA_FUNC(08887AFC, game_objects_3)    { FRAME(0x20, run_list(c, &LIST_3)); }
+SFA_FUNC(0883771C, game_objects_4)    { FRAME(0x20, run_list(c, &LIST_4)); }
+
+/* Two small tables of callbacks, run once a frame unless BATTLE + 37 or + 52 stops them: each used
+   entry's routine (kept in the entry itself) is called with the entry. */
+typedef struct { gaddr first; int count; uint32_t size, routine; } CallbackTable;
+static void run_callbacks(Cpu *c, const CallbackTable *t) {
+    if ((S8(BATTLE + 37) | S8(BATTLE + 52)) != 0) return;
+    gaddr e = t->first;
+    for (int i = 0; i < t->count; i++, e += t->size) {
+        if (S8(e) == 0) continue;
+        gaddr fn = *W(e + t->routine);
+        c->r[4] = e; c->r[5] = fn;
+        rt_call_indirect(c, fn);
+    }
+}
+static const CallbackTable CALLBACKS_8  = { 0x095177C8u, 8, 0x14, 16 };
+static const CallbackTable CALLBACKS_12 = { 0x09517868u, 12, 0x18, 20 };
+SFA_FUNC(08819BBC, game_callbacks_8)  { FRAME(0x20, run_callbacks(c, &CALLBACKS_8)); }
+SFA_FUNC(0881EE84, game_callbacks_12) { FRAME(0x20, run_callbacks(c, &CALLBACKS_12)); }
 SFA_FUNC(0880B6CC, game_end_of_frame) { FRAME(0x20, end_of_frame(c)); }

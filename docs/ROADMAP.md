@@ -4,7 +4,7 @@
 loop, set-up, most of its screens and its per-frame steps, the end of every frame, the sprite and object
 drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
 OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers,
-the step dispatchers the tests run, the text queue, the camera's sideways steps, the fighters' trail and the small steps and
+the step dispatchers the tests run, the text queue, objects' queueing, drawing dispatch and animation, the camera's sideways steps and the layers that follow it, the fighters' trail and the small steps and
 questions about a fighter's state, its buttons and the network state are
 native C. Everything else still runs as translated code. The extracted assets are laid out by character, stage and screen ([assets/LAYOUT.md](../assets/LAYOUT.md)). How much is done is in the box below.
 
@@ -18,13 +18,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  5.85% decompiled
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  6.02% decompiled
 
-Functions                                [░░░░░░░░░░]   5.49%  817 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   5.85%  28,318 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   5.66%  842 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   6.02%  29,130 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  12.80%  26,113 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  13.20%  26,925 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -104,6 +104,11 @@ Done:
 - [x] Seventeen steps objects' routines share (`src/core/object/motion.c`: speed and acceleration,
       targets, the floor, timers, the owner's place, the stage's colour) and five helpers
       (`src/core/misc.c`) (0.63.0)
+- [x] An object queued for drawing and drawn (0x088216FC, 0x08821780, 0x08821828, 0x088215C4), its
+      animation's step (0x088219B0), a fourth object list and two callback tables, the background
+      layers following the camera (0x0881E058, 0x0881E148), making an object (0x08822FE4), the fade's
+      dimming (0x0880E388), the picture cache's lookup (0x0880EB84), the trail's frame, the clock's
+      digits and four more fighter questions (0.64.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -157,3 +157,41 @@ SFA_FUNC(0880BE64, game_draw_single)         { FRAME(0x20, draw_single(c, ARG(0)
 SFA_FUNC(0880DB78, game_draw_overlay)        { FRAME(0x20, draw_overlay(c, ARG(0))); }
 SFA_FUNC(088224DC, game_sprites_reset)       { sprites_reset((uint8_t)ARG(0)); }
 SFA_FUNC(088225EC, game_sprites_reset_halted) { sprites_reset_halted(); }
+
+/* ---- queueing: an object asks to be drawn this frame ---- */
+
+#define O_DRAWN   1      /* u8: set when the object has been handed to its drawer */
+#define O_KIND    8      /* u8: which drawer (2 on) */
+#define O_LAYER   9      /* u8: the layer it is drawn in */
+#define O_FORCED  72     /* s8: queued even while BATTLE + 36 hides the fight's objects */
+#define OBJECT_DRAWERS 0x08A0E080u   /* handlers by kind, the first for kind 2 */
+
+/* Adds the object to its layer in a queue: both sets of entries, and both counts. */
+static void queue_put(const Queue *q, gaddr obj) {
+    uint32_t layer = *B(obj + O_LAYER), n = *B(q->count + layer);
+    *W(q->entries + layer * q->stride + n * 4u) = obj;
+    *W(q->entries_halted + layer * q->stride + n * 4u) = obj;
+    *B(q->count + layer) = (uint8_t)(n + 1);
+    *B(q->count_halted + layer) = (uint8_t)(n + 1);
+}
+
+SFA_FUNC(088216FC, object_queue_single) { queue_put(&SINGLE, ARG(0)); }
+
+/* The layers' queue: not while BATTLE + 36 hides the fight's objects, unless the object insists. */
+SFA_FUNC(08821780, object_queue_layer) {
+    if ((int8_t)*B(BATTLE + 36) != 0 && (int8_t)*B(ARG(0) + O_FORCED) == 0) return;
+    queue_put(&QUEUE_B, ARG(0));
+}
+
+SFA_FUNC(08821828, object_queue_d) {
+    if ((int8_t)*B(BATTLE + 36) != 0) return;
+    queue_put(&QUEUE_D, ARG(0));
+}
+
+/* Draws an object: marks it drawn and runs its kind's drawer (the handler left in a1 and the table in
+   a2, a 0x20-byte frame, as the step dispatchers do). */
+#include "step.h"
+SFA_FUNC(088215C4, object_draw) {
+    *B(ARG(0) + O_DRAWN) = 1;
+    run_step(c, (uint32_t)*B(ARG(0) + O_KIND) - 2u, OBJECT_DRAWERS, 5, 0x088215F4u);
+}

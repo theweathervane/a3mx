@@ -127,3 +127,62 @@ SFA_FUNC(08834604, side_pressed_start) {
     uint32_t pressed = *W(PADS + (S8(fighter + F_SIDE) != 0 ? 44u : 0u) + 12);
     RETURN(pressed & PAD_START);
 }
+
+#define BT_CLOCK 9               /* s8: the round's clock as shown, 99 down to 0 */
+#define F_HEALTH 112             /* s16 */
+
+/* How pressed the fighter is, 0 to 3, into +485: the worse of the clock (under 80, 60, 40) and its
+   health (under 112, 72, 32). */
+SFA_FUNC(0883727C, fighter_pressure) {
+    gaddr f = ARG(0);
+    int clock = S8(BATTLE + BT_CLOCK), health = S16(f + F_HEALTH);
+    int by_clock = clock < 40 ? 3 : clock < 60 ? 2 : clock < 80 ? 1 : 0;
+    int by_health = health < 32 ? 3 : health < 72 ? 2 : health < 112 ? 1 : 0;
+    *B(f + 485) = (uint8_t)(by_health < by_clock ? by_clock : by_health);
+}
+
+/* How far the fighter is from the near edge of its opponent, into +508: the opponent's x moved by the
+   box its current frame names (byte 3 of the data at +256 picks one of the 8-byte boxes at +220: an
+   offset and a half-width, one of them turned round by which side the fighter is on). 0 for a fighter
+   not in play. */
+SFA_FUNC(08859238, fighter_distance) {
+    gaddr f = ARG(0), opponent = *W(f + F_OPPONENT);
+    int16_t distance = 0;
+    if (*B(f + F_ACTIVE) != 0) {
+        int16_t offset = 0, width = 0;
+        uint8_t box = *B(*W(opponent + 256) + 3);
+        if (box != 0) {
+            gaddr b = *W(opponent + 220) + box * 8u;
+            width = S16(b); offset = S16(b + 4);
+            if ((S8(f + F_OPPONENT_SIDE) ^ 1) != 0) width = (int16_t)-width;
+            else offset = (int16_t)-offset;
+        }
+        int16_t edge = (int16_t)(offset + S16(opponent + F_X) + width);
+        distance = (int16_t)(S16(f + F_X) - edge);
+        if (distance < 0) distance = (int16_t)-distance;
+    }
+    *H(f + 508) = (uint16_t)distance;
+}
+
+#define F_ISM       386          /* s8: 1 is V-ISM */
+#define F_BUTTONS   760          /* u16: buttons held */
+#define F_BUTTONS_2 762          /* u16 */
+#define F_PRESSED   764          /* u16 */
+
+/* A punch and the kick of the same strength are held (0x90, 0x120 or 0x240, and nothing else) with
+   +366 at 72 or more and +777 clear, by a V-ISM fighter or one with 0x80080 in +792. */
+SFA_FUNC(0886A1E4, fighter_holds_punch_and_kick) {
+    gaddr f = ARG(0);
+    if (S8(f + F_ISM) != 1 && (*W(f + 792) & 0x80080) == 0) { RETURN(0); return; }
+    if (S16(f + F_HELD_366) < 72 || S8(f + 777) != 0) { RETURN(0); return; }
+    uint16_t held = (uint16_t)(*H(f + F_BUTTONS) | *H(f + F_BUTTONS_2));
+    RETURN(held == 0x90 || held == 0x120 || held == 0x240);
+}
+
+/* A punch and the kick of the same strength are among the buttons held, and bit 1 of +764 is set. */
+SFA_FUNC(0886A264, fighter_pressed_punch_and_kick) {
+    gaddr f = ARG(0);
+    uint16_t held = (uint16_t)(*H(f + F_BUTTONS) | *H(f + F_BUTTONS_2));
+    int pair = ((held & 0x10) && (held & 0x80)) || ((held & 0x20) && (held & 0x100)) || ((held & 0x40) && (held & 0x200));
+    RETURN(pair && (*H(f + F_PRESSED) & 2) != 0);
+}

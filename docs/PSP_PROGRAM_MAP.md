@@ -457,6 +457,27 @@ owner at + 88, and frame data at + 296.
 | 0x088ABA0C | once GAME + 16's low byte reaches 7: object + 17 on, 0x08B02800 = -0x180 |
 | 0x088AC4D8 | the fighters' layer + 123 bits 0 - 2 from an object's + 78, + 79, + 80 |
 
+**Drawing, animation and the camera's layers** (0.64.0).
+
+| Address | What |
+|---|---|
+| 0x088216FC / 0x08821780 / 0x08821828 | an object added to a sprite queue at its layer (+ 9), both sets of entries and counts (`src/core/object/frame.c`): the single queue; the layers' queue (not while BATTLE + 36, unless object + 72); queue D (not while BATTLE + 36) |
+| 0x088215C4 | an object drawn: + 1 = 1, then the drawer 0x08A0E080[+ 8 - 2] |
+| 0x088219B0 | an animation's frame (`animation.c`): + 74 counted down; at 0 the next entry (8 bytes: + 0 frames, + 1 flags, + 4 picture, + 6 s16 entries to the next), + 152 = the picture changed; an entry with flag 0x40 ends it (+ 75 = -1) |
+| 0x08821330 | 0x08A0E05C[object + 14] |
+| 0x0883771C | a fourth object list (`lists.c`): 0x09515770, 42 of 0xC0, routines 0x08A10040 by + 2 |
+| 0x08819BBC / 0x0881EE84 | callback tables run each frame unless BATTLE + 37 or + 52: 8 entries of 0x14 at 0x095177C8 (routine at + 16), 12 of 0x18 at 0x09517868 (+ 20) |
+| 0x0881E058 / 0x0881E148 | a background layer's x / y from the camera's travel (0x092E88A0 + 32 - + 8, less 0x092E5F78 + 112 for x) × rate / 16, plus the layer's + 8 / + 12 and + 80 / + 84; + 59 = 8 or 12, + 58 = 4 or 0 by the limit + 40 / + 44 (`src/core/stage/camera.c`) |
+| 0x0881E7DC | two fighters' span: the least x - (+ 232) and the greatest x + (+ 232) |
+| 0x08822FE4 | an object made (`pool.c`): the first free one looking down from a0 through a3 of them, kind + 2 and type + 3 set, the pool's free count (*t0) one less |
+| 0x0880E388 | a colour dimmed by the fade: each of R, G, B less (0xFF - level), the level from 0x092E11A0[owner + 13] or 0x092E1220; not for objects with + 85 |
+| 0x0880EB84 | the picture cache (512 pointers at 0x092E8000): the entry in use (+ 14) with the same data (+ 4), + 12 and + 13; + 15 = 8 |
+| 0x0882D6FC / 0x0882D794 | fighter 1's / 2's trail frame (`fighter/trail.c`): the place (0x09523CA0 / 0x09523C9E) on by one, 0 - 127, and the fighter recorded there |
+| 0x0888D8BC | the clock's digits from BATTLE + 9 (the round's clock as shown) |
+| 0x0883727C | fighter + 485 = 0 - 3, the worse of the clock (under 80 / 60 / 40) and health + 112 (under 112 / 72 / 32) |
+| 0x08859238 | fighter + 508 = the distance to the near edge of the opponent's box |
+| 0x0886A1E4 / 0x0886A264 | a punch and the same-strength kick held alone (0x90, 0x120, 0x240) with + 366 ≥ 72, for V-ISM (+ 386 = 1) / held among others with + 764 bit 1 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

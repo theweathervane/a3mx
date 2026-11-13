@@ -206,3 +206,67 @@ SFA_FUNC(08887C24, object_take_stage_colour) {
     for (int i = 3; i >= 0; i--) *B(o + 42 + i) = b;
     for (int i = 3; i >= 0; i--) *B(o + 48 + i) = d;
 }
+
+/* While the high byte of GAME + 22 is set: the next step, and the aim (0x0889BE20, which steps on
+   again). Otherwise, for an owner with bit 0 of +78: the next step with the x acceleration halved. */
+void f_0889BE20(Cpu *c);
+SFA_FUNC(0889BD9C, object_aim_or_slow) {
+    gaddr o = ARG(0), owner = ARG(1);
+    if ((S16(GAME + 22) & 0xFF00) != 0) {
+        next_substep(o);
+        c->r[29] -= 0x20;
+        c->r[4] = o; c->r[5] = owner; c->r[6] = owner;
+        f_0889BE20(c);
+        c->r[29] += 0x20;
+    } else if (S8(owner + 78) & 1) {
+        next_substep(o);
+        *W(o + O_AX) = (uint32_t)((int32_t)*W(o + O_AX) >> 1);
+    }
+}
+
+/* An object that copies another (`src`): its place, facing and, 0x2A on, its picture. It shows only
+   while the source's fighter (+92) is character 0x29, and its routine steps on when the source goes. */
+SFA_FUNC(088A0464, object_copy_other) {
+    gaddr o = ARG(0), src = ARG(1);
+    if (*B(src) == 0) { next_step(o); return; }
+    if (S8(*W(src + 92) + 338) == 0x29) {
+        *B(o + 1) = 1;
+        *B(o + 171) = *B(src + 171);
+    } else *B(o + 1) = 0;
+    *W(o + O_X) = *W(src + O_X);
+    *W(o + O_Y) = *W(src + O_Y);
+    *B(o + O_FACING) = *B(src + O_FACING);
+    gaddr entry = *W(src + 28);
+    if (entry != 0) *H(o + 84) = (uint16_t)(*H(entry + 4) + 0x2A);
+}
+
+/* A counter that runs +35 up to +34 - 1, one every +32 frames (+40 counts them); at the end, or at once
+   when BATTLE + 82 is already set, it stops there, the object steps on and BATTLE + 82 is set. */
+SFA_FUNC(08887018, object_count_up) {
+    gaddr o = ARG(0);
+    uint8_t last = (uint8_t)(*B(o + 34) - 1);
+    if (S8(BATTLE + 82) == 0) {
+        int16_t wait = (int16_t)(S16(o + 40) - 1);
+        *H(o + 40) = (uint16_t)wait;
+        if (wait >= 0) return;
+        *H(o + 40) = *B(o + 32);
+        uint8_t n = (uint8_t)(*B(o + 35) + 1);
+        *B(o + 35) = n;
+        if (n < last) return;
+    }
+    *B(o + 35) = last;
+    next_substep(o);
+    *B(BATTLE + 82) = 1;
+}
+
+/* The round's clock as two digits: tens and units into +10 and +11, and their pictures (0xC0 + digit)
+   into the object's two parts (+0x74 and +0xB4, each +60). Not while GAME + 47 is 3. */
+SFA_FUNC(0888D8BC, clock_digits) {
+    gaddr o = ARG(0);
+    if (S8(GAME + 47) == 3) return;
+    int clock = S8(BATTLE + 9);
+    *B(o + 10) = (uint8_t)(clock / 10);
+    *B(o + 11) = (uint8_t)(clock % 10);
+    *H(o + 0x74 + 60) = (uint16_t)(*B(o + 10) + 0xC0);
+    *H(o + 0xB4 + 60) = (uint16_t)(*B(o + 11) + 0xC0);
+}
