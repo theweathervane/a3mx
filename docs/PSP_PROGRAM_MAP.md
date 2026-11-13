@@ -578,6 +578,27 @@ owner at + 88, and frame data at + 296.
 | 0x088958C0 | + 22 counted down, then the second record shows fighter 1's or 2's character (bit 0 of + 57) |
 | `object/screen_steps.c` | 0x0887E094, 0x08885950 (a part animated), 0x08886EE4 (a counter started), 0x08887BBC, 0x08889E80, 0x08889E00, 0x088BBF48 (a marker follows), 0x088B2C8C (the third list fades out); `intro_steps.c` 0x088551D0 waits, then intro stage 5 |
 
+**The pools emptied and more of the screens' objects** (0.70.0).
+
+| Address | What |
+|---|---|
+| 0x088222C4 / 0x08822934 / 0x088229CC / 0x08822444 / 0x0882222C | the five pools of 0xC0-byte objects emptied (`pool.c`): 8 at 0x09512170 (list 3), 32 at 0x09512770 (4), 16 at 0x09513F70 (7), 16 at 0x09514B70 (5), 42 at 0x09515770 (6); free counts 0x095176F2 - F6 |
+| 0x0880A028 | the queues beside the ring (0x092DA0F0: three rows of eight words, 0x8C bytes at 0x092DA1B0) emptied, and five 0x800-byte buffers from 0x092DA240 |
+| 0x088156FC | the current 216-byte record (number at 0x08E76084, records from 0x08E76088) partly cleared and 0x08808424 run with 5 |
+| 0x088DF288 | a record's eight-character name (+ 0xB0), or the default at 0x08A3EB78 |
+| 0x08877BC4 / 0x08879C8C | the CPU's wait set, then its script read on (or 0x08877F44 with + 506); a block left at its close or its 0x7601 |
+| 0x08877148 / 0x0887BAD8 | two questions of a fighter's frame (characters 4, 7 and 28 above + 132; the opponent in routine 1.1.1.1) |
+| 0x088A0248 / 0x088A0374 | follow a record while it is shown: 24 above it, or 44 to the side by the owner's side |
+| 0x088AD5A8 / 0x088B2754 | thirteen frames of 12 a frame (x, or + 6 by type 4 / 5), answering 1 on the last |
+| 0x088B18FC / 0x088B1978 | animations picked at random (tables 0x08A30248 / 0x08A30140; 0x08A30288 / the list at 0x08A2FFFC) |
+| 0x088BB8A0 / 0x088BB9BC | scroll round 224 while sliding in and out by GAME + 18 |
+| 0x088BBB14 / 0x088BBD54 / 0x088BBBEC | a row of kind 0x71 objects, each making the next when its count (+ 82) runs out |
+| 0x0889A1BC / 0x0889FB04 | scroll in y / x round the length + 76 (high byte) and + 77 |
+| 0x08899DF0 | the fighter's character shown: picture 0x127 + its number from 0x08ACCAE6 into the animation at 0x08A287FE |
+| 0x0887D9D0 / 0x0887D684 | jittered by sixteen s16 at 0x08A242F4; and a second object made beside it |
+| 0x08886160 / 0x08886314 | six parts moved by the table 0x08A25818; four parts animated, then step 3 |
+| `object/screen_steps.c` | 0x0889A600, 0x0889A6C4, 0x088AD328, 0x088AD3B8, 0x088BB728, 0x08899590, 0x0889961C (table 0x08A2A8B8), 0x0889BD08 (reports bit 2 in GAME + 18), 0x0889F810, 0x088A0104; `intro_steps.c` 0x08854FEC, 0x088563BC, 0x08857A3C, 0x08855AA4 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.70.0
+- **More of the game decompiled:** 44 more functions are hand-written C: the emptying of the five object pools, the queues beside the drawing ring, a record's name, more of how the CPU waits and reads its scripts, and thirty-five more objects of the screens and the fight's intro (following another object, sliding and scrolling, rows of objects made one by one, animations picked at random). Nothing changes in play.
+
 ## 0.69.0
 - **More of the game decompiled:** 40 more functions are hand-written C: how the CPU picks, restarts and reads its scripts, clearing the network record and its small steps, more of the routines that direct a sequence of screens, and the objects of the versus screen (arriving at their places, lighting up for the side that is choosing, their rows). Nothing changes in play.
 

@@ -165,3 +165,23 @@ SFA_FUNC(08823338, object_make_list_3) {
     *B(o + 54) = 0xFF; *B(o + 89) = 0; *B(o + 88) = 0; *B(o + 138) = 0;
     RETURN(o);
 }
+
+/* ---- the pools emptied (0.70.0) ---- */
+
+/* A pool of `count` objects made empty: the first cleared and given its list's number (+8), the rest
+   copies of it; all of them free. */
+static void pool_reset(gaddr pool, uint32_t count, gaddr free_count, uint8_t list) {
+    *B(free_count) = (uint8_t)count;
+    uint8_t *first = guest_ptr(pool);
+    for (uint32_t i = 0; i < OBJECT_SIZE; i++) first[i] = 0;
+    first[8] = list;
+    for (uint32_t n = 1; n < count; n++) {
+        uint8_t *to = first + n * OBJECT_SIZE;
+        for (uint32_t i = 0; i < OBJECT_SIZE; i++) to[i] = first[i];
+    }
+}
+SFA_FUNC(088222C4, pool_3_reset) { pool_reset(0x09512170u, 8,  0x095176F2u, 3); }
+SFA_FUNC(08822934, pool_4_reset) { pool_reset(0x09512770u, 32, 0x095176F3u, 4); }
+SFA_FUNC(088229CC, pool_7_reset) { pool_reset(0x09513F70u, 16, 0x095176F4u, 7); }
+SFA_FUNC(08822444, pool_5_reset) { pool_reset(0x09514B70u, 16, 0x095176F5u, 5); }
+SFA_FUNC(0882222C, pool_6_reset) { pool_reset(0x09515770u, 42, 0x095176F6u, 6); }

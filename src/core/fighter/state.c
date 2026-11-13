@@ -748,3 +748,73 @@ SFA_FUNC(0887A350, fighter_restart_script) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.70.0 ---- */
+
+void f_0887B48C(Cpu *c);   /* fighter_cpu_set_wait */
+void f_08877F44(Cpu *c);
+
+/* (fighter, script): the wait set, then the script read on, or (with +506) +482 and +483 cleared and
+   0x08877F44. */
+SFA_FUNC(08877BC4, fighter_cpu_wait_then_read) {
+    gaddr f = ARG(0), p = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = p; c->r[17] = f;
+    f_0887B48C(c);
+    c->r[4] = f; c->r[5] = p;
+    if (S16(f + 506) == 0) f_0887A10C(c);
+    else { *B(f + 483) = 0; *B(f + 482) = 0; f_08877F44(c); }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* A script's block left: words passed over (0x7600 opens a nested block, 0x7602 closes one) to this
+   block's close or its 0x7601, and the script read on from the word after. */
+SFA_FUNC(08879C8C, fighter_script_leave_block) {
+    gaddr f = ARG(0), p = ARG(1);
+    int32_t depth = S8(f + 501), now = depth;
+    for (;; p += 2) {
+        if (S16(p) == 0x7600) { *B(f + 501) = (uint8_t)(now + 1); now = S8(f + 501); }
+        if (S16(p) == 0x7602) {
+            *B(f + 501) = (uint8_t)(now - 1); now = S8(f + 501);
+            if (depth == now + 1) break;
+        }
+        if (S16(p) == 0x7601 && depth == now) break;
+    }
+    c->r[29] -= 0x20;
+    c->r[4] = f; c->r[5] = p + 2; c->r[6] = p + 2;
+    f_0887A10C(c);
+    c->r[29] += 0x20;
+}
+
+void f_0887BA84(Cpu *c);
+
+/* Characters 4, 7 and 28 with +496, more than 32 below +132, with +78 set: 1 when +238 is 1 moving
+   left or up (+96 negative) or 2 the other way. */
+SFA_FUNC(08877148, fighter_asks_08877148) {
+    gaddr f = ARG(0);
+    int8_t ch = S8(f + 338), k = S8(f + 238);
+    int32_t speed = (int32_t)*W(f + 96);
+    RETURN(0);
+    if (S8(f + 496) == 0 || (ch != 4 && ch != 7 && ch != 0x1C)) return;
+    if (!(S16(f + 132) + 0x20 < S16(f + 22)) || S8(f + 78) == 0 || k == 0 || speed == 0) return;
+    RETURN(k == (speed <= 0 ? 1 : 2));
+}
+
+/* 0x0887BA84 says yes and the opponent is in routine 1, step 1, part 1, +7 = 1, with +116 = 2 and
+   +698 set. */
+SFA_FUNC(0887BAD8, fighter_asks_of_opponent) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    f_0887BA84(c);
+    int yes = 0;
+    if (c->r[2] != 0) {
+        gaddr o = *W(f + 92);
+        c->r[16] = o;
+        yes = *B(o + 4) == 1 && *B(o + 5) == 1 && *B(o + 6) == 1 && *B(o + 7) == 1 && *B(o + 116) == 2 && S8(o + 698) != 0;
+    }
+    RETURN(yes);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

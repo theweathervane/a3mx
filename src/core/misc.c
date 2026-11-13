@@ -105,3 +105,52 @@ SFA_FUNC(08819020, save_cursor_object) {
     *H(o + 6) = 0xA0;
     *H(o + 10) = cursor == 1 ? 0x91 : 0x81;
 }
+
+/* ---- 0.70.0 ---- */
+
+void f_088D7EA0(Cpu *c);
+void f_08808424(Cpu *c);
+void f_089F3470(Cpu *c);   /* memset */
+void f_089F3540(Cpu *c);   /* strncpy */
+#define QUEUES      0x092DA0F0u   /* three rows of eight words, then five buffer pointers at +160 */
+#define QUEUE_BYTES 0x092DA1B0u
+#define QUEUE_BUFFERS 0x092DA240u /* 0x800 bytes each */
+
+/* The ring and the queues beside it emptied, and the five buffers' addresses set. */
+SFA_FUNC(0880A028, queues_reset) {
+    for (uint32_t i = 0; i < 0x8C; i++) *B(QUEUE_BYTES + i) = 0;
+    for (uint32_t i = 0; i < 8; i++) { *W(QUEUES + i * 4) = 0; *W(QUEUES + 64 + i * 4) = 0; *W(QUEUES + 32 + i * 4) = 0; }
+    *B(RING_NEXT) = 0;
+    *B(RING_NEXT - 1) = 0;
+    for (uint32_t i = 0; i < 5; i++) *W(QUEUES + 160 + i * 4) = QUEUE_BUFFERS + i * 0x800u;
+}
+
+/* The current record of 216 bytes (number at 0x08E76084, records from 0x08E76088) has +202 to +208
+   cleared and 0x08808424 run with 5, with the first two buffers lent to 0x08A055DC (+52, +56) and
+   0x088D7EA0 set to 1 meanwhile. */
+SFA_FUNC(088156FC, record_clear_and_run_5) {
+    gaddr saved = c->r[16], lend = 0x08A055DCu;
+    c->r[29] -= 0x20;
+    c->r[4] = 1; f_088D7EA0(c);
+    gaddr record = 0x08E76088u + *B(0x08E76084u) * 216u;
+    *B(record + 202) = 0; *B(record + 203) = 0; *H(record + 208) = 0;
+    c->r[16] = lend;
+    *W(lend + 52) = QUEUE_BUFFERS; *W(lend + 56) = QUEUE_BUFFERS + 0x800u;
+    *B(record + 204) = 0;
+    c->r[4] = 5; f_08808424(c);
+    *W(lend + 52) = 0; *W(lend + 56) = 0;
+    c->r[4] = 0; f_088D7EA0(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (record, name): the eight characters at +0xB0 set from the name, or from the default at 0x08A3EB78. */
+SFA_FUNC(088DF288, record_set_name) {
+    gaddr to = ARG(0) + 0xB0, name = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = name; c->r[17] = to;
+    c->r[4] = to; c->r[5] = 0; c->r[6] = 8; f_089F3470(c);
+    c->r[4] = to; c->r[5] = name != 0 ? name : 0x08A3EB78u; c->r[6] = 8; f_089F3540(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

@@ -237,3 +237,85 @@ SFA_FUNC(088551D0, intro_wait_then_stage_5) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.70.0 ---- */
+
+void f_08855D80(Cpu *c);   /* intro_object_setup (object, layer, x, y) */
+
+SFA_FUNC(08854FEC, intro_setup_08854FEC) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[5] = 0; c->r[6] = 0xC0; c->r[7] = 0x110;
+    f_08855D80(c);
+    *W(o + 148) = 0xB;
+    *W(o + 156) = 0x08A16962u;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *B(o + 7) = 0xE; *B(o + 79) = 1; *H(o + 82) = 3;
+    *W(o + 100) = 0xFFE00000u;
+    c->r[4] = o; c->r[5] = *W(0x08A16A90u + 40);
+    f_0882196C(c);
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* Comes in from the left at 32 a frame to x 168, or (BATTLE + 63 clear) from x 472 leftwards to 88. */
+SFA_FUNC(088563BC, intro_setup_from_a_side) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[5] = 3; c->r[6] = 0xFFFFFF28u; c->r[7] = 0x69;
+    f_08855D80(c);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 96) = 0x200000; *H(o + 112) = 0xA8;
+    if (S8(BATTLE + 63) == 0) { *H(o + 18) = 0x1D8; *W(o + 96) = 0xFFE00000u; *H(o + 112) = 0x58; }
+    c->r[4] = o; c->r[5] = *W(0x08A16A90u + 4);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* Two objects of kind 2 made, one for each side: at x 64 moving right with BATTLE + 136, at x 320
+   moving left with BATTLE + 140. */
+SFA_FUNC(08857A3C, intro_make_pair) {
+    gaddr saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[4] = 2; c->r[5] = 0;
+    f_08822E74(c);
+    gaddr o = c->r[2];
+    if (o != 0) {
+        c->r[16] = BATTLE;
+        *W(o + 88) = *W(BATTLE + 136); *H(o + 18) = 0x40; *W(o + 96) = 0x100000; *B(o + 9) = 0;
+        c->r[4] = 2; c->r[5] = 1;
+        f_08822E74(c);
+        o = c->r[2];
+        if (o != 0) { *W(o + 88) = *W(BATTLE + 140); *H(o + 18) = 0x140; *W(o + 96) = 0xFFF00000u; *B(o + 9) = 1; }
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+void f_08855D44(Cpu *c);
+
+/* The intro's first object made (its routine table 0x08A166D8 at 0x092E3E98), with its four parts
+   started by 0x08855D44; GAME + 20 = 0x100. */
+SFA_FUNC(08855AA4, intro_make_first) {
+    gaddr saved = c->r[16];
+    c->r[29] -= 0x20;
+    *W(0x092E3E98u) = 0x08A166D8u;
+    c->r[4] = 0; c->r[5] = 0;
+    f_08822E74(c);
+    gaddr o = c->r[2];
+    c->r[16] = o;
+    if (o != 0) {
+        *B(o) = 1;
+        c->r[4] = o; c->r[5] = 0; c->r[6] = 1; f_08855D44(c);
+        c->r[4] = o; c->r[5] = 1; c->r[6] = 0; f_08855D44(c);
+        c->r[4] = o; c->r[5] = 2; c->r[6] = 0; f_08855D44(c);
+        *H(GAME + 20) = 0x100;
+        c->r[4] = o; c->r[5] = 0xD; c->r[6] = 0; f_08855D44(c);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

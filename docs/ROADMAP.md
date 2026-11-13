@@ -18,14 +18,14 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  7.20% decompiled
+Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  7.49% decompiled
 
-Functions                                [░░░░░░░░░░]   7.59%  1,129 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   7.20%  34,855 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   7.88%  1,173 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   7.49%  36,289 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  16.01%  32,650 / 203,929
-  wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.00%  0 / 3,721
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  16.70%  34,057 / 203,929
+  wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.73%  27 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
@@ -129,6 +129,10 @@ Done:
       wait set and its words unpacked; the network record cleared and its small steps; three more of the
       director's routines; the versus screen's objects (run for a marked side, arriving and reporting, lit
       and nudged, rows) and thirteen more object steps (0.69.0)
+- [x] The five object pools emptied (0x0882222C - 0x08822A18), the queues beside the ring reset, the
+      CPU's wait and block leave, two fighter questions, and thirty-five more objects of the screens and
+      the intro (following a record, sliding thirteen frames, scrolling round, rows made one by one,
+      animations picked at random) (0.70.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

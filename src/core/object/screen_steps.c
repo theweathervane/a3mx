@@ -995,3 +995,409 @@ SFA_FUNC(08889E00, setup_08889E00) {
     for (int i = 3; i >= 0; i--) *B(o + 48 + i) = 0xBC;
     *B(o + 93) = 1;
 }
+
+/* ---- 0.70.0 ---- */
+
+void f_08821368(Cpu *c);   /* a random number */
+void f_08822EAC(Cpu *c);   /* object_make (kind, type) in the fifth list */
+void f_0889CFE8(Cpu *c);
+void f_0889A754(Cpu *c);   /* animate_draw_lit */
+void f_08885950(Cpu *c);   /* part_animate */
+
+/* The x kept in +36 moved to its target (the first also stops on it), the next part on arriving; then
+   lit and drawn. */
+static void slide_kept_x(Cpu *c, int snap) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    *H(o + 18) = *H(o + 36);
+    c->r[4] = o; f_0889CE64(c);
+    if (c->r[2] != 0) {
+        next_part(o);
+        if (snap) snap_x_to_target(o);
+    }
+    *H(o + 36) = (uint16_t)S16(o + 18);
+    c->r[4] = o; c->r[5] = f; f_0889A754(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+SFA_FUNC(0889A600, slide_kept_x_and_stop) { slide_kept_x(c, 1); }
+SFA_FUNC(0889A6C4, slide_kept_x_on)       { slide_kept_x(c, 0); }
+
+/* Follows the record `p` while it is shown, 24 above it; animated while GAME + 20's low byte names
+   the record (+10). */
+SFA_FUNC(088A0248, follow_24_above) {
+    gaddr o = ARG(0), p = ARG(1);
+    if (*B(p + 1) == 0) return;
+    *B(o + 1) = 1;
+    *B(o + 12) = *B(p + 12); *B(o + 13) = *B(p + 13);
+    *W(o + 16) = *W(p + 16);
+    *W(o + 20) = *W(p + 20) - 0x180000u;
+    if (*B(p + 10) == (uint32_t)(S16(GAME + 20) & 0xFF)) call_on(c, f_088219B0, o, 0x20);
+}
+
+/* Follows the record `p` while it is shown, 44 to the side of it by its owner's side; animated while
+   the record's +79 is the owner's +438. */
+SFA_FUNC(088A0374, follow_44_beside) {
+    gaddr o = ARG(0), p = ARG(1), owner = *W(o + 92);
+    if (*B(p + 1) == 0) return;
+    *B(o + 1) = 1;
+    *B(o + 12) = *B(p + 12); *B(o + 13) = *B(p + 13);
+    *W(o + 16) = *W(p + 16) + (S8(owner + 337) != 0 ? 0x2C0000u : 0xFFD40000u);
+    *W(o + 20) = *W(p + 20);
+    if ((uint32_t)*B(p + 79) == (uint32_t)S8(owner + 438)) call_on(c, f_088219B0, o, 0x20);
+}
+
+/* The animation for the high byte of the s16 at 0x0951CE52, through a table of numbers. */
+static void set_animation_by_ce52(Cpu *c, gaddr numbers) {
+    uint32_t n = *B(numbers + (uint32_t)(*H(0x0951CE52u) >> 8));
+    gaddr set = set_by_flag();
+    c->r[6] = set;
+    set_animation(c, *W(set + n * 4u));
+}
+SFA_FUNC(088AD328, set_animation_by_ce52_a) { set_animation_by_ce52(c, 0x08A2CC60u); }
+SFA_FUNC(088AD3B8, set_animation_by_ce52_b) { set_animation_by_ce52(c, 0x08A2CC74u); }
+
+/* Thirteen frames of 12 a frame, right or (with +78) left: answers 1 on the last, with the count (+10)
+   back at 0 and those going left 13 further. */
+SFA_FUNC(088AD5A8, shift_x_13_frames) {
+    gaddr o = ARG(0);
+    int left = S8(o + 78) != 0;
+    *H(o + 18) = (uint16_t)(S16(o + 18) + (left ? -12 : 12));
+    *B(o + 10) = (uint8_t)(*B(o + 10) + 1);
+    if (*B(o + 10) != 13) { RETURN(0); return; }
+    if (left) *H(o + 18) = (uint16_t)(S16(o + 18) - 13);
+    *B(o + 10) = 0;
+    RETURN(1);
+}
+
+/* The same for the s16 +6, by the type (+92): 4 goes up, 5 down, with the count in +98. */
+SFA_FUNC(088B2754, shift_6_13_frames) {
+    gaddr o = ARG(0);
+    uint32_t type = *B(o + 92);
+    if (type == 4) *H(o + 6) = (uint16_t)(S16(o + 6) + 12);
+    else if (type == 5) *H(o + 6) = (uint16_t)(S16(o + 6) - 12);
+    *H(o + 98) = (uint16_t)(*H(o + 98) + 1);
+    if (*H(o + 98) != 13) { RETURN(0); return; }
+    if (type == 5) *H(o + 6) = (uint16_t)(S16(o + 6) - 13);
+    *H(o + 98) = 0;
+    RETURN(1);
+}
+
+/* An animation picked at random: one of 64 numbers (0x08A30248) into the table 0x08A30140, kept in
+   +112; or one of 32 (0x08A30288) as an entry of the list at 0x08A2FFFC, kept in +114. */
+SFA_FUNC(088B18FC, set_animation_at_random_a) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = 1;
+    *H(o + 26) = 1;
+    f_08821368(c);
+    int32_t n = S8(0x08A30248u + (c->r[2] & 0x3F));
+    c->r[18] = (uint32_t)n;
+    c->r[4] = o; c->r[5] = *W(0x08A30140u + ((uint32_t)n << 2));
+    f_0882196C(c);
+    *H(o + 112) = (uint16_t)n;
+    *H(o + 36) = 1;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+SFA_FUNC(088B1978, set_animation_at_random_b) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *H(o + 26) = 3;
+    f_08821368(c);
+    int32_t n = S8(0x08A30288u + (c->r[2] & 0x1F));
+    c->r[17] = (uint32_t)n;
+    c->r[4] = o; c->r[5] = *W(0x08A2FFB0u + 76) + ((uint32_t)n << 3);
+    f_0882196C(c);
+    *H(o + 114) = (uint16_t)n;
+    *H(o + 36) = 2;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+SFA_FUNC(088BB728, setup_088BB728) {
+    gaddr o = ARG(0);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *B(o + 9) = 2; *H(o + 24) = 6; *B(o + 14) = 0; *B(o + 11) = 0;
+    *H(o + 18) = 0x290; *H(o + 22) = 0x70;
+    *B(o + 12) = 0xFF; *B(o + 13) = 0x34;
+    *H(o + 86) = 0x15;
+    *H(o + 84) = *B(0x08A38154u + *B(o + 10));
+    *W(o + 148) = 3;
+}
+
+/* Scrolls down, round from 224 to 0, sliding 2 a frame out to x 0 while GAME + 18 is set and back in
+   while it is not; the second scrolls up and slides to x 352. Drawn. */
+SFA_FUNC(088BB8A0, scroll_down_slide_left) {
+    gaddr o = ARG(0);
+    int16_t x = S16(o + 18);
+    if (S16(GAME + 18) == 0) *H(o + 18) = (uint16_t)(x - 2);
+    else if (x != 0) *H(o + 18) = (uint16_t)(x + 2);
+    *H(o + 22) = (uint16_t)(S16(o + 22) + 1);
+    if (S16(o + 22) >= 224) *H(o + 22) = (uint16_t)(S16(o + 22) - 224);
+    call_on(c, f_088215C4, o, 0x20);
+}
+SFA_FUNC(088BB9BC, scroll_up_slide_right) {
+    gaddr o = ARG(0);
+    int16_t x = S16(o + 18);
+    if (S16(GAME + 18) == 0) *H(o + 18) = (uint16_t)(x + 2);
+    else if (x != 0x160) *H(o + 18) = (uint16_t)(x - 2);
+    *H(o + 22) = (uint16_t)(S16(o + 22) - 1);
+    if (S16(o + 22) <= 0) *H(o + 22) = (uint16_t)(S16(o + 22) + 224);
+    call_on(c, f_088215C4, o, 0x20);
+}
+
+/* One more object of kind 0x71 made for the same +10. */
+static gaddr make_0x71(Cpu *c, gaddr o, uint32_t type, uint8_t number) {
+    c->r[4] = 0x71; c->r[5] = type;
+    f_08822EAC(c);
+    gaddr made = c->r[2];
+    *B(made + 78) = number;
+    *B(made + 10) = *B(o + 10);
+    return made;
+}
+
+/* Counts +82 down; then the next step, having made the next of its row (+78 one more) unless it is
+   the last. */
+static void count_then_make_next(Cpu *c, uint32_t type, int last) {
+    gaddr o = ARG(0), saved = c->r[16];
+    *H(o + 82) = (uint16_t)(S16(o + 82) - 1);
+    if (S16(o + 82) != 0) return;
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    if (S8(o + 78) != last) make_0x71(c, o, type, (uint8_t)(S8(o + 78) + 1));
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+SFA_FUNC(088BBB14, count_then_make_next_5) { count_then_make_next(c, 5, 3); }
+SFA_FUNC(088BBD54, count_then_make_next_6) { count_then_make_next(c, 6, 4); }
+
+/* 4 a frame to x 368: there the next step, the fourth of the row (+78 = 3) starting the next row. */
+SFA_FUNC(088BBBEC, move_to_368_then_next_row) {
+    gaddr o = ARG(0), saved = c->r[16];
+    if (S16(o + 18) != 0x170) { *H(o + 18) = (uint16_t)(S16(o + 18) + 4); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    if (S8(o + 78) == 3) make_0x71(c, o, 6, 0);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* Jittered once (unless +135): x and y each by one of sixteen s16 at 0x08A242F4, at random. */
+SFA_FUNC(0887D9D0, jitter_once) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18], s19 = c->r[19];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    if (S8(o + 135) == 0) {
+        int16_t x = S16(o + 18);
+        c->r[17] = (uint32_t)x; c->r[18] = 0x08A242F4u;
+        f_08821368(c);
+        int16_t dx = S16(0x08A242F4u + (c->r[2] & 0xF) * 2u);
+        int16_t y = S16(o + 22);
+        c->r[19] = (uint32_t)y;
+        *H(o + 18) = (uint16_t)(x + dx);
+        f_08821368(c);
+        *H(o + 22) = (uint16_t)(y + S16(0x08A242F4u + (c->r[2] & 0xF) * 2u));
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18; c->r[19] = s19;
+}
+
+/* The six parts (16 bytes each from +0x20) move +4 by this frame's entry of the table 0x08A25818; an
+   entry of 0 ends it: the next substep, +7 = 2, +18 = 23. */
+SFA_FUNC(08886160, parts_move_by_table) {
+    gaddr o = ARG(0);
+    int8_t i = S8(o + 16);
+    *B(o + 16) = (uint8_t)(i + 1);
+    int8_t by = S8(0x08A25818u + (uint32_t)(int32_t)i);
+    if (by == 0) { next_substep(o); *B(o + 7) = 2; *B(o + 18) = 0x17; }
+    for (int k = 0; k < 6; k++) {
+        gaddr part = o + 0x20 + (uint32_t)k * 0x10u;
+        *H(part + 4) = (uint16_t)(S16(part + 4) + by);
+    }
+}
+
+/* The first four parts animated (one whose +7 goes negative is put out); +18 counts down, then
+   step 3. */
+SFA_FUNC(08886314, parts_animate_then_step_3) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    for (int k = 0; k < 4; k++) {
+        gaddr part = o + 0x20 + (uint32_t)k * 0x10u;
+        c->r[17] = part; c->r[18] = (uint32_t)(3 - k);
+        c->r[4] = o; c->r[5] = part;
+        f_08885950(c);
+        if (S8(part + 7) < 0) *B(part) = 0;
+    }
+    *B(o + 18) = (uint8_t)(S8(o + 18) - 1);
+    if (S8(o + 18) < 0) *B(o + 4) = 3;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* Set up by its fighter's side: the next step, +13 and +121 the side, +12 = -1 for the second side;
+   those with +10 get +160 = 0x80. */
+SFA_FUNC(08899590, setup_by_side) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = f;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *H(o + 82) = 0; *W(o + 148) = 0; *H(o + 86) = 8; *B(o + 78) = 0xFF;
+    c->r[4] = o; c->r[5] = 1;
+    f_0889CFE8(c);
+    *B(o + 13) = (uint8_t)S8(f + 337);
+    *B(o + 121) = (uint8_t)S8(f + 337);
+    *B(o + 12) = S8(f + 337) != 0 ? 0xFF : 0;
+    if (*B(o + 10) != 0) *B(o + 160) = 0x80;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* +82 goes round by 128 (back to 0 at 2560), then the substep's handler for a marked side. */
+SFA_FUNC(0889961C, turn_82_run_for_marked_side) {
+    gaddr o = ARG(0);
+    *H(o + 82) = (uint16_t)(S16(o + 82) + 0x80);
+    if (S16(o + 82) >= 2560) *H(o + 82) = 0;
+    if (side_marked(ARG(1), 0)) run_step_with(c, *B(o + 5), 0x08A2A8B8u, ARG(1), 0x088996A0u);
+}
+
+/* The first of its kind (+10 = 0) shows its fighter's character: when that changes, the animation by
+   side (0x08A287FE, 8 bytes each) is given the character's picture (0x127 + its number from
+   0x08ACCAE6) and started. Drawn. */
+SFA_FUNC(08899DF0, show_character_draw) {
+    gaddr o = ARG(0), f = ARG(1), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    if (*B(o + 10) == 0 && S8(f + 338) != S8(o + 78)) {
+        *B(o + 78) = (uint8_t)S8(f + 338);
+        gaddr entry = 0x08A287FEu + (uint32_t)(S8(f + 337) << 3);
+        *H(entry + 4) = (uint16_t)(*B(0x08ACCAE6u + (uint32_t)(int32_t)S8(f + 338)) + 0x127);
+        c->r[4] = o; c->r[5] = 0x08A287FEu + (uint32_t)(S8(f + 337) << 3);
+        f_0882196C(c);
+    }
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+void f_0887D9D0(Cpu *c);   /* jitter_once */
+void f_088988FC(Cpu *c);
+void f_088A055C(Cpu *c);
+
+/* Jittered, with a second object (kind 4, type its own + 14) made beside it sharing its +88 and +121;
+   then its animation by type. */
+SFA_FUNC(0887D684, jitter_make_second) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 9) = 0;
+    f_0887D9D0(c);
+    if (S8(o + 121) == 0) { *B(o + 12) = 0xFF; *B(o + 13) = 2; }
+    c->r[4] = 4; c->r[5] = (*B(o + 3) + 0xEu) & 0xFF;
+    f_08822EAC(c);
+    gaddr n = c->r[2];
+    if (n != 0) {
+        *B(n + 121) = (uint8_t)S8(o + 121);
+        *B(n + 135) = 0xFF;
+        *W(n + 88) = *W(o + 88);
+        *H(n + 82) = 0;
+        *B(n + 119) = 0xFF;
+    }
+    c->r[4] = o;
+    f_0887D990(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* The length an object's scroll goes round in: the s8 +76 as the high byte with +77 as the low. */
+static uint32_t round_length(gaddr o) { return (uint32_t)((S8(o + 76) << 8) + (S8(o + 77) & 0xFF)); }
+
+/* Moves in y by its speed (+100), kept within 0 and its round length; drawn. */
+SFA_FUNC(0889A1BC, scroll_y_round_draw) {
+    gaddr o = ARG(0);
+    int32_t length = (int32_t)(round_length(o) & 0xFFFF);
+    *W(o + 20) += *W(o + 100);
+    int16_t y = S16(o + 22);
+    if (y < 0) {
+        do y = (int16_t)(y + length); while (y < 0);
+        *H(o + 22) = (uint16_t)y;
+        y = S16(o + 22);
+    }
+    if ((int32_t)(uint16_t)y >= length) {
+        do y = (int16_t)(y - length); while ((int32_t)(uint16_t)y >= length);
+        *H(o + 22) = (uint16_t)y;
+    }
+    call_on(c, f_088215C4, o, 0x20);
+}
+
+/* The next step once GAME + 20 has bits 7 and 15; those with +10 move in x by +96, coming round by
+   their length when they pass 0. Drawn. */
+SFA_FUNC(0889FB04, scroll_x_round_draw) {
+    gaddr o = ARG(0);
+    if ((S16(GAME + 20) & 0x8080) == 0x8080) *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    if (*B(o + 10) != 0) {
+        uint32_t length = round_length(o) << 16;
+        int32_t x = (int32_t)(*W(o + 96) + *W(o + 16));
+        while (x < 0) x = (int32_t)(length + (uint32_t)x);
+        *W(o + 16) = (uint32_t)x;
+    }
+    call_on(c, f_088215C4, o, 0x20);
+}
+
+/* Arrives in y: the next substep on its target, reporting bit 2 in GAME + 18 (those with +10 start
+   moving in x at 72 with +9 = 1); and one substep more while the fighter's +424 is set. */
+SFA_FUNC(0889BD08, arrive_y_report_18) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    f_0889CEA4(c);
+    if (c->r[2] != 0) {
+        *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+        if (*B(o + 10) != 0) { *W(o + 96) = 0x480000; *B(o + 9) = 1; }
+        *W(o + 20) = (uint32_t)S16(o + 114) << 16;
+        *H(GAME + 18) = (uint16_t)(S16(GAME + 18) | 4);
+        if (S16(f + 424) != 0) *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Once GAME + 20 has bit 15: the next substep, leaving for x -32 (or 416, by what 0x088988FC says of
+   its owner) with +104 = -2.7 or 2.7 and +96 at 0. */
+SFA_FUNC(0889F810, leave_by_owner_side) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    if (S16(GAME + 20) >= 0) return;
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = 0xFFFD4C00u; c->r[18] = 0xFFFFFFE0u;
+    *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+    c->r[4] = *W(o + 92);
+    f_088988FC(c);
+    int right = c->r[2] != 0;
+    *H(o + 114) = right ? 0x1A0 : 0xFFE0;
+    *W(o + 104) = right ? 0x2B400u : 0xFFFD4C00u;
+    *W(o + 96) = 0;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* (object, record, n): n kept in +36; type 3 goes to 0x088A055C with 16, the others start entry
+   n / 8 (of its low byte) of the animation list picked from +96 by the record's +76. */
+SFA_FUNC(088A0104, set_animation_by_n) {
+    gaddr o = ARG(0), p = ARG(1);
+    uint32_t n = ARG(2);
+    *H(o + 36) = (uint16_t)n;
+    c->r[29] -= 0x20;
+    c->r[4] = o;
+    if (*B(o + 3) == 3) { c->r[5] = 0x10; c->r[6] = n & 0xFFFF; f_088A055C(c); }
+    else {
+        gaddr list = *W(*W(o + 96) + (uint32_t)(S8(p + 76) << 2));
+        c->r[5] = list + (((n & 0xFF) >> 3) << 3);
+        f_0882196C(c);
+    }
+    c->r[29] += 0x20;
+}
