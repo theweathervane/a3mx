@@ -131,7 +131,8 @@ def nightly_notes(v, since, secs):
     if not m: sys.exit('release_notes.py: %r is not MAJOR.MINOR.PATCH-nightly.YYYYMMDD+COMMIT' % v)
     base, date, commit = m.group(1), '%s-%s-%s' % m.group(2, 3, 4), m.group(5)
     url = project_url()
-    head = NIGHTLY.replace('{url}', url).replace('{v}', v).replace('{date}', date).replace('{commit}', commit)
+    text = NIGHTLY.replace('{url}/-/commit/', '{url}/commit/').replace('{url}/-/releases/permalink/latest', '{url}/releases/latest') if on_github() else NIGHTLY
+    head = text.replace('{url}', url).replace('{v}', v).replace('{date}', date).replace('{commit}', commit)
     how = header(url, v.replace('+', '.'), commit)
     chosen = [(n, t) for n, t in secs if key(n) and key(n) <= key(base) and (not since or key(n) > key(since))]
     chosen.sort(key=lambda x: key(x[0]), reverse=True)

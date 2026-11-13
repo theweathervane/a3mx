@@ -6,9 +6,16 @@
 # stand-in for the generated code, builds the launcher, and runs the tests that need no disc. The
 # parity tests need the disc and run on developers' machines (docs/TESTS.md).
 #
-# When it runs: by hand (Actions > CI > Run workflow) and when a tag v<VERSION> arrives, which also
-# makes the GitHub release. Not on pushes to main, not on pull requests and not on a schedule:
-# committing (or mirroring) often must not mean building and releasing often. There is no nightly.
+# When it runs: by hand (Actions > CI > Run workflow), when a tag v<VERSION> arrives, which also
+# makes the GitHub release, and every night for the nightly (below). Not on pushes to main and not on
+# pull requests: committing (or mirroring) often must not mean building and releasing often.
+#
+# The nightly (GitHub only; GitLab's is switched off): at 02:47 UTC, if main has changed since the last
+# nightly, main is built with VERSION stamped <VERSION>-nightly.<YYYYMMDD>+<commit> and published as
+# the rolling pre-release "nightly", replacing the previous one. It is never marked latest, so the
+# supported release stays the one players are sent to. Run it by hand with Run workflow > nightly.
+# Its tag, nightly, exists only on GitHub: the GitLab mirror must have Keep divergent refs on, or each
+# mirror push deletes that tag (and GitHub turns the release back into a draft) until the next nightly.
 #
 # Releasing is the maintainer's choice, made in one place: he tags the commit on main as v<VERSION> and
 # pushes the tag to GitLab; the mirror brings the tag here. Nothing in this workflow creates or moves a
@@ -21,6 +28,13 @@
 name: CI
 on:
   workflow_dispatch:
+    inputs:
+      nightly:
+        description: 'Make the nightly pre-release from main (even if main has not changed)'
+        type: boolean
+        default: false
+  schedule:
+    - cron: '47 2 * * *'
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
 # Runs never wait for each other (one stuck on a macOS runner mustn't hold up a release).
@@ -29,11 +43,40 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  # Is this run a nightly, and is there anything new for it? Its stamped version, for the builds.
+  nightly:
+    name: Nightly?
+    runs-on: ubuntu-24.04
+    outputs:
+      is: ${{ steps.n.outputs.is }}
+      go: ${{ steps.n.outputs.go }}
+      version: ${{ steps.n.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+      - id: n
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          BY_HAND: ${{ inputs.nightly }}
+        run: |
+          if [ "$EVENT" != schedule ] && [ "$BY_HAND" != true ]; then
+            echo "is=false" >> "$GITHUB_OUTPUT"; echo "go=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          [ "$GITHUB_REF" = refs/heads/main ] || { echo "::error::a nightly is made from main only"; exit 1; }
+          V="$(tr -d ' \r\n' < VERSION)-nightly.$(date -u +%Y%m%d)+${GITHUB_SHA::8}"
+          LAST=$(gh api "repos/$GITHUB_REPOSITORY/commits/nightly" --jq .sha 2>/dev/null || true)
+          GO=true
+          if [ "$EVENT" = schedule ] && [ "$LAST" = "$GITHUB_SHA" ]; then GO=false; echo "main hasn't changed since the last nightly: nothing to do"; fi
+          echo "is=true" >> "$GITHUB_OUTPUT"; echo "go=$GO" >> "$GITHUB_OUTPUT"; echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Nightly $V (go: $GO)"
+
   # Every pinned dependency (tools/data/pins.json): the same URL and SHA-256 wherever it is used and
   # docs/DEPENDENCIES.md up to date; the Python tools compile; for a tag, VERSION and its CHANGELOG.md
   # section are in order.
   pins:
     name: Pinned dependencies
+    needs: nightly
+    if: needs.nightly.outputs.go == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
@@ -49,6 +92,8 @@ jobs:
 
   build:
     name: ${{ matrix.name }}
+    needs: nightly
+    if: needs.nightly.outputs.go == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -60,15 +105,19 @@ jobs:
       os: ${{ matrix.os }}
       system: ${{ matrix.system }}
       exe: ${{ matrix.exe }}
+      version: ${{ needs.nightly.outputs.version }}
 
   # macOS on its own: GitHub's macOS runners can take hours to start, so a release doesn't wait for
   # it; its downloads are added when it passes (release-macos).
   build-macos:
     name: macOS Apple Silicon
+    needs: nightly
+    if: needs.nightly.outputs.go == 'true'
     uses: ./.github/workflows/build.yml
     with:
       os: macos-15
       system: macos-arm64
+      version: ${{ needs.nightly.outputs.version }}
 
   # A tag v<VERSION> on main: the GitHub release, with notes from CHANGELOG.md and the downloads of
   # this very commit's builds.
@@ -134,3 +183,62 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+
+  # The nightly pre-release: the previous one (and its tag) removed, this one made at this commit with
+  # notes from release_notes.py --nightly. Windows and Linux must have built, as for a release.
+  release-nightly:
+    needs: [nightly, pins, build]
+    if: needs.nightly.outputs.is == 'true' && needs.nightly.outputs.go == 'true'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: nightly-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+        with:
+          fetch-depth: 0               # the tags: the notes cover what changed since the last release
+      - name: The downloads (from the build jobs)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093   # v4.3.0
+        with:
+          pattern: a3mx-*
+          path: dist
+          merge-multiple: true
+      - name: Notes
+        env:
+          V: ${{ needs.nightly.outputs.version }}
+        run: |
+          ls -l dist
+          F="${V//+/.}"
+          ls "dist/a3mx-$F-windows-x64.zip" "dist/a3mx-$F-linux-x64.zip"    # both must be there (macOS's are added later)
+          PREV=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --merged HEAD --sort=-v:refname | head -n 1)
+          python3 tools/release_notes.py --nightly "$V" ${PREV:+--since "${PREV#v}"} > notes.md
+          wc -c notes.md
+      - name: Replace the nightly pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ needs.nightly.outputs.version }}
+        run: |
+          gh release delete nightly --cleanup-tag --yes 2>/dev/null || true
+          git push origin :refs/tags/nightly 2>/dev/null || true      # a tag left without its release
+          gh release create nightly --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "A3MX nightly $V" --notes-file notes.md dist/*
+
+  # The nightly's macOS downloads, added once its build passes; a nightly goes out without them if not.
+  release-nightly-macos:
+    needs: [nightly, build-macos, release-nightly]
+    if: needs.nightly.outputs.is == 'true' && needs.nightly.outputs.go == 'true'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: nightly-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093   # v4.3.0
+        with:
+          name: a3mx-macos-arm64
+          path: dist
+      - name: Add them to the nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload nightly dist/* --clobber --repo "$GITHUB_REPOSITORY"

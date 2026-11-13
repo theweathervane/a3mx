@@ -15,6 +15,7 @@ on:
       os: { type: string, required: true }
       system: { type: string, required: true }
       exe: { type: string, default: '' }
+      version: { type: string, default: '' }   # a nightly's <VERSION>-nightly.<date>+<commit>; empty: VERSION as committed
 permissions:
   contents: read
 jobs:
@@ -29,6 +30,13 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065   # v5.6.0
         with:
           python-version: '3.12'
+      # A nightly stamps VERSION before anything is built, so the game, the launcher and the downloads
+      # all say so (as .gitlab-ci.yml's .stamp-nightly does).
+      - name: Stamp VERSION (nightly only)
+        if: inputs.version != ''
+        env:
+          V: ${{ inputs.version }}
+        run: printf '%s\n' "$V" > VERSION && cat VERSION
       - name: Tools (Linux)
         if: runner.os == 'Linux'
         timeout-minutes: 10             # apt has hung for 40 minutes before: fail fast and re-run instead

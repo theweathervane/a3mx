@@ -157,7 +157,7 @@ Windows, Linux and macOS. The parity tests need the disc, so they stay on develo
 them (`ctest`, or `build.sh --test`) before committing.
 
 It runs when started by hand (**Build > Pipelines > New pipeline**) and for a tag `v<VERSION>`. Not
-on every push, and not on a schedule: the nightly is switched off, and releases are made by hand.
+on every push. Releases are made by hand; the GitHub mirror also makes a nightly (below).
 
 | Stage | Jobs | What |
 |---|---|---|
@@ -227,15 +227,24 @@ a zip by hand: `python tools/package_launcher.py --system linux-x64 --launcher b
 Tags are made only by the maintainer, only on `main`. To preview a release's notes:
 `python tools/release_notes.py 0.55.0 --since 0.52.0`.
 
-### Nightly (switched off)
+### Nightly (GitHub)
 
-There is no nightly for now: releases are made by hand. The pipeline still knows how to make one, so
-turning it on is two steps: put the `schedule` rule back in `.gitlab-ci.yml`'s `workflow:` (the
-comment there shows it) and add a schedule under **Build > Pipeline schedules**. A scheduled run's
-build jobs stamp `VERSION` as `<VERSION>-nightly.<YYYYMMDD>+<commit>` (for example
-`0.55.0-nightly.20261112+c67e648`) before building, so the launcher's corner, the game's boot screen
-and log, and the bug report all say so. EX. SETTING shows `V0.55.0-NIGHTLY.20261112`: its font has no
-`+` or lower case, so the commit is left off. File names use `.` for the `+`. A nightly makes no
+The GitHub mirror makes a nightly; GitLab's is switched off. Every night at 02:47 UTC, if `main` has
+changed since the last nightly, GitHub Actions builds it exactly as for a release, with `VERSION`
+stamped `<VERSION>-nightly.<YYYYMMDD>+<commit>` (for example `0.64.0-nightly.20261113+0ebcb8b1`), and
+publishes it as the pre-release **nightly**, replacing the previous one. It is never marked latest, so
+players are still sent to the supported release. To make one by hand: **Actions > CI > Run workflow**,
+on `main`, with **nightly** ticked. The stamp means the launcher's corner, the game's boot screen and
+log, and the bug report all say it is a nightly. EX. SETTING shows `V0.64.0-NIGHTLY.20261113`: its font
+has no `+` or lower case, so the commit is left off. File names use `.` for the `+`.
+
+The `nightly` tag exists only on GitHub, so the GitLab push mirror must have **Keep divergent refs**
+on; otherwise every mirror push deletes the tag and GitHub turns the release back into a draft until
+the next nightly. (It is a checkbox when the mirror is created, and afterwards only changeable through
+GitLab's remote mirrors API.)
+
+GitLab can make one too: put the `schedule` rule back in `.gitlab-ci.yml`'s `workflow:` (the comment
+there shows it) and add a schedule under **Build > Pipeline schedules**. A GitLab nightly makes no
 release: its downloads are the build jobs' artifacts, kept for two weeks.
 
 ## The loop
