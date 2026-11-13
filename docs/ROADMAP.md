@@ -18,14 +18,14 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  7.49% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  7.67% decompiled
 
-Functions                                [░░░░░░░░░░]   7.88%  1,173 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   7.49%  36,289 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   8.12%  1,209 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   7.67%  37,145 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  16.70%  34,057 / 203,929
-  wireless (ad-hoc) VS                   [░░░░░░░░░░]   0.73%  27 / 3,721
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  17.11%  34,893 / 203,929
+  wireless (ad-hoc) VS                   [░░░░░░░░░░]   1.26%  47 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
@@ -133,6 +133,9 @@ Done:
       CPU's wait and block leave, two fighter questions, and thirty-five more objects of the screens and
       the intro (following a record, sliding thirteen frames, scrolling round, rows made one by one,
       animations picked at random) (0.70.0)
+- [x] The CPU's script branches (at random, by the opponent, by layout, by a count; a script called at
+      random and started), a fighter kept on the screen (0x08862DF8) and its speeds from a record
+      (0x08863168), the director clearing pools, and twenty more screen and intro objects (0.71.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

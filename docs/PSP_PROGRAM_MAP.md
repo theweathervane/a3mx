@@ -599,6 +599,22 @@ owner at + 88, and frame data at + 296.
 | 0x08886160 / 0x08886314 | six parts moved by the table 0x08A25818; four parts animated, then step 3 |
 | `object/screen_steps.c` | 0x0889A600, 0x0889A6C4, 0x088AD328, 0x088AD3B8, 0x088BB728, 0x08899590, 0x0889961C (table 0x08A2A8B8), 0x0889BD08 (reports bit 2 in GAME + 18), 0x0889F810, 0x088A0104; `intro_steps.c` 0x08854FEC, 0x088563BC, 0x08857A3C, 0x08855AA4 |
 
+**The CPU's script branches and a fighter kept on the screen** (0.71.0).
+
+| Address | What |
+|---|---|
+| 0x08878B30 / 0x08878C24 / 0x08878CD8 / 0x08878EEC / 0x08878A68 | script branches: into the block (0x0887A10C) or past it (0x08879C8C) one time in two, by the opponent's + 73 = 1, by its + 698, by 0x08876BE4, or once + 492 (set from the script) reaches + 508 |
+| 0x08879E10 / 0x0887A188 | a script called at random (this one kept in + 504 / + 512 to come back to); a random script started (+ 528, + 488), answering the word after |
+| 0x08877A38 | the CPU's first wait (0x08877BC4), then its wait set and the script read on, or + 483 = 8 and 0x08877F44 with + 506 |
+| 0x0887BD60 | a script command allowed: 3 always; 4 while + 536 and + 228 are clear; 5 for ISM other than 1 while + 366 is at least 48 (ISM 0) or 144 |
+| 0x08876A0C / 0x08876AA8 | 1 once (+ 498) when nothing halts the fight and the record at + 296 is shown; the question numbered by + 492 / 2 (table 0x08A22178) |
+| 0x08862DF8 | the fighter kept on the screen: past the left (+ 238 = 1) or right (2) edge by its width (+ 232, 24 more with 0x08A0588A) it is pushed back and 0x08862F28 told how far |
+| 0x08863168 | speeds + 96 - + 108 from the 16-byte records at 0x08A182C0, picked through 0x08A180C8 (by + 655, + 575) and 0x08A18218 (by the argument); x ones turned round unless + 134 |
+| 0x088AC3A8 / 0x088AC3EC | the director empties pools 4 and 6 and the object list, or pool 5, and clears its + 78 - + 80 and + 92 |
+| 0x08814B4C / 0x088DEB10 | 0x08808424 run with 6 and 7; the 0xC4-byte record at 0x09523740 reset with the default name |
+| `object/screen_steps.c` | arriving in x then scrolling (0x0889A0C4, 0x0889A3A8, 0x0889B9E0, 0x0889A154, 0x0889A438, 0x0889BA70) or showing the character (0x08899CCC, 0x08899D78); the next part on a bit of the fighter's + 78 (0x08899D28, 0x0889A110, 0x0889A3F4, 0x0889BA2C, 0x0889A670); 0x0887D63C; 0x088AD1D4, 0x088B270C; 0x08889CC8 (by type from 0x08A26950) |
+| `intro_steps.c` | 0x08855B3C (two parts crossing from x -384 and 384), 0x08857B14 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

@@ -154,3 +154,27 @@ SFA_FUNC(088DF288, record_set_name) {
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* 0x08808424 run with 6 and 7, with 0x088D7EA0 set to 1 meanwhile. */
+SFA_FUNC(08814B4C, run_6_and_7) {
+    c->r[29] -= 0x20;
+    c->r[4] = 1; f_088D7EA0(c);
+    c->r[4] = 6; f_08808424(c);
+    c->r[4] = 7; f_08808424(c);
+    c->r[4] = 0; f_088D7EA0(c);
+    c->r[29] += 0x20;
+}
+
+void f_088DF288(Cpu *c);   /* record_set_name */
+
+/* The 0xC4-byte record at 0x09523740 cleared, words 0, 2 and 3 set to -1, and the default name. */
+SFA_FUNC(088DEB10, record_23740_reset) {
+    gaddr r = 0x09523740u, saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = r;
+    c->r[4] = r; c->r[5] = 0; c->r[6] = 0xC4; f_089F3470(c);
+    *W(r) = 0xFFFFFFFFu; *W(r + 8) = 0xFFFFFFFFu; *W(r + 12) = 0xFFFFFFFFu;
+    c->r[4] = r; c->r[5] = 0; f_088DF288(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

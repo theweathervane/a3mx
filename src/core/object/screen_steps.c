@@ -1401,3 +1401,105 @@ SFA_FUNC(088A0104, set_animation_by_n) {
     }
     c->r[29] += 0x20;
 }
+
+/* ---- 0.71.0: arriving, then the object's frame ---- */
+
+void f_0889A1BC(Cpu *c);   /* scroll_y_round_draw */
+void f_08899DF0(Cpu *c);   /* show_character_draw */
+void f_088AD5A8(Cpu *c);   /* shift_x_13_frames */
+void f_088B2754(Cpu *c);   /* shift_6_13_frames */
+
+/* (object): moved in x to its target, the next part on arriving (and stopped on it with `snap`); then
+   it scrolls round and is drawn. */
+static void arrive_x_then_scroll(Cpu *c, int snap) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    f_0889CE64(c);
+    if (c->r[2] != 0) { next_part(o); if (snap) snap_x_to_target(o); }
+    c->r[4] = o;
+    f_0889A1BC(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+SFA_FUNC(0889A0C4, arrive_x_stop_then_scroll_a) { arrive_x_then_scroll(c, 1); }
+SFA_FUNC(0889A3A8, arrive_x_stop_then_scroll_b) { arrive_x_then_scroll(c, 1); }
+SFA_FUNC(0889B9E0, arrive_x_stop_then_scroll_c) { arrive_x_then_scroll(c, 1); }
+SFA_FUNC(0889A154, arrive_x_then_scroll_a)      { arrive_x_then_scroll(c, 0); }
+SFA_FUNC(0889A438, arrive_x_then_scroll_b)      { arrive_x_then_scroll(c, 0); }
+SFA_FUNC(0889BA70, arrive_x_then_scroll_c)      { arrive_x_then_scroll(c, 0); }
+
+/* (object, fighter): the same, then the fighter's character shown and drawn. */
+static void arrive_x_then_show(Cpu *c, int snap) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    f_0889CE64(c);
+    if (c->r[2] != 0) { next_part(o); if (snap) snap_x_to_target(o); }
+    c->r[4] = o; c->r[5] = f;
+    f_08899DF0(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+SFA_FUNC(08899CCC, arrive_x_stop_then_show) { arrive_x_then_show(c, 1); }
+SFA_FUNC(08899D78, arrive_x_on_then_show)    { arrive_x_then_show(c, 0); }
+
+/* (object, fighter): on a bit of the fighter's +78 the next part, with the target (+114) back to its
+   start (+112) and (`stop`) the speed +96 cleared; then the object's frame routine. */
+static void on_fighter_bit(Cpu *c, uint32_t bit, int stop, GuestFunc then) {
+    gaddr o = ARG(0), f = ARG(1);
+    if (S8(f + 78) & bit) {
+        next_part(o);
+        *H(o + 114) = *H(o + 112);
+        if (stop) *W(o + 96) = 0;
+    }
+    c->r[29] -= 0x20;
+    c->r[4] = o; c->r[5] = f;
+    then(c);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(08899D28, on_fighter_bit_1_show)   { on_fighter_bit(c, 1, 0, f_08899DF0); }
+SFA_FUNC(0889A110, on_fighter_bit_2_scroll) { on_fighter_bit(c, 2, 1, f_0889A1BC); }
+SFA_FUNC(0889A3F4, on_fighter_bit_4_scroll) { on_fighter_bit(c, 4, 1, f_0889A1BC); }
+SFA_FUNC(0889BA2C, on_fighter_bit_8_scroll) { on_fighter_bit(c, 8, 1, f_0889A1BC); }
+SFA_FUNC(0889A670, on_fighter_bit_8_lit)    { on_fighter_bit(c, 8, 1, f_0889A754); }
+
+/* Jittered once, set to its first colour unless it is the second of a pair; then its animation by
+   type. */
+SFA_FUNC(0887D63C, jitter_then_animate) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 9) = 0;
+    f_0887D9D0(c);
+    if (S8(o + 121) == 0) { *B(o + 12) = 0xFF; *B(o + 13) = 2; }
+    c->r[4] = o;
+    f_0887D990(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* The thirteen-frame shifts as steps: the next substep (or +129 one more) on the last frame. */
+SFA_FUNC(088AD1D4, shift_x_then_next_substep) {
+    gaddr o = ARG(0);
+    if (call_keeping(c, f_088AD5A8, o)) *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+}
+SFA_FUNC(088B270C, shift_6_then_count_129) {
+    gaddr o = ARG(0);
+    if (call_keeping(c, f_088B2754, o)) *B(o + 129) = (uint8_t)(*B(o + 129) + 1);
+}
+
+/* Set up by its type (+92): three words from 0x08A26950 (entry 3 × type - 51 on) for +8, +104 and the
+   12-byte record at 0x08A26700 kept in +132. */
+SFA_FUNC(08889CC8, setup_by_type_26950) {
+    gaddr o = ARG(0);
+    uint32_t i = *B(o + 92) * 3u - 51u;
+    gaddr table = 0x08A26950u;
+    *B(o + 54) = 0x12; *B(o + 88) = 2; *B(o + 55) = 5;
+    *W(o + 4) = 0;
+    *W(o + 8) = *W(table + i * 4u);
+    *W(o + 104) = *W(table + (i + 1) * 4u);
+    *B(o + 56) = 0; *B(o + 136) = 0x60;
+    *W(o + 132) = 0x08A26700u + *W(table + (i + 2) * 4u) * 12u;
+    *B(o + 93) = 1;
+}

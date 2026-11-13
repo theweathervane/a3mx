@@ -121,3 +121,34 @@ SFA_FUNC(088AA950, count_pair) {
     f_088AA980(c);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.71.0 ---- */
+
+void f_08822934(Cpu *c);   /* pool_4_reset */
+void f_0882222C(Cpu *c);   /* pool_6_reset */
+void f_08822444(Cpu *c);   /* pool_5_reset */
+void f_08823304(Cpu *c);   /* clear the object list */
+
+static void director_clear_78(void) {
+    *B(DIRECTOR + 80) = 0; *B(DIRECTOR + 79) = 0; *B(DIRECTOR + 78) = 0; *B(DIRECTOR + 92) = 0;
+}
+
+/* Pools 4 and 6 and the object list emptied, and the director's +78 - +80 and +92 cleared. */
+SFA_FUNC(088AC3A8, director_clear_pools_4_6) {
+    c->r[29] -= 0x10;
+    f_08822934(c);
+    f_08823304(c);
+    f_0882222C(c);
+    c->r[4] = DIRECTOR;
+    director_clear_78();
+    c->r[29] += 0x10;
+}
+
+/* Pool 5 emptied, and the same fields cleared. */
+SFA_FUNC(088AC3EC, director_clear_pool_5) {
+    c->r[29] -= 0x10;
+    f_08822444(c);
+    c->r[4] = DIRECTOR;
+    director_clear_78();
+    c->r[29] += 0x10;
+}

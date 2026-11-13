@@ -818,3 +818,227 @@ SFA_FUNC(0887BAD8, fighter_asks_of_opponent) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.71.0: the CPU's script branches ---- */
+
+void f_08879C8C(Cpu *c);   /* fighter_script_leave_block */
+void f_0887C25C(Cpu *c);   /* fighter_pick_script_at_random */
+
+/* (fighter, script): the script read on into the block when `yes`, or the block left. */
+static void script_branch(Cpu *c, gaddr f, gaddr p, int yes) {
+    c->r[4] = f; c->r[5] = p; c->r[6] = p;
+    if (yes) f_0887A10C(c); else f_08879C8C(c);
+}
+
+/* Into the block one time in two. */
+SFA_FUNC(08878B30, fighter_script_if_random) {
+    gaddr f = ARG(0), p = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = p; c->r[17] = f;
+    f_08821368(c);
+    uint32_t heads = c->r[2] & 1;
+    c->r[4] = f; c->r[5] = p;
+    if (heads) f_08879C8C(c); else f_0887A10C(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Into the block while the opponent's +73 is 1 / while the opponent's +698 is set. */
+SFA_FUNC(08878C24, fighter_script_if_opponent_73) {
+    gaddr f = ARG(0), p = ARG(1);
+    c->r[29] -= 0x20;
+    c->r[7] = p;
+    script_branch(c, f, p, S8(*W(f + 92) + 73) == 1);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(08878CD8, fighter_script_if_opponent_698) {
+    gaddr f = ARG(0), p = ARG(1);
+    c->r[29] -= 0x20;
+    c->r[7] = p;
+    script_branch(c, f, p, S8(*W(f + 92) + 698) != 0);
+    c->r[29] += 0x20;
+}
+
+/* Into the block when the routine by layout (0x08876BE4) says yes. */
+SFA_FUNC(08878EEC, fighter_script_if_layout) {
+    gaddr f = ARG(0), p = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = p; c->r[17] = f;
+    f_08876BE4(c);
+    uint32_t yes = c->r[2];
+    c->r[4] = f; c->r[5] = p;
+    if (yes) f_0887A10C(c); else f_08879C8C(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* (fighter, script): this script kept to come back to (+504 its first word, +512 where), and one
+   picked at random read instead. */
+SFA_FUNC(08879E10, fighter_script_call_random) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    *H(f + 504) = (uint16_t)S16(f + 486);
+    *B(f + 484) = 1;
+    *W(f + 512) = ARG(1);
+    c->r[4] = f;
+    f_0887C25C(c);
+    c->r[4] = f; c->r[5] = c->r[2];
+    f_0887A10C(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* A script picked at random (after one picked by level, the first time) and started: +528 its place,
+   +488 its first word; answers the word after. */
+SFA_FUNC(0887A188, fighter_start_random_script) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    if (*B(f + 484) == 0) { c->r[4] = f; f_0887B1B8(c); }
+    *B(f + 484) = 1;
+    c->r[4] = f;
+    f_0887C25C(c);
+    gaddr p = c->r[2];
+    *W(f + 528) = p;
+    c->r[4] = (uint32_t)(int32_t)S16(p);
+    *H(f + 488) = (uint16_t)S16(p);
+    RETURN(p + 2);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+void f_08821330(Cpu *c);
+void f_08862F28(Cpu *c);
+void f_088632C4(Cpu *c);
+void f_08877BC4(Cpu *c);   /* fighter_cpu_wait_then_read */
+
+/* Kept off the edges: past the left (+238 = 1) or the right (+238 = 2) by its width (+232, 24 more
+   with 0x08A0588A) from the screen (0x08821330's x), the fighter is pushed back in and 0x08862F28 told
+   how far. Pushed while +73 bit 7 sets +592. */
+SFA_FUNC(08862DF8, fighter_keep_on_screen) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    int32_t margin = S8(0x08A0588Au) != 0 ? 0x18 : 0;
+    c->r[18] = (uint32_t)margin;
+    *B(f + 238) = 0;
+    if (S8(f + 671) == 0) {
+        gaddr opp = *W(f + 92);
+        c->r[17] = opp;
+        c->r[4] = f;
+        f_08821330(c);
+        int16_t x = S16(f + 18), width = S16(f + 232);
+        int16_t d = (int16_t)((int16_t)(x - width - margin) - S16(c->r[2] + 18));
+        int16_t by = 0;
+        uint8_t edge = 0;
+        if (d <= 0) { by = d; edge = 1; }
+        else {
+            int16_t e = (int16_t)((int16_t)(width * 2 + margin * 2 + d) - 0x180);
+            if (e >= 0) { by = e; edge = 2; }
+        }
+        if (edge) {
+            *H(f + 18) = (uint16_t)(x - by);
+            *B(f + 238) = edge;
+            c->r[4] = f; c->r[5] = opp; c->r[6] = (uint32_t)(int32_t)by;
+            f_08862F28(c);
+        }
+    }
+    if (S8(f + 238) != 0 && (S8(f + 73) & 0x80) && S8(f + 592) == 0) *B(f + 592) = 1;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* (fighter, n): the speeds +96 - +108 from the record (0x08A182C0, 16 bytes) picked through two tables
+   by +655, +575 and n; x ones turned round unless +134. */
+SFA_FUNC(08863168, fighter_set_speeds) {
+    gaddr f = ARG(0);
+    uint32_t a = *B(0x08A180C8u + (uint32_t)(S8(f + 655) * 4 + S8(f + 575)));
+    uint32_t k = *B(0x08A18218u + a * 2u + ARG(1));
+    gaddr e = 0x08A182C0u + k * 16u;
+    int keep = S8(f + 134) != 0;
+    *W(f + 96)  = keep ? *W(e) : 0u - *W(e);
+    *W(f + 104) = keep ? *W(e + 4) : 0u - *W(e + 4);
+    *W(f + 100) = *W(e + 8);
+    *W(f + 108) = *W(e + 12);
+}
+
+/* 1 once (+498 cleared) when nothing halts the fight, 0x088632C4 says no, +498 and +123 are set and
+   the record at +296 is shown. */
+SFA_FUNC(08876A0C, fighter_asks_08876A0C) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    int yes = 0;
+    if ((S8(GAME + G_HALT_38) | S8(BATTLE + BT_FLAG_13) | S8(BATTLE + BT_FLAG_14)) == 0) {
+        c->r[4] = f;
+        f_088632C4(c);
+        if (c->r[2] == 0 && S8(f + 498) != 0 && S8(f + 123) != 0 && *B(*W(f + 296) + 1) != 0) {
+            *B(f + 498) = 0;
+            yes = 1;
+        }
+    }
+    RETURN(yes);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* The question numbered by +492 (table 0x08A22178, by its value / 2) asked of the fighter: 0 with
+   +788, or with +688 while less than 32 above +132, or for 0 or 1. */
+SFA_FUNC(08876AA8, fighter_ask_by_492) {
+    gaddr f = ARG(0);
+    RETURN(0);
+    if (*B(f + 788) != 0) return;
+    if (S8(f + 688) != 0 && S16(f + 22) - S16(f + 132) < 32) return;
+    uint32_t m = (uint32_t)(int32_t)S8(f + 492) & 0xFE;
+    if (m == 0) return;
+    gaddr fn = *W(0x08A22178u + (m >> 1) * 4u);
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = c->r[31];
+    c->r[4] = f; c->r[5] = fn;
+    c->r[31] = 0x08876B3Cu;
+    rt_call_indirect(c, fn);
+    c->r[31] = *W(c->r[29] + 16);
+    c->r[29] += 0x20;
+}
+
+/* (fighter, script): a first script waits (0x08877BC4); after that the wait set and the script read
+   on, or (with +506) +482 = 0, +483 = 8 and 0x08877F44. */
+SFA_FUNC(08877A38, fighter_cpu_wait_or_read) {
+    gaddr f = ARG(0), p = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = p; c->r[17] = f;
+    if (*B(f + 484) == 0) { c->r[4] = f; c->r[5] = p; f_08877BC4(c); }
+    else {
+        c->r[4] = f; c->r[5] = p;
+        f_0887B48C(c);
+        c->r[4] = f; c->r[5] = p;
+        if (S16(f + 506) != 0) { *B(f + 482) = 0; *B(f + 483) = 8; f_08877F44(c); }
+        else f_0887A10C(c);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* (fighter, script): +492 = the script's word; into the block while it is at least +508. */
+SFA_FUNC(08878A68, fighter_script_if_492_reached) {
+    gaddr f = ARG(0), p = ARG(1);
+    *H(f + 492) = (uint16_t)S16(p);
+    c->r[29] -= 0x20;
+    script_branch(c, f, p + 2, !(S16(f + 492) < S16(f + 508)));
+    c->r[29] += 0x20;
+}
+
+/* With the opponent's health not below 0, by the script's command (+528's word, high byte): 3 yes; 4
+   while +536 and +228 are clear; 5 for ISM other than 1 while +366 is at least 48 (ISM 0) or 144. */
+SFA_FUNC(0887BD60, fighter_script_command_allowed) {
+    gaddr f = ARG(0);
+    RETURN(0);
+    if (S16(*W(f + 92) + 112) < 0) return;
+    uint32_t command = (uint32_t)(int32_t)S16(*W(f + 528)) & 0xFF00;
+    if (command == 0x300) { RETURN(1); return; }
+    if (command == 0x400) { RETURN(*B(f + 536) == 0 && *W(f + 228) == 0); return; }
+    int8_t ism = S8(f + F_ISM);
+    if (ism == 1 || command != 0x500) return;
+    RETURN(S16(f + 366) >= (ism == 0 ? 48 : 144));
+}

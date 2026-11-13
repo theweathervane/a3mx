@@ -319,3 +319,38 @@ SFA_FUNC(08855AA4, intro_make_first) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* Two parts of the intro's first object (0x08855D44 with 4): one from x -384 moving right at 40, the
+   other from x 384 moving left. */
+SFA_FUNC(08855B3C, intro_make_crossing_pair) {
+    gaddr s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[4] = 0; c->r[5] = 1;
+    f_08822E74(c);
+    gaddr o = c->r[2];
+    c->r[16] = o; c->r[17] = 1;
+    if (o != 0) {
+        *B(o) = 1;
+        c->r[4] = o; c->r[5] = 4; c->r[6] = 0; f_08855D44(c);
+        gaddr p = c->r[2];
+        *B(p + 9) = 1; *H(p + 18) = 0xFE80; *H(p + 22) = 0x9A; *W(p + 96) = 0x280000;
+        c->r[4] = o; c->r[5] = 4; c->r[6] = 0; f_08855D44(c);
+        p = c->r[2];
+        *B(p + 9) = 2; *H(p + 18) = 0x180; *H(p + 22) = 0x67; *W(p + 96) = 0xFFD80000u;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Set up with nine s16 from 0x08A16FF8 into +112 on (the list kept in +156) and its animation. */
+SFA_FUNC(08857B14, intro_setup_08857B14) {
+    gaddr o = ARG(0);
+    *B(o + 10) = 0;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *B(o + 141) = 0; *B(o + 11) = 0; *B(o + 14) = 0;
+    *H(o + 24) = 7; *H(o + 22) = 0xB7; *H(o + 86) = 5; *W(o + 148) = 6;
+    *B(o + 12) = 1; *B(o + 13) = 0x16;
+    for (uint32_t i = 0; i < 9; i++) *H(o + 0x70 + i * 2) = *H(0x08A16FF8u + i * 2);
+    *W(o + 156) = 0x08A16FF8u;
+    set_animation(c, *W(0x08A170C8u));
+}
