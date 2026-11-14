@@ -1531,3 +1531,31 @@ SFA_FUNC(0886E3CC, fighter_call_08805310_by_kind) {
     f_08805310(c);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.78.0 ---- */
+
+/* (fighter): 1 when a CPU fighter may take a chance (list 0x08A228A0) on its opponent: not while
+   +550 or +500, the opponent attacking (+536, or +235) without bit 7 of its +307, itself in routine
+   1.0 but not at part 5, 7, 8 or 9; never in a network battle with +815 while its script nesting
+   (+484) is 2. */
+SFA_FUNC(0887B6B8, fighter_cpu_may_chance) {
+    gaddr f = ARG(0), opp = *W(f + 92), s16 = c->r[16], s17 = c->r[17];
+    uint32_t answer = 0;
+    if (S8(f + 550) != 0 || S8(f + 500) != 0) goto done;
+    if (*B(opp + 536) == 0 && S8(opp + 235) == 0) goto done;
+    if (*B(opp + 307) & 0x80) goto done;
+    if (*B(f + 4) != 1 || *B(f + 5) != 0) goto done;
+    uint8_t part = *B(f + 6);
+    if (part == 5 || part == 7 || part == 8 || part == 9) goto done;
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = 1;
+    c->r[4] = f; c->r[5] = 0x08A228A0u; f_08877258(c);
+    if (c->r[2] != 0) {
+        f_088D5E44(c);
+        answer = !(c->r[2] != 0 && S8(f + 815) != 0 && *B(f + 484) == 2 && *B(f + 5) == 0);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+done:
+    RETURN(answer);
+}

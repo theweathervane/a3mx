@@ -1443,3 +1443,30 @@ SFA_FUNC(0882453C, game_fight_frame_end) {
     FRAME(0x20, fight_frame_end(c, ARG(0), ARG(1)));
     c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
 }
+
+/* (n): the s8 at 0x08A0F3A8 + n. For n = 41 outside a continuing match, one of the 41 entries picked at
+   random instead (up to 32 tries): not 9, 10, 23, 30 or 31, not BATTLE + 98, and not the one GAME + 192
+   names; the last try's is taken if none fits. */
+#define PICK_TABLE 0x08A0F3A8u
+SFA_FUNC(0883021C, game_pick_at_random) {
+    uint32_t n = ARG(0);
+    gaddr saved[9] = { c->r[16], c->r[17], c->r[18], c->r[19], c->r[20], c->r[21], c->r[22], c->r[23], c->r[30] };
+    c->r[29] -= 0x30;
+    c->r[16] = n; c->r[18] = PICK_TABLE;
+    if (CALL_KEEP_RESULT(c, f_088D7C1C) == 0 && n == 0x29) {
+        for (uint8_t tries = 0x20; tries != 0; ) {
+            uint32_t r = CALL0(f_08821368);
+            DIV(c, r, 0x29);
+            n = c->hi;
+            tries = (uint8_t)(tries - 1);
+            if (n == 9 || n == 10 || n == 23 || n == 30 || n == 31) continue;
+            int8_t v = S8(PICK_TABLE + n);
+            if (v == (int16_t)*H(BATTLE + 98)) continue;
+            if (v != S8(PICK_TABLE + (uint32_t)(int32_t)S8(GAME + 192))) break;
+        }
+    }
+    c->r[29] += 0x30;
+    c->r[16] = saved[0]; c->r[17] = saved[1]; c->r[18] = saved[2]; c->r[19] = saved[3]; c->r[20] = saved[4];
+    c->r[21] = saved[5]; c->r[22] = saved[6]; c->r[23] = saved[7]; c->r[30] = saved[8];
+    RETURN((uint32_t)(int32_t)S8(PICK_TABLE + n));
+}

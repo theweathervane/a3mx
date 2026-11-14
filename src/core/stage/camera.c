@@ -106,3 +106,29 @@ SFA_FUNC(0881EB14, camera_height_by_pair) {
     rt_call_indirect(c, fn);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.78.0 ---- */
+
+void f_0881EA10(Cpu *c);   /* camera_height_by_layout (object/runners.c) */
+
+/* (layer): its y (+38). While the byte at 0x08B01560 is set it just moves by +86. Otherwise the
+   fighters' height is asked for (into a word on the guest stack, frame + 16) and y steps by 1 towards
+   it less 0x60, kept within +66 - +64; then +86 is added, and +58 = 4 while the result is under +46. */
+SFA_FUNC(0881E538, camera_layer_follow_height) {
+    gaddr l = ARG(0), saved = c->r[16];
+    int16_t y = *S(l + 38);
+    if (*(uint8_t *)guest_ptr(0x08B01560u) != 0) { *S(l + 38) = (int16_t)(y + *S(l + 86)); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = l;
+    gaddr out = c->r[29] + 16;
+    c->r[4] = out; f_0881EA10(c);
+    y = *S(l + 38);
+    int16_t d = (int16_t)(*S(out) - y - 0x60);
+    if (d > 0) { y = (int16_t)(y + 1); if (y >= *S(l + 64)) y = *S(l + 64); }
+    else if (d < 0) { y = (int16_t)(y - 1); if (*S(l + 66) >= y) y = *S(l + 66); }
+    y = (int16_t)(y + *S(l + 86));
+    *(uint8_t *)guest_ptr(l + 58) = y < *S(l + 46) ? 4 : 0;
+    *S(l + 38) = y;
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

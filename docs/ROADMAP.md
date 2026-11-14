@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  8.89% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  9.03% decompiled
 
-Functions                                [░░░░░░░░░░]   9.19%  1,368 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   8.89%  43,051 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   9.26%  1,378 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   9.03%  43,745 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  19.62%  40,018 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  19.96%  40,712 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.72%  1,845 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -157,6 +157,9 @@ Done:
 - [x] A hit's damage (0x08872B54), a fighter's speeds by direction (0x08862068), the character's values
       (0x088597F0), a CPU script picked by the opponent (0x0887B308), rows laid out by a character's
       width, and five more screen objects (0.77.0)
+- [x] The random numbers' twist (0x08820A68), a pick at random from 41 (0x0883021C), the camera layer
+      following the height (0x0881E538), a CPU fighter's chance check (0x0887B6B8), and six more screen
+      objects (0.78.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

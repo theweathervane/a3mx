@@ -2832,3 +2832,181 @@ SFA_FUNC(08818F1C, record_setup_from_tables) {
     rt_call_indirect(c, fn);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.78.0 ---- */
+
+void f_088D5E44(Cpu *c);   /* game_network_battle (task/fight.c) */
+
+/* Nineteen kind-0x10 objects from the 3-byte entries at 0x08A27328 (type, fighter 2 if set, +10; a
+   +10 with bit 7 takes GAME + 39 instead), once pool 4 has 19 free; in Final Battle (mode 9) one more
+   of type 4, for the fighter GAME + 53 bit 0 names, +10 = 0xFF. As in the original, the stores go to
+   whatever was made, 0 included, and the fighters' registers keep the caller's values when the
+   nineteen are not made. */
+SFA_FUNC(0889682C, make_nineteen_and_final) {
+    gaddr s[6] = { c->r[16], c->r[17], c->r[18], c->r[19], c->r[20] };
+    gaddr f1 = c->r[18], f2 = c->r[17];
+    c->r[29] -= 0x30;
+    c->r[16] = GAME;
+    if (*B(0x095176F3u) >= 0x13) {
+        f1 = FIGHTER_1; f2 = FIGHTER_2;
+        c->r[18] = f1; c->r[17] = f2;
+        gaddr e = 0x08A27328u;
+        for (int i = 0; i < 19; i++, e += 3) {
+            c->r[20] = e + 1;
+            gaddr n = CALL2(f_08822EAC, 0x10, *B(e) & 0x7F);
+            *W(n + 92) = *B(e + 1) != 0 ? f2 : f1;
+            uint8_t v = *B(e + 2);
+            *B(n + 10) = (v & 0x80) ? (uint8_t)S8(GAME + 39) : v;
+        }
+        c->r[19] = 0;
+    }
+    if (S8(GAME + 114) == 9) {
+        gaddr n = CALL2(f_08822EAC, 0x10, 4);
+        if (n != 0) *W(n + 92) = (S8(GAME + 53) & 1) ? f2 : f1;
+        *B(n + 10) = 0xFF;
+    }
+    c->r[29] += 0x30;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3]; c->r[20] = s[4];
+}
+
+/* (record): +10 counts frames and y (+22) moves with them: for type 3 (+3) every frame, for others
+   from the third frame, y - 4 with +78, else y + 14 at the count 2 and y + 8 at the others; at the
+   count 1 of other types y + 2 without +78. On the 14th frame y - 8 with +78 (else + 8), +10 starts
+   again and the answer is 1; otherwise 0. */
+SFA_FUNC(088AD60C, record_bob_22) {
+    gaddr r = ARG(0);
+    uint8_t t = *B(r + 10);
+    int up = S8(r + 78) == 0;
+    if (*B(r + 3) == 3 || t >= 2) {
+        int16_t y = S16(r + 22);
+        *H(r + 22) = (uint16_t)(!up ? y - 4 : t == 2 ? y + 14 : y + 8);
+    } else if (t == 1) {
+        int16_t y = S16(r + 22);
+        *H(r + 22) = (uint16_t)(up ? y + 2 : y);
+    }
+    uint8_t n = (uint8_t)(t + 1);
+    *B(r + 10) = n;
+    if (n != 14) { RETURN(0); return; }
+    int16_t y = S16(r + 22);
+    *H(r + 22) = (uint16_t)(S8(r + 78) != 0 ? y - 8 : y + 8);
+    *B(r + 10) = 0;
+    RETURN(1);
+}
+
+/* (object): its first substep sets it up (layer 0; at (0xC0, 0x180) with target (0x180, 0x80), speeds
+   +100 = -0x1E1E00 and +108 = 0x1E100) and, offline or in a continuing match, +148 cleared, +86 = 8 and
+   animation 0x08A27730[2]. Then it waits: with BATTLE + 81 the next step at once and arrives in y; else
+   the next step once GAME + 20's low byte is 3. */
+SFA_FUNC(08897C64, setup_then_wait_20_3) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    uint8_t sub = *B(o + 5);
+    if (sub == 0) {
+        *B(o + 5) = 1;
+        c->r[4] = o; f_08898954(c);
+        *H(o + 18) = 0xC0; *H(o + 112) = 0x180; *H(o + 22) = 0x180; *H(o + 114) = 0x80;
+        *W(o + 100) = 0xFFE1E200u; *W(o + 108) = 0x1E100u;
+        f_088D5E44(c);
+        if (c->r[2] == 0 || S8(GAME + 146) != 0) {
+            *W(o + 148) = 0; *H(o + 86) = 8;
+            c->r[4] = o; c->r[5] = *W(0x08A27730u + 8); f_0882196C(c);
+        }
+    } else if (S8(BATTLE + 81) != 0) {
+        *B(o + 5) = 0; *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+        c->r[4] = o; f_08897D78(c);
+    } else if ((S16(GAME + 20) & 0xFF) == 3) {
+        *B(o + 5) = 0; *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, fighter): with the fighter's +424 bit 3, the next step (+5 cleared, +4 on); otherwise the
+   next part: +148 cleared, +86 = 8, +160 = 0xC0, layer 1, motion entry 0x19 + side, +13 = 1, +36 = x,
+   y from the s16 at 0x08A2A990 by +10; a pool-42 marker (kind 0x21, type 4) pointing back, kept in
+   +44; animation 0xF + +10 + 2 × GAME + 118. */
+SFA_FUNC(0889A4E8, setup_side_19_with_marker) {
+    gaddr o = ARG(0), f = ARG(1), s[3] = { c->r[16], c->r[17], c->r[18] };
+    if (S16(f + 424) & 8) { *B(o + 5) = 0; *B(o + 4) = (uint8_t)(*B(o + 4) + 1); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o; c->r[18] = 1;
+    next_part(o);
+    *W(o + 148) = 0; *H(o + 86) = 8; *B(o + 160) = 0xC0;
+    c->r[4] = o; c->r[5] = 1; f_0889CFE8(c);
+    c->r[4] = o; c->r[5] = (uint32_t)(S8(f + 337) + 0x19) & 0xFFFF; f_0889CEE4(c);
+    int16_t x = S16(o + 18);
+    uint8_t k = *B(o + 10);
+    *B(o + 13) = 1;
+    *H(o + 36) = (uint16_t)x;
+    *H(o + 22) = (uint16_t)S16(0x08A2A990u + k * 2u);
+    gaddr n = CALL2(f_08822F54, 0x21, 4);
+    c->r[16] = n;
+    if (n != 0) {
+        *B(n + 10) = *B(o + 10); *W(n + 88) = o; *B(n + 78) = 1;
+        *W(o + 44) = n;
+    }
+    c->r[4] = o; c->r[5] = (uint32_t)((S8(GAME + 118) << 1) + *B(o + 10) + 0xF) & 0xFFFF; f_0889CDC8(c);
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}
+
+void f_088233BC(Cpu *c);   /* object_free_list_3 (pool.c) */
+
+/* (record), by its type (+92): 2 flashes: with +129 set it is cleared and the record lit (+136 = 0xFF,
+   colour bytes 0xE0), otherwise dimmed (+136 = 0x80, colour bytes 0); 3 is freed once the object at
+   +124 has its +82 at 0, and while GAME + 89 is set; the others fade: while +98 counts down, +136
+   changes by +104. */
+SFA_FUNC(088892C4, record_flash_or_fade) {
+    gaddr r = ARG(0), saved = c->r[16];
+    uint8_t type = *B(r + 92);
+    static const uint8_t colours[] = { 51, 50, 49, 48, 45, 44, 43, 42, 39, 38, 37, 36 };
+    if (type == 2) {
+        uint8_t v;
+        if (*B(r + 129) == 0) { *B(r + 136) = 0x80; v = 0; }
+        else { *B(r + 129) = 0; *B(r + 136) = 0xFF; v = 0xE0; }
+        for (unsigned i = 0; i < sizeof colours; i++) *B(r + colours[i]) = v;
+        return;
+    }
+    if (type == 3) {
+        c->r[29] -= 0x20;
+        c->r[16] = r;
+        if (S16(*W(r + 124) + 82) == 0) { c->r[4] = r; f_088233BC(c); }
+        if (S8(GAME + 89) != 0) { c->r[4] = r; f_088233BC(c); }
+        c->r[29] += 0x20;
+        c->r[16] = saved;
+        return;
+    }
+    uint16_t t = *H(r + 98);
+    if (t == 0) return;
+    uint8_t alpha = *B(r + 136);
+    uint32_t by = *W(r + 104);
+    *H(r + 98) = (uint16_t)(t - 1);
+    *B(r + 136) = (uint8_t)(alpha + by);
+}
+
+/* (object): y (+20, 16.16) moves by +108 and its whole part is kept within 0 up to (+76 << 8 | +77);
+   shown (+9 = 2, +24 = 1, +12 / +13 = 1 / 1) unless GAME + 22's low byte matches its +78 (12 with 12,
+   0 with 15 or 10, 7 with 7), which hides it (+9 = 0, +24 = 7, +12 / +13 = 1 / 2). */
+SFA_FUNC(088ADB28, scroll_y_wrapped_by_game_22) {
+    gaddr o = ARG(0);
+    *W(o + 20) += *W(o + 108);
+    int16_t period = (int16_t)((S8(o + 76) << 8) + (S8(o + 77) & 0xFF));
+    int16_t y = S16(o + 22);
+    if (y < 0) {
+        do y = (int16_t)(y + period); while (y < 0);
+        *H(o + 22) = (uint16_t)y;
+        y = S16(o + 22);
+    }
+    if (y >= period) {
+        do y = (int16_t)(y - period); while (y >= period);
+        *H(o + 22) = (uint16_t)y;
+    }
+    uint8_t g = (uint8_t)(S16(GAME + 22) & 0xFF);
+    int8_t k = S8(o + 78);
+    int hidden = (g == 12 && k == 12) || (g == 0 && (k == 15 || k == 10)) || (g == 7 && k == 7);
+    *B(o + 9) = hidden ? 0 : 2;
+    *H(o + 24) = hidden ? 7 : 1;
+    *B(o + 12) = 1;
+    *B(o + 13) = hidden ? 2 : 1;
+}

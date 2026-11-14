@@ -711,6 +711,18 @@ owner at + 88, and frame data at + 296.
 | 0x08899FD0 / 0x0889C0D4 | rows of 6-byte entries laid out by a character's width (0x08A27FFC by 0x08A2A914; 0x08A280B0 by 0x08A2AB0C) |
 | `object/screen_steps.c` | 0x0889B15C, 0x0889C3D8, 0x08881FB8 (kind 15 beside, jittered by 0x08A24C38), 0x08818F1C (tables 0x08A078D0 - 0x08A07900) |
 
+**The random numbers' twist and more** (0.78.0).
+
+| Address | What |
+|---|---|
+| 0x08820A68 | the Mersenne Twister's twist over the 624 words at 0x08B01564 (mag01 at 0x08A0E06C); run by 0x08820BE0 when its place (+ 2496) is 0 |
+| 0x0883021C | (n): the s8 at 0x08A0F3A8 + n; n = 41 outside a continuing match picks one of 41 at random (32 tries; not 9, 10, 23, 30, 31, BATTLE + 98 or GAME + 192's) (`task/fight.c`) |
+| 0x0881E538 | a camera layer's y (+ 38) stepping by 1 towards the height 0x0881EA10 gives (on the guest stack) less 0x60, within + 66 - + 64, plus + 86; + 58 = 4 under + 46; only + 86 added while 0x08B01560 (`stage/camera.c`) |
+| 0x0887B6B8 | 1 when a CPU fighter may take a chance (0x08A228A0): see `fighter/state.c` |
+| 0x0889682C | nineteen kind-0x10 objects from 0x08A27328 once pool 4 has 19 free; one more of type 4 in Final Battle |
+| 0x088AD60C / 0x088892C4 / 0x088ADB28 | a record bobbing by + 10 (1 on the 14th frame); flashing / freeing / fading by + 92; y wrapped within (+ 76 << 8 \| + 77), hidden for GAME + 22's low byte matching + 78 |
+| `object/screen_steps.c` | 0x08897C64, 0x0889A4E8 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

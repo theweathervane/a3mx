@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.78.0
+- **More of the game decompiled:** 10 more functions are hand-written C. They include the game's random numbers being made anew (the Mersenne Twister's twist), a value picked at random from a table of 41 with a few left out, the camera layer following the fighters' height, whether a CPU fighter may take its chance on its opponent, and more objects of the screens around a fight (nineteen made at once, a bobbing record, scrolling layers hidden by the screen's state). Nothing changes in play.
+
 ## 0.77.0
 - **More of the game decompiled:** 11 more functions are hand-written C. They include how much damage a hit does (through the ISM, the CPU's level and the hit's kind), a fighter's walking speeds by the direction it holds, the character's own values loaded at the start, how a CPU fighter picks a script by what its opponent is doing, and rows of pictures laid out by a character's width on the screens around a fight. Nothing changes in play.
 

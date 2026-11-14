@@ -234,3 +234,21 @@ static void queue_record(Cpu *c, gaddr row, GuestFunc take) {
 }
 SFA_FUNC(08809EF0, queue_record_b) { queue_record(c, QUEUES, f_089E26D0); }
 SFA_FUNC(08809F48, queue_record_c) { queue_record(c, QUEUES + 64, f_089E272C); }
+
+/* ---- 0.78.0 ---- */
+
+/* The Mersenne Twister's 624 words made anew (the standard twist: 397 apart, the two-entry table at
+   0x08A0E06C for the low bit). Answers 4 × the low bit used for word 622, as the original leaves v0. */
+#define MT_MAG01 0x08A0E06Cu
+SFA_FUNC(08820A68, random_twist) {
+    uint32_t *mt = guest_ptr(RANDOM_STATE), y = 0, bit = 0;
+    const uint32_t upper = 0x80000000u, lower = 0x7FFFFFFFu;
+    for (int k = 0; k < 623; k++) {
+        y = (mt[k] & upper) | (mt[k + 1] & lower);
+        bit = (y & 1) << 2;
+        mt[k] = (k < 227 ? mt[k + 397] : mt[k - 227]) ^ (y >> 1) ^ *W(MT_MAG01 + bit);
+    }
+    y = (mt[623] & upper) | (mt[0] & lower);
+    mt[623] = mt[396] ^ (y >> 1) ^ *W(MT_MAG01 + ((y & 1) << 2));
+    RETURN(bit);
+}
