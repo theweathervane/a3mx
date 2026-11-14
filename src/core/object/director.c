@@ -315,3 +315,46 @@ SFA_FUNC(088AA6F4, director_by_93) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.80.0 ---- */
+
+void f_08822F1C(Cpu *c);   /* object_make_16 (pool.c) */
+
+/* (director): +16 counts on, pool 5 emptied, the scrolls' +16 / +18 words and +17 cleared, GAME + 8
+   cleared and GAME + 20 cut to its low byte, the fighters' layer + 122 = 6, scroll A + 0x18 = 0x4400000
+   and + 0x1C = 0xFEF00000; with 14 or more free in pool 7 (0x095176F5) the kind-0x7F objects of types
+   2, 1, 0, nine of type 4 (+78 = 9 down to 1) and 6 are made and shown. +75 = 1. As in the original,
+   the stores go to whatever was made, 0 included. */
+SFA_FUNC(088AB814, director_start_kind_7f) {
+    gaddr d = ARG(0), s[3] = { c->r[16], c->r[17], c->r[18] };
+    c->r[29] -= 0x20;
+    c->r[16] = d; c->r[17] = 0;
+    *B(d + 16) = (uint8_t)(*B(d + 16) + 1);
+    c->r[4] = d; f_088AC3EC(c);
+    *H(0x08B02828u + 18) = 0; *H(0x08B02828u + 16) = 0;
+    *H(0x08B027F8u + 18) = 0;
+    *B(d + 17) = 0;
+    *H(0x08B027F8u + 16) = 0;
+    *H(0x08B027C8u + 18) = 0; *H(0x08B027C8u + 16) = 0;
+    int16_t g20 = S16(GAME + 20);
+    *H(GAME + 8) = 0;
+    *H(GAME + 20) = (uint16_t)(g20 & 0xFF);
+    *B(0x092E88A0u + 122) = 6;
+    *W(0x08B027F8u) = 0x4400000u;
+    *W(0x08B027F8u + 4) = 0xFEF00000u;
+    if (S8(0x095176F5u) >= 14) {
+        c->r[18] = 1;
+        static const uint8_t first[] = { 2, 1, 0 };
+        for (int i = 0; i < 3; i++) *B(CALL2(f_08822F1C, 0x7F, first[i])) = 1;
+        for (int k = 9; k > 0; k--) {
+            gaddr n = CALL2(f_08822F1C, 0x7F, 4);
+            *B(n + 78) = (uint8_t)k;
+            *B(n) = 1;
+        }
+        *B(CALL2(f_08822F1C, 0x7F, 6)) = 1;
+        c->r[17] = 0;
+    }
+    *B(d + 75) = 1;
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}

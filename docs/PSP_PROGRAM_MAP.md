@@ -734,6 +734,18 @@ owner at + 88, and frame data at + 296.
 | 0x08822808 / 0x088226E0 | the two pools of twelve 0x168-byte objects (0x0950FFB0 / 0x09511090; counts 0x095176F0 / F1) reset; the fight's word tables cleared (0x092E2A00 only when the argument is 0) |
 | `object/screen_steps.c` | 0x08899EB0 / 0x0889A288 (falling set-ups), 0x08899258 (by GAME + 41) |
 
+**Hold frames on a hit, button attacks and more** (0.80.0).
+
+| Address | What |
+|---|---|
+| 0x0887223C | (attacker, defender, hit): + 127 of each from the pair at 0x08A21EC4 by the hit's + 16 (second half for the defender's + 117 bit 7); at least 16 with the defender's + 590; halved with + 637; + 16 (max 30) while 0x09358410 + 46 (`fighter/hit.c`) |
+| 0x0886BE50 | a human's attack on + 760 bits 4 / 7: facing, + 193 kick, + 192 down, 0x0886DC3C, the opponent's + 592 / + 270, ISM -1 + 194 = 2; + 551 = 1 and answers 1 |
+| 0x08878798 | a script's routine 1.0.5.0: + 482 / 483 / 498 / 235, facing, then + 490 from the script and 0x0887B528 |
+| 0x0885847C | score 0x08A17270[record + 6] added as 0x088211CC does (also not while BATTLE + 16) (`task/fight.c`) |
+| 0x088644F4 | + 771 by the characters met (lists 0x08A215A4, values 0x08A195D0 / E1); 1 for BATTLE + 79 of 7 or 10 |
+| 0x088AB814 | the director's start: pool 5 emptied, scrolls reset, the layer's + 122 = 6, kind-0x7F objects (types 2, 1, 0, 4 × 9, 6) with 14 free in pool 7 (`director.c`) |
+| `object/screen_steps.c` | 0x0889F5F8 (round pictures from 0x08A2B1F4), 0x0888A224 (lit by mode, 0x08A269B0), 0x0889E46C (nine by width, 0x08A2B0B0) |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

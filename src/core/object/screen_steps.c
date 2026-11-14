@@ -3073,3 +3073,83 @@ SFA_FUNC(08899258, setup_by_game_41) {
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* ---- 0.80.0 ---- */
+
+void f_088988FC(Cpu *c);   /* fighter_display_side (fighter/state.c) */
+
+/* (object, second): four pictures (+4 of 6-byte entries from 0x08A2824E, from entry 4 for `second`)
+   for the round: the u16 at 0x08A2B1F4 by BATTLE + 20 (12 on when the owner's display side asks), by
+   24 + the character of the fighter at +88, and two from 0x08A2B278 (the second pair when the
+   character's byte at 0x08A2B280 is set). */
+SFA_FUNC(0889F5F8, round_pictures) {
+    gaddr o = ARG(0), s[3] = { c->r[16], c->r[17], c->r[18] };
+    uint32_t second = ARG(1) & 0xFFFF;
+    int32_t round = S16(BATTLE + 20);
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[18] = second;
+    c->r[4] = *W(o + 92); f_088988FC(c);
+    if (c->r[2] != 0) round += 0xC;
+    gaddr e = 0x08A2824Eu + (second ? 4u : 0u) * 6u;
+    *H(e + 4) = *H(0x08A2B1F4u + (uint32_t)round * 2u);
+    int32_t ch = S8(*W(o + 88) + 338);
+    *H(e + 12 + 4) = *H(0x08A2B1F4u + (uint32_t)(ch + 0x18) * 2u);
+    uint32_t pair = *B(0x08A2B280u + (uint32_t)ch) != 0 ? 2 : 0;
+    *H(e + 6 + 4) = *H(0x08A2B278u + pair * 2u);
+    *H(e + 18 + 4) = *H(0x08A2B278u + (pair + 1) * 2u);
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}
+
+/* (record): lit when its type (+92) is the mode's (the byte at 0x08A269B0 by GAME + 114): +12 / +24
+   = -4, +14 = 0xB8, +26 = 0x48, +136 and the colour bytes 0xFF, +56 = 1; otherwise +12 / +24 = 0,
+   +14 = 0xB0, +26 = 0x40, +136 = 0xC0, colour bytes 0x80 (0x20 while the flag at 0x09525DD0 for its
+   type, by 0x08A269C3, is clear), +56 = 2. */
+SFA_FUNC(0888A224, record_lit_by_mode) {
+    gaddr r = ARG(0);
+    static const uint8_t colours[] = { 51, 50, 49, 48, 45, 44, 43, 42, 39, 38, 37, 36 };
+    uint8_t type = *B(r + 92);
+    if (*B(0x08A269B0u + (uint32_t)(int32_t)S8(GAME + 114)) == type) {
+        *H(r + 24) = 0xFFFC; *H(r + 12) = 0xFFFC; *H(r + 14) = 0xB8; *H(r + 26) = 0x48;
+        *B(r + 136) = 0xFF;
+        for (unsigned i = 0; i < sizeof colours; i++) *B(r + colours[i]) = 0xFF;
+        *B(r + 56) = 1;
+        return;
+    }
+    *H(r + 24) = 0; *H(r + 12) = 0; *H(r + 14) = 0xB0; *H(r + 26) = 0x40;
+    *B(r + 136) = 0xC0;
+    for (unsigned i = 0; i < sizeof colours; i++) *B(r + colours[i]) = 0x80;
+    *B(r + 56) = 2;
+    if (*B(0x09525DD0u + *B(0x08A269C3u + type)) == 0)
+        for (unsigned i = 0; i < sizeof colours; i++) *B(r + colours[i]) = 0x20;
+}
+
+/* (object, fighter): a row of nine 6-byte entries (0x08A281E2, or 0x08A28218 on the second side) from
+   x -256 by the character's width (the u16 at 0x08A2B0B0), each with the picture 0x94 + the byte at
+   0x08ACCA68, the last marked; the next step (+4), +148 = 1, +86 = 8, layer 0, +24 = 5, falling at
+   -1.0; motion entry 0xE + the fighter's display side (+2 on the second side in layout 3); animation
+   2 of the side's (0x0889FBBC); +77 the width. */
+SFA_FUNC(0889E46C, row_of_nine_by_width) {
+    gaddr o = ARG(0), f = ARG(1), s[3] = { c->r[16], c->r[17], c->r[18] };
+    int32_t ch = S8(f + 338);
+    uint16_t picture = (uint16_t)(*B(0x08ACCA68u + (uint32_t)ch) + 0x94);
+    uint16_t width = *H(0x08A2B0B0u + (uint32_t)ch * 2u);
+    gaddr e = 0x08A281E2u + (S8(f + 337) != 0 ? 0x36u : 0u);
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o; c->r[18] = width;
+    uint32_t x = 0xFFFFFF00u;
+    for (int i = 0; i < 9; i++, e += 6) { *H(e + 4) = picture; *H(e + 2) = (uint16_t)x; x += width; }
+    *H(e - 6 + 4) = (uint16_t)(*H(e - 6 + 4) | 0x8000);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 148) = 1; *H(o + 86) = 8;
+    c->r[4] = o; c->r[5] = 0; f_0889CFE8(c);
+    *H(o + 24) = 5; *W(o + 100) = 0xFFFF0000u;
+    c->r[4] = f; f_088988FC(c);
+    uint32_t side = c->r[2];
+    if (S16(BATTLE + 56) == 3 && S8(f + 337) != 0) side += 2;
+    c->r[4] = o; c->r[5] = (side + 0xE) & 0xFFFF; f_0889CEE4(c);
+    c->r[4] = o; c->r[5] = 2; c->r[6] = (uint32_t)(S8(f + 337) & 1); f_0889FBBC(c);
+    *B(o + 77) = (uint8_t)width;
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}

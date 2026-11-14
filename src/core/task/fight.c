@@ -1481,15 +1481,30 @@ static void add_capped(gaddr a, uint32_t add) {
     *W(a) = (uint32_t)v;
     if (v > SCORE_MAX) *W(a) = SCORE_MAX;
 }
+static void score_add(gaddr f, uint32_t amount) {
+    int8_t mode = S8(GAME + G_MODE);
+    int team = mode == 15 || (mode == 7 && S8(BATTLE + 79) == 5) || (mode == 16 && S8(BATTLE + 159) == 3);
+    add_capped(f + 352, amount);
+    if (team) add_capped(*W(f + 1168) + 352, amount);
+    if (S8(GAME + G_MODE) == 3) add_capped(WORLD_TOUR + 920, amount);
+}
 SFA_FUNC(088211CC, game_add_score) {
     uint32_t n = ARG(0);
     gaddr f = ARG(1);
-    int8_t mode = S8(GAME + G_MODE);
-    if (mode == 3 && S8(WORLD_TOUR + 899) != 0) return;
+    if (S8(GAME + G_MODE) == 3 && S8(WORLD_TOUR + 899) != 0) return;
     if (S8(BATTLE + 61) != 0 || S8(f + 373) != 0) return;
-    gaddr amount = 0x08A0DEC0u + n * 4u;
-    int team = mode == 15 || (mode == 7 && S8(BATTLE + 79) == 5) || (mode == 16 && S8(BATTLE + 159) == 3);
-    add_capped(f + 352, *W(amount));
-    if (team) add_capped(*W(f + 1168) + 352, *W(amount));
-    if (S8(GAME + G_MODE) == 3) add_capped(WORLD_TOUR + 920, *W(amount));
+    score_add(f, *W(0x08A0DEC0u + n * 4u));
+}
+
+/* ---- 0.80.0 ---- */
+
+/* (record, fighter): the same for the amount 0x08A17270[+6 of the record], when it is not 0 and
+   BATTLE + 16 is clear as well. */
+SFA_FUNC(0885847C, game_add_score_by_record) {
+    gaddr r = ARG(0), f = ARG(1);
+    if (S8(GAME + G_MODE) == 3 && S8(WORLD_TOUR + 899) != 0) return;
+    if ((S8(BATTLE + 16) | S8(BATTLE + 61) | S8(f + 373)) != 0) return;
+    uint32_t amount = *W(0x08A17270u + *B(r + 6) * 4u);
+    if (amount == 0) return;
+    score_add(f, amount);
 }

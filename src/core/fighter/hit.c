@@ -241,3 +241,38 @@ SFA_FUNC(08872B54, hit_damage) {
     c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3]; c->r[20] = s[4];
     RETURN(v);
 }
+
+/* ---- 0.80.0 ---- */
+
+/* (attacker, defender, hit): the frames both fighters are held (+127 of each) from the pair at
+   0x08A21EC4 by the hit's +16 (the second half of it for a defender with +117 bit 7); none for +16
+   with bit 7, and nothing while the attacker's +136. A defender with +590 holds at least 16 each; one
+   with +637 half (the defender's only for a hit not from an object, +8); while the hit record's +46,
+   16 more each, at most 30. */
+SFA_FUNC(0887223C, hit_hold_frames) {
+    gaddr a = ARG(0), d = ARG(1);
+    uint8_t k = *B(ARG(2) + 16);
+    if (k & 0x80) { *B(a + 127) = 0; *B(d + 127) = 0; return; }
+    if (S8(a + 136) != 0) return;
+    gaddr p = 0x08A21EC4u + k * 4u;
+    if (*B(d + 117) & 0x80) p += 2;
+    if (S8(d + 590) != 0) {
+        int8_t v = S8(p);
+        *B(a + 127) = (uint8_t)(v < 16 ? 16 : v);
+        v = S8(p + 1);
+        *B(d + 127) = (uint8_t)(v < 16 ? 16 : v);
+        return;
+    }
+    if (S8(d + 637) == 0) {
+        *B(a + 127) = (uint8_t)S8(p);
+        *B(d + 127) = (uint8_t)S8(p + 1);
+    } else {
+        *B(a + 127) = (uint8_t)(S8(p) >> 1);
+        if (*B(a + 8) == 0) *B(d + 127) = (uint8_t)(S8(p + 1) >> 1);
+    }
+    if (*B(HIT + 46) == 0) return;
+    *B(a + 127) = (uint8_t)(S8(a + 127) + 16);
+    *B(d + 127) = (uint8_t)(S8(d + 127) + 16);
+    if (S8(a + 127) >= 31) *B(a + 127) = 0x1E;
+    if (S8(d + 127) >= 31) *B(d + 127) = 0x1E;
+}

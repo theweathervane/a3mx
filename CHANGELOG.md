@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.80.0
+- **More of the game decompiled:** 9 more functions are hand-written C. They include how long both fighters are held when a hit lands, a human fighter's punch or kick starting an attack, a CPU script starting an attack routine, score from a record, a value set by which two characters meet, and more objects of the screens around a fight (the round's pictures, a row of nine by a character's width, records lit for the mode, the director's start). Nothing changes in play.
+
 ## 0.79.1
 - **A Gitea CI workflow:** `.gitea/workflows/ci.yml` runs the same pins check and Linux build/test as the GitLab and GitHub pipelines, for the project's Gitea mirrors. No change for players.
 

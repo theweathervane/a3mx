@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  9.17% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  9.31% decompiled
 
-Functions                                [░░░░░░░░░░]   9.32%  1,387 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   9.17%  44,405 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   9.38%  1,396 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   9.31%  45,100 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  20.29%  41,372 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  20.63%  42,067 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.72%  1,845 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -163,6 +163,9 @@ Done:
 - [x] The score added (0x088211CC), the held-direction history (0x08858D54), a CPU state from its script
       word (0x0887B528), offsets unpacked (0x0886E638), the 0x168-byte pools and the fight's tables
       cleared, and three more screen objects (0.79.0)
+- [x] The frames both fighters are held on a hit (0x0887223C), a button attack (0x0886BE50), a script's
+      routine 1.5 (0x08878798), score by a record (0x0885847C), the characters met (0x088644F4), and four
+      more screen and director objects (0.80.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

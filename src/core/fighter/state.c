@@ -1636,3 +1636,83 @@ SFA_FUNC(08858D54, fighter_held_history) {
     *H(f + 754) = setting != 0 ? (uint16_t)(held & 0x800F) : held;
     *H(f + 766) = *H(f + 764);
 }
+
+/* ---- 0.80.0 ---- */
+
+/* (fighter): +771 from the pairs of characters met (for a human against a CPU the list for the human's
+   character at 0x08A215A4, the other way round for a CPU against a human: { opponent, n } until bit 7,
+   n into 0x08A195D0 or 0x08A195E1), while neither GAME + 74 nor BATTLE + 79 is set and +415 is
+   negative; otherwise 1 for BATTLE + 79 of 7 or 10. */
+SFA_FUNC(088644F4, fighter_meeting_value) {
+    gaddr f = ARG(0), opp = *W(f + 92);
+    int8_t state = S8(BATTLE + 79);
+    if (!((S8(GAME + 74) | state) == 0 && S8(f + 415) < 0)) {
+        if (state == 7 || state == 10) *B(f + 771) = 1;
+        return;
+    }
+    int cpu = S8(f + 373) != 0, opp_cpu = S8(opp + 373) != 0;
+    if (cpu == opp_cpu) return;
+    gaddr list = *W(0x08A215A4u + ((uint32_t)(int32_t)S8((cpu ? opp : f) + 338) << 2));
+    int8_t target = S8((cpu ? f : opp) + 338);
+    gaddr values = cpu ? 0x08A195E1u : 0x08A195D0u;
+    *B(f + 771) = 0;
+    for (gaddr e = list; !(S8(e) & 0x80); e += 2)
+        if (S8(e) == target) { *B(f + 771) = (uint8_t)S8(values + (uint32_t)(int32_t)S8(e + 1)); return; }
+}
+
+/* (fighter): a human fighter attacks with a punch or kick button (+760 bits 4 / 7) unless BATTLE + 13,
+   GAME + 38 or both fighters in step 6: facing its opponent, +193 = kick (bit 4 clear), +192 = down
+   held, the hit flags cleared; the opponent's +592 steps on (1 to 2; 3 sets +270 and ends it); for ISM
+   -1 a kick with button bit 6 becomes +194 = 2; +270 cleared. +551 and the answer are 1 when it
+   attacks. */
+SFA_FUNC(0886BE50, fighter_button_attack) {
+    gaddr f = ARG(0), opp = *W(f + 92), s[3] = { c->r[16], c->r[17], c->r[18] };
+    uint32_t attacked = 0;
+    if ((S8(BATTLE + BT_FLAG_13) | S8(GAME + G_HALT_38)) != 0) goto done;
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = opp; c->r[18] = 0;
+    c->r[4] = f; f_088632C4(c);
+    uint16_t pressed = *H(f + F_PRESSED);
+    if (c->r[2] != 0 || (pressed & 0x90) == 0) { c->r[29] += 0x20; goto done; }
+    *B(f + F_FACING) = (uint8_t)S8(f + F_OPPONENT_SIDE);
+    *B(f + 193) = (pressed & 0x10) ? 0 : 1;
+    *B(f + 192) = (*H(f + F_DIRECTIONS) & 4) ? 1 : 0;
+    c->r[4] = f; f_0886DC3C(c);
+    int8_t m = S8(opp + 592);
+    if (m == 1) { *B(opp + 592) = 2; }
+    else if (m == 3) { *B(opp + 270) = 1; *B(opp + 592) = 0; }
+    if (S8(f + F_ISM) == -1 && S8(f + 193) != 0 && (*H(f + F_PRESSED) & 0x40)) { *B(f + 193) = 0; *B(f + 194) = 2; }
+    *B(f + 270) = 0;
+    attacked = 1;
+    c->r[29] += 0x20;
+done:
+    *B(f + 551) = (uint8_t)attacked;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+    RETURN(attacked);
+}
+
+/* (fighter, script): a script's routine 1.5: +482 = 3, +4 = 1, +6 = 5, +5 / +7 / +123 cleared, +235 =
+   1, facing the opponent, the hit flags cleared; with a command (+488) +483 / +498 = 1 (+498 left 0 for
+   ISM -1 characters 17 and 19), else 0; the next word into +490 and the state from it (0x0887B528).
+   Answers the word after it. */
+SFA_FUNC(08878798, fighter_script_routine_1_5) {
+    gaddr f = ARG(0), p = ARG(1), s[3] = { c->r[16], c->r[17], c->r[18] };
+    int command = S8(f + 488) != 0;
+    int8_t side = S8(f + F_OPPONENT_SIDE);
+    c->r[29] -= 0x20;
+    c->r[16] = p; c->r[17] = f; c->r[18] = p + 2;
+    *B(f + 482) = 3; *B(f + 483) = (uint8_t)command;
+    *B(f + 4) = 1; *B(f + 6) = 5; *B(f + 7) = 0; *B(f + 5) = 0;
+    *B(f + 498) = (uint8_t)command; *B(f + 235) = 1;
+    *B(f + F_FACING) = (uint8_t)side; *B(f + 123) = 0;
+    c->r[4] = f; f_0886DC3C(c);
+    if (command && S8(f + F_ISM) == -1) {
+        int8_t ch = S8(f + 338);
+        if (ch == 0x11 || ch == 0x13) *B(f + 498) = 0;
+    }
+    *H(f + 490) = (uint16_t)S16(p);
+    c->r[4] = f; c->r[5] = *H(f + 490); f_0887B528(c);
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+    RETURN(p + 2);
+}
