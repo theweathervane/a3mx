@@ -1,9 +1,5 @@
 # Changelog
 
-## 0.74.1
-- **Hyper Street Fighter Alpha: assessment (spike):** [docs/HYPER_ALPHA.md](docs/HYPER_ALPHA.md) looks at bringing *Street Fighter Alpha Anthology*'s hidden Hyper mode (each character in its Alpha, Alpha 2, Alpha 2 Gold or Alpha 3 version, and the four S-ISMs) and the Anthology's music into this game as an optional extension, read from your own PS2 disc. The game logic is a CPS2 arcade program on the disc, not PS2 code, so no PS2 decompilation is needed; the plan and sizes are in the page. Nothing changes in play.
-- **`tools/anthology.py`:** `survey` lists what is on the Anthology disc in `imports/ps2/` (the archives, the ten packed 68000 programs, the QSound data, the 588 ADX music tracks) into `work/anthology/survey.json`; `music` decodes the tracks to OGG with ffmpeg (loop points not kept yet).
-
 ## 0.74.0
 - **More of the game decompiled:** 56 more functions are hand-written C. They include the 2D library's texture lists and palettes, the game's zeroed memory allocation, the save files' names and the settings handed to the PSP's save dialogue, the network session's small checks and its start-up from scratch (still never reached offline), a fighter starting a move when an attack button is pressed, and more objects of the screens around a fight. Nothing changes in play.
 
