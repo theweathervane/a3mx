@@ -400,4 +400,5 @@ Some functionality was carried over from the recomp but never fully implemented.
 - [ ] Player 4: the original game handles three sets of inputs; find out whether it can handle more
 - [ ] X.DRAMATIC BATTLE: 2v2, like Street Fighter EX3, if Dramatic Battle can be mirrored
 - [ ] Other versions' rules ([VERSION_DIFFERENCES.md](VERSION_DIFFERENCES.md))
+- [ ] Hyper Street Fighter Alpha's versions and S-ISMs, and the Anthology's music, from your own PS2 Anthology disc (assessment and plan: [HYPER_ALPHA.md](HYPER_ALPHA.md))
 - [ ] Other systems
