@@ -615,6 +615,23 @@ owner at + 88, and frame data at + 296.
 | `object/screen_steps.c` | arriving in x then scrolling (0x0889A0C4, 0x0889A3A8, 0x0889B9E0, 0x0889A154, 0x0889A438, 0x0889BA70) or showing the character (0x08899CCC, 0x08899D78); the next part on a bit of the fighter's + 78 (0x08899D28, 0x0889A110, 0x0889A3F4, 0x0889BA2C, 0x0889A670); 0x0887D63C; 0x088AD1D4, 0x088B270C; 0x08889CC8 (by type from 0x08A26950) |
 | `intro_steps.c` | 0x08855B3C (two parts crossing from x -384 and 384), 0x08857B14 |
 
+**The script step, a fighter's move state and objects on the screen** (0.72.0).
+
+| Address | What |
+|---|---|
+| 0x088774A8 | the CPU's next script command read (a new script for -1) and run by 0x08877564; where it left off in + 528 and, by the nesting (+ 484, 0 - 3), in + 512 - + 524 |
+| 0x088647C4 | a fighter's move state cleared: speeds + 96 - + 108, many flags, + 574 of all four fighters, the opponent's + 586 / + 587 |
+| 0x08863A9C | the button just pressed (+ 760 bits 4 - 9) as strength 0 - 2 and punch 0 / kick 1 |
+| 0x0886BCB8 | an entry of a fighter's table of values (0x08A1FFEE with + 792's bits, else the character's from 0x08A2002C, or 0x08A20006): row by + 192 (0, 6 or 12), 3 more with + 193, column + 194 |
+| 0x08821424 | an object drawn only while its x on the screen (64 to the left counted) is within 0 - 511: fixed with + 14 = 0, else by its camera (kept at 0x08B01F28), moved by the camera's + 28 × + 38 for + 14 = 2; out of it + 1 = 0 |
+| 0x088081D4 | the sixteen 216-byte records from 0x08E76088 emptied, and the 0x28 bytes at 0x08E87908 |
+| 0x088A9AD8 / 0x088A9D58 / 0x088AB948 | the director makes a row of objects from 0x08A2C5CC (if pool 4 has room); one of kind 0x31 every eighth frame; two of kind 7 in the third list, then its handler (0x08A2C5F4 / 0x08A2C748) |
+| 0x088A9E24 / 0x088ABA4C | the s16 at 0x0951CE52 taken into GAME + 22; the word at 0x08B027F8 moved by its speed, kept above 0x2000000 |
+| 0x0889C2EC / 0x0889C9FC / 0x0889CEE4 / 0x0889EE08 | scrolls while its fighter's character is shown; a row chosen (four buttons a side at 0x08A2882E); a motion entry by mode (0x08A2A3A0 / A5F8 / A148); eight entries of 0x08A2824E shown from BATTLE + 72 |
+| 0x0888D5B0 | the record at 0x092E51C0 and its 54 parts set up (the ones 0x0888D71C slides) |
+| `object/screen_steps.c` | 0x08889D64 (by type from 0x08A26980), 0x088B1374, 0x088B1BB4, 0x088B1D10, 0x088B2104 / 2184 / 232C / 23B4 (a record placed with a size) |
+| `intro_steps.c` | 0x08855F44, 0x088561C0 (coming in by BATTLE + 63), 0x08857464 (three numbers' pictures from GAME + 20) |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

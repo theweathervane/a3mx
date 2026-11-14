@@ -1503,3 +1503,162 @@ SFA_FUNC(08889CC8, setup_by_type_26950) {
     *W(o + 132) = 0x08A26700u + *W(table + (i + 2) * 4u) * 12u;
     *B(o + 93) = 1;
 }
+
+/* ---- 0.72.0 ---- */
+
+/* As 0x08889CC8, from 0x08A26980 (entry 3 × type - 63 on): +4, +108 and the record kept in +132. */
+SFA_FUNC(08889D64, setup_by_type_26980) {
+    gaddr o = ARG(0);
+    uint32_t i = *B(o + 92) * 3u - 63u;
+    gaddr table = 0x08A26980u;
+    *B(o + 54) = 0x12; *B(o + 88) = 2; *B(o + 55) = 5;
+    *W(o + 4) = *W(table + i * 4u);
+    *W(o + 8) = 0;
+    *W(o + 108) = *W(table + (i + 1) * 4u);
+    *B(o + 56) = 0; *B(o + 136) = 0x60;
+    *W(o + 132) = 0x08A26700u + *W(table + (i + 2) * 4u) * 12u;
+    *B(o + 93) = 1;
+}
+
+/* The record at 0x092E51C0 with its 54 parts (0x40 bytes from +0x34, the ones 0x0888D71C slides) set
+   up: each shown, white (its three colours 0xFF), +55 = 7, +54 = 9, +60 = 0x8000. */
+SFA_FUNC(0888D5B0, parts_record_setup) {
+    gaddr r = 0x092E51C0u;
+    *B(r + 3) = 0; *B(r + 2) = 0; *B(r) = 1;
+    for (uint32_t i = 0; i < 54; i++) {
+        gaddr part = r + 0x34 + i * 0x40u;
+        *B(part + 55) = 7;
+        *B(part + 1) = 1; *B(part + 3) = 0;
+        for (uint32_t k = 0; k < 4; k++) { *B(part + 36 + k) = 0xFF; *B(part + 42 + k) = 0xFF; *B(part + 48 + k) = 0xFF; }
+        *H(part + 60) = 0x8000;
+        *B(part + 54) = 9;
+    }
+}
+
+SFA_FUNC(088B1374, setup_088B1374) {
+    gaddr o = ARG(0);
+    *H(o + 32) = 0;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 148) = 7; *H(o + 86) = 0x13; *W(o + 164) = 1; *B(o + 9) = 1;
+    *B(o + 78) = 0; *H(o + 38) = 0; *B(o + 15) = 0; *B(o + 11) = 0; *B(o + 12) = 0; *B(o + 13) = 0;
+    *B(o + 14) = 2; *H(o + 24) = 7; *H(o + 26) = 3;
+    *H(o + 18) = 0x250; *H(o + 22) = 0xFF90;
+    set_animation(c, *W(0x08A2FFB0u + 72));
+}
+
+SFA_FUNC(088B1BB4, setup_088B1BB4) {
+    gaddr o = ARG(0);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 148) = 0; *H(o + 86) = 0xC; *W(o + 164) = 0;
+    *H(o + 38) = 0; *B(o + 15) = 0; *B(o + 14) = 0; *B(o + 11) = 0; *H(o + 82) = 0; *B(o + 10) = 0;
+    *B(o + 12) = 0xFF; *B(o + 13) = 1; *H(o + 24) = 1; *H(o + 26) = 2;
+    *H(o + 18) = 0; *H(o + 22) = 0xF0;
+    set_animation(c, *W(0x08A30140u + 136));
+}
+
+/* Out of sight (+1 = 0), drawn while the high byte of GAME + 16 is set; types below 4 take the next
+   step when GAME + 20 has bit 12 and the low byte of GAME + 16 is not their +32. */
+SFA_FUNC(088B1D10, draw_by_game_16) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = GAME;
+    *B(o + 1) = 0;
+    if (S16(GAME + 16) & 0xFF00) { c->r[4] = o; f_088215C4(c); }
+    if (*B(o + 3) < 4 && ((S16(GAME + 20) & 0xFF00) >> 8 & 0x10) && (S16(GAME + 16) & 0xFF) != S16(o + 32))
+        *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* A record set up at (x, y) with a size (+14, +26), its colours cleared, +128 one more. */
+static void record_place(gaddr r, uint32_t x, uint32_t y, uint16_t w, uint16_t h) {
+    *B(r + 128) = (uint8_t)(*B(r + 128) + 1);
+    *B(r + 93) = 1; *B(r + 55) = 7; *B(r + 56) = 0; *B(r + 1) = 0; *B(r + 3) = 0;
+    *W(r + 4) = x; *W(r + 8) = y;
+    for (uint32_t k = 0; k < 4; k++) { *B(r + 48 + k) = 0; *B(r + 42 + k) = 0; *B(r + 36 + k) = 0; }
+    *H(r + 12) = 0; *H(r + 24) = 0;
+    *H(r + 14) = w; *H(r + 26) = h;
+}
+SFA_FUNC(088B2104, record_place_a) { record_place(ARG(0), 0, 0xF00000, 0x180, 0x30); }
+SFA_FUNC(088B2184, record_place_b) { record_place(ARG(0), 0, 0x400000, 0x180, 0x30); }
+SFA_FUNC(088B232C, record_place_c) { *H(ARG(0) + 98) = 0; record_place(ARG(0), 0xFF260000u, 0xF00000, 0xC8, 0xF0); }
+SFA_FUNC(088B23B4, record_place_d) { *H(ARG(0) + 98) = 0; record_place(ARG(0), 0x01B00000u, 0xF00000, 0x88, 0xF0); }
+
+void f_0889FB94(Cpu *c);
+
+/* (object, fighter): while the fighter's character is the one shown (+78) the object scrolls in x round
+   the length +77 (in whole pixels); a change hides it (+78 = -1, y -64) while the fighter's +81 is
+   set, else restarts its part (+6 = 1). Drawn. */
+SFA_FUNC(0889C2EC, scroll_x_while_character) {
+    gaddr o = ARG(0), f = ARG(1);
+    if ((uint32_t)(uint8_t)S8(f + 338) != (uint32_t)(int32_t)S8(o + 78)) {
+        if (S8(f + 81) != 0) { *B(o + 78) = 0xFF; *H(o + 22) = 0xFFC0; return; }
+        *B(o + 6) = 1;
+    }
+    int32_t speed = (int32_t)*W(o + 96);
+    int32_t length = (int32_t)(((uint32_t)S8(o + 77) & 0xFF) << 16);
+    int32_t x = (int32_t)(*W(o + 16) + (uint32_t)speed);
+    *W(o + 16) = (uint32_t)x;
+    if (speed < 0) { if (x < 0) *W(o + 16) = (uint32_t)(x + length); }
+    else if (!(x < length)) *W(o + 16) = (uint32_t)(x - length);
+    call_on(c, f_088215C4, o, 0x20);
+}
+
+/* (object, n): row n chosen: +79 = n, y from 0x08A2AB68, the current frame's sprite (+156 by the
+   animation's +4) given picture 0x8C + n; of the four buttons for its side (0x08A2882E, 64 bytes a
+   side) the chosen one is lit (0x4000), the others show 0x8C + k and 0x8B; the last marked as the end. */
+SFA_FUNC(0889C9FC, choose_row) {
+    gaddr o = ARG(0);
+    uint32_t n = ARG(1);
+    *B(o + 79) = (uint8_t)n;
+    *H(o + 22) = *H(0x08A2AB68u + n * 2u);
+    gaddr sprite = *W(o + 156) + (uint32_t)*H(*W(o + 28) + 4) * 8u;
+    uint8_t colour = (uint8_t)((n << 1) + 0x24);
+    *H(sprite + 2) = 0; *H(sprite + 4) = (uint16_t)(n + 0x8C); *B(sprite + 7) = colour;
+    *H(sprite + 10) = 0; *B(sprite + 15) = colour; *H(sprite + 12) = 0x808B;
+    gaddr e = 0x08A2882Eu + (uint32_t)(S8(*W(o + 92) + 337) << 6);
+    for (uint32_t k = 0; k < 4; k++, e += 16) {
+        if (k == n) { *H(e + 4) = 0x4000; *H(e + 12) = 0x4000; }
+        else { *H(e + 4) = (uint16_t)(k + 0x8C); *H(e + 12) = 0x8B; }
+    }
+    *H(e - 4) = (uint16_t)(*H(e - 4) | 0x8000);
+}
+
+/* (object, k): entry k (8 bytes) of the motion table for the mode (0x08A2A3A0 / 0x08A2A5F8 in modes 15
+   and 8 by bit 0 of GAME + 53, else 0x08A2A148): x and its target (+112, +18; +114), speeds +96, +104. */
+SFA_FUNC(0889CEE4, set_motion_by_mode) {
+    gaddr o = ARG(0);
+    uint32_t i = ((ARG(1) & 0xFFFF) << 2 & 0xFFFF) * 2u;
+    int8_t mode = S8(GAME + 114);
+    gaddr table = (mode == 15 || mode == 8) ? ((S8(GAME + 53) & 1) ? 0x08A2A3A0u : 0x08A2A5F8u) : 0x08A2A148u;
+    gaddr p = table + i;
+    *H(o + 112) = (uint16_t)S16(p);
+    *H(o + 114) = (uint16_t)S16(p + 2);
+    *W(o + 96) = (uint32_t)(S16(p + 4) << 8);
+    *H(o + 18) = (uint16_t)S16(p);
+    *W(o + 104) = (uint32_t)(S16(p + 6) << 8);
+}
+
+/* y from 0x0889FB94; of the 6-byte entries at 0x08A2824E the eight from BATTLE + 72 shown and the
+   ninth marked as the end; animation 0x08A283EC + 24. */
+SFA_FUNC(0889EE08, show_eight_from_72) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *W(o + 148) = 2; *H(o + 86) = 8;
+    c->r[4] = o;
+    f_0889FB94(c);
+    *H(o + 22) = (uint16_t)c->r[2];
+    int32_t first = S16(BATTLE + 72);
+    gaddr entries = 0x08A2824Eu;
+    for (int32_t j = first; j < first + 8; j++) {
+        gaddr e = entries + (uint32_t)(j * 6);
+        *H(e + 4) = (uint16_t)(*H(e + 4) & 0x7FFF);
+    }
+    gaddr end = entries + (uint32_t)(first * 6);
+    *H(end + 52) = (uint16_t)(*H(end + 52) | 0x8000);
+    c->r[4] = o; c->r[5] = *W(0x08A283ECu + 24);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

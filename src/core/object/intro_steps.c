@@ -241,6 +241,7 @@ SFA_FUNC(088551D0, intro_wait_then_stage_5) {
 /* ---- 0.70.0 ---- */
 
 void f_08855D80(Cpu *c);   /* intro_object_setup (object, layer, x, y) */
+void f_08821368(Cpu *c);   /* a random number */
 
 SFA_FUNC(08854FEC, intro_setup_08854FEC) {
     gaddr o = ARG(0), saved = c->r[16];
@@ -353,4 +354,57 @@ SFA_FUNC(08857B14, intro_setup_08857B14) {
     for (uint32_t i = 0; i < 9; i++) *H(o + 0x70 + i * 2) = *H(0x08A16FF8u + i * 2);
     *W(o + 156) = 0x08A16FF8u;
     set_animation(c, *W(0x08A170C8u));
+}
+
+/* Comes in from the left (from x 435, the animation 9) or, with BATTLE + 63 clear, from x -51 to the
+   right with the animation 4 + BATTLE + 2. */
+SFA_FUNC(08855F44, intro_setup_by_side_b) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[5] = 0; c->r[6] = 0x1B3; c->r[7] = 0x80;
+    f_08855D80(c);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 96) = 0xFFD80000u; *W(o + 104) = 0x20000; *H(o + 112) = 0x38;
+    *W(o + 148) = 0xB; *W(o + 156) = 0x08A16962u;
+    uint32_t n = 9;
+    if (S8(BATTLE + 63) == 0) {
+        *H(o + 18) = 0xFFCD; *W(o + 96) = 0x280000; *W(o + 104) = 0xFFFE0000u; *H(o + 112) = 0x148;
+        n = (uint32_t)(S16(BATTLE + 2) + 4) & 0xFFFF;
+    }
+    c->r[4] = o; c->r[5] = *W(0x08A16A90u + n * 4u);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* Comes in from x -240 (or, with BATTLE + 63, from x 608 leftwards), with animation 0 or 14 at random. */
+SFA_FUNC(088561C0, intro_setup_by_side_c) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[5] = 2; c->r[6] = 0xFFFFFF10u; c->r[7] = 0x98;
+    f_08855D80(c);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 96) = 0x200000; *H(o + 112) = 0x90;
+    if (S8(BATTLE + 63) != 0) { *H(o + 18) = 0x260; *W(o + 96) = 0xFFE00000u; *H(o + 112) = 0xE0; }
+    c->r[17] = 0;
+    f_08821368(c);
+    if (c->r[2] & 1) c->r[17] = 0xE;
+    c->r[4] = o; c->r[5] = *W(0x08A16A90u + c->r[17] * 4u);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* The pictures of three numbers in the first object's animation (0x08A166D8): the high byte of
+   GAME + 20 by the table 0x08A16FBC, and its low byte × 100 / 60 as two digits from 0x08A16FC0. */
+SFA_FUNC(08857464, intro_show_numbers) {
+    uint32_t v = (uint16_t)S16(GAME + 20);
+    uint32_t percent = (uint32_t)(int32_t)(((v & 0xFF) * 100u) & 0xFFFF) / 60u & 0xFFFF;
+    *H(0x08A166E2u) = *H(0x08A16FBCu + (v >> 8) * 2u);
+    uint32_t tens = percent / 10u, units = percent % 10u;
+    *H(0x08A166E8u) = *H(0x08A16FC0u + tens * 2u);
+    *H(0x08A166EEu) = *H(0x08A16FC0u + units * 2u);
+    c->lo = tens; c->hi = units;
 }

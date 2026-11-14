@@ -1042,3 +1042,73 @@ SFA_FUNC(0887BD60, fighter_script_command_allowed) {
     if (ism == 1 || command != 0x500) return;
     RETURN(S16(f + 366) >= (ism == 0 ? 48 : 144));
 }
+
+/* ---- 0.72.0 ---- */
+
+void f_08877564(Cpu *c);
+
+/* (fighter, out): the button pressed this frame as strength and kind: 0 - 2 (light, medium, heavy)
+   and 0 punch or 1 kick; 0, 0 with none. */
+SFA_FUNC(08863A9C, fighter_button_pressed) {
+    uint16_t b = *H(ARG(0) + 760);
+    uint8_t strength = 0, kind = 0;
+    if (b & 0x10) { }
+    else if (b & 0x20)  strength = 1;
+    else if (b & 0x40)  strength = 2;
+    else if (b & 0x80)  kind = 1;
+    else if (b & 0x100) { strength = 1; kind = 1; }
+    else if (b & 0x200) { strength = 2; kind = 1; }
+    *B(ARG(1)) = strength;
+    *B(ARG(1) + 1) = kind;
+}
+
+/* A fighter's move state cleared: its speeds and many flags, +574 of all four fighters, and the
+   opponent's +586 / +587. */
+SFA_FUNC(088647C4, fighter_clear_move_state) {
+    gaddr f = ARG(0), opp = *W(f + 92);
+    static const uint16_t bytes[] = { 502, 541, 235, 1146, 768, 713, 310, 260, 693, 562, 671, 596, 689, 688,
+                                      281, 282, 591, 668, 566, 644, 573, 270, 777 };
+    *H(f + 584) = 0;
+    for (int i = 0; i < 4; i++) *B(FIGHTER_1 + 0x498u * (uint32_t)i + 574) = 0;
+    *W(f + 108) = 0; *W(f + 100) = 0; *W(f + 104) = 0; *W(f + 96) = 0;
+    *W(f + 816) = 0;
+    for (size_t i = 0; i < sizeof bytes / sizeof *bytes; i++) *B(f + bytes[i]) = 0;
+    *B(opp + 587) = 0; *B(opp + 586) = 0;
+}
+
+/* An entry of the fighter's table of values (the shared 0x08A1FFEE with +792's bits 0, 20, 21, else
+   the character's from 0x08A2002C, or 0x08A20006 for state 2 with +327): row by +192 (0 - 1, 6, or 12),
+   3 more with +193, column +194. */
+SFA_FUNC(0886BCB8, fighter_value_by_state) {
+    gaddr f = ARG(0);
+    gaddr table = (*W(f + 792) & 0x300001u) ? 0x08A1FFEEu : *W(0x08A2002Cu + (uint32_t)(S8(f + 338) << 2));
+    int8_t state = S8(f + 192);
+    int32_t row;
+    if (state < 2) row = state <= 0 ? 0 : 6;
+    else if (state >= 3) row = 0;
+    else { row = 0xC; if (S8(f + 327) != 0) table = 0x08A20006u; }
+    if (S8(f + 193) != 0) row = (int16_t)(row + 3);
+    int32_t at = (int16_t)(row + S8(f + 194));
+    RETURN(*H(table + (uint32_t)(at * 2)));
+}
+
+/* The next script command read (+488, a new script picked first for -1) and run by 0x08877564; where
+   it left off kept in +528 and, by the nesting (+484, 0 - 3), in +512 - +524. */
+SFA_FUNC(088774A8, fighter_script_step) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    gaddr p = *W(f + 528);
+    *H(f + 488) = (uint16_t)S16(p);
+    *H(0x08B0268Eu) = 1;
+    p += 2;
+    if (S8(f + 489) == -1) { c->r[4] = f; c->r[5] = p; f_0887A154(c); p = c->r[2]; }
+    c->r[4] = f; c->r[5] = p;
+    f_08877564(c);
+    gaddr at = c->r[2];
+    *W(f + 528) = at;
+    uint8_t depth = *B(f + 484);
+    if (depth < 4) *W(f + 512 + depth * 4u) = at;
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

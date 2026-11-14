@@ -178,3 +178,26 @@ SFA_FUNC(088DEB10, record_23740_reset) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* The sixteen 216-byte records from 0x08E76088 emptied (word 0 = -1) and the 0x28 bytes at 0x08E87908
+   cleared with +4 = -1. */
+SFA_FUNC(088081D4, records_reset) {
+    gaddr s16 = c->r[16], s17 = c->r[17], s18 = c->r[18], s19 = c->r[19];
+    static const uint16_t words[] = { 164, 184, 156, 152, 148, 144, 180, 140, 136, 192 };
+    c->r[29] -= 0x30;
+    c->r[16] = 0; c->r[17] = 0xFFFFFFFFu;
+    for (uint32_t i = 0; i < 16; i++) {
+        gaddr r = 0x08E76088u + i * 216u;
+        c->r[18] = r; c->r[19] = i;
+        c->r[4] = r + 4; c->r[5] = 0; c->r[6] = 0x80; f_089F3470(c);
+        *W(r) = 0xFFFFFFFFu;
+        *H(r + 210) = 0;
+        for (size_t k = 0; k < sizeof words / sizeof *words; k++) *W(r + words[k]) = 0;
+        *H(r + 212) = 0; *H(r + 214) = 0;
+    }
+    c->r[16] = 0x08E87908u; c->r[18] = 0x08E76088u + 16 * 216u; c->r[19] = 16;
+    c->r[4] = 0x08E87908u; c->r[5] = 0; c->r[6] = 0x28; f_089F3470(c);
+    *B(0x08E87908u + 4) = 0xFF;
+    c->r[29] += 0x30;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18; c->r[19] = s19;
+}

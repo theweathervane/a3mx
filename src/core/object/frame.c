@@ -195,3 +195,38 @@ SFA_FUNC(088215C4, object_draw) {
     *B(ARG(0) + O_DRAWN) = 1;
     run_step(c, (uint32_t)*B(ARG(0) + O_KIND) - 2u, OBJECT_DRAWERS, 5, 0x088215F4u);
 }
+
+/* ---- an object drawn when on the screen (0.72.0) ---- */
+
+static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+void f_08821330(Cpu *c);   /* the camera an object is seen by */
+void f_088215C4(Cpu *c);   /* object_draw */
+#define LAST_CAMERA 0x08B01F28u   /* u32: the camera 0x08821424 asked for last */
+
+/* An object in use drawn while its x on the screen (64 to the left of it counted) is within 0 - 511:
+   fixed to the screen with +14 = 0, else by its camera's x, and for +14 = 2 moved by the camera's
+   +28 × its depth (+38). Out of it, +1 = 0. */
+SFA_FUNC(08821424, object_draw_if_on_screen) {
+    gaddr o = ARG(0), saved = c->r[16];
+    if (*B(o) == 0) return;
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    int16_t x;
+    if (*B(o + 14) == 0) x = (int16_t)(S16(o + 18) + 0x40);
+    else {
+        c->r[4] = o;
+        f_08821330(c);
+        gaddr camera = c->r[2];
+        *W(LAST_CAMERA) = camera;
+        x = (int16_t)(S16(o + 18) - S16(camera + 18) + 0x40);
+        if (*B(o + 14) == 2) {
+            int64_t m = (int64_t)(int32_t)*W(0x092E5F78u + 28) * S16(o + 38);
+            c->lo = (uint32_t)m; c->hi = (uint32_t)(m >> 32);
+            x = (int16_t)(x + ((int32_t)c->lo >> 16));
+        }
+    }
+    if (x < 512 && x >= 0) { c->r[4] = o; f_088215C4(c); }
+    else *B(o + 1) = 0;
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

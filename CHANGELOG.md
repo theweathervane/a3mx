@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.72.0
+- **More of the game decompiled:** 27 more functions are hand-written C: how the CPU steps through its scripts, a fighter's move state being cleared, the button just pressed read as strength and punch or kick, objects drawn only while they are on the screen, sixteen records reset, and more of the screens' director and the objects of the screens and the intro. Nothing changes in play.
+
 ## 0.71.0
 - **More of the game decompiled:** 36 more functions are hand-written C: the branches in the CPU's scripts (at random, by what the opponent is doing, by a count), a fighter being kept on the screen at the edges, the speeds a fighter is given from the game's tables, the screens' director emptying the object pools, and more objects of the screens around a fight and of the intro. Nothing changes in play.
 

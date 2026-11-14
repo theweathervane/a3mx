@@ -152,3 +152,132 @@ SFA_FUNC(088AC3EC, director_clear_pool_5) {
     director_clear_78();
     c->r[29] += 0x10;
 }
+
+/* ---- 0.72.0 ---- */
+
+void f_08822EAC(Cpu *c);   /* object_make (kind, type) */
+void f_08821368(Cpu *c);   /* a random number */
+
+/* (row, count): count objects made from row `row` of the table at 0x08A2C5CC (three bytes each: kind,
+   type, +78), if pool 4 has that many free. */
+SFA_FUNC(088A9AD8, director_make_row) {
+    int32_t count = (int32_t)ARG(1);
+    gaddr s16 = c->r[16], s17 = c->r[17], s18 = c->r[18], s19 = c->r[19];
+    if (S8(0x095176F3u) < count) return;
+    c->r[29] -= 0x30;
+    gaddr e = 0x08A2C5CCu + ARG(0) * 3u;
+    int32_t left = count - 1;
+    c->r[17] = 1;
+    do {
+        uint32_t kind = (uint32_t)S8(e) & 0xFF, type = (uint32_t)S8(e + 1) & 0xFF;
+        int8_t number = S8(e + 2);
+        e += 3;
+        c->r[16] = (uint32_t)left; c->r[18] = e; c->r[19] = (uint32_t)(int32_t)number;
+        c->r[4] = kind; c->r[5] = type;
+        f_08822EAC(c);
+        gaddr o = c->r[2];
+        *B(o) = 1;
+        left--;
+        *B(o + 78) = (uint8_t)number;
+    } while (left >= 0);
+    c->r[29] += 0x30;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18; c->r[19] = s19;
+}
+
+/* The s16 at 0x0951CE52 made both bytes its low one; its old high byte to +77 and into the low byte
+   of GAME + 22 (as an s8); the second scroll record set to 0x2287 / -893. */
+SFA_FUNC(088A9E24, director_take_ce52) {
+    gaddr o = ARG(0);
+    *B(o + 9) = (uint8_t)(*B(o + 9) + 1);
+    uint16_t was = *H(0x0951CE52u);
+    uint16_t low = was & 0xFF;
+    *H(0x0951CE52u) = (uint16_t)(low | (low << 8));
+    uint8_t high = (uint8_t)(was >> 8);
+    *B(o + 77) = high;
+    *H(GAME + 22) = (uint16_t)(S16(GAME + 22) & 0xFF00);
+    *H(GAME + 22) = (uint16_t)(S16(GAME + 22) | (int32_t)(int8_t)high);
+    *B(o + 76) = 0;
+    *H(SCROLL_B + 10) = 0x2287;
+    *H(SCROLL_B + 14) = 0xFC83;
+}
+
+/* The word at 0x08B027F8 moves by its speed (+8) × 256, kept above 0x2000000 (the object's +17
+   one more each time it is held); with GAME + 33's low three bits clear a random number is drawn and
+   GAME + 20 bit 0 set. */
+SFA_FUNC(088ABA4C, director_grow_27F8) {
+    gaddr o = ARG(0), r = 0x08B027F8u, saved = c->r[16];
+    c->r[29] -= 0x10;
+    *W(r) += (uint32_t)(S16(r + 8) << 8);
+    c->r[16] = GAME;
+    if (!((int32_t)0x2000000 < (int32_t)*W(r))) {
+        *B(o + 17) = (uint8_t)(*B(o + 17) + 1);
+        *W(r) = 0x2000000;
+    }
+    if ((*B(GAME + 33) & 7) == 0) {
+        f_08821368(c);
+        *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | 1);
+    }
+    c->r[29] += 0x10;
+    c->r[16] = saved;
+}
+
+void f_08823338(Cpu *c);   /* object_make_list_3 */
+
+/* Every eighth frame (+12) an object of kind 0x31 is made, numbered by +13; +80 is set while GAME + 16's
+   high byte is clear. Then the handler by +9 (0x08A2C5F4). */
+SFA_FUNC(088A9D58, director_make_every_8th) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = 1;
+    *B(o + 80) = 1;
+    if (S16(GAME + 16) & 0xFF00) *B(o + 80) = 0;
+    *B(o + 12) = (uint8_t)((*B(o + 12) + 1) & 7);
+    if (*B(o + 12) == 0) {
+        c->r[4] = 0x31; c->r[5] = 1;
+        f_08822EAC(c);
+        gaddr made = c->r[2];
+        if (made != 0) {
+            *B(made) = 1;
+            uint8_t number = *B(o + 13);
+            *B(o + 13) = (uint8_t)(number + 1);
+            *B(made + 78) = number;
+        }
+    }
+    gaddr fn = *W(0x08A2C5F4u + *B(o + 9) * 4u);
+    c->r[4] = o; c->r[5] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* +79 says whether GAME + 16 has a high byte: then, below 24 in its low byte and the first time (+92),
+   two objects of kind 7 are made in the third list (types 0 and 1); if one cannot be made nothing
+   more is done. Then the handler by +17 (0x08A2C748). */
+SFA_FUNC(088AB948, director_make_pair_then_run) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 79) = 0;
+    int16_t g = S16(GAME + 16);
+    if (g & 0xFF00) {
+        if ((g & 0xFF) < 24 && *B(o + 92) == 0) {
+            for (uint32_t k = 0; k < 2; k++) {
+                c->r[17] = k;
+                c->r[4] = 7; c->r[5] = k & 0xFF;
+                f_08823338(c);
+                c->r[17] = k + 1;
+                if (c->r[2] == 0) goto done;
+            }
+            *B(o + 92) = 1;
+        }
+        *B(o + 79) = 1;
+    }
+    {
+        gaddr fn = *W(0x08A2C748u + *B(o + 17) * 4u);
+        c->r[4] = o; c->r[5] = fn;
+        rt_call_indirect(c, fn);
+    }
+done:
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
