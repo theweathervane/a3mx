@@ -1428,3 +1428,106 @@ SFA_FUNC(08872080, fighter_fill_gauge_700) {
     if (own != 8) { *B(f + 701) = (uint8_t)(limit + 5); limit = *B(f + 701); }
     if (limit >= 160) *B(f + 701) = 0xA0;
 }
+
+/* ---- 0.77.0 ---- */
+
+/* (fighter): its speeds from the character's table (+708: 16 s16 a character): x and y speed, then x
+   and y acceleration (+96 - +108, each << 8), from row 0 / 8 / 12 by what it is doing (a CPU by +497:
+   none, 8, or 12 with bit 7; a human by its held direction: none, 12 for forward, 8 for back). ISM -1
+   characters 17 and 19 take their x acceleration unshifted. Facing left (+11) turns the x values. */
+SFA_FUNC(08862068, fighter_speeds_by_direction) {
+    gaddr f = ARG(0);
+    int8_t ch = S8(f + 338);
+    uint32_t row;
+    if (S8(f + 373) != 0) {
+        int8_t v = S8(f + 497);
+        row = v == 0 ? 0 : (v & 0x80) ? 12 : 8;
+    } else {
+        uint16_t d = *H(f + 752);
+        row = (d & 3) == 0 ? 0 : (d & 2) ? 8 : 12;
+    }
+    gaddr p = *W(f + 708) + ((uint32_t)((int32_t)ch << 4) + row) * 2u;
+    *W(f + 96) = (uint32_t)(int32_t)S16(p) << 8;
+    *W(f + 100) = (uint32_t)(int32_t)S16(p + 2) << 8;
+    int unshifted = S8(f + F_ISM) == -1 && (ch == 0x11 || ch == 0x13);
+    *W(f + 104) = unshifted ? (uint32_t)(int32_t)S16(p + 4) : (uint32_t)(int32_t)S16(p + 4) << 8;
+    *W(f + 108) = (uint32_t)(int32_t)S16(p + 6) << 8;
+    if (*B(f + F_FACING) != 0) {
+        *W(f + 96) = 0u - *W(f + 96);
+        *W(f + 104) = 0u - *W(f + 104);
+    }
+}
+
+/* (fighter): the character's routine (0x08A19040), then three lists of { index, value } pairs ending
+   at -1 (routine table + 116, + 112, + 120) written into the word tables 0x08A10040, 0x08A10130 and
+   0x08A0FDC8. */
+static void write_pairs(gaddr list, gaddr table) {
+    for (gaddr e = list; *W(e) != 0xFFFFFFFFu; e += 8) *W(table + *W(e) * 4u) = *W(e + 4);
+}
+SFA_FUNC(088597F0, fighter_character_values) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    gaddr fn = *W(0x08A19040u + ((uint32_t)(int32_t)S8(f + 338) << 2));
+    c->r[4] = f; c->r[5] = fn;
+    rt_call_indirect(c, fn);
+    write_pairs(*W(*W(f + 416) + 116), 0x08A10040u);
+    write_pairs(*W(*W(f + 416) + 112), 0x08A10130u);
+    write_pairs(*W(*W(f + 416) + 120), 0x08A0FDC8u);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (fighter): a CPU script picked by the opponent's +307: from the list at routine table + 164 in a
+   network battle with +815, else + 56 (shifted by +499); one of 32 random choices (s8) names the script
+   in the entry's second list. +511 = the choice, +486 = its first word, +520 where it reads on, +550 /
+   +565 / +501 cleared. Answers +520. */
+SFA_FUNC(0887B308, fighter_pick_script_by_opponent) {
+    gaddr f = ARG(0), opp = *W(f + 92);
+    gaddr s[4] = { c->r[16], c->r[17], c->r[18], c->r[19] };
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = opp;
+    *B(f + 550) = 0;
+    f_088D5E44(c);
+    int net = c->r[2] != 0;
+    gaddr table = *W(f + 416);
+    int by_network = net && S8(f + 815) != 0;
+    gaddr lists = *W(table + (by_network ? 164 : 56));
+    gaddr choices = *W(lists + *B(opp + 307) * 8u);
+    c->r[18] = lists; c->r[19] = choices;
+    f_08821368(c);
+    uint32_t r = c->r[2] & 0x1F;
+    int8_t pick = by_network ? S8(choices + r)
+                             : S8(choices + (uint32_t)(int32_t)(int8_t)(r + (uint32_t)(int32_t)S8(f + 499)));
+    gaddr p = *W(*W(lists + *B(opp + 307) * 8u + 4) + ((uint32_t)(int32_t)pick << 2));
+    *B(f + 511) = (uint8_t)pick;
+    *W(f + 520) = p + 2;
+    *H(f + 486) = (uint16_t)S16(p);
+    *B(f + 565) = 0; *B(f + 501) = 0;
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3];
+    RETURN(p + 2);
+}
+
+void f_08805310(Cpu *c);   /* does nothing (empty.c) */
+
+/* (fighter, kind, length): for a human fighter (in Training: only the side GAME + 57 names) 0x08805310
+   is called with its pad slot (+775), the two bytes for `kind` at 0x08A1BFD8 and the length. Nothing
+   for a length of 0. */
+SFA_FUNC(0886E3CC, fighter_call_08805310_by_kind) {
+    gaddr f = ARG(0);
+    uint32_t kind = ARG(1) & 0xFF, length = ARG(2) & 0xFFFF;
+    if (length == 0) return;
+    int call;
+    if (S8(GAME + 114) == 2) call = (S8(GAME + 57) == 1) ? S8(f + 337) == 0 : S8(f + 337) != 0;
+    else call = S8(f + 373) == 0;
+    if (!call) return;
+    gaddr e = 0x08A1BFD8u + kind * 2u;
+    c->r[29] -= 0x20;
+    c->r[4] = (uint32_t)(int32_t)S8(f + 775) & 0xFF;
+    c->r[5] = *B(e);
+    c->r[6] = (uint32_t)(int32_t)S8(e + 1);
+    c->r[7] = length;
+    f_08805310(c);
+    c->r[29] += 0x20;
+}

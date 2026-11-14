@@ -699,6 +699,18 @@ owner at + 88, and frame data at + 296.
 | `object/screen_steps.c` | 0x088B2800, 0x088AE99C, 0x08889BA8, 0x088AF758 / 0x088AF574 / 0x088AF838, 0x088EB1E8, 0x088ACE00 (0x08A2CB60 by + 3), 0x0889C738 |
 | `intro_steps.c` | 0x08857E98 (two parts built at + 0x78) |
 
+**A hit's damage, speeds and script picks** (0.77.0).
+
+| Address | What |
+|---|---|
+| 0x08872B54 | (attacker, defender, hit, v): v or the attacker's + 260, through 0x08872C50 and 0x08872CD8; bits 0 - 6 index the s8 table 0x08A1C0C8 (32 by CPU level, 0x09358410 + 24's + 375); ¾ for a hit + 19 of 2; at least 1; + ½ with that fighter's + 309; 0x088732E0; under 128 (`fighter/hit.c`) |
+| 0x08862068 | speeds from the character's 16 s16 at + 708: rows 0 / 8 / 12 by + 497 (CPU) or the held direction; + 96 / + 100 / + 104 / + 108 (<< 8; + 104 unshifted for ISM -1 characters 17 and 19); turned for facing left |
+| 0x088597F0 | the character's routine (0x08A19040), then { index, value } lists (routine table + 116 / 112 / 120) into 0x08A10040 / 0x08A10130 / 0x08A0FDC8 |
+| 0x0887B308 | a CPU script by the opponent's + 307: lists at routine table + 164 (network battle with + 815) or + 56 (+ 499 added to the random pick); + 511, + 486, + 520, answers + 520 |
+| 0x0886E3CC | (fighter, kind, length): 0x08805310 (empty) with the pad slot + 775 and the pair at 0x08A1BFD8 + 2 × kind, for a human (Training: the side GAME + 57 names) |
+| 0x08899FD0 / 0x0889C0D4 | rows of 6-byte entries laid out by a character's width (0x08A27FFC by 0x08A2A914; 0x08A280B0 by 0x08A2AB0C) |
+| `object/screen_steps.c` | 0x0889B15C, 0x0889C3D8, 0x08881FB8 (kind 15 beside, jittered by 0x08A24C38), 0x08818F1C (tables 0x08A078D0 - 0x08A07900) |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

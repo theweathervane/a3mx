@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.77.0
+- **More of the game decompiled:** 11 more functions are hand-written C. They include how much damage a hit does (through the ISM, the CPU's level and the hit's kind), a fighter's walking speeds by the direction it holds, the character's own values loaded at the start, how a CPU fighter picks a script by what its opponent is doing, and rows of pictures laid out by a character's width on the screens around a fight. Nothing changes in play.
+
 ## 0.76.0
 - **More of the game decompiled:** 19 more functions are hand-written C. They include the last part of every fight frame, damage adjusted by both fighters' values, a gauge a fighter fills when hit, a count whose highest is kept for the fighters, each fighter noting which side its opponent is on, the small objects' and the queues' resets, an object drawn with a margin of its own, and more objects of the screens around a fight and of the intro. Nothing changes in play.
 

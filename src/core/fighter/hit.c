@@ -213,3 +213,31 @@ SFA_FUNC(088732E0, hit_scale_by_644) {
     }
     RETURN(v);
 }
+
+/* ---- 0.77.0 ---- */
+
+/* (attacker, defender, hit, v): the damage of a hit: v (or the attacker's +260 when set) through the
+   ISM and kind-0x22 adjustments; then, unless that leaves 0 (bits 0 - 6), the s8 from 0x08A1C0C8 by it
+   and the hit record fighter's CPU level (+375), three quarters for a hit whose +19 is 2, at least 1,
+   half as much more with the hit record fighter's +309, scaled by +644 and kept under 128. */
+SFA_FUNC(08872B54, hit_damage) {
+    gaddr a = ARG(0), d = ARG(1), hit = ARG(2), other = *W(HIT + 24);
+    gaddr s[5] = { c->r[16], c->r[17], c->r[18], c->r[19], c->r[20] };
+    uint32_t v = ARG(3);
+    c->r[29] -= 0x30;
+    c->r[16] = hit; c->r[17] = d; c->r[18] = a; c->r[19] = other; c->r[20] = HIT;
+    if (S8(a + 260) != 0) v = (uint32_t)(int32_t)S8(a + 260);
+    v = CALL2(f_08872C50, hit, v);
+    v = CALL2(f_08872CD8, a, v) & 0x7F;
+    if (v != 0) {
+        int32_t n = S8(0x08A1C0C8u + (v << 5) + (uint32_t)(int32_t)S8(*W(HIT + 24) + 375));
+        if (*B(hit + 19) == 2) n = (n >> 1) + (n >> 2);
+        if (n == 0) n = 1;
+        if (S8(other + 309) != 0) n += n >> 1;
+        n = (int32_t)CALL3(f_088732E0, a, d, (uint32_t)n);
+        v = (uint32_t)(n < 128 ? n : 0x7F);
+    }
+    c->r[29] += 0x30;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3]; c->r[20] = s[4];
+    RETURN(v);
+}
