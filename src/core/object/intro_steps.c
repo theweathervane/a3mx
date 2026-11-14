@@ -408,3 +408,59 @@ SFA_FUNC(08857464, intro_show_numbers) {
     *H(0x08A166EEu) = *H(0x08A16FC0u + units * 2u);
     c->lo = tens; c->hi = units;
 }
+
+/* ---- 0.73.0 ---- */
+
+void f_08821424(Cpu *c);   /* object_draw_if_on_screen */
+void f_08857464(Cpu *c);   /* intro_show_numbers */
+
+static void draw_if_on_screen(Cpu *c, gaddr o) { c->r[29] -= 0x20; c->r[4] = o; f_08821424(c); c->r[29] += 0x20; }
+
+/* Moves in x by +96: the next substep once it passes x 128; drawn while on the screen. */
+SFA_FUNC(0885647C, move_x_past_128) {
+    gaddr o = ARG(0);
+    uint32_t v = *W(o + 96), x = v + *W(o + 16);
+    *W(o + 16) = x;
+    if (passed(v, x, 0x800000)) next_substep(o);
+    draw_if_on_screen(c, o);
+}
+
+/* Moves in x by +96: within 88 - 168 the next substep, set to its place (+112); drawn while on the
+   screen. */
+SFA_FUNC(088564C8, move_x_into_88_168) {
+    gaddr o = ARG(0);
+    uint32_t x = *W(o + 96) + *W(o + 16);
+    *W(o + 16) = x;
+    if (!(0x500000u < x - 0x580000u)) { next_substep(o); *H(o + 18) = (uint16_t)S16(o + 112); }
+    draw_if_on_screen(c, o);
+}
+
+/* Shows the numbers and is drawn until the intro reaches stage 2, then the next step. */
+SFA_FUNC(08857620, intro_numbers_until_stage_2) {
+    gaddr o = ARG(0), saved = c->r[16];
+    if (S8(BATTLE + BT_INTRO) >= 2) { next_step(o); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[4] = o; f_08857464(c);
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* From x 440 leftwards to 56, or (BATTLE + 63) from x -248 rightwards to 136; the numbers shown, and
+   animation 0x08A16B0C + 8. */
+SFA_FUNC(088573BC, intro_setup_numbers) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[5] = 5; c->r[6] = 0x1B8; c->r[7] = 0x66;
+    f_08855D80(c);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 96) = 0xFFE00000u; *H(o + 112) = 0x38; *W(o + 148) = 1; *H(o + 86) = 6; *W(o + 164) = 1;
+    if (S8(BATTLE + 63) != 0) { *H(o + 18) = 0xFF08; *W(o + 96) = 0x200000; *H(o + 112) = 0x88; }
+    c->r[4] = o; f_08857464(c);
+    c->r[4] = o; c->r[5] = *W(0x08A16B0Cu + 8);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

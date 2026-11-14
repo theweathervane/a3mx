@@ -201,3 +201,15 @@ SFA_FUNC(088081D4, records_reset) {
     c->r[29] += 0x30;
     c->r[16] = s16; c->r[17] = s17; c->r[18] = s18; c->r[19] = s19;
 }
+
+void f_088081B0(Cpu *c);
+void f_0880829C(Cpu *c);
+
+/* 0x088081B0, the records reset (0x088081D4), then 0x0880829C. */
+SFA_FUNC(088073E8, records_start) {
+    c->r[29] -= 0x10;
+    f_088081B0(c);
+    f_088081D4(c);
+    f_0880829C(c);
+    c->r[29] += 0x10;
+}

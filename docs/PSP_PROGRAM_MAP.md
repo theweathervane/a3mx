@@ -632,6 +632,22 @@ owner at + 88, and frame data at + 296.
 | `object/screen_steps.c` | 0x08889D64 (by type from 0x08A26980), 0x088B1374, 0x088B1BB4, 0x088B1D10, 0x088B2104 / 2184 / 232C / 23B4 (a record placed with a size) |
 | `intro_steps.c` | 0x08855F44, 0x088561C0 (coming in by BATTLE + 63), 0x08857464 (three numbers' pictures from GAME + 20) |
 
+**The CPU's first frame and more objects** (0.73.0).
+
+| Address | What |
+|---|---|
+| 0x08877328 / 0x08877388 | the CPU's first frame: a script picked once (+ 480; by level, or at random), its first command run once from + 512 / + 516 (+ 481), then 0x0887A400 |
+| 0x08863A50 | a human fighter's button just pressed kept in + 194 / + 193, its held directions in + 290 (the pair read into the guest stack) |
+| 0x08879E58 / 0x088780A0 | a script called at random when 0x08877258 (list 0x08A22B20) says yes; within 2 of + 508 the script read on, else routine 1.0.2.0 with + 497 / + 78 saying whether + 490 reached + 508 |
+| 0x088073E8 | the records' start-up: 0x088081B0, the reset (0x088081D4), 0x0880829C |
+| 0x08881EB4 | a thrown object: falls by + 100 (growing by + 108) and swings about x + 96 by + 104 (growing by 0xC000) to alternate sides; the next step once + 75 is negative |
+| 0x0888639C | frames for a record from the table 0x08A25808 while it is shown; a negative one puts it out and sets + 129 of the object at + 20 |
+| 0x088894B8 | a record placed at the object at + 124 by the next entry of the list at + 120 (sizes from 0x08A262E0); -1 ends it |
+| 0x0887E6EC | a jittered copy (kind 5) made beside an object (sixteen s8 at 0x08A2445A) |
+| 0x08897B80 / 0x0889AB98 | arrives (y or x by + 10 bit 1) then y 120, reporting bits 0 - 1 in GAME + 20; set up by side unless the fighter's + 424 bit 1 |
+| `object/screen_steps.c` | 0x0887DD04, 0x0889C1E0 / 0x0889C23C / 0x0889C290 (then 0x0889C2EC), 0x088B1314 |
+| `intro_steps.c` | 0x0885647C (past x 128), 0x088564C8 (into 88 - 168), 0x08857620, 0x088573BC |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

@@ -1112,3 +1112,86 @@ SFA_FUNC(088774A8, fighter_script_step) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.73.0 ---- */
+
+void f_08863A9C(Cpu *c);   /* fighter_button_pressed */
+void f_088774A8(Cpu *c);   /* fighter_script_step */
+void f_0887A400(Cpu *c);
+void f_08877258(Cpu *c);
+void f_08879E10(Cpu *c);   /* fighter_script_call_random */
+
+/* A human fighter's button just pressed kept as +194 (strength) and +193 (kind), its held directions
+   in +290 (the pair is read into the guest stack, as the original does). */
+SFA_FUNC(08863A50, fighter_keep_button) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    if (S8(f + 373) == 0) {
+        gaddr pair = c->r[29] + 16;
+        c->r[4] = f; c->r[5] = pair;
+        f_08863A9C(c);
+        *B(f + 194) = *B(pair);
+        *B(f + 193) = *B(pair + 1);
+        *H(f + 290) = *H(f + 752);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* The CPU's first frame: a script picked (by level, or at random), then the first command run from
+   the script kept for the nesting (+512 or +516); then 0x0887A400. */
+static void cpu_first_frame(Cpu *c, GuestFunc pick, uint32_t kept) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    if (*B(f + 480) == 0) { *B(f + 480) = 1; c->r[4] = f; pick(c); }
+    if (*B(f + 481) == 0) {
+        *B(f + 481) = 1;
+        *W(f + 528) = *W(f + kept);
+        c->r[4] = f; f_088774A8(c);
+    }
+    c->r[4] = f; f_0887A400(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+SFA_FUNC(08877328, fighter_cpu_frame_by_level)  { cpu_first_frame(c, f_0887B1B8, 512); }
+SFA_FUNC(08877388, fighter_cpu_frame_at_random) { cpu_first_frame(c, f_0887C25C, 516); }
+
+/* (fighter, script): a script called at random when 0x08877258 (with the list 0x08A22B20) says yes,
+   else the script read on. */
+SFA_FUNC(08879E58, fighter_script_maybe_call_random) {
+    gaddr f = ARG(0), p = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = p; c->r[17] = f;
+    c->r[5] = 0x08A22B20u;
+    f_08877258(c);
+    uint32_t yes = c->r[2];
+    c->r[4] = f; c->r[5] = p;
+    if (yes) f_08879E10(c); else f_0887A10C(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* (fighter, script): +490 = the script's word; within 2 of +508 the script is read on, otherwise the
+   fighter is set to routine 1.0.2.0 (+482 = 1, +483 = 2), with +497 and +78 saying whether +490
+   reached +508. */
+SFA_FUNC(088780A0, fighter_script_if_near_508) {
+    gaddr f = ARG(0), p = ARG(1);
+    int16_t word = S16(p);
+    int32_t target = S16(f + 508);
+    *H(f + 490) = (uint16_t)word;
+    RETURN(p + 2);
+    uint32_t apart = ((uint32_t)(uint16_t)word - (uint32_t)target) & 0xFFFF;
+    if (((apart + 3) & 0xFFFF) < 6) {
+        c->r[29] -= 0x20;
+        c->r[4] = f; c->r[5] = p + 2;
+        f_0887A10C(c);
+        c->r[29] += 0x20;
+        return;
+    }
+    *B(f + 482) = 1; *B(f + 483) = 2;
+    *B(f + 4) = 1; *B(f + 6) = 2; *B(f + 7) = 0; *B(f + 5) = 0;
+    uint8_t reached = !((int32_t)(uint16_t)S16(f + 490) < target);
+    *B(f + 497) = reached; *B(f + 78) = reached;
+}

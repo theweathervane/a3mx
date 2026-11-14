@@ -18,13 +18,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  7.90% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  8.03% decompiled
 
-Functions                                [░░░░░░░░░░]   8.31%  1,236 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   7.90%  38,264 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   8.45%  1,257 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   8.03%  38,879 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  17.66%  36,012 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  17.96%  36,627 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   1.26%  47 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -139,6 +139,9 @@ Done:
 - [x] The CPU's script step (0x088774A8) and a fighter's move state cleared (0x088647C4), the button
       just pressed as strength and kind, a fighter's table of values by state, objects drawn only when on
       the screen (0x08821424), the records reset, and twenty more director, screen and intro objects (0.72.0)
+- [x] The CPU's first frame (a script picked, the first command run), a human fighter's button kept,
+      two more script branches, the records' start-up, a thrown object swinging as it falls, a record
+      following a list, and twelve more screen and intro objects (0.73.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -1662,3 +1662,206 @@ SFA_FUNC(0889EE08, show_eight_from_72) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.73.0 ---- */
+
+void f_08821424(Cpu *c);   /* object_draw_if_on_screen */
+void f_0889C2EC(Cpu *c);   /* scroll_x_while_character */
+void f_088B1D10(Cpu *c);   /* draw_by_game_16 */
+
+/* Counts +82 down to 0; drawn while on the screen. */
+SFA_FUNC(0887DD04, count_82_draw_if_on_screen) {
+    gaddr o = ARG(0);
+    if (S16(o + 82) != 0) *H(o + 82) = (uint16_t)(S16(o + 82) - 1);
+    call_on(c, f_08821424, o, 0x20);
+}
+
+/* (object, fighter): arriving in y (the next part, stopped on its target), on bit 0 of the fighter's
+   +78 (the next part, target back to +112, +100 cleared), or arriving in y or with the fighter's +81
+   (the next part); then it scrolls while the character is shown. */
+static void then_scroll_while_character(Cpu *c, gaddr o, gaddr f) {
+    c->r[4] = o; c->r[5] = f;
+    f_0889C2EC(c);
+}
+SFA_FUNC(0889C1E0, arrive_y_stop_then_scroll_character) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    f_0889CEA4(c);
+    if (c->r[2] != 0) { next_part(o); *W(o + 20) = (uint32_t)S16(o + 114) << 16; }
+    then_scroll_while_character(c, o, f);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+SFA_FUNC(0889C23C, on_fighter_bit_1_scroll_character) {
+    gaddr o = ARG(0), f = ARG(1);
+    if (S8(f + 78) & 1) { next_part(o); *H(o + 114) = *H(o + 112); *W(o + 100) = 0; }
+    c->r[29] -= 0x20;
+    then_scroll_while_character(c, o, f);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(0889C290, arrive_y_or_81_then_scroll_character) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    f_0889CEA4(c);
+    if (c->r[2] != 0 || S8(f + 81) != 0) next_part(o);
+    then_scroll_while_character(c, o, f);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Animated, then drawn by GAME + 16 (0x088B1D10). */
+SFA_FUNC(088B1314, animate_then_draw_by_game_16) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    f_088219B0(c);
+    c->r[4] = o; f_088B1D10(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, type, a, b): a jittered copy (kind 5) made beside the object: +9 = a, +78 = b, its
+   +11, +14 and +24, x and y each moved by one of sixteen s8 at 0x08A2445A at random. Answers it. */
+SFA_FUNC(0887E6EC, make_jittered_copy) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17], s18 = c->r[18], s19 = c->r[19];
+    uint8_t a = (uint8_t)ARG(2), b = (uint8_t)ARG(3);
+    c->r[29] -= 0x30;
+    c->r[16] = o; c->r[18] = b; c->r[19] = a;
+    c->r[4] = 5; c->r[5] = ARG(1) & 0xFF;
+    f_08822EAC(c);
+    gaddr n = c->r[2];
+    c->r[17] = n;
+    if (n != 0) {
+        *B(n + 9) = a; *B(n + 78) = b;
+        *B(n + 14) = *B(o + 14); *B(n + 11) = *B(o + 11); *B(n + 12) = 0; *H(n + 24) = *H(o + 24);
+        int16_t x = S16(o + 18);
+        c->r[18] = (uint32_t)(int32_t)x;
+        f_08821368(c);
+        c->r[19] = 0x08A2445Au;
+        *H(n + 18) = (uint16_t)(x + S8(0x08A2445Au + (c->r[2] & 0xF)));
+        int16_t y = S16(o + 22);
+        c->r[16] = (uint32_t)(int32_t)y;
+        f_08821368(c);
+        *H(n + 22) = (uint16_t)(y + S8(0x08A2445Au + (c->r[2] & 0xF)));
+    }
+    RETURN(n);
+    c->r[29] += 0x30;
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18; c->r[19] = s19;
+}
+
+/* Thrown (until +75 goes negative, then the next step): falls by +100 (growing by +108), and swings
+   about x +96 by +104 (growing by 0xC000), to one side or the other on alternate frames (+82 and
+   GAME + 66). Animated, drawn while on the screen. */
+SFA_FUNC(08881EB4, swing_and_fall) {
+    gaddr o = ARG(0), saved = c->r[16];
+    if (S8(o + 75) < 0) { *B(o + 4) = (uint8_t)(*B(o + 4) + 1); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *H(o + 82) = (uint16_t)(S16(o + 82) + 1);
+    uint32_t fall = *W(o + 100);
+    *W(o + 20) += fall;
+    *W(o + 100) = fall + *W(o + 108);
+    uint32_t x = *W(o + 96);
+    *W(o + 16) = x;
+    uint32_t swing = *W(o + 104) + 0xC000u;
+    *W(o + 104) = swing;
+    *W(o + 16) = ((S16(o + 82) + S8(GAME + 66)) & 1) ? x - swing : x + swing;
+    c->r[4] = o; f_088219B0(c);
+    c->r[4] = o; f_08821424(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, record): while the record is shown, +18 counts down; then the next frame of the table
+   0x08A25808 (by +16) goes to the record's +11 and +18 is the frame after; a negative one ends it:
+   the record put out, +16 back to 0 and +129 of the object at +20 set. Answers 0 for a record not
+   shown, else 1. */
+SFA_FUNC(0888639C, frames_from_table) {
+    gaddr o = ARG(0), p = ARG(1);
+    if (*B(p + 1) == 0) { RETURN(0); return; }
+    *B(o + 18) = (uint8_t)(S8(o + 18) - 1);
+    RETURN(1);
+    if (S8(o + 18) >= 0) return;
+    gaddr table = 0x08A25808u;
+    int8_t i = S8(o + 16);
+    *B(o + 16) = (uint8_t)(i + 1);
+    int8_t wait = S8(table + (uint32_t)(int32_t)i);
+    *B(o + 18) = (uint8_t)wait;
+    int8_t j = S8(o + 16);
+    *B(o + 16) = (uint8_t)(j + 1);
+    if (wait >= 0) { *B(p + 11) = (uint8_t)S8(table + (uint32_t)(int32_t)j); return; }
+    *B(p + 1) = 0;
+    *B(p + 11) = (uint8_t)S8(table + (uint32_t)(int32_t)j);
+    *B(o + 16) = 0;
+    *B(*W(o + 20) + 129) = 1;
+}
+
+/* The next entry of the list at +120: -1 ends it (+128 one more); otherwise the record is placed at
+   the object at +124 (x, y) with the size from 0x08A262E0 (by the entry's low seven bits) and shown;
+   an entry with bit 7 only while that object's routine is below 2 (else +128 one more). */
+SFA_FUNC(088894B8, record_follow_list) {
+    gaddr r = ARG(0), at = *W(r + 120);
+    *B(r + 93) = 0;
+    int8_t v = S8(at);
+    if (v == -1) { *B(r + 128) = (uint8_t)(*B(r + 128) + 1); return; }
+    gaddr o = *W(r + 124);
+    if (v >= 0) *W(r + 120) = at + 1;
+    else if (!(*B(o + 4) < 2)) { *B(r + 128) = (uint8_t)(*B(r + 128) + 1); return; }
+    *B(r + 93) = 1;
+    *H(r + 6) = (uint16_t)S16(o + 18);
+    *H(r + 10) = (uint16_t)S16(o + 22);
+    gaddr e = 0x08A262E0u + (uint32_t)(v & 0x7F) * 8u;
+    *H(r + 12) = (uint16_t)S16(e); *H(r + 14) = (uint16_t)S16(e + 2);
+    *H(r + 24) = (uint16_t)S16(e + 4); *H(r + 26) = (uint16_t)S16(e + 6);
+}
+
+/* Arrives (in y for those with +10 bit 1, else in x; at once while BATTLE + 81) and goes to y 120,
+   reporting bits 0 and 1 in GAME + 20; drawn. Only in substep 0. */
+SFA_FUNC(08897B80, arrive_then_y_120) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    if (*B(o + 5) == 0) {
+        int there = S8(BATTLE + 81) != 0;
+        if (*B(o + 10) & 2) {
+            if (!there) { c->r[4] = o; f_0889CEA4(c); there = c->r[2] != 0; }
+        } else {
+            if (!there) { c->r[4] = o; f_0889CE64(c); there = c->r[2] != 0; }
+            if (there) *W(o + 16) = (uint32_t)S16(o + 114) << 16;
+        }
+        if (there) {
+            *B(o + 5) = (uint8_t)(*B(o + 5) + 1);
+            *W(o + 20) = 0x780000;
+            *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | 3);
+        }
+    }
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, fighter): with the fighter's +424 bit 1 the next substep; otherwise set up once more (the
+   next part): +82 = 0x600, +80 / +81 = -128, colours by side, motion entry 65 + side, animation 8 +
+   side. */
+SFA_FUNC(0889AB98, setup_by_side_unless_flag_2) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    if (S16(f + 424) & 2) { *B(o + 6) = 0; *B(o + 5) = (uint8_t)(*B(o + 5) + 1); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    next_part(o);
+    *W(o + 148) = 0; *H(o + 86) = 8; *H(o + 82) = 0x600; *B(o + 81) = 0x80; *B(o + 80) = 0x80;
+    c->r[4] = o; c->r[5] = 1;
+    f_0889CFE8(c);
+    int32_t side = S8(f + 337);
+    c->r[16] = (uint32_t)side;
+    *B(o + 12) = 1;
+    *B(o + 13) = (uint8_t)(side + 0x14);
+    c->r[4] = o; c->r[5] = (uint32_t)(side + 0x41) & 0xFFFF;
+    f_0889CEE4(c);
+    c->r[4] = o; c->r[5] = (uint32_t)(side + 8) & 0xFFFF;
+    f_0889CDC8(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
