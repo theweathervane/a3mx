@@ -4,6 +4,7 @@
  * and these answer "no".
  */
 #include "../decomp.h"
+#include "../psp_os.h"
 
 #define GAME        0x08E75910u
 #define G_MODE      114            /* s8: the mode; 12 is NETWORK */
@@ -92,4 +93,90 @@ SFA_FUNC(088DC080, net_block_reset) {
     *W(block + 4) = *W(0x08B02EA0u) + 0x10000;
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}
+
+/* ---- 0.74.0: the session (0x09523920, task/fight_network.c) and its thread's record ---- */
+
+
+#define SESSION      0x09523920u   /* the session: +16 its error, +37 / +48 up, +38 a counter, +49 halted */
+#define SESSION_SIZE 0x34
+#define NET_STEP_SIZE 0x1C
+#define NET_THREAD   0x095236C0u   /* +4 a thread to wake, +16 whether to; 0x20 bytes */
+#define NET_SEMA     0x08A3EB88u   /* u32: the semaphore "network_sema", once made */
+#define NET_SEMA_NAME 0x08A01380u  /* "network_sema" */
+
+
+SFA_FUNC(088E3294, net_session_clear)   { c->r[29] -= 0x20; CALL3(f_089F3470, SESSION, 0, SESSION_SIZE); c->r[29] += 0x20; }
+SFA_FUNC(088E3EB0, net_step_clear)      { c->r[29] -= 0x20; CALL3(f_089F3470, NET_STEP, 0, NET_STEP_SIZE); c->r[29] += 0x20; }
+
+/* 1 while the session has no error and has not halted the fight (+16, +49). */
+SFA_FUNC(088E358C, net_session_fine)    { RETURN(*W(SESSION + 16) == 0 && S8(SESSION + 49) == 0); }
+
+/* 1 while the session is up neither way (+48, +37). */
+SFA_FUNC(088E3604, net_session_down)    { RETURN(S8(SESSION + 48) == 0 && S8(SESSION + 37) == 0); }
+
+/* While the session is up (+48), +38 counts 0 - 3 round. */
+SFA_FUNC(088E36B8, net_session_count_38) {
+    if (S8(SESSION + 48) == 0) return;
+    *B(SESSION + 38) = (uint8_t)((S8(SESSION + 38) + 1) & 3);
+}
+
+/* The buttons this frame (the button-config remap): while the session is up and has not failed they
+   go into the session's first word and the answer is 0; otherwise they are answered as they are. */
+SFA_FUNC(088E3660, net_take_buttons) {
+    uint32_t buttons = ARG(0);
+    if (S8(SESSION + 48) == 0) { RETURN(buttons); return; }
+    c->r[29] -= 0x10;
+    c->r[4] = buttons; c->r[5] = SESSION;
+    f_088D7F18(c);
+    uint32_t failed = c->r[2];
+    c->r[29] += 0x10;
+    if (failed != 0) { RETURN(buttons); return; }
+    *W(SESSION) = buttons;
+    RETURN(0);
+}
+
+/* Wakes the network's thread (+4) when +16 asks for it. */
+SFA_FUNC(088E1ABC, net_wake_thread) {
+    if (S8(NET_THREAD + 16) == 0 || *W(NET_THREAD + 4) == 0) return;
+    c->r[29] -= 0x20;
+    os_wakeup_thread(c, (int32_t)*W(NET_THREAD + 4));
+    c->r[29] += 0x20;
+}
+
+/* The thread's record cleared, and the semaphore "network_sema" (count 1 of 1) made the first time. */
+SFA_FUNC(088E0A58, net_thread_reset) {
+    c->r[29] -= 0x30;
+    CALL3(f_089F3470, NET_THREAD, 0, 0x20);
+    if (*W(NET_SEMA) == 0) {
+        int32_t id = os_create_sema(c, NET_SEMA_NAME, 0, 1, 1, 0);
+        if (id > 0) *W(NET_SEMA) = (uint32_t)id;
+    }
+    c->r[29] += 0x30;
+}
+
+void f_088DC080(Cpu *c);   /* net_block_reset */
+void f_088DEB10(Cpu *c);   /* record_23740_reset (misc.c) */
+void f_088DD81C(Cpu *c);   /* net_clear_09523C20 */
+
+#define NET_BLOCK_PTR  0x08B02EA0u   /* u32: the 64 KB block (net_block_reset) */
+#define NET_HEAP_SEMA  0x08B02EA4u   /* u32: the semaphore "heap_work_sema" */
+
+/* The network's state from scratch: the 64 KB block at 0x09316A00 (and the semaphore
+   "heap_work_sema", count 1 of 1), the thread's record, 0x09523740, the step, the session, the 0xF4
+   bytes at 0x09523820, the text and 0x09523C20. */
+SFA_FUNC(088DBF88, net_reset_all) {
+    c->r[29] -= 0x30;
+    *W(NET_BLOCK_PTR) = 0x09316A00u;
+    *W(NET_HEAP_SEMA) = (uint32_t)os_create_sema(c, 0x08A012B8u, 0, 1, 1, 0);
+    c->r[4] = 0x08B00000u;
+    f_088DC080(c);
+    f_088E0A58(c);
+    f_088DEB10(c);
+    f_088E3EB0(c);
+    f_088E3294(c);
+    CALL3(f_089F3470, 0x09523820u, 0, 0xF4);
+    f_088D55D0(c);
+    f_088DD81C(c);
+    c->r[29] += 0x30;
 }

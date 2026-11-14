@@ -5,7 +5,8 @@ loop, set-up, most of its screens and its per-frame steps, the end of every fram
 drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
 OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers,
 the step dispatchers the tests run, the text queue, objects' queueing, drawing dispatch and animation, the camera's sideways steps and the layers that follow it, the fighters' trail and the small steps and
-questions about a fighter's state, its buttons and the network state are
+questions about a fighter's state, its buttons, the network state, the 2D library's texture lists and
+palettes, and the save files' names and parameters are
 native C. Everything else still runs as translated code. The extracted assets are laid out by character, stage and screen ([assets/LAYOUT.md](../assets/LAYOUT.md)). How much is done is in the box below.
 
 ## Progress
@@ -18,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  8.03% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  8.31% decompiled
 
-Functions                                [░░░░░░░░░░]   8.45%  1,257 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   8.03%  38,879 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   8.82%  1,313 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   8.31%  40,237 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  17.96%  36,627 / 203,929
-  wireless (ad-hoc) VS                   [░░░░░░░░░░]   1.26%  47 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   0.43%  1,105 / 257,012
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  18.30%  37,315 / 203,929
+  wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   0.67%  1,734 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -142,6 +143,10 @@ Done:
 - [x] The CPU's first frame (a script picked, the first command run), a human fighter's button kept,
       two more script branches, the records' start-up, a thrown object swinging as it falls, a record
       following a list, and twelve more screen and intro objects (0.73.0)
+- [x] The 2D library's texture lists and palette upload (0x089E0CF4, 0x089E0EA4, 0x089E1254), the zeroed
+      allocation (0x089E04EC), three small record tables, the save files' names and dialogue settings,
+      the network session's checks and full reset (0x088DBF88), a fighter's attack starting routine 1 / 5,
+      and twenty-eight more screen objects (0.74.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

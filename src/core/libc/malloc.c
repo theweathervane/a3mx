@@ -478,3 +478,16 @@ SFA_FUNC(089F8E30, game_sbrk_r) { RETURN(sbrk_r(c, ARG(0), (int32_t)ARG(1))); }
    that runs them: nothing in the scenarios calls them yet.) */
 SFA_FUNC(089F33C0, game_free)     { free_r(c, impure(), ARG(0)); }
 SFA_FUNC(089F3374, game_memalign) { RETURN(memalign_r(c, impure(), ARG(0), ARG(1))); }
+
+/* The game's own allocation (0.74.0): size rounded down to 64 bytes and 64 more, aligned to 64 and
+   zeroed. The memset runs on whatever memalign answered, 0 included. */
+void f_089F3374(Cpu *c);   /* memalign (above) */
+void f_089F3470(Cpu *c);   /* memset */
+SFA_FUNC(089E04EC, game_alloc_zeroed) {
+    uint32_t size = (ARG(0) & ~0x3Fu) + 0x40;
+    c->r[29] -= 0x20;
+    gaddr p = CALL2(f_089F3374, 0x40, size);
+    CALL3(f_089F3470, p, 0, size);
+    c->r[29] += 0x20;
+    RETURN(p);
+}

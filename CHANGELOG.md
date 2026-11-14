@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.74.0
+- **More of the game decompiled:** 56 more functions are hand-written C. They include the 2D library's texture lists and palettes, the game's zeroed memory allocation, the save files' names and the settings handed to the PSP's save dialogue, the network session's small checks and its start-up from scratch (still never reached offline), a fighter starting a move when an attack button is pressed, and more objects of the screens around a fight. Nothing changes in play.
+
 ## 0.73.0
 - **More of the game decompiled:** 21 more functions are hand-written C: the CPU's first frame (picking its script and running the first command), a human fighter's last button press being kept, two more branches in the CPU's scripts, a thrown object swinging as it falls, and more objects of the screens around a fight and of the intro. Nothing changes in play.
 

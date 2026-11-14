@@ -648,6 +648,26 @@ owner at + 88, and frame data at + 296.
 | `object/screen_steps.c` | 0x0887DD04, 0x0889C1E0 / 0x0889C23C / 0x0889C290 (then 0x0889C2EC), 0x088B1314 |
 | `intro_steps.c` | 0x0885647C (past x 128), 0x088564C8 (into 88 - 168), 0x08857620, 0x088573BC |
 
+**The 2D library, the save names, the network's start and more objects** (0.74.0).
+
+| Address | What |
+|---|---|
+| 0x089E0CF4 / 0x089E0EA4 | a texture list made the one in use (copied to 0x08B23334) and its descriptor 0 picked; descriptor n picked into 0x08B2333C (its number u8 at 0x08ACCD80) unless it already is (`syslib/draw2d.c`) |
+| 0x089E1204 / 0x089E0778 / 0x089E1438 | a 12-byte descriptor set (+0 itself unless flag 0x40000000 gives a word, +4 flags, +8 set with 0x800000); its value: +8 itself with 0x800000 (or 0x40000000 for 0x089E0778), otherwise the word +8 points at; the same for the picked one |
+| 0x089E1254 | count palette entries copied to the word at 0x09525E08 + 2 × start (2 bytes an entry for the kinds 0 - 2 at 0x08B2334C, 4 for 6, else none) |
+| 0x089E055C / 0x089E0DE0 | a code's number from 17 pairs at 0x08ACCD88 (bits 4 - 19, low four kept); a 24-byte record set, +8 / +12 by the low byte of its third argument |
+| 0x089E04EC | the game's zeroed allocation: (size & ~63) + 64 bytes, aligned to 64 (`libc/malloc.c`) |
+| 0x089E1D3C / 0x089E26D0 / 0x089E272C | a record taken from 0x08ACCE10 (8 × 20), 0x08AD3AF8 (16 × 20) or 0x08AD3C38 (8 × 24); 0x07000101 when all are in use. 0x089E2340 / 23A0 / 25E8 / 2644 set their values (`syslib/tables.c`) |
+| 0x089E3158 / 0x089E31E0 / 0x089E3248 | which of STFALPH3.SYS / .WTR / .NET / .DWN (0x08AD3D8C) a name is; a system dialogue's 0x600-byte parameters (size, language 1, button swap 1, thread priorities 0x11 / 0x13 / 0x12 / 0x10); save parameters for file n: "ULUS10062", "0000" - "0003" (0x08AD3D3C), the file's name |
+| 0x088DBF88 | the network from scratch: the 64 KB block 0x09316A00 (0x08B02EA0), "heap_work_sema" (0x08B02EA4), 0x088E0A58 (the thread record 0x095236C0 and "network_sema" at 0x08A3EB88), the session 0x09523920 and step 0x09523960 cleared, 0x09523820 (0xF4 bytes), the text, 0x09523C20 |
+| 0x088E3660 | the button-config remap: while the session is up (+ 48) and has not failed, the buttons go into the session's first word and 0 is answered |
+| 0x088E358C / 0x088E3604 / 0x088E36B8 / 0x088E1ABC | the session has no error and has not halted (+ 16, + 49); is down (+ 48, + 37); + 38 counts 0 - 3 while up; the network thread woken (0x095236C0 + 4) while + 16 |
+| 0x0886DB2C / 0x088639CC | a human fighter with + 80 and not + 262 starts routine 1 / 5 on an attack button while the opponent has health: facing + 697, 0x0886DC3C, the button kept, + 192 / + 696 whether down is held, 0x0885B7D4 |
+| 0x08879DBC | a script called at random, or maybe called (0x08879E58) when + 488 has a command |
+| 0x0892EA9C / 0x0892B188 / 0x0892EFB8 | x (+ 16) moved by + 96 (backwards while + 11 is 0), + 96 growing by + 104; a blink at + 828 after 23 frames, then every 15; an object copied from a fighter |
+| 0x088AD538 / 0x088ADC44 / 0x088AF2D0 / 0x088B01A0 | the same routine four times: drawn on the screen while GAME + 16's high byte is 0, + 4 on while its low byte is not + 32; 0x088AFC90 counts, sinks and draws with it |
+| `object/screen_steps.c` | 0x0887DAFC / 0x0887DC54, 0x0887E230 / 54, 0x08889440, 0x088F1718 (0x08A43C50 / 0x08A43C60 by + 2), 0x088BB510 / 61C / 820 / 93C, 0x088B243C / 24C0 / 2B98, 0x088EB1A4, 0x0889AE58, 0x0889B544 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

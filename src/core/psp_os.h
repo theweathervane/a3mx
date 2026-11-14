@@ -110,3 +110,12 @@ static inline int32_t os_register_exit_callback(Cpu *c, int32_t callback) { c->r
 static inline void os_dcache_writeback_all(Cpu *c) { hle_sceKernelDcacheWritebackAll(c); }
 /* Vertical blanks since the display started. */
 static inline uint32_t os_display_get_vcount(Cpu *c) { hle_sceDisplayGetVcount(c); return c->r[2]; }
+
+void hle_sceKernelCreateSema(Cpu *c);
+
+/* A semaphore named `name` (a guest string): its id, or a negative error. */
+static inline int32_t os_create_sema(Cpu *c, uint32_t name, uint32_t attr, int32_t initial, int32_t max, uint32_t options) {
+    c->r[4] = name; c->r[5] = attr; c->r[6] = (uint32_t)initial; c->r[7] = (uint32_t)max; c->r[8] = options;
+    hle_sceKernelCreateSema(c);
+    return (int32_t)c->r[2];
+}

@@ -1195,3 +1195,57 @@ SFA_FUNC(088780A0, fighter_script_if_near_508) {
     uint8_t reached = !((int32_t)(uint16_t)S16(f + 490) < target);
     *B(f + 497) = reached; *B(f + 78) = reached;
 }
+
+/* ---- 0.74.0 ---- */
+
+void f_08879E58(Cpu *c);   /* fighter_script_maybe_call_random */
+void f_0886DC3C(Cpu *c);   /* fighter_clear_644 (hit.c) */
+void f_088623BC(Cpu *c);   /* fighter_holds_down (buttons.c) */
+void f_0885B7D4(Cpu *c);   /* fighter_tick_and_routine_64 */
+
+/* (fighter, script): with a script command (+488) a script maybe called at random, otherwise one
+   called at random. */
+SFA_FUNC(08879DBC, fighter_script_call_by_command) {
+    gaddr f = ARG(0), p = ARG(1);
+    int8_t command = S8(f + 488);
+    c->r[29] -= 0x20;
+    c->r[4] = f; c->r[5] = p;
+    if (command != 0) f_08879E58(c); else f_08879E10(c);
+    c->r[29] += 0x20;
+}
+
+/* (fighter): routine 1, 0, 5, 0; facing the opponent's side (+697); +644 cleared, +123 cleared, the
+   button kept; +192 and +696 say whether down is held; then the frame's tick and routine 64. */
+SFA_FUNC(088639CC, fighter_start_routine_1_5) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    *B(f + 4) = 1; *B(f + 5) = 0; *B(f + 6) = 5;
+    int8_t side = S8(f + F_OPPONENT_SIDE);
+    *B(f + 7) = 0; *B(f + 266) = 0;
+    *B(f + F_FACING) = (uint8_t)side;
+    c->r[4] = f; f_0886DC3C(c);
+    *B(f + 123) = 0;
+    c->r[4] = f; f_08863A50(c);
+    c->r[4] = f; f_088623BC(c);
+    uint8_t down = c->r[2] != 0;
+    *B(f + 192) = down; *B(f + 696) = down;
+    c->r[4] = f; f_0885B7D4(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+void f_088639C0(Cpu *c);   /* fighter_pressed_attacks (buttons.c) */
+
+/* (fighter): a human fighter (+373 clear) with +80 set and +262 clear, whose opponent still has
+   health (+112 not negative), starts routine 1 / 5 when an attack button is pressed. */
+SFA_FUNC(0886DB2C, fighter_attack_starts_1_5) {
+    gaddr f = ARG(0), saved = c->r[16];
+    if (S8(f + 373) != 0 || S8(f + 80) == 0 || S8(f + 262) != 0 || S16(*W(f + F_OPPONENT) + F_HEALTH) < 0) return;
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    c->r[4] = f; f_088639C0(c);
+    if (c->r[2] != 0) { c->r[4] = f; f_088639CC(c); }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
