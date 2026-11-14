@@ -281,3 +281,37 @@ done:
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* ---- 0.75.0 ---- */
+
+/* (director): its step (+9) on, +12 = 7; by +93: negative clears GAME + 10's low byte (and with +2 set
+   steps on once more and places scroll A); 1 sets GAME + 10 to 2; 2 and over set it to +93 - 2 and
+   the step back to 0. When GAME + 16's low byte is 0x17, bit 8 of GAME + 20 is set and scroll B's
+   words +0 / +4 become 0 / 0xFD000000. */
+SFA_FUNC(088AA6F4, director_by_93) {
+    gaddr d = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = GAME;
+    *B(d + 9) = (uint8_t)(*B(d + 9) + 1);
+    int8_t k = S8(d + 93);
+    *B(d + 12) = 7;
+    if (k < 0) {
+        *H(GAME + 10) = (uint16_t)(*H(GAME + 10) & 0xFF00);
+        if (*H(d + 2) != 0) {
+            *B(d + 9) = (uint8_t)(*B(d + 9) + 1);
+            c->r[4] = d; f_088AA808(c);
+        }
+    } else if (k == 1) {
+        *H(GAME + 10) = 2;
+    } else if (k >= 2) {
+        *H(GAME + 10) = (uint16_t)(k - 2);
+        *B(d + 9) = 0;
+    }
+    if ((S16(GAME + 16) & 0xFF) == 0x17) {
+        *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | 0x100);
+        *W(SCROLL_B) = 0;
+        *W(SCROLL_B + 4) = 0xFD000000u;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

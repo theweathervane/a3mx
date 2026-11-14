@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  8.31% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  8.54% decompiled
 
-Functions                                [░░░░░░░░░░]   8.82%  1,313 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   8.31%  40,237 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   8.99%  1,338 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   8.54%  41,330 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  18.30%  37,315 / 203,929
+  game (modes, menus, fighters, battle)  [█░░░░░░░░░]  18.81%  38,354 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   0.67%  1,734 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   0.70%  1,788 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -147,6 +147,9 @@ Done:
       allocation (0x089E04EC), three small record tables, the save files' names and dialogue settings,
       the network session's checks and full reset (0x088DBF88), a fighter's attack starting routine 1 / 5,
       and twenty-eight more screen objects (0.74.0)
+- [x] A CPU fighter's script restarted (0x0887A1D8), a value scaled by a setting (0x08873094), the CPU's
+      chance for characters 6 / 15 / 20, jittered copies placed by the character, the queues' records
+      (0x08809EF0 / 0x08809F48), the director by + 93, and fifteen more screen objects (0.75.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

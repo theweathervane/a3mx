@@ -213,3 +213,24 @@ SFA_FUNC(088073E8, records_start) {
     f_0880829C(c);
     c->r[29] += 0x10;
 }
+
+/* ---- 0.75.0 ---- */
+
+void f_089E26D0(Cpu *c);   /* table_b_take (syslib/tables.c) */
+void f_089E272C(Cpu *c);   /* table_c_take */
+
+/* (n): the record in the queues' word n (from QUEUES, or QUEUES + 64), taken from the table the first
+   time; 0 when the table has none to give. */
+static void queue_record(Cpu *c, gaddr row, GuestFunc take) {
+    gaddr slot = row + ((uint32_t)(int32_t)(int16_t)ARG(0) << 2), saved = c->r[16];
+    uint32_t r = *W(slot);
+    if (r != 0) { RETURN(r); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = slot;
+    uint32_t err = CALL1(take, slot);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+    RETURN(err != 0 ? 0 : *W(slot));
+}
+SFA_FUNC(08809EF0, queue_record_b) { queue_record(c, QUEUES, f_089E26D0); }
+SFA_FUNC(08809F48, queue_record_c) { queue_record(c, QUEUES + 64, f_089E272C); }

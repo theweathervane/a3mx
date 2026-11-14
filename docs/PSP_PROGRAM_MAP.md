@@ -668,6 +668,22 @@ owner at + 88, and frame data at + 296.
 | 0x088AD538 / 0x088ADC44 / 0x088AF2D0 / 0x088B01A0 | the same routine four times: drawn on the screen while GAME + 16's high byte is 0, + 4 on while its low byte is not + 32; 0x088AFC90 counts, sinks and draws with it |
 | `object/screen_steps.c` | 0x0887DAFC / 0x0887DC54, 0x0887E230 / 54, 0x08889440, 0x088F1718 (0x08A43C50 / 0x08A43C60 by + 2), 0x088BB510 / 61C / 820 / 93C, 0x088B243C / 24C0 / 2B98, 0x088EB1A4, 0x0889AE58, 0x0889B544 |
 
+**A script restarted, the queues' records and more objects** (0.75.0).
+
+| Address | What |
+|---|---|
+| 0x0887A1D8 | a CPU fighter's script from the start: picked (+ 484 = 0) or the one left off at + 504 / + 512; its first word into + 488; a command of -1 runs at once (0x0887A154). Answers the next place |
+| 0x08873094 | v scaled by GAME + 116 (the record's + 19 = 2) or GAME + 46: 0 takes an eighth off, 2 adds an eighth, 3 a quarter |
+| 0x0885E9A4 | the chance by level (list 0x08A22CA0) for a CPU fighter of character 6, 15 or 20, when nothing stops it (+ 702, + 568, health, ISM -1, BATTLE + 13 / 14, GAME + 38, both in step 6) |
+| 0x088638A8 / 0x088638E0 | a jittered copy (+ 78 = 17 / 16) moved by the character's offset (0x08864D98) |
+| 0x08809EF0 / 0x08809F48 | the record in word n of 0x092DA0F0 (from table B, 0x089E26D0) or 0x092DA130 (table C), taken the first time |
+| 0x088AA6F4 | the director by + 93: GAME + 10 cleared to its high byte (negative; + 2 steps on and places scroll A), 2 (for 1) or + 93 - 2; GAME + 16's low byte 0x17 sets GAME + 20 bit 8 and scroll B |
+| 0x088BBA24 / 0x088BBC54 | a line of text (18 bytes a line from 0x08A05834 + 16, the second + 0x48) in the stage's colour (0x08A381B0 / D0 by BATTLE + 102) after the step from 0x08A38198 / B8; freed while GAME + 39 or no GAME + 18 |
+| 0x088BBE98 | the stage's colour (u16 at 0x08A381E0, five bits a channel) into a record's colour bytes |
+| 0x088F1860 / 0x0889BC30 | an object on its fighter's picture (frame data + 10; animations 0x08A3F9E0); a substep (0x08A2AAC4) then + 96 kept within (+ 76 << 8 \| + 77) << 16 |
+| 0x088957EC | six objects of kind 0x71 once pool 4 has 6 free (0x095176F3), three given the character of the fighter + 57 names |
+| `object/screen_steps.c` | 0x088AFC50, 0x088B1260 (0x08A301F8), 0x088B2878, 0x088AF91C / 0x088AF658 (by the byte 0x09525DE3), 0x088AF1C8, 0x088B19F0 (switch 0x089FF778), 0x0889B71C, 0x088B59A0, 0x0889592C, 0x08897E2C |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

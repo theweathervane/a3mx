@@ -1249,3 +1249,90 @@ SFA_FUNC(0886DB2C, fighter_attack_starts_1_5) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.75.0 ---- */
+
+void f_0887E230(Cpu *c);   /* jittered_copy_16 (object/screen_steps.c) */
+void f_0887E254(Cpu *c);   /* jittered_copy_17 */
+
+/* (fighter): a jittered copy (+78 = 17 or 16) moved by the character's offset when one is made. */
+static void offset_jittered_copy(Cpu *c, GuestFunc copy) {
+    gaddr f = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    c->r[4] = f; copy(c);
+    gaddr o = c->r[2];
+    c->r[5] = o;
+    if (o != 0) { c->r[4] = f; f_08864D98(c); }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+SFA_FUNC(088638A8, fighter_jittered_copy_17) { offset_jittered_copy(c, f_0887E254); }
+SFA_FUNC(088638E0, fighter_jittered_copy_16) { offset_jittered_copy(c, f_0887E230); }
+
+/* (record, v): v by a setting (GAME + 116 when the record's +19 is 2, else GAME + 46): 0 takes an
+   eighth off, 2 adds an eighth, 3 a quarter; anything else leaves it. */
+SFA_FUNC(08873094, scale_by_setting) {
+    int32_t v = (int32_t)ARG(1);
+    int8_t level = S8(GAME + (*B(ARG(0) + 19) == 2 ? 116 : 46));
+    switch (level) {
+    case 0: v -= v >> 3; break;
+    case 2: v += v >> 3; break;
+    case 3: v += v >> 2; break;
+    default: break;
+    }
+    RETURN(v);
+}
+
+/* (fighter): the script read on from the start: with no nesting (+484) a script picked; otherwise the
+   one left off at the first level (+504 into +486, +512). Its first word is the command (+488); a
+   command of -1 (+489) runs at once, on the word after it for a picked script or on a newly picked
+   script for one left off. Answers where it reads next. */
+SFA_FUNC(0887A1D8, fighter_script_restart) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = 0xFFFFFFFFu;
+    if (*B(f + 484) == 0) {
+        *B(f + 484) = 0;
+        c->r[4] = f; f_0887B1B8(c);
+        gaddr p = c->r[2];
+        *W(f + 528) = p;
+        *H(f + 488) = (uint16_t)S16(p);
+        RETURN(p + 2);
+        if (S8(f + 489) == -1) { c->r[4] = f; c->r[5] = p + 2; f_0887A154(c); }
+    } else {
+        int16_t at = S16(f + 504);
+        *B(f + 484) = 0;
+        gaddr p = *W(f + 512);
+        *H(f + 486) = (uint16_t)at;
+        *W(f + 528) = p;
+        *H(f + 488) = (uint16_t)S16(p);
+        RETURN(p + 2);
+        if (S8(f + 489) == -1) {
+            c->r[4] = f; f_0887B1B8(c);
+            c->r[4] = f; c->r[5] = c->r[2]; f_0887A154(c);
+        }
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* (fighter): a CPU fighter of characters 6, 15 or 20, not in +702 / +568, with health, not ISM -1, with
+   neither BATTLE + 13 / + 14 nor GAME + 38 set and not both fighters in step 6, answers the chance by
+   its level from the list 0x08A22CA0; otherwise 0. */
+SFA_FUNC(0885E9A4, fighter_cpu_chance_by_character) {
+    gaddr f = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    uint32_t answer = 0;
+    int8_t ch = S8(f + 338);
+    if (S8(f + 373) != 0 && (ch == 6 || ch == 20 || ch == 15) && S8(f + 702) == 0 && S8(f + 568) == 0 &&
+        S16(f + F_HEALTH) >= 0 && S8(f + F_ISM) != -1 &&
+        (S8(BATTLE + BT_FLAG_13) | S8(BATTLE + BT_FLAG_14) | S8(GAME + G_HALT_38)) == 0) {
+        c->r[29] -= 0x20;
+        c->r[16] = f; c->r[17] = 0;
+        c->r[4] = f; f_088632C4(c);
+        if (c->r[2] == 0) { c->r[4] = f; c->r[5] = 0x08A22CA0u; f_08877258(c); answer = c->r[2]; }
+        c->r[29] += 0x20;
+        c->r[16] = s16; c->r[17] = s17;
+    }
+    RETURN(answer);
+}
