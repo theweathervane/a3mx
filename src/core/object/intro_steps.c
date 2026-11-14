@@ -464,3 +464,33 @@ SFA_FUNC(088573BC, intro_setup_numbers) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.76.0 ---- */
+
+void f_08858418(Cpu *c);   /* owned_set_animation */
+
+/* (object, fighter): the next part (+7); +139 = 0x10, +140 = 3; x from the s16 table 0x08A17200 by +3
+   and BATTLE + 7; +142 the fighter's +769; two 8-byte parts built at +0x78 (the first at (-24, -8),
+   picture 0x216 + +142; the second at (-8, -8), picture 0x8235), +0x74 = 0x4000; animation 0xD;
+   +148 = 5, +156 the parts; drawn. */
+SFA_FUNC(08857E98, setup_parts_by_fighter) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 7) = (uint8_t)(*B(o + 7) + 1);
+    *B(o + 139) = 0x10; *B(o + 140) = 3;
+    *H(o + 18) = (uint16_t)S16(0x08A17200u + (uint32_t)(*B(o + 3) * 2 + S8(BATTLE + 7)) * 2u);
+    gaddr parts = o + 0x70;
+    c->r[17] = parts;
+    *B(o + 142) = (uint8_t)S8(f + 769);
+    *H(parts + 4) = 0x4000;
+    gaddr p = parts + 8;
+    *H(p) = 0xFFE8; *H(p + 2) = 0xFFF8; *H(p + 4) = (uint16_t)(S8(o + 142) + 0x216); *B(p + 6) = 1; *B(p + 7) = 0x15;
+    p += 8;
+    *H(p) = 0xFFF8; *H(p + 2) = 0xFFF8; *H(p + 4) = 0x8235; *B(p + 6) = 1; *B(p + 7) = 0x15;
+    c->r[4] = o; c->r[5] = 0xD; f_08858418(c);
+    *W(o + 148) = 5; *W(o + 156) = parts;
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

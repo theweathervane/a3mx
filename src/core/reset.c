@@ -183,3 +183,23 @@ SFA_FUNC(08836A3C, grow_09524A68_on_timer) {
     f_08836E60(c);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.76.0 ---- */
+
+/* The three queues emptied at once (as above, the network step's flag cleared once after them), then
+   the first bytes of 0x092E2690 (4), 0x092E23C0 (2), 0x092E2AC0 (3) and the 8 bytes at 0x092E29D0. */
+SFA_FUNC(08822600, queues_and_flags_clear) {
+    gaddr saved = c->r[16];
+    for (int i = 0; i < 96; i++) *B(0x092DF240u + (uint32_t)i * 0x10) = 0;
+    for (int i = 0; i < 4; i++)  *B(0x092DF930u + (uint32_t)i * 0x14) = 0;
+    for (int i = 0; i < 10; i++) *B(0x092DF840u + (uint32_t)i * 0x18) = 0;
+    c->r[29] -= 0x10;
+    c->r[16] = 0x092E29D0u;
+    f_088E3FE0(c);
+    c->r[29] += 0x10;
+    c->r[16] = saved;
+    for (int i = 3; i >= 0; i--) *B(0x092E2690u + (uint32_t)i) = 0;
+    for (int i = 1; i >= 0; i--) *B(0x092E23C0u + (uint32_t)i) = 0;
+    for (int i = 2; i >= 0; i--) *B(0x092E2AC0u + (uint32_t)i) = 0;
+    for (int i = 7; i >= 0; i--) *B(0x092E29D0u + (uint32_t)i) = 0;
+}

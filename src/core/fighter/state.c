@@ -1336,3 +1336,95 @@ SFA_FUNC(0885E9A4, fighter_cpu_chance_by_character) {
     }
     RETURN(answer);
 }
+
+/* ---- 0.76.0 ---- */
+
+void f_08821368(Cpu *c);   /* a random number */
+
+/* (fighter): with +117 = 5, a jittered copy (+78 16 or 17, at random). */
+SFA_FUNC(08863850, fighter_jittered_copy_by_117) {
+    gaddr f = ARG(0), saved = c->r[16];
+    if (*B(f + 117) != 5) return;
+    c->r[29] -= 0x20;
+    c->r[16] = f;
+    f_08821368(c);
+    c->r[4] = f;
+    if (c->r[2] & 1) f_088638E0(c); else f_088638A8(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (attacker, defender, record, v): v adjusted by both fighters' values: the attacker's +796 (+798 when
+   the record's +19 is 2; 100 when its +792 has bit 25) and +802, and the defender's +800 (75 is added
+   instead when its +792 has bit 25) and +802 taken away, each counted from 100; v grows or shrinks by
+   that many 200ths, and is at least 1. Answered as it is for v = 0 or the defender's +117 = 0xFF. */
+SFA_FUNC(08872F68, damage_by_values) {
+    gaddr a = ARG(0), d = ARG(1), r = ARG(2);
+    int32_t v = (int32_t)ARG(3);
+    if (v == 0 || *B(d + 117) == 0xFF) { RETURN(v); return; }
+    int32_t k;
+    if (*W(a + 792) & 0x2000000u) k = 100;
+    else k = (*B(r + 19) == 2 ? S16(a + 798) : S16(a + 796)) - 100;
+    k += S16(a + 802) - 100;
+    if (*W(d + 792) & 0x2000000u) k += 75;
+    else k = k - S16(d + 800) + 100;
+    k = k - S16(d + 802) + 100;
+    if (k > 0)      { DIV(c, (uint32_t)v * (uint32_t)k, 200);  v += (int32_t)c->lo; }
+    else if (k < 0) { DIV(c, (uint32_t)v * (uint32_t)-k, 200); v -= (int32_t)c->lo; }
+    if (v <= 0) v = 1;
+    RETURN(v);
+}
+
+/* (record): +126 counts up to 99, and the highest count is kept in +357 of the hit record's fighter
+   (in the single layout, 0) and of the pair it belongs to: fighters 1 and 2 in layout 3 unless it is on
+   side 2 or 3, otherwise fighters 3 and 4 when it is. */
+static void keep_highest(gaddr f, int8_t n) { if (S8(f + 357) < n) *B(f + 357) = (uint8_t)n; }
+SFA_FUNC(0887335C, count_126_keep_highest) {
+    gaddr r = ARG(0);
+    int8_t n = S8(r + 126);
+    if (n == 99) return;
+    *B(r + 126) = (uint8_t)(n + 1);
+    gaddr f = *W(0x09358410u + 24);
+    if (S16(BATTLE + BT_LAYOUT) == 0) keep_highest(f, S8(r + 126));
+    int second_pair = S8(f + F_SIDE) & 2;
+    if (S16(BATTLE + BT_LAYOUT) == 3) {
+        if (second_pair) return;
+        keep_highest(FIGHTER_1, S8(r + 126)); keep_highest(FIGHTER_2, S8(r + 126));
+    } else {
+        if (!second_pair) return;
+        keep_highest(FIGHTER_3, S8(r + 126)); keep_highest(FIGHTER_4, S8(r + 126));
+    }
+}
+
+/* Every fighter in play (by the layout: 0 the first two, 1 the first and the pair 3 / 4, 2 the second
+   and 3 / 4, 3 the first three) notes its opponent's side. */
+SFA_FUNC(088592E4, fighters_note_opponent_side) {
+    static const gaddr none[] = { 0 };
+    static const gaddr l0[] = { FIGHTER_1, FIGHTER_2, 0 }, l1[] = { FIGHTER_1, FIGHTER_3, FIGHTER_4, 0 },
+                       l2[] = { FIGHTER_2, FIGHTER_3, FIGHTER_4, 0 }, l3[] = { FIGHTER_1, FIGHTER_2, FIGHTER_3, 0 };
+    int16_t layout = S16(BATTLE + BT_LAYOUT);
+    const gaddr *list = layout == 0 ? l0 : layout == 1 ? l1 : layout == 2 ? l2 : layout == 3 ? l3 : none;
+    c->r[29] -= 0x20;
+    for (; *list; list++) { c->r[4] = *list; f_088593D8(c); }
+    c->r[29] += 0x20;
+}
+
+/* (fighter, hit): a gauge (+700) filled by the hit's +12 (a quarter more with +588; 20 or 30 when the
+   hit record's fighter's +810 is 2 or 3), unless +810 is 7. Reaching +701 sets +702, empties the
+   gauge and +699, and (unless +810 is 8) raises +701 by 5, never past 160. Nothing for a fighter out
+   of health, with +637, +792 bit 11 or character 0x24. */
+SFA_FUNC(08872080, fighter_fill_gauge_700) {
+    gaddr f = ARG(0), hit = ARG(1), other = *W(0x09358410u + 24);
+    if (S16(f + F_HEALTH) < 0 || S8(f + 637) != 0 || (*W(f + 792) & 0x800) || S8(f + 338) == 0x24) return;
+    int8_t add = (int8_t)*B(hit + 12);
+    if (S8(f + 588) != 0) add = (int8_t)(add + (add >> 2));
+    int8_t kind = S8(other + 810);
+    if (kind == 2) add = 20; else if (kind == 3) add = 30;
+    int8_t own = S8(f + 810);
+    uint8_t limit = *B(f + 701);
+    if (own != 7) *B(f + 700) = (uint8_t)(*B(f + 700) + add);
+    if (*B(f + 700) < limit) return;
+    *B(f + 702) = 1; *B(f + 700) = 0; *B(f + 699) = 0;
+    if (own != 8) { *B(f + 701) = (uint8_t)(limit + 5); limit = *B(f + 701); }
+    if (limit >= 160) *B(f + 701) = 0xA0;
+}

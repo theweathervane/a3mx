@@ -2466,3 +2466,189 @@ SFA_FUNC(0889BC30, substep_then_wrap_96) {
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* ---- 0.76.0 ---- */
+
+void f_08822F54(Cpu *c);   /* object_make_42 (pool.c) */
+
+/* (record): +129 counts each time 0x088B2878's bounce comes round. */
+SFA_FUNC(088B2800, count_bounces) {
+    gaddr r = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = r;
+    c->r[4] = r; f_088B2878(c);
+    if (c->r[2] != 0) *B(r + 129) = (uint8_t)(*B(r + 129) + 1);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object): the next step (+4); +32 / +34 / +82 / +148 / +164 / +38 cleared, +86 = 0xC, +9 / +11 / +14
+   / +15 cleared, +24 = 7, +26 = 3; placed by +3 from the pairs at 0x08A2E5C8; +10 from the s8 table
+   0x08A2E5E4 by GAME + 22's low byte and +3; animation entry +10 of 0x08A2E550[20]. */
+SFA_FUNC(088AE99C, setup_by_3_and_game_22) {
+    gaddr o = ARG(0);
+    *H(o + 32) = 0; *H(o + 34) = 0;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 148) = 0; *H(o + 86) = 0xC; *W(o + 164) = 0; *H(o + 38) = 0;
+    *B(o + 15) = 0; *B(o + 14) = 0; *B(o + 11) = 0; *B(o + 9) = 0;
+    uint8_t k = *B(o + 3);
+    *H(o + 24) = 7; *H(o + 26) = 3; *H(o + 82) = 0;
+    gaddr p = 0x08A2E5C8u + k * 4u;
+    *H(o + 18) = *H(p);
+    *H(o + 22) = *H(p + 2);
+    *B(o + 10) = *B(0x08A2E5E4u + (S16(GAME + 22) & 0xFF) + k);
+    c->r[29] -= 0x20;
+    c->r[4] = o; c->r[5] = *W(0x08A2E550u + 80) + *B(o + 10) * 8u;
+    f_0882196C(c);
+    c->r[29] += 0x20;
+}
+
+/* (record): set up from a description (0x08A265B0 for type 15, +92, else 0x08A26650) with +6 = 0x80 /
+   0x148; +54 = 0x12, +88 = 0x81, +55 = 7, +10 = 0xE, +56 cleared, +136 = 0xFF; the corners +64 - +82
+   from the description's +8 - +14; +93 and +138 set. */
+SFA_FUNC(08889BA8, setup_corners_by_type) {
+    gaddr r = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    *B(r + 54) = 0x12; *B(r + 88) = 0x81; *B(r + 55) = 7; *H(r + 10) = 0xE; *B(r + 56) = 0; *B(r + 136) = 0xFF;
+    c->r[16] = r;
+    gaddr d;
+    if (*B(r + 92) == 0xF) { *H(r + 6) = 0x80;  d = 0x08A264C0u + 0xF0; }
+    else                   { *H(r + 6) = 0x148; d = 0x08A264C0u + 0x190; }
+    c->r[17] = d;
+    c->r[4] = r; c->r[5] = d; f_08889F7C(c);
+    *H(r + 64) = *H(d + 8);  *H(r + 76) = *H(d + 14);
+    *H(r + 66) = *H(d + 12); *H(r + 78) = *H(d + 14);
+    *H(r + 68) = *H(d + 8);  *H(r + 80) = *H(d + 10);
+    *H(r + 70) = *H(d + 12); *H(r + 82) = *H(d + 10);
+    *B(r + 93) = 1; *B(r + 138) = 1;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* Shared by the next three: the next step (+4) and the work fields of objects that come in on the
+   screens' layers (the animation tables 0x08A2EBA0 / 0x08A2ED04 by the byte at 0x09525DE3). */
+static gaddr layer_table(void) { return S8(0x09525DE3u) != 0 ? 0x08A2EBA0u : 0x08A2ED04u; }
+
+/* (object): +32 = GAME + 16's low byte; +148 / +164 / +38 / +82 / +11 / +14 / +15 cleared, +86 = 0xC,
+   +12 = 0xFF, +13 = 0x20, +24 = 5, +26 = 2, at (0xC0, 0xC8); animation 18 + GAME + 22's high byte. */
+SFA_FUNC(088AF758, setup_by_game_22_high) {
+    gaddr o = ARG(0);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *H(o + 32) = (uint16_t)(S16(GAME + 16) & 0xFF);
+    *W(o + 148) = 0; *H(o + 86) = 0xC; *W(o + 164) = 0; *H(o + 38) = 0;
+    *B(o + 15) = 0; *B(o + 14) = 0; *B(o + 11) = 0; *H(o + 82) = 0;
+    *B(o + 12) = 0xFF; *B(o + 13) = 0x20; *H(o + 24) = 5; *H(o + 26) = 2; *H(o + 18) = 0xC0; *H(o + 22) = 0xC8;
+    uint32_t n = (uint32_t)(S16(GAME + 22) & 0xFF00) >> 8;
+    c->r[29] -= 0x20;
+    c->r[4] = o; c->r[5] = *W(layer_table() + n * 4u + 72);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+}
+
+/* (object): +32 = GAME + 16's low byte; +148 / +10 / +38 / +9 / +11 / +14 / +15 cleared, +86 = 0x14,
+   +164 = 1, +12 = 0xFF, +13 = 0x20, +24 = 5, +26 = 2, at (0xC8, 0x70); animation +78; then a list-3
+   object of type 7 made with 0xE. */
+SFA_FUNC(088AF574, setup_by_78_with_partner_e) {
+    gaddr o = ARG(0);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 148) = 0;
+    *H(o + 32) = (uint16_t)(S16(GAME + 16) & 0xFF);
+    *B(o + 10) = 0; *H(o + 86) = 0x14; *W(o + 164) = 1; *H(o + 38) = 0;
+    *B(o + 15) = 0; *B(o + 14) = 0; *B(o + 11) = 0; *B(o + 9) = 0;
+    *B(o + 12) = 0xFF; *B(o + 13) = 0x20; *H(o + 24) = 5; *H(o + 26) = 2; *H(o + 18) = 0xC8; *H(o + 22) = 0x70;
+    int8_t k = S8(o + 78);
+    c->r[29] -= 0x20;
+    c->r[4] = o; c->r[5] = *W(layer_table() + ((uint32_t)(int32_t)k << 2));
+    f_0882196C(c);
+    CALL2(f_08823338, 7, 0xE);
+    c->r[29] += 0x20;
+}
+
+/* (object): +32 = GAME + 16's low byte; +34 / +148 / +164 / +38 / +11 - +15 cleared, +86 = 0xC, shown
+   (+9), +82 / +10 = 1, +24 = 5, +26 = 2, at (0x88, 0x100) (x 0x80 with +78); animation 24. */
+SFA_FUNC(088AF838, setup_shown_by_78) {
+    gaddr o = ARG(0);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *H(o + 34) = 0;
+    *H(o + 32) = (uint16_t)(S16(GAME + 16) & 0xFF);
+    *W(o + 148) = 0; *H(o + 86) = 0xC; *W(o + 164) = 0; *B(o + 9) = 1; *H(o + 82) = 1; *B(o + 10) = 1;
+    *H(o + 38) = 0; *B(o + 15) = 0; *B(o + 14) = 0; *B(o + 11) = 0; *B(o + 12) = 0; *B(o + 13) = 0;
+    *H(o + 24) = 5; *H(o + 26) = 2;
+    *H(o + 18) = S8(o + 78) != 0 ? 0x80 : 0x88;
+    *H(o + 22) = 0x100;
+    c->r[29] -= 0x20;
+    c->r[4] = o; c->r[5] = *W(layer_table() + 96);
+    f_0882196C(c);
+    c->r[29] += 0x20;
+}
+
+/* (record): the next step (+128); +54 = 0x28, +88 / +89 / +137 / +138 = 1, +55 = 5; its corners from
+   0x08A3F4D0 by +92 (0x088EB1A4); +6 / +10 from the pairs at 0x08A3F4E0, +56 = 2, +93 / +3 cleared,
+   +136 and the colour bytes +36 - +39, +42 - +45, +48 - +51 = 0xFF. */
+SFA_FUNC(088EB1E8, record_setup_by_92) {
+    gaddr r = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = r; c->r[17] = 1;
+    *B(r + 128) = (uint8_t)(*B(r + 128) + 1);
+    *B(r + 54) = 0x28; *B(r + 88) = 1; *B(r + 55) = 5;
+    c->r[4] = r; c->r[5] = 0x08A3F4D0u + *B(r + 92) * 16u;
+    f_088EB1A4(c);
+    gaddr p = 0x08A3F4E0u + *B(r + 92) * 4u;
+    *H(r + 6) = *H(p);
+    *B(r + 56) = 2;
+    *H(r + 10) = *H(p + 2);
+    *B(r + 93) = 0; *B(r + 3) = 0; *B(r + 89) = 1; *B(r + 137) = 1; *B(r + 136) = 0xFF;
+    for (int i = 3; i >= 0; i--) { *B(r + 48 + i) = 0xFF; }
+    for (int i = 3; i >= 0; i--) { *B(r + 42 + i) = 0xFF; }
+    for (int i = 3; i >= 0; i--) { *B(r + 36 + i) = 0xFF; }
+    *B(r + 138) = 1;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}
+
+/* (object): the next step (+4); +32 = GAME + 16's low byte; +148 = 1, +86 = 0xC, +164 cleared; the word
+   at 0x092E3E98 = 0x08A2C8A8 (or 0x08A2C9E8 without the byte at 0x09525DE3); +12 / +13 / +26 = 1,
+   placed at 0, +38 / +9 / +11 / +14 / +15 cleared, +24 = 7; then its routine 0x08A2CB60[+3], and drawn
+   as 0x088AD538. */
+SFA_FUNC(088ACE00, setup_routine_by_3) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *H(o + 32) = (uint16_t)(S16(GAME + 16) & 0xFF);
+    *W(o + 148) = 1; *H(o + 86) = 0xC; *W(o + 164) = 0;
+    *W(0x092E3E98u) = S8(0x09525DE3u) != 0 ? 0x08A2C8A8u : 0x08A2C9E8u;
+    gaddr entry = 0x08A2CB60u + *B(o + 3) * 4u;
+    *B(o + 12) = 1; *B(o + 13) = 1; *H(o + 22) = 0; *H(o + 18) = 0; *H(o + 38) = 0;
+    *B(o + 15) = 0; *B(o + 11) = 0; *B(o + 9) = 0; *B(o + 14) = 0; *H(o + 24) = 7; *H(o + 26) = 1;
+    gaddr fn = *W(entry);
+    c->r[4] = o; c->r[5] = fn;
+    rt_call_indirect(c, fn);
+    c->r[4] = o; f_088AD538(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, fighter): with the fighter's +424 bit 2, the next substep; otherwise the next part: +82 =
+   0x600, +148 = 5, +156 = 0x08A2882E, +160 = 0xC0, layer 0, motion entry 0x45 + side, animation 0x1A +
+   side, the row the fighter's +438 gives, and a pool-42 object (kind 0x21, type 5) made with +10 the
+   object's, +88 the object, +78 = 1, +92 the fighter, kept in the object's +44. */
+SFA_FUNC(0889C738, setup_side_45_with_marker) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    if (S16(f + 424) & 4) { next_substep(o); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    next_part(o);
+    *H(o + 82) = 0x600; *W(o + 148) = 5; *W(o + 156) = 0x08A2882Eu; *B(o + 160) = 0xC0;
+    c->r[4] = o; c->r[5] = 0; f_0889CFE8(c);
+    c->r[4] = o; c->r[5] = (uint32_t)(S8(f + 337) + 0x45) & 0xFFFF; f_0889CEE4(c);
+    c->r[4] = o; c->r[5] = (uint32_t)(S8(f + 337) + 0x1A) & 0xFFFF; f_0889CE34(c);
+    c->r[4] = o; c->r[5] = (uint32_t)(int32_t)S8(f + 438); f_0889C9FC(c);
+    gaddr n = CALL2(f_08822F54, 0x21, 5);
+    if (n != 0) {
+        *B(n + 10) = *B(o + 10); *W(n + 88) = o; *B(n + 78) = 1; *W(n + 92) = f;
+        *W(o + 44) = n;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

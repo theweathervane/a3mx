@@ -230,3 +230,33 @@ SFA_FUNC(08821424, object_draw_if_on_screen) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* ---- 0.76.0 ---- */
+
+/* (object, margin): 0x08821424 with a margin of its own: drawn while x on the screen plus the margin is
+   within 0 - (2 × margin + 0x17F). */
+SFA_FUNC(088214E8, object_draw_if_on_screen_margin) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    int16_t margin = (int16_t)ARG(1);
+    if (*B(o) == 0) return;
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = (uint32_t)(int32_t)margin;
+    int16_t x;
+    if (*B(o + 14) == 0) x = (int16_t)(S16(o + 18) + margin);
+    else {
+        c->r[4] = o;
+        f_08821330(c);
+        gaddr camera = c->r[2];
+        *W(LAST_CAMERA) = camera;
+        x = (int16_t)(S16(o + 18) - S16(camera + 18) + margin);
+        if (*B(o + 14) == 2) {
+            int64_t m = (int64_t)(int32_t)*W(0x092E5F78u + 28) * S16(o + 38);
+            c->lo = (uint32_t)m; c->hi = (uint32_t)(m >> 32);
+            x = (int16_t)(x + ((int32_t)c->lo >> 16));
+        }
+    }
+    if (x < margin * 2 + 0x180 && x >= 0) { c->r[4] = o; f_088215C4(c); }
+    else *B(o + 1) = 0;
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

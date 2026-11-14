@@ -684,6 +684,21 @@ owner at + 88, and frame data at + 296.
 | 0x088957EC | six objects of kind 0x71 once pool 4 has 6 free (0x095176F3), three given the character of the fighter + 57 names |
 | `object/screen_steps.c` | 0x088AFC50, 0x088B1260 (0x08A301F8), 0x088B2878, 0x088AF91C / 0x088AF658 (by the byte 0x09525DE3), 0x088AF1C8, 0x088B19F0 (switch 0x089FF778), 0x0889B71C, 0x088B59A0, 0x0889592C, 0x08897E2C |
 
+**The fight frame's end, damage by values and more objects** (0.76.0).
+
+| Address | What |
+|---|---|
+| 0x0882453C | a fight frame's last part (`task/fight.c`): unless GAME + 40 or the pause, GAME + 4 on (+ 6 / 8 / 10 cleared), BATTLE + 81 cleared, GAME + 59 set for a continuing match (+ 32 / 33 cleared) or counted, BATTLE + 52 = 1, + 23 cleared, 0x08824624 both ways; then 0x0881DF10, the second object list unless paused, 0x0880B6CC |
+| 0x08872F68 | (attacker, defender, record, v): v changed by (attacker + 796 or + 798 by the record's + 19, 100 with + 792 bit 25) + + 802 - the defender's + 800 (75 with its bit 25) and + 802, each from 100, in 200ths; at least 1 |
+| 0x08872080 | a gauge at + 700 filled by the hit's + 12 (+ 25 % with + 588; 20 / 30 by the hit record fighter's + 810); at + 701: + 702 set, + 700 / + 699 cleared, + 701 up by 5 to 160 (not for + 810 = 8) |
+| 0x0887335C | + 126 counts to 99, the highest kept in + 357 of 0x09358410 + 24's fighter (layout 0) and of its pair |
+| 0x088592E4 | 0x088593D8 for the fighters in play by layout |
+| 0x08822600 / 0x0882235C | the three queues emptied and the flags at 0x092E2690 / 23C0 / 2AC0 / 29D0; the three small objects at 0x092E3E08 reset (copied from the first) and the text queue emptied |
+| 0x088214E8 | 0x08821424 with a margin argument: drawn while 0 <= x + margin < 2 × margin + 0x180 |
+| 0x08863850 | with + 117 = 5, a jittered copy (16 or 17 at random) |
+| `object/screen_steps.c` | 0x088B2800, 0x088AE99C, 0x08889BA8, 0x088AF758 / 0x088AF574 / 0x088AF838, 0x088EB1E8, 0x088ACE00 (0x08A2CB60 by + 3), 0x0889C738 |
+| `intro_steps.c` | 0x08857E98 (two parts built at + 0x78) |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

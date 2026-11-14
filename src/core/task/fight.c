@@ -1410,3 +1410,36 @@ SFA_FUNC(0881DF10, game_fight_effects)    { FRAME(0x10, fight_effects(c)); }
 SFA_FUNC(0883206C, game_round_kind)       { FRAME(0x30, round_kind(c, ARG(0), ARG(1))); }
 SFA_FUNC(0889562C, game_win_screen)       { FRAME(0x20, win_screen(c, ARG(0), ARG(1))); }
 SFA_FUNC(08895BD4, game_win_screen_sub)   { FRAME(0x30, win_screen_sub(c, ARG(0), ARG(1))); }
+
+/* ---- 0.76.0 ---- */
+
+void f_08824624(Cpu *c);   /* nothing (empty.c) */
+
+/* (game, battle): a fight frame's last part. Unless GAME + 40 or the pause (+145): the step's counters
+   (+4 on; +6 / +8 / +10 cleared), BATTLE + 81 cleared, GAME + 59 set (and + 32 / + 33 cleared) for a
+   continuing match or counted on otherwise, BATTLE + 52 = 1 and + 23 cleared, and 0x08824624 for each
+   fighter against the other. Then the effects, the second object list unless paused, and the frame's
+   end. */
+static void fight_frame_end(Cpu *c, gaddr g, gaddr battle) {
+    if (S8(g + 40) == 0 && S8(g + 145) == 0) {
+        *H(g + 10) = 0;
+        *H(g + 4) = (uint16_t)(*H(g + 4) + 1);
+        *H(g + 8) = 0; *H(g + 6) = 0;
+        *B(battle + 81) = 0;
+        if (CALL_KEEP_RESULT(c, f_088D7C1C) != 0) { *B(g + 59) = 1; *B(g + 33) = 0; *B(g + 32) = 0; }
+        else *B(g + 59) = (uint8_t)(S8(g + 59) + 1);
+        *B(battle + 52) = 1;
+        *B(battle + 23) = 0;
+        CALL3(f_08824624, FIGHTER_1, FIGHTER_2, g);
+        CALL3(f_08824624, FIGHTER_2, FIGHTER_1, g);
+    }
+    call_keep(c, f_0881DF10);
+    if (S8(g + 145) == 0) call_keep(c, f_088379B8);
+    call_keep(c, f_0880B6CC);
+}
+SFA_FUNC(0882453C, game_fight_frame_end) {
+    gaddr s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
+    c->r[16] = ARG(1); c->r[17] = ARG(0);
+    FRAME(0x20, fight_frame_end(c, ARG(0), ARG(1)));
+    c->r[16] = s16; c->r[17] = s17; c->r[18] = s18;
+}

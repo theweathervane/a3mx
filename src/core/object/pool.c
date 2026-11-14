@@ -185,3 +185,23 @@ SFA_FUNC(08822934, pool_4_reset) { pool_reset(0x09512770u, 32, 0x095176F3u, 4); 
 SFA_FUNC(088229CC, pool_7_reset) { pool_reset(0x09513F70u, 16, 0x095176F4u, 7); }
 SFA_FUNC(08822444, pool_5_reset) { pool_reset(0x09514B70u, 16, 0x095176F5u, 5); }
 SFA_FUNC(0882222C, pool_6_reset) { pool_reset(0x09515770u, 42, 0x095176F6u, 6); }
+
+/* ---- 0.76.0 ---- */
+
+void f_0880A87C(Cpu *c);   /* text_queue_clear (reset.c) */
+
+/* The three small objects (0x30 bytes at 0x092E3E08, list 6) emptied: the first cleared with +8 = 6,
+   copied into the other two, their free count (0x095176F8) back to 3; then the text queue emptied and
+   the byte at 0x092E51C0 cleared. */
+SFA_FUNC(0882235C, small_objects_reset) {
+    gaddr first = 0x092E3E08u;
+    *B(0x095176F8u) = 3;
+    for (uint32_t i = 0; i < 0x30; i++) *B(first + i) = 0;
+    *B(first + 8) = 6;
+    for (uint32_t k = 1; k < 3; k++)
+        for (uint32_t i = 0; i < 0x30; i += 4) *W(first + k * 0x30 + i) = *W(first + (k - 1) * 0x30 + i);
+    c->r[29] -= 0x10;
+    f_0880A87C(c);
+    c->r[29] += 0x10;
+    *B(0x092E51C0u) = 0;
+}
