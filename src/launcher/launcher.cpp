@@ -1709,11 +1709,11 @@ struct App {
     }
     /* Which bubbles the MODE MENU would show with the controllers plugged in now: as the game decides
        (host_sdl.c, host_pad_connected): a player with keys, or whose controller is plugged in, and then
-       controllers no player names, in order, for the players that aren't set. Without controllers.cfg,
-       controller k is player k. */
+       controllers no player names, in order, for the players waiting for one (automatic, or a controller
+       type with none chosen). Without controllers.cfg: ctl's defaults (controls_defaults). */
     void menu_bubbles(bool shown[CONTROLS_PLAYERS]) const {
         for (int k = 0; k < CONTROLS_PLAYERS; k++) shown[k] = false;
-        std::vector<bool> claimed(pads.size(), false);     /* (no file: every player automatic, as ctl's defaults are) */
+        std::vector<bool> claimed(pads.size(), false);     /* (no file: ctl holds the defaults, as the game uses) */
         for (int k = 0; k < CONTROLS_PLAYERS; k++) {
             const ControlsPlayer &p = ctl.p[k];
             if (controls_auto_keys(&ctl, k)) shown[k] = true;
@@ -1722,10 +1722,10 @@ struct App {
                 if (controls_uses_pad(&p) && p.pad_guid[0] && pads[i].guid == p.pad_guid && pads[i].index == p.pad_index) { claimed[i] = true; shown[k] = true; }
         }
         std::vector<bool> got(CONTROLS_PLAYERS, false);
-        for (size_t i = 0; i < pads.size(); i++) {         /* the rest go to the automatic players, lowest first */
+        for (size_t i = 0; i < pads.size(); i++) {         /* the rest go to the players waiting for one, lowest first */
             if (claimed[i]) continue;
             for (int k = 0; k < CONTROLS_PLAYERS; k++)
-                if (ctl.p[k].type == CT_AUTO && !got[k]) { got[k] = true; shown[k] = true; break; }
+                if (controls_takes_free_pad(&ctl.p[k]) && !got[k]) { got[k] = true; shown[k] = true; break; }
         }
     }
     const Pad *player_pad(int k) const {
@@ -1834,7 +1834,7 @@ struct App {
             ImGui::EndCombo();
         }
         ImGui::SetItemTooltip("Keyboard: the keys below.  Controller: the controller and buttons below.\n"
-                              "Keyboard/Controller: both.  None: this player can't play.\n"
+                              "Keyboard/Controller: both (player 1's default).  None: this player can't play.\n"
                               "Automatic: a controller no player names, in the order they're plugged in (player 1 also has the usual keys).");
         ImGui::SameLine();
         ImGui::BeginDisabled(p.type == CT_NONE);
@@ -1848,8 +1848,14 @@ struct App {
         ImGui::SetNextItemWidth(em * 22.0f);
         ImGui::BeginDisabled(!controls_uses_pad(&p));
         std::string preview = p.type == CT_AUTO ? "Automatic" : !controls_uses_pad(&p) ? "(not used)" :
-                              !p.pad_guid[0] ? "Choose one..." : mine ? mine->name : std::string(p.pad_name) + " (not plugged in)";
+                              !p.pad_guid[0] ? "Any (the first free one)" : mine ? mine->name : std::string(p.pad_name) + " (not plugged in)";
         if (ImGui::BeginCombo("##pad", preview.c_str())) {
+            if (ImGui::Selectable("Any (the first free one)", !p.pad_guid[0]) && p.pad_guid[0]) {   /* no controller named: it takes one no player names */
+                p.pad_guid[0] = 0; p.pad_name[0] = 0; p.pad_index = 0;
+                controls_changed();
+            }
+            ImGui::SetItemTooltip("The first controller plugged in that no player has chosen, with the buttons below.\n"
+                                  "With none plugged in this player has only its keys.");
             for (const Pad &d : pads) {
                 int owner = -1;
                 for (int k = 0; k < CONTROLS_PLAYERS; k++)

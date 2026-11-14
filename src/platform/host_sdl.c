@@ -291,7 +291,8 @@ static Controls ctl;
 static SDL_Scancode byod_key[CONTROLS_PLAYERS][CB_COUNT];
 static struct { int kind, code, dir; } byod_pad[CONTROLS_PLAYERS][CB_COUNT];   /* kind 1 a button, 2 an axis (dir +1 / -1) */
 static SDL_Gamepad *byod_dev[CONTROLS_PLAYERS];     /* each player's named controller, when plugged in */
-static SDL_Gamepad *byod_auto[CONTROLS_PLAYERS];    /* a controller no player names, given to an unset player */
+static SDL_Gamepad *byod_auto[CONTROLS_PLAYERS];    /* a controller no player names, given to a player waiting for one */
+static int byod_buttons[CONTROLS_PLAYERS];          /* the player's controller buttons that are set */
 
 static void byod_assign(void) {               /* which open controller is each player's */
     for (int k = 0; k < CONTROLS_PLAYERS; k++) {
@@ -318,7 +319,7 @@ static void byod_assign(void) {               /* which open controller is each p
         int still = 0;
         for (int i = 0; i < 4; i++) if (pads_sdl[i] && pads_sdl[i] == byod_auto[k]) still = 1;
         for (int j = 0; j < CONTROLS_PLAYERS; j++) if (byod_dev[j] && byod_dev[j] == byod_auto[k]) still = 0;   /* now named by someone */
-        if (!still || ctl.p[k].type != CT_AUTO) byod_auto[k] = NULL;
+        if (!still || !controls_takes_free_pad(&ctl.p[k])) byod_auto[k] = NULL;
     }
     for (int i = 0; i < 4; i++) {
         SDL_Gamepad *g = pads_sdl[i];
@@ -327,9 +328,10 @@ static void byod_assign(void) {               /* which open controller is each p
         for (int k = 0; k < CONTROLS_PLAYERS; k++) if (byod_dev[k] == g || byod_auto[k] == g) taken = 1;
         if (taken) continue;
         for (int k = 0; k < CONTROLS_PLAYERS; k++)
-            if (ctl.p[k].type == CT_AUTO && !byod_auto[k]) {
+            if (controls_takes_free_pad(&ctl.p[k]) && !byod_auto[k]) {
                 byod_auto[k] = g;
-                rt_log("controls: %s is player %d (automatic)", SDL_GetGamepadName(g) ? SDL_GetGamepadName(g) : "a controller", k + 1);
+                rt_log("controls: %s is player %d (%s)", SDL_GetGamepadName(g) ? SDL_GetGamepadName(g) : "a controller", k + 1,
+                       ctl.p[k].type == CT_AUTO ? "automatic" : "the first controller no player names");
                 break;
             }
     }
@@ -338,9 +340,9 @@ static void byod_load(void) {
     char path[1200];
     if (!rt_config_dir[0]) return;
     snprintf(path, sizeof path, "%s/controllers.cfg", rt_config_dir);
-    if (!controls_load(&ctl, path)) {             /* none yet: every player automatic, the arrangement the game always had */
+    if (!controls_load(&ctl, path)) {             /* none yet: player 1 the keyboard and the first controller, the rest automatic */
         controls_defaults(&ctl);
-        rt_log("controls: no %s: every player automatic (the keyboard and the first controller are player 1, the next controllers players 2 to 4)", path);
+        rt_log("controls: no %s: player 1 Keyboard/Controller (the usual keys and the first controller), players 2 to 4 automatic (the next controllers)", path);
     }
     byod = 1;
     for (int k = 0; k < CONTROLS_PLAYERS; k++) {
@@ -369,7 +371,7 @@ static void byod_load(void) {
         }
         rt_log("controls: player %d: %s, %d keys%s%s", k + 1, CONTROL_TYPE_LABELS[ctl.p[k].type], keys,
                controls_uses_pad(&ctl.p[k]) && ctl.p[k].pad_guid[0] ? ", controller " : "", controls_uses_pad(&ctl.p[k]) ? ctl.p[k].pad_name : "");
-        (void)buttons;
+        byod_buttons[k] = buttons;
     }
     rt_log("controls: %s", path);
 }
@@ -381,7 +383,9 @@ static uint32_t byod_bits(int k, const bool *keys, uint8_t stick[2]) {
             if (byod_key[k][i] == SDL_SCANCODE_RETURN && (SDL_GetModState() & SDL_KMOD_ALT)) continue;   /* Alt+Enter is full screen */
             b |= CONTROL_BUTTONS[i].bit;
         }
-    SDL_Gamepad *g = byod_dev[k];
+    /* its named controller with its buttons; a free one (none named) with its buttons too for a
+       Controller or Keyboard/Controller player that has some set, else with the usual layout */
+    SDL_Gamepad *g = byod_dev[k] ? byod_dev[k] : controls_uses_pad(&ctl.p[k]) && byod_buttons[k] ? byod_auto[k] : NULL;
     if (!g) return byod_auto[k] ? b | pad_bits(byod_auto[k], stick) : b;
     for (int i = 0; i < CB_COUNT; i++) {
         if (byod_pad[k][i].kind == 1) { if (SDL_GetGamepadButton(g, (SDL_GamepadButton)byod_pad[k][i].code)) b |= CONTROL_BUTTONS[i].bit; }

@@ -13,14 +13,17 @@
  *                               SDL_GetGamepadStringForButton / ...ForAxis); empty: unset
  *
  *   Control types (each player's own):
- *     Automatic            the default. Controllers that no player names go, in the order they were
- *                          plugged in, to the automatic players, lowest first, with the usual layout;
- *                          automatic player 1 also has the usual keys, unless another player has keys.
- *                          All four automatic is the arrangement the game always had: the keyboard and
- *                          the first controller are player 1, the next controllers players 2 to 4.
+ *     Automatic            players 2 to 4's default. Controllers that no player names go, in the order
+ *                          they were plugged in, to the players waiting for one (lowest first), with
+ *                          the usual layout; automatic player 1 also has the usual keys, unless another
+ *                          player has keys. All four automatic is the arrangement the game always had:
+ *                          the keyboard and the first controller are player 1, the next players 2 to 4.
  *     Keyboard             only the keys set here
- *     Controller           only the controller named here, with the buttons set here
- *     Keyboard/Controller  both
+ *     Controller           only the controller named here, with the buttons set here; with none named,
+ *                          the first controller no player names (as Automatic), with these buttons
+ *     Keyboard/Controller  both. Player 1's default (0.72.1, issue #15): the usual keys and the first
+ *                          controller no player names, so the keyboard and a pad share player 1's slot
+ *                          (no controller plugged in: just the keys)
  *     None                 nothing: the player can't play
  *   Player 1 on the keyboard, player 3 on a named controller, 2 and 4 automatic: the next controller
  *   plugged in is player 2, then player 4.
@@ -29,8 +32,9 @@
  *   can play: it has keys, or its controller is plugged in. In the launcher every type but None shows
  *   the player's bubble.
  *
- * With no file at all (the launcher's Controllers tab never changed) every player is automatic
- * (host_sdl.c). Started with --save-dir (the tests) no file is read and the same arrangement is used. A file from before the control types (no type= lines) is read as
+ * With no file at all (the launcher's Controllers tab never changed) player 1 is Keyboard/Controller
+ * with the usual keys and no controller named, players 2 to 4 automatic (controls_defaults; host_sdl.c). Started with --save-dir (the tests) no file is read and the arrangement the game always had is used
+ * (every player automatic: the keyboard and the first controller are player 1). A file from before the control types (no type= lines) is read as
  * keyboard / controller / both from what it sets, and automatic for a player with nothing set.
  *
  * Shared by the game (C, host_sdl.c) and the launcher (C++): parsing and writing only, no SDL here.
@@ -70,9 +74,20 @@ typedef struct {
 } ControlsPlayer;
 typedef struct { ControlsPlayer p[CONTROLS_PLAYERS]; } Controls;
 
-static inline void controls_defaults(Controls *c) { memset(c, 0, sizeof *c); }   /* everyone automatic (CT_AUTO is 0) */
 static inline int controls_uses_keys(const ControlsPlayer *p) { return p->type == CT_KEYBOARD || p->type == CT_BOTH; }
 static inline int controls_uses_pad(const ControlsPlayer *p) { return p->type == CT_CONTROLLER || p->type == CT_BOTH; }
+/* waits for a controller no player names: automatic, or a controller type with none named */
+static inline int controls_takes_free_pad(const ControlsPlayer *p) { return p->type == CT_AUTO || (controls_uses_pad(p) && !p->pad_guid[0]); }
+/* player 1 Keyboard/Controller with the usual keys and buttons and no controller named (it takes the
+ * first one plugged in that no player names), players 2 to 4 automatic (CT_AUTO is 0) */
+static inline void controls_defaults(Controls *c) {
+    memset(c, 0, sizeof *c);
+    c->p[0].type = CT_BOTH;
+    for (int b = 0; b < CB_COUNT; b++) {
+        snprintf(c->p[0].key[b], sizeof c->p[0].key[b], "%s", CONTROL_DEFAULT_KEYS[b]);
+        snprintf(c->p[0].pad[b], sizeof c->p[0].pad[b], "%s", CONTROL_DEFAULT_PAD[b]);
+    }
+}
 /* automatic player 1's keys: the usual ones, unless a player has keys of its own */
 static inline int controls_auto_keys(const Controls *c, int k) {
     if (k != 0 || c->p[0].type != CT_AUTO) return 0;

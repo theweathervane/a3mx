@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.72.1
+- **Player 1 is Keyboard/Controller by default (issue #15):** with no `controllers.cfg` yet, player 1 now has the usual keys and the first controller plugged in, sharing one slot, and players 2 to 4 are Automatic. With no controller plugged in, player 1 just has the keys. Settings you've already saved are kept.
+- **Any controller:** a Controller or Keyboard/Controller player can choose **Any (the first free one)** in the launcher's Controllers tab: the first controller no other player has chosen, with that player's buttons. If your keyboard also shows up as a controller, choose your pad for player 1 instead.
+
 ## 0.72.0
 - **More of the game decompiled:** 27 more functions are hand-written C: how the CPU steps through its scripts, a fighter's move state being cleared, the button just pressed read as strength and punch or kick, objects drawn only while they are on the screen, sixteen records reset, and more of the screens' director and the objects of the screens and the intro. Nothing changes in play.
 
