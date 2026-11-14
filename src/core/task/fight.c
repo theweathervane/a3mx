@@ -1470,3 +1470,26 @@ SFA_FUNC(0883021C, game_pick_at_random) {
     c->r[21] = saved[5]; c->r[22] = saved[6]; c->r[23] = saved[7]; c->r[30] = saved[8];
     RETURN((uint32_t)(int32_t)S8(PICK_TABLE + n));
 }
+
+/* (n, fighter): the score (+352) of a human fighter grows by the amount 0x08A0DEC0[n], kept to
+   9,999,999; in the team modes (15; 7 while BATTLE + 79 is 5; 16 while BATTLE + 159 is 3) its
+   partner's (+1168) too, and in World Tour its own total (+920) as well. Nothing while BATTLE + 61 is
+   set, or in World Tour while its +899 is. */
+#define SCORE_MAX 9999999
+static void add_capped(gaddr a, uint32_t add) {
+    int32_t v = (int32_t)(*W(a) + add);
+    *W(a) = (uint32_t)v;
+    if (v > SCORE_MAX) *W(a) = SCORE_MAX;
+}
+SFA_FUNC(088211CC, game_add_score) {
+    uint32_t n = ARG(0);
+    gaddr f = ARG(1);
+    int8_t mode = S8(GAME + G_MODE);
+    if (mode == 3 && S8(WORLD_TOUR + 899) != 0) return;
+    if (S8(BATTLE + 61) != 0 || S8(f + 373) != 0) return;
+    gaddr amount = 0x08A0DEC0u + n * 4u;
+    int team = mode == 15 || (mode == 7 && S8(BATTLE + 79) == 5) || (mode == 16 && S8(BATTLE + 159) == 3);
+    add_capped(f + 352, *W(amount));
+    if (team) add_capped(*W(f + 1168) + 352, *W(amount));
+    if (S8(GAME + G_MODE) == 3) add_capped(WORLD_TOUR + 920, *W(amount));
+}

@@ -205,3 +205,19 @@ SFA_FUNC(0882235C, small_objects_reset) {
     c->r[29] += 0x10;
     *B(0x092E51C0u) = 0;
 }
+
+/* Two pools of twelve 0x168-byte objects emptied: the first at 0x0950FFB0 (free count 0x095176F0,
+   +8 = 2, +289 = 0), the second at 0x09511090 (0x095176F1, +8 = 2, +289 = 1); each first object is
+   cleared and copied into the next eleven. */
+static void pool_168_reset(gaddr first, gaddr count, uint8_t b289) {
+    *B(count) = 12;
+    for (uint32_t i = 0; i < 0x168; i++) *B(first + i) = 0;
+    *B(first + 8) = 2;
+    *B(first + 289) = b289;
+    for (uint32_t k = 1; k < 12; k++)
+        for (uint32_t i = 0; i < 0x168; i += 4) *W(first + k * 0x168 + i) = *W(first + (k - 1) * 0x168 + i);
+}
+SFA_FUNC(08822808, pools_168_reset) {
+    pool_168_reset(0x0950FFB0u, 0x095176F0u, 0);
+    pool_168_reset(0x09511090u, 0x095176F1u, 1);
+}

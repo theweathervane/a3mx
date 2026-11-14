@@ -203,3 +203,18 @@ SFA_FUNC(08822600, queues_and_flags_clear) {
     for (int i = 2; i >= 0; i--) *B(0x092E2AC0u + (uint32_t)i) = 0;
     for (int i = 7; i >= 0; i--) *B(0x092E29D0u + (uint32_t)i) = 0;
 }
+
+/* (keep): the words of several fight tables cleared: 12 at 0x09517700 and at 0x09517760, 48 from
+   0x092E2300, 8 from 0x092E29B0, 128 from 0x092E2490, 32 from 0x092E28A0, and (keep = 0) 48 from
+   0x092E2A00. */
+static void clear_words(gaddr a, int n) { for (int i = 0; i < n; i++) *W(a + (uint32_t)i * 4u) = 0; }
+SFA_FUNC(088226E0, fight_tables_clear) {
+    uint8_t keep = (uint8_t)ARG(0);
+    clear_words(0x09517700u, 12);
+    clear_words(0x09517760u, 12);
+    clear_words(0x092E2300u, 48);
+    clear_words(0x092E29B0u, 8);
+    clear_words(0x092E2490u, 128);
+    clear_words(0x092E28A0u, 32);
+    if (keep == 0) clear_words(0x092E2A00u, 48);
+}

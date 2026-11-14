@@ -1559,3 +1559,80 @@ SFA_FUNC(0887B6B8, fighter_cpu_may_chance) {
 done:
     RETURN(answer);
 }
+
+/* ---- 0.79.0 ---- */
+
+void f_0887B648(Cpu *c);   /* fighter_unpack_script_word */
+void f_088D7C1C(Cpu *c);   /* game_continuing_match (task/fight.c) */
+
+/* (fighter, bits): a CPU fighter's state from a script word: +497 = bit 0, +290 = bits 0 - 3. With bit
+   11 the word is unpacked by 0x0887B648; otherwise +688 = bits 4 - 7, +192 = bits 8 - 9, +193 = bit 10,
+   +194 = bits 13 - 15. */
+SFA_FUNC(0887B528, fighter_cpu_state_from_word) {
+    gaddr f = ARG(0);
+    uint32_t v = ARG(1) & 0xFFFF;
+    *B(f + 497) = (uint8_t)(v & 1);
+    *H(f + 290) = (uint16_t)(v & 0xF);
+    if (v & 0x800) {
+        c->r[29] -= 0x20;
+        c->r[4] = f; c->r[5] = v; f_0887B648(c);
+        c->r[29] += 0x20;
+        return;
+    }
+    *B(f + 688) = (uint8_t)(v & 0xF0);
+    *B(f + 192) = (uint8_t)(((v >> 7) & 6) >> 1);
+    *B(f + 193) = (uint8_t)(((v >> 9) & 2) >> 1);
+    *B(f + 194) = (uint8_t)(((v >> 12) & 0xE) >> 1);
+}
+
+/* (out, base, table, n): addresses written out from entry n of a table of offsets (+8 + 4n the offset
+   from base, +264 + 4n a count): a count of 0 writes base + the offset; -1 a list of little-endian
+   words (read a byte at a time) at that address, each base + 10 × the word, until -1; a count over 0
+   that many words, each naming an entry whose word at +12 is added to base. */
+static uint32_t le_word(gaddr p) { return *B(p) | (uint32_t)*B(p + 1) << 8 | (uint32_t)*B(p + 2) << 16 | (uint32_t)*B(p + 3) << 24; }
+SFA_FUNC(0886E638, unpack_offsets) {
+    gaddr out = ARG(0), base = ARG(1), table = ARG(2);
+    uint32_t n = ARG(3);
+    gaddr e = table + n * 4u, p = base + *W(e + 8);
+    int32_t count = (int32_t)*W(e + 264);
+    if (count == 0) { *W(out) = p; return; }
+    if (count == -1) {
+        for (uint32_t w = le_word(p); w != 0xFFFFFFFFu; w = le_word(p)) {
+            *W(out) = base + w * 10u;
+            p += 4; out += 4;
+        }
+        return;
+    }
+    for (int32_t i = 0; i < (int32_t)*W(e + 264); i++, p += 4, out += 4)
+        *W(out) = base + *W(table + (n + le_word(p)) * 4u + 12);
+}
+
+/* (fighter): the held directions' history moves on (+754 into +756 into +758) and +754 takes the
+   held buttons (+752), only the directions and bit 15 when the pad's setting (byte 18 of its 20-byte
+   record at 0x08A058A0 by +775; in a continuing match its 208-byte record at 0x09523438; in Training
+   the byte at 0x09525D9A for the side GAME + 53 does not name while 0x0950FF64 is set) says so;
+   +766 = +764. */
+SFA_FUNC(08858D54, fighter_held_history) {
+    gaddr f = ARG(0), saved = c->r[16];
+    *H(f + 758) = *H(f + 756);
+    *H(f + 756) = *H(f + 754);
+    int32_t slot;
+    uint8_t setting;
+    c->r[29] -= 0x10;
+    c->r[16] = f;
+    if (S8(GAME + 114) == 2) {
+        int named = (S8(GAME + 53) & (1 << (S8(f + 337) & 31))) != 0;
+        if (!named && *B(0x0950FF64u) != 0) setting = *B(0x09525D9Au);
+        else { slot = S8(f + 775); setting = *B(0x08A058A0u + (uint32_t)(slot * 20) + 18); }
+    } else {
+        f_088D7C1C(c);
+        slot = S8(f + 775);
+        if (c->r[2] != 0) setting = *B(0x09523438u + (uint32_t)(slot * 208) + 18);
+        else setting = *B(0x08A058A0u + (uint32_t)(slot * 20) + 18);
+    }
+    c->r[29] += 0x10;
+    c->r[16] = saved;
+    uint16_t held = *H(f + 752);
+    *H(f + 754) = setting != 0 ? (uint16_t)(held & 0x800F) : held;
+    *H(f + 766) = *H(f + 764);
+}

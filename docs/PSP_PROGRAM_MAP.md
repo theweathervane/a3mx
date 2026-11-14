@@ -723,6 +723,17 @@ owner at + 88, and frame data at + 296.
 | 0x088AD60C / 0x088892C4 / 0x088ADB28 | a record bobbing by + 10 (1 on the 14th frame); flashing / freeing / fading by + 92; y wrapped within (+ 76 << 8 \| + 77), hidden for GAME + 22's low byte matching + 78 |
 | `object/screen_steps.c` | 0x08897C64, 0x0889A4E8 |
 
+**The score, the held history and more** (0.79.0).
+
+| Address | What |
+|---|---|
+| 0x088211CC | (n, fighter): + 352 += 0x08A0DEC0[n] for a human, capped at 9,999,999; the partner's (+ 1168) too in the team modes (15; 7 with BATTLE + 79 = 5; 16 with BATTLE + 159 = 3); World Tour's + 920 in mode 3; not while BATTLE + 61 or World Tour + 899 (`task/fight.c`) |
+| 0x08858D54 | + 754 / 756 / 758 history of + 752, masked to 0x800F by a pad setting (byte 18 of 0x08A058A0 + 20 × slot; 0x09523438 + 208 × slot in a continuing match; 0x09525D9A in Training); + 766 = + 764 |
+| 0x0887B528 | a CPU state from a script word: + 497 bit 0, + 290 bits 0 - 3; bit 11 → 0x0887B648; else + 688 / + 192 / + 193 / + 194 |
+| 0x0886E638 | (out, base, table, n): addresses from a table of offsets (+ 8) and counts (+ 264): one, a -1-ended list (× 10), or a count of entries (+ 12) |
+| 0x08822808 / 0x088226E0 | the two pools of twelve 0x168-byte objects (0x0950FFB0 / 0x09511090; counts 0x095176F0 / F1) reset; the fight's word tables cleared (0x092E2A00 only when the argument is 0) |
+| `object/screen_steps.c` | 0x08899EB0 / 0x0889A288 (falling set-ups), 0x08899258 (by GAME + 41) |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

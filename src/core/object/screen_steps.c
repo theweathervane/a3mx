@@ -3010,3 +3010,66 @@ SFA_FUNC(088ADB28, scroll_y_wrapped_by_game_22) {
     *B(o + 12) = 1;
     *B(o + 13) = hidden ? 2 : 1;
 }
+
+/* ---- 0.79.0 ---- */
+
+/* (object, fighter): with the fighter's +424 `flag`, the next substep's count (+5) on; otherwise the
+   next part: 0x092E3E98 = 0x08A28418, +148 = 1, +86 = 8, +20 cleared, layer 1; motion entry `entry` +
+   2 × side, falling at -2.0 (+100); with +10 set instead 0x092E3E9C = 0x08A27FFC, +148 = 2, entry + 1,
+   -1.0, animation 0xD + 2 × side and the row for the character; without it animation `still`. */
+static void setup_falling(Cpu *c, uint16_t flag, uint32_t entry, uint32_t still) {
+    gaddr o = ARG(0), f = ARG(1), s[5] = { c->r[16], c->r[17], c->r[18], c->r[19], c->r[20] };
+    if (S16(f + 424) & flag) { *B(o + 5) = (uint8_t)(*B(o + 5) + 1); return; }
+    c->r[29] -= 0x30;
+    c->r[16] = f; c->r[17] = o; c->r[20] = 0x092E0000u;
+    next_part(o);
+    *W(0x092E3E98u) = 0x08A28418u;
+    *W(o + 148) = 1; *H(o + 86) = 8; *W(o + 20) = 0;
+    c->r[4] = o; c->r[5] = 1; f_0889CFE8(c);
+    uint32_t side2 = (uint32_t)(S8(f + 337) << 1), index = side2, speed = 0xFFFE0000u;
+    int row = *B(o + 10) != 0;
+    if (row) {
+        *W(0x092E3E98u + 4) = 0x08A27FFCu;
+        *W(o + 148) = 2;
+        index = side2 + 1;
+        speed = 0xFFFF0000u;
+    }
+    c->r[18] = speed; c->r[19] = side2;
+    c->r[4] = o; c->r[5] = (index + entry) & 0xFFFF; f_0889CEE4(c);
+    *W(o + 100) = speed;
+    if (*B(o + 10) == 0) { c->r[4] = o; c->r[5] = still; f_0889CE34(c); }
+    else {
+        c->r[4] = o; c->r[5] = (side2 + 0xD) & 0xFFFF; f_0889CE34(c);
+        c->r[4] = o; c->r[5] = f; f_08899FD0(c);
+    }
+    (void)row;
+    c->r[29] += 0x30;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3]; c->r[20] = s[4];
+}
+SFA_FUNC(08899EB0, setup_falling_unless_flag_2) { setup_falling(c, 2, 2, 0x11); }
+SFA_FUNC(0889A288, setup_falling_unless_flag_4) { setup_falling(c, 4, 0x47, 0x17); }
+
+/* (object): the next step (+4); layer 1, +148 = 0xC, +156 = 0x08A28418, +86 = 0xB, +164 = 1, at
+   (0xD0, 0x70), +24 = 7, +32 / +34 = 0xF000, target (0x1E1, -30); speeds +16 / +20 by GAME + 41
+   (3: none, bit 0: -0x1E1E / 0x1E1, else 0x1E1E / -0x1E1). By +10: 0 animation 0 (0x0889CE34); 2 sets
+   GAME + 22 bit 2 and frees it; others animation 0x08A287F6. */
+SFA_FUNC(08899258, setup_by_game_41) {
+    gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
+    c->r[29] -= 0x20;
+    c->r[16] = o; c->r[17] = 1;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    c->r[4] = o; c->r[5] = 1; f_0889CFE8(c);
+    *W(o + 148) = 0xC; *W(o + 156) = 0x08A28418u; *H(o + 86) = 0xB; *W(o + 164) = 1;
+    *H(o + 18) = 0xD0; *H(o + 22) = 0x70; *H(o + 24) = 7; *H(o + 32) = 0xF000; *H(o + 34) = 0xF000;
+    *H(o + 112) = 0x1E1; *H(o + 114) = 0xFFE2;
+    int8_t g = S8(GAME + 41);
+    uint8_t k = *B(o + 10);
+    uint16_t sx = 0, sy = 0;
+    if (g != 3) { if (g & 1) { sx = 0xE1E2; sy = 0x1E1; } else { sx = 0x1E1E; sy = 0xFE1F; } }
+    *H(o + 16) = sx; *H(o + 20) = sy;
+    if (k == 0) { c->r[4] = o; c->r[5] = 0; f_0889CE34(c); }
+    else if (k == 2) { *H(GAME + 22) = (uint16_t)(S16(GAME + 22) | 4); c->r[4] = o; f_088231C8(c); }
+    else { c->r[4] = o; c->r[5] = 0x08A287F6u; f_0882196C(c); }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.79.0
+- **More of the game decompiled:** 9 more functions are hand-written C. They include adding to a player's score (kept to 9,999,999, shared with a partner in the team modes and counted into World Tour's total), a fighter's held-direction history, a CPU fighter's state read from its script, offsets unpacked from a character's data, two object pools and the fight's tables cleared, and more objects of the screens around a fight. Nothing changes in play.
+
 ## 0.78.0
 - **More of the game decompiled:** 10 more functions are hand-written C. They include the game's random numbers being made anew (the Mersenne Twister's twist), a value picked at random from a table of 41 with a few left out, the camera layer following the fighters' height, whether a CPU fighter may take its chance on its opponent, and more objects of the screens around a fight (nineteen made at once, a bobbing record, scrolling layers hidden by the screen's state). Nothing changes in play.
 
