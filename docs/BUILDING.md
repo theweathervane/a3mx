@@ -185,6 +185,17 @@ builds, with the same notes and downloads. It never runs for a push to `main`, n
 and never makes a tag itself: tagging on GitLab is still the one way to release. A change to a job in
 `.gitlab-ci.yml` belongs in the workflow too. The actions it uses are pinned by commit.
 
+### The Gitea mirror
+
+GitLab also push-mirrors to Gitea (both the cloud instance at `gitea.com/theweathervane/a3mx` and a
+local one). `.gitea/workflows/ci.yml` runs just the `pins` check and the Linux x64 build and test
+(no Windows or macOS job, no release job): by hand (**Actions > CI > Run workflow**) and when a tag
+`v<VERSION>` arrives. It needs an `act_runner` registered against whichever Gitea instance receives
+the push, with the default `ubuntu-latest` label; none is registered yet (2026-11-14), so the
+workflow sits idle until one is. Gitea Actions also needs outbound access to github.com (or a local
+mirror of the actions) to resolve the pinned `uses:` steps. A change to a shared job belongs in
+`.gitlab-ci.yml` and the GitHub workflow too.
+
 ### Built once and kept
 
 Three things take time and rarely change, so each build job keeps them in its cache under `.tools/`,

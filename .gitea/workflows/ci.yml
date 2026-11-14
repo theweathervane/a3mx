@@ -1,0 +1,84 @@
+# Gitea Actions for a3mx: a leaner version of the same pipeline as GitLab's (.gitlab-ci.yml) and
+# GitHub's (.github/workflows/ci.yml + build.yml), for whichever Gitea remote receives main and the
+# tags (gitea.com/theweathervane/a3mx, the local instance, or both).
+#
+# No game data is ever used here: the disc-free build (CMake preset "ci") compiles every hand-written
+# file against a stand-in for the generated code, builds the launcher, and runs the tests that need no
+# disc. The parity tests need the disc and run on developers' machines (docs/TESTS.md).
+#
+# Scope: Linux x64 only, since no Windows or macOS runner is registered with Gitea (2026-11-14). Add a
+# build:windows-x64 / build:macos-arm64 job (same steps as .gitlab-ci.yml's) once one exists, and keep
+# this file in step with .gitlab-ci.yml and the GitHub workflow when a shared job changes. No release
+# job here: Gitea isn't publishing releases for this project (GitLab and GitHub mirror cover that);
+# this workflow is a build/test check only.
+#
+# When it runs: by hand (Actions > CI > Run workflow) and for a tag v<VERSION>. Not on every push to
+# main: committing often must not mean building often.
+#
+# This sits idle until an act_runner is registered with the "ubuntu-latest" label (its default) against
+# whichever Gitea instance gets the push — see notes/process.md. Gitea Actions also needs outbound
+# access to github.com to fetch the pinned actions below (checkout, upload-artifact), or a configured
+# local mirror of them; without either, a run fails at the first "uses:" step even with a runner online.
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+jobs:
+  pins:
+    name: Pinned dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+      - name: Every pin agrees everywhere it is used
+        run: python3 tools/pins.py --check
+      - name: Python tools compile
+        run: python3 -m compileall -q tools tests
+      - name: .recomp.json (the recomp.fyi listing) is valid JSON, under the board's 8 KB
+        run: python3 -c "import json, os; json.load(open('.recomp.json', encoding='utf-8')); assert os.path.getsize('.recomp.json') < 8192"
+      - name: The release's version and changelog section (tags only)
+        if: github.ref_type == 'tag'
+        run: python3 tools/release_notes.py --check "$(tr -d ' \r\n' < VERSION)"
+
+  build:
+    name: Linux x64
+    needs: pins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+      - name: Tools
+        timeout-minutes: 10
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q cmake ninja-build clang libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxi-dev libxss-dev libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev libgl-dev \
+            libasound2-dev libpulse-dev libudev-dev libxtst-dev libxfixes-dev
+      - name: SDL3
+        run: python3 tools/sdl3.py
+      - name: librashader (built only when it isn't kept, or its pin changed)
+        run: |
+          if ! python3 tools/librashader.py --check; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+            . "$HOME/.cargo/env"
+            python3 tools/librashader.py || echo "librashader was not built: the download goes out without it"
+          fi
+      - name: FILTER's shaders
+        run: python3 tools/shaders.py
+      - name: Configure
+        run: cmake --preset ci
+      - name: Build
+        run: cmake --build --preset ci
+      - name: Test
+        run: ctest --preset ci
+      - name: Build without the extensions
+        run: |
+          cmake --preset ci -B build-ci-noext -DA3MX_EXTENSIONS=OFF
+          cmake --build build-ci-noext
+      - name: The downloads
+        run: python3 tools/package_launcher.py --system linux-x64 --launcher build-ci/a3mx-launcher --out dist --standalone --librashader .tools/librashader
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
+        with:
+          name: a3mx-linux-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

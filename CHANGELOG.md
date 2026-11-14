@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.79.1
+- **A Gitea CI workflow:** `.gitea/workflows/ci.yml` runs the same pins check and Linux build/test as the GitLab and GitHub pipelines, for the project's Gitea mirrors. No change for players.
+
 ## 0.79.0
 - **More of the game decompiled:** 9 more functions are hand-written C. They include adding to a player's score (kept to 9,999,999, shared with a partner in the team modes and counted into World Tour's total), a fighter's held-direction history, a CPU fighter's state read from its script, offsets unpacked from a character's data, two object pools and the fight's tables cleared, and more objects of the screens around a fight. Nothing changes in play.
 
