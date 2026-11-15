@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.86.0
+- **EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER or COM:** the rows that were 1P / 2P / 3P JOIN-IN, HUMAN or CPU, are renamed for what they decide: whether a fighter nobody started with goes to the player on that pad first (PLAYER) or to the computer (COM, the game's own word). Nothing else changes: joining with Start works as before, whatever the rows say. `a3mx.cfg` now writes `p1_priority=PLAYER` / `COM`; files from earlier versions, with `p1_join_in=HUMAN` / `CPU`, are still read.
+
 ## 0.85.0
 - **SELECT + START: back to the MODE MENU:** player 1 holding SELECT and pressing START goes straight back to the MODE MENU without saving, as F2 does, so a pad alone can get back quickly. That START doesn't also open the pause menu. Part of the "F2 / SELECT + START: back to the MODE MENU" extension (quit_key), on by default.
 - **Boot to the MODE MENU (new extension, off by default):** with "Boot to the MODE MENU" ticked in the launcher's Extensions tab (`--features default,boot_to_menu`), the game opens straight on the MODE MENU with your settings and save loaded. The boot screens and the load run off screen at full speed, so nothing is shown until the menu: no NOW LOADING, title screen, logos, story, attract demos or PRESS START. If the save can't be loaded, the game's own question is shown, then the MODE MENU. Only at boot: left alone, the MODE MENU still goes back to the title as before.

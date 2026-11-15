@@ -250,7 +250,7 @@ Every extension from the static recomp, moved from hooks into the decompiled cod
 checked with the same scripted runs before and after. Each one can start once the code it touches is
 decompiled.
 
-- [ ] Up to three local players, join-in (EX. SETTING JOIN-IN, Start on select screens, JOIN / WAIT).
+- [ ] Up to three local players, join-in (EX. SETTING PRIORITY, Start on select screens, JOIN / WAIT).
       Now: hooks.c, selectscreen.c. Needs: input records and select screens.
 - [ ] Network modes on one PC (virtual players, COUCH CO-OP). Now: vpeer.c, netplay.c, hle_net.c.
       Needs: the wireless block.
@@ -353,20 +353,31 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
 
 ## Phase 9: Setting refinement
 
-EX. SETTING's 1P / 2P / 3P JOIN-IN rows say HUMAN or CPU, but that is not what decides whether a pad
-can join: Start joins on the select screens that allow it whatever JOIN-IN says, and JOIN-IN HUMAN
+EX. SETTING's 1P / 2P / 3P PRIORITY rows say PLAYER or COM, but that is not what decides whether a pad
+can join: Start joins on the select screens that allow it whatever PRIORITY says, and PRIORITY PLAYER
 instead hands a pad the fighter the computer would have played. The rows should say what they do.
 Can start once phase 4's join-in item is native code; the rule itself is in [PLAYERS.md](PLAYERS.md).
 
 - [ ] Document the runtime rule completely in `PLAYERS.md`, from the native code:
-  - [ ] What JOIN-IN HUMAN / CPU changes, mode by mode, and what joining with Start does on its own
+  - [ ] What PRIORITY PLAYER / COM changes, mode by mode, and what joining with Start does on its own
   - [ ] Which modes let a second or third pad join with Start (Arcade's new challenger, the Dramatic,
         Variable and Free Battle select screens) and which never do (World Tour, Training, R.Dramatic
         Battle from the MODE MENU), and why
   - [ ] Plugging a pad in or pulling it out mid-mode: what happens to the fighter it was playing
   - [x] Bring the page's file paths up to date (it still names `src/runtime/`)
-- [ ] Audit the names and labels: the JOIN-IN rows and their HUMAN / CPU values, the JOIN / WAIT
-      boxes, the CPU2 / CPU3 names, COUCH CO-OP
+- [ ] Audit the names and labels: the JOIN / WAIT boxes, the CPU2 / CPU3 names, COUCH CO-OP
+  - [x] JOIN-IN HUMAN / CPU renamed 1P / 2P / 3P PRIORITY PLAYER / COM, as the game's own COM
+        (0.86.0; the old `a3mx.cfg` lines are still read)
+- [ ] Free Battle (Arcade and Team): a MODE row on the 2P side too, so the second side's MODE can be
+      chosen for the computer, or by player 2 once they join
+- [ ] Training: the other pad can JOIN (2P's box when player 1 started, 1P's when player 2 did), and a
+      MODE row on that side as in Free Battle
+- [ ] Training's pause menu: whoever presses Start sets CPU OPTIONS for the other side
+- [ ] CPU OPTIONS > ACTION gets PLAYER (the other side's pad plays it), set by itself when a pad has
+      joined; with nobody joined it works as PRIORITY PLAYER does
+- [ ] Training's REC with a joined player: the other side's own pad does the recording; without one,
+      the game's own REC (the starter takes the dummy over while recording). PLAY and the other
+      actions override the joined player's inputs
 - [ ] Propose new names or a new layout for EX. SETTING (for example, one row per pad: "takes the
       CPU's fighter: YES / NO"), agree it, and implement it, with the saved setting carried over
 - [ ] A parity scenario per changed row: with every row at its default, every mode still plays as on a PSP

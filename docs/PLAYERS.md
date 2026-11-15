@@ -13,31 +13,35 @@ There are two separate ways a pad gets a fighter, and they don't depend on each 
    that presses Start becomes a **human player**, on its own side, exactly as a second player would
    on the PSP. This works **whatever EX. SETTING says**. Pads that don't press Start stay out, and
    the computer plays the fighters it would have played on a PSP.
-2. **JOIN-IN HUMAN (OPTION MODE > EX. SETTING).** This is only a way to **take over a fighter the
+2. **PRIORITY PLAYER (OPTION MODE > EX. SETTING).** This is only a way to **take over a fighter the
    computer would otherwise play**:
    - in modes where a pad *could* have joined but didn't (for example, it didn't press Start in
      Arcade, so the opponent is still the computer);
    - in modes where a pad *can't* join at all (World Tour, R.Dramatic Battle from the MODE MENU).
 
    A box a pad can join with Start on the select screen (every box in Free Battle, the partner in
-   Survival Dramatic and Variable) is **never** taken over by JOIN-IN: it stays the computer's until a
+   Survival Dramatic and Variable) is **never** taken over by PRIORITY: it stays the computer's until a
    pad presses Start, so Free Battle keeps its computer opponent with a second pad plugged in
    (issue #17).
 
-With **1P / 2P / 3P JOIN-IN all on CPU** (the default), every mode plays as on a PSP, except that
+With **1P / 2P / 3P PRIORITY all on COM** (the default), every mode plays as on a PSP, except that
 pads 2 and 3 can still join wherever the mode allows it.
 
 ## The EX. SETTING rows
 
+The PRIORITY rows say who has first claim on a fighter nobody started with or joined: the player on
+that pad (PLAYER) or the computer (COM). Before 0.86.0 they were called JOIN-IN, with HUMAN / CPU;
+`a3mx.cfg` still reads the old `p1_join_in=HUMAN` / `CPU` lines and writes `p1_priority=PLAYER` / `COM`.
+
 | Row | Values (default first) | What it does |
 |---|---|---|
-| 1P JOIN-IN | CPU / HUMAN | Pad 1 (and the keyboard) takes over a computer fighter when it **didn't** start the mode (player 2 started it) |
-| 2P JOIN-IN | CPU / HUMAN | Pad 2 takes over a computer fighter when it didn't start or join |
-| 3P JOIN-IN | CPU / HUMAN | Pad 3 takes over a computer fighter when it didn't join |
+| 1P PRIORITY | COM / PLAYER | Pad 1 (and the keyboard) takes over a computer fighter when it **didn't** start the mode (player 2 started it) |
+| 2P PRIORITY | COM / PLAYER | Pad 2 takes over a computer fighter when it didn't start or join |
+| 3P PRIORITY | COM / PLAYER | Pad 3 takes over a computer fighter when it didn't join |
 | COUCH CO-OP | ON / OFF | The network modes: ON plays them on this PC with pads 2 and 3; OFF leaves the network stubbed, as if no wireless network were found |
 
-A pad set to HUMAN that isn't plugged in changes nothing: the computer keeps the fighter. DEFAULT puts
-the three JOIN-IN rows back to CPU and COUCH CO-OP to ON.
+A pad set to PLAYER that isn't plugged in changes nothing: the computer keeps the fighter. DEFAULT puts
+the three PRIORITY rows back to COM and COUCH CO-OP to ON.
 
 ## Mode by mode
 
@@ -47,7 +51,7 @@ pads that neither started nor joined, in order (P1 started: pads 2 then 3; P2 st
 Rows marked **(not checked)** come from reading the code, not from a scripted run. Phase 10 of the
 roadmap checks them.
 
-| PSP mode | What the original PSP mode does | Join in with Start (pad plugged in) | With JOIN-IN HUMAN |
+| PSP mode | What the original PSP mode does | Join in with Start (pad plugged in) | With PRIORITY PLAYER |
 |---|---|---|---|
 | **Arcade** | One player against the Arcade ladder; every opponent is the computer | **Yes**, in a fight: HERE COMES A NEW CHALLENGER. Both humans keep the character they chose (the PSP's challenger path had been cut and took the ladder's) | The opponent goes to the first free pad, for a player who didn't press Start |
 | **World Tour** | One player travels the map, fighting computer opponents and levelling up their ISM | **No** | The opponent goes to the first free pad |
@@ -78,16 +82,16 @@ host), as it did on the PSP. Real online play is phase 12 of the roadmap.
 
 ### Examples
 
-- P1 starts Arcade, pad 2 is plugged in, JOIN-IN all CPU: the opponents are the computer until pad 2
+- P1 starts Arcade, pad 2 is plugged in, PRIORITY all COM: the opponents are the computer until pad 2
   presses Start, then pad 2 is the challenger.
-- P1 starts Arcade, 2P JOIN-IN HUMAN: pad 2 plays every opponent without pressing Start.
-- P2 starts Arcade, 1P HUMAN: pad 1 plays the opponent.
-- P1 starts R.Dramatic Battle, 2P and 3P HUMAN: pads 2 and 3 play the two opponents.
-- P2 starts R.Dramatic Battle, 1P CPU, 3P HUMAN: of the two opponents, the first is the computer and
+- P1 starts Arcade, 2P PRIORITY PLAYER: pad 2 plays every opponent without pressing Start.
+- P2 starts Arcade, 1P PLAYER: pad 1 plays the opponent.
+- P1 starts R.Dramatic Battle, 2P and 3P PLAYER: pads 2 and 3 play the two opponents.
+- P2 starts R.Dramatic Battle, 1P COM, 3P PLAYER: of the two opponents, the first is the computer and
   the second is pad 3.
-- P1 starts Dramatic Battle, pad 2 presses Start on the select screen, 3P HUMAN: pad 2 picks and plays
+- P1 starts Dramatic Battle, pad 2 presses Start on the select screen, 3P PLAYER: pad 2 picks and plays
   the partner, pad 3 plays the boss.
-- P1 starts Dramatic Battle, 2P CPU, 3P HUMAN, nobody presses Start: the partner is the computer, the
+- P1 starts Dramatic Battle, 2P COM, 3P PLAYER, nobody presses Start: the partner is the computer, the
   boss is pad 3.
 
 ## The rule, exactly
@@ -99,7 +103,7 @@ host), as it did on the PSP. Real online play is phase 12 of the roadmap.
    Dramatic / Variable and Free Battle keep no record of a second player, so hooks.c keeps its own
    (`join_to`), cleared whenever a mode is chosen on the MODE MENU.
 2. Every other fighter, in the game's order, goes to the next free pad.
-3. That pad plays it if its JOIN-IN is HUMAN and the pad is plugged in (pad 1 always counts as plugged in:
+3. That pad plays it if its PRIORITY is PLAYER and the pad is plugged in (pad 1 always counts as plugged in:
    it has the keyboard), and the fighter's box can't be joined with Start (`joinable_box`: every Free
    Battle box, Survival Dramatic / Variable's partner). Otherwise the fighter stays the computer's; a
    joinable box still uses its pad up, so the fighters after it get the same pads as before.
@@ -115,7 +119,7 @@ A side can have more fighters than players (R.Dramatic Battle's two opponents an
 boss all say player 1). A fighter given to another pad gets that pad's player number at +2, so it reads
 that pad's slot and button config. It gets its own number back when the pad lets it go.
 
-## What else the project changes (whatever JOIN-IN says)
+## What else the project changes (whatever PRIORITY says)
 
 - Pads 2 and 3 feed the game's player 2 and 3 controller slots (the PSP had one pad), so a second pad
   can press Start to join wherever the game lets player 2 join.
@@ -126,11 +130,11 @@ that pad's slot and button config. It gets its own number back when the pad lets
 - L2 / R2 are extra buttons ([PLAYER_CONFIG.md](PLAYER_CONFIG.md)); Start keeps pausing, from the pad of
   whoever plays the fighter.
 
-## The check: unchanged with JOIN-IN on CPU
+## The check: unchanged with PRIORITY on COM
 
 23 scripted runs, one per mode and sub-mode (pad 1 boots, chooses the mode, then presses Cross every 100
 frames), give every fighter the same player number and computer flag as the game without the player
-rules, and the same screen. With all three JOIN-IN on HUMAN, the same runs give the non-starting fighters
+rules, and the same screen. With all three PRIORITY on PLAYER, the same runs give the non-starting fighters
 to pads 2 and 3 in order, as the table says, and leave Training's dummy alone.
 
 Not covered yet:

@@ -6,7 +6,7 @@
  * Player 1 is always the host; in Dramatic Battle HOST is chosen by itself.
  *
  * Gamepad 2 plays player 2 and gamepad 3 player 3 when they are plugged in (--p2 / --p3 human|cpu
- * for tests; EX. SETTING's JOIN-IN is for the offline modes only). Without one, that player is the computer: it moves round the select screens by
+ * for tests; EX. SETTING's PRIORITY is for the offline modes only). Without one, that player is the computer: it moves round the select screens by
  * itself and its fighter is computer controlled. Names: PLAYER1, PLAYER2 / CPU2, PLAYER3 / CPU3.
  *
  * After a match the CONTINUE / SELECT / EXIT menu (0x088E9AE0) is the host's: it reads only the

@@ -4,7 +4,7 @@
  * 0x092E1228): every box's cursor reads the buttons of fighter +0x334 (0x088A5174, wrapped below, finds it; 0x088A507C /
  * 0x088A5100 read its +0x16A, the held word of slot +775), which the game sets to the player who
  * started, so one player picked every box. A box whose fighter a pad plays (hooks.c: it joined with
- * Start, or its JOIN-IN is HUMAN) takes that pad's buttons instead. The boxes' states (+4): 1
+ * Start, or its PRIORITY is PLAYER) takes that pad's buttons instead. The boxes' states (+4): 1
  * character (+5 = 0 and +0x338 = 0 until its turn), 2 chosen, 3 ISM, 7 speed. A box a pad can still
  * join says JOIN (blinking), a box a pad has joined says WAIT until its turn.
  *
