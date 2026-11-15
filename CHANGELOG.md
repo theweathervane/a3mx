@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.88.1
+### For players
+- **Stage Extensions: no more coloured strips on the select, map, profile and VS screens.** With WIDE FORCED and Stage Extensions on, the next stage's edge strips (the coloured placeholders) were drawn in the middle of the character select screen, Arcade's world map, the fighter's profile and the VS screen. They now appear only in the fight itself.
+
+### Technical
+- `src/extensions/stagestrips.c`: the fight gate also needs the battle task at its fight screen (GAME + 2 = 2, GAME + 4 = 3). The select screen (GAME + 2 = 1) and the map, profile and VS screens (2 / 1 - 2) run inside the same per-frame fight step (0x08823674) and draw their backdrops with the stage's camera layers, so the timestamp alone passed (CONCERNS C29, first half). Checked in Arcade, Free Battle and Training.
+- `stage_strips` test: frames from the select screen's STAGE row up to the fight must be the same with and without the strips (0.88.0 fails it: 98 of 126 frames differ).
+
 ## 0.88.0
 - **More of the game decompiled:** 45 more small functions are hand-written C (`object/small_steps.c`): screen objects that move until a mark, count down, then fade out or move on, the step tables run by GAME's state and by the objects' own fields, text from two of the game's lists, which fighter a layout picks, an opponent's score by a count, and a fighter's CPU script read or started again. Nothing changes in play.
 

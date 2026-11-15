@@ -9,7 +9,10 @@ Checks that:
     art leaves empty (rows 60 - 200);
   - layer 0's bright green filler columns (screen x 34 - 45) are painted over by its strip, drawn in
     front of the layer ("layer0_left_front");
-  - without --custom-assets (the launcher's Custom Assets unchecked, the default) none is loaded.
+  - without --custom-assets (the launcher's Custom Assets unchecked, the default) none is loaded;
+  - before the fight (the select screen's last rows and the screens up to the fight, which run inside
+    the same per-frame fight step and draw with the stage's layers), the screen is the same with and
+    without the strips: 0.87.0 drew the next stage's strips there (C29).
 0.50.0 was merged with the tile drawers' wrappers lost, so no strip was ever drawn and no test noticed.
 
 Usage: stage_strips_test.py --exe build/a3mx --work work --assets assets/us [--out DIR]
@@ -20,6 +23,8 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import measure_stages as ms
 
 CHARLIE = 6                                   # its place in FREE BATTLE's stage row
+SELECT_FROM = 3000                            # the select screen, its STAGE row on the way
+EVERY = 8                                     # frames between the dumps (the runtime dumps frames that are multiples of it)
 
 
 def run(a, d, custom):
@@ -29,10 +34,10 @@ def run(a, d, custom):
     p, e = f + 1500, f + 1900
     cmd = [a.exe, '--work', a.work, '--assets', a.assets, '--save-dir', d, '--log', os.path.join(d, 'log'),
            '--headless', '--fast', '--renderer', 'soft', '--frames', str(e + 1), '--input', inp,
-           '--dump', d, '--dump-from', str(e), '--dump-every', '1'] + (['--custom-assets'] if custom else [])
+           '--dump', d, '--dump-from', str(SELECT_FROM), '--dump-every', str(EVERY)] + (['--custom-assets'] if custom else [])
     for addr in (ms.P1_X, ms.P2_X): cmd += ['--poke', '%d-%d:%08X=118/2' % (p, e, addr)]
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, check=True)
-    return open(os.path.join(d, 'log'), errors='replace').read(), os.path.join(d, 'frame_%05d.png' % e)
+    return open(os.path.join(d, 'log'), errors='replace').read(), os.path.join(d, 'frame_%05d.png' % (e - e % EVERY))
 
 
 def main():
@@ -52,6 +57,16 @@ def main():
     m = re.search(r'stage strips: stage 0x03: (\d+) strips', log)
     if not m or int(m.group(1)) == 0: fails.append('no strips loaded for stage 0x03')
     if 'stage strips: stage' in log_off: fails.append('strips loaded without --custom-assets')
+    # before the fight: the same screen with and without the strips
+    inp, f = ms.script(CHARLIE)
+    before = list(range(-(-SELECT_FROM // EVERY) * EVERY, f + 600, EVERY))
+    shown = []
+    for fr in before:
+        pa, pb = (os.path.join(a.out, w, 'frame_%05d.png' % fr) for w in ('on', 'off'))
+        if not (os.path.exists(pa) and os.path.exists(pb)): fails.append('frame %d not dumped' % fr); break
+        if Image.open(pa).convert('RGB').tobytes() != Image.open(pb).convert('RGB').tobytes(): shown.append(fr)
+    print('frames before the fight compared: %d, with strips drawn: %d' % (len(before), len(shown)))
+    if shown: fails.append('strips drawn before the fight (frames %s)' % ', '.join(map(str, shown[:5])))
     if not os.path.exists(shot): fails.append('no frame dumped')
     else:
         im = Image.open(shot).convert('RGB')

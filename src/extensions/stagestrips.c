@@ -24,8 +24,8 @@
  * A missing or unreadable file is skipped (the log says why).
  *
  * Drawn only with --custom-assets (the launcher's Custom Assets, off by default), while WIDE FORCED is
- * on and a fight is running (the fight's per-frame step 0x08823674,
- * src/core/task/fight.c, wraps a timestamp), around both tile drawers (0x0881AB28, 0x0881B268,
+ * on and a fight is running (the fight's per-frame step 0x08823674, src/core/task/fight.c, wraps a
+ * timestamp, and the battle task is at its fight screen: GAME + 2 = 2, + 4 = 3), around both tile drawers (0x0881AB28, 0x0881B268,
  * src/core/stage/tiles.c: SFA_FUNC_WRAPPED), as textured quads through the game's 2D library like
  * padicons.c: our 16-bit texture on page STRIP_PAGE only while drawing.
  *
@@ -58,6 +58,11 @@ void f_089E1618(Cpu *c);   /* queues a quad list: a0 its descriptor, a1 vertex c
 #define REC_KIND        94            /* 0x0881B268's record: +94 its layer's kind, +60 its depth column */
 #define REC_DEPTH       60
 #define SCALE_X         0x08E759E8u
+#define GAME            0x08E75910u   /* +2 the battle task's screen, +4 its step: 2 / 3 is the fight itself. The
+                                         select screen (1 / *), the world map, profile and VS screens (2 / 1 - 2)
+                                         run inside the same per-frame fight step and reuse the stage's layers
+                                         for their own backdrops, so the timestamp alone let the next stage's
+                                         strips show on them (C29). Arcade, Free Battle and Training checked. */
 #define SCALE_Y         0x08E759ECu
 #define OFFSET_X        0x08E75A04u
 #define OFFSET_Y        0x08E75A0Cu
@@ -282,6 +287,7 @@ int stagestrips_fight_frame(Cpu *c, uint32_t a0, int after) { (void)c; (void)a0;
 static int before_layer(Cpu *c, int layer, uint32_t column) {
     uint64_t now = rt_vblank_count();
     if (fight_frame == ~0ull || now - fight_frame > 2) return 0;          /* not in a fight */
+    if (RH(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;               /* not the fight itself (C29) */
     if (RB(FIGHTERS_LAYER + 2) != 1) return 0;                           /* no stage set up */
     read_measure();
     if (measuring) {
