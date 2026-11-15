@@ -92,8 +92,9 @@ The left stick and the triggers count as pressed past about half way. What each 
 fight is set per player in OPTION MODE > PLAYER CONFIG ([PLAYER_CONFIG.md](PLAYER_CONFIG.md)), and from
 the pause menu's BUTTON CONFIG.
 
-Keyboard only: **F2** goes back to the MODE MENU at once without saving, **F11** or **Alt+Enter**
-switches full screen. No gamepad button does these. To quit, close the game the way your system closes
+**F2** on the keyboard, or player 1 holding **SELECT** and pressing **START** (Backspace and Enter on
+the keyboard), goes back to the MODE MENU at once without saving; that START doesn't also pause the
+fight. Keyboard only: **F11** or **Alt+Enter** switches full screen. To quit, close the game the way your system closes
 any program: **Alt+F4** on Windows, **Cmd+Q** on macOS, **Ctrl+Q** on Linux, or the window's close
 button. (Esc used to quit, and was too easy to press by mistake.)
 

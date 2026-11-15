@@ -2054,6 +2054,12 @@ struct App {
         ImGui::Spacing();
         ImGui::BeginDisabled(busy);
         bool changed = false;
+        /* the names' column: after the widest checkbox and title, at least 17 em */
+        float name_col = em * 17.0f;
+        for (int f = 0; f < FEAT_COUNT; f++) {
+            float w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize(FEATURES[f].title).x + em * 1.5f;
+            if (w > name_col) name_col = w;
+        }
         for (int f = 0; f < FEAT_COUNT; f++) {
             int need = FEATURES[f].needs;
             bool blocked = need >= 0 && !set.feature[need];
@@ -2065,8 +2071,8 @@ struct App {
             if (blocked) tip += std::string("\n\nOff, because it needs \"") + FEATURES[need].title + "\".";
             if (f == FEAT_SHADERS) tip += "\n\nNeeds the shaders and the librashader library: see Dependencies.";
             ImGui::SetItemTooltip("%s", tip.c_str());
-            ImGui::SameLine(em * 17.0f);
-            ImGui::TextDisabled("%s%s", FEATURES[f].name, FEATURES[f].on_by_default ? "" : "  (off by default: experimental)");
+            ImGui::SameLine(name_col);
+            ImGui::TextDisabled("%s%s", FEATURES[f].name, FEATURES[f].on_by_default ? "" : f == FEAT_STAGE_EXT ? "  (off by default: experimental)" : "  (off by default)");
         }
         ImGui::Spacing();
         if (ImGui::Button("Defaults")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0; changed = true; }

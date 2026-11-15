@@ -1,0 +1,5 @@
+# Player 1 holds SELECT and presses START in Arcade's first fight (arcade_fight's input up to frame
+# 3500): back to the MODE MENU at once without saving, as F2 (quit_key feature), and the START is kept
+# from the game, so the pause menu doesn't open on the way.
+frames 3900
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=;2100=cross;2106=;2190=cross;2196=;2280=cross;2286=;2370=cross;2376=;2460=cross;2466=;2550=cross;2556=;2640=cross;2646=;2730=cross;2736=;2820=cross;2826=;2910=cross;2916=;3000=cross;3006=;3090=cross;3096=;3180=cross;3186=;3270=cross;3276=;3360=cross;3366=;3450=cross;3456=;3500=select;3530=select+start;3540=select;3560=

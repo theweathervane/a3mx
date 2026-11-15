@@ -1,0 +1,7 @@
+# The boot_to_menu feature: the boot screens run held (off screen, at full speed), the title starts at
+# screen 0, which does the SYSTEM DATA load itself and goes to screen 7; the MODE MENU's PRESS START is
+# passed once it has faded in and the hold ends with the menu drawn (frame ~258). Then Cross chooses
+# ARCADE-MODE and its select screen opens.
+frames 1100
+args --features default,-shaders,boot_to_menu
+input 500=cross;506=

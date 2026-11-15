@@ -638,7 +638,7 @@ static void load_menu_pictures(Cpu *c) {
 #define CURSOR_FRAME(f) FRAME(0x20, f(c, ARG(0)))
 SFA_FUNC(0888C268, game_mode_menu_task)            { FRAME(0x20, mode_menu_task(c)); }
 SFA_FUNC(0888C2DC, game_mode_menu_screen_setup)    { FRAME(0x20, screen_setup(c, ARG(0))); }
-SFA_FUNC(0888C3A0, game_mode_menu_screen_start)    { FRAME(0x20, screen_press_start(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(0888C3A0, game_mode_menu_screen_start, bootmenu_press_start) { FRAME(0x20, screen_press_start(c, ARG(0), ARG(1))); }
 SFA_FUNC(0888C498, game_mode_menu_screen_menu)     { FRAME(0x20, screen_menu(c, ARG(0), ARG(1))); }
 SFA_FUNC(0888C4CC, game_mode_menu_setup)           { FRAME(0x20, menu_setup(c, ARG(0))); }
 /* padicons.c: the pad icons are drawn while the menu runs */

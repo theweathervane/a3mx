@@ -132,7 +132,7 @@ static void screen_to_title(Cpu *c) {
 
 /* ---------------------------------------------------------------- adapters (frames as the originals') */
 #define FRAME(size, call) do { c->r[29] -= (size); call; c->r[29] += (size); } while (0)
-SFA_FUNC(08805734, game_screen_reset)          { FRAME(0x20, screen_reset(c)); }
+SFA_FUNC_WRAPPED(08805734, game_screen_reset, bootmenu_boot_start) { FRAME(0x20, screen_reset(c)); }
 SFA_FUNC(088057F0, game_screen_fade_in)        { FRAME(0x10, screen_fade_in(c)); }
 SFA_FUNC(08805828, game_screen_wait_fade)      { screen_wait_fade(); }
 SFA_FUNC(08805850, game_screen_hold)           { FRAME(0x10, screen_hold(c)); }

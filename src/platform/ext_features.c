@@ -71,6 +71,7 @@ static const struct { const char *prefix; int feature; } BY_PREFIX[] = {
     { "padicons_mode_menu", FEAT_ANY },      /* also tells pacing.c the MODE MENU has opened; its drawing goes by FEAT_HUD */
     { "padicons_", FEAT_HUD },
     { "quitkey_", FEAT_QUITKEY },
+    { "bootmenu_", FEAT_BOOTMENU },
     { "widescreen_", FEAT_WIDESCREEN },
     { "stagestrips_", FEAT_STAGE_EXT },
 };
