@@ -1,0 +1,26 @@
+# The feature form on the GitHub mirror. The launcher fills in "version" by id (src/launcher/report.cpp).
+name: Request a feature
+description: An idea, and why it would help.
+title: "Feature request: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: GitHub is a mirror of the project's home on [GitLab](https://gitlab.com/theweathervane-group/a3mx); requests here are read just the same. Please check the [roadmap](https://github.com/theweathervane/a3mx/blob/main/docs/ROADMAP.md) first.
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What you would like.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What it would help with.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: v0.83.0

@@ -1,0 +1,49 @@
+# The bug form on the GitHub mirror. The launcher's Report window fills in the fields by id
+# (details, last_run, console: src/launcher/report.cpp), so keep those ids if this changes.
+name: Report a problem
+description: Something doesn't work, or works differently from the PSP game.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        GitHub is a mirror of the project's home on [GitLab](https://gitlab.com/theweathervane-group/a3mx); issues opened here are read and handled just the same.
+        The quickest way to report is the launcher's **bug** button: it fills this in and puts your logs in one file to drag below. What to include: [REPORTING_ISSUES.md](https://github.com/theweathervane/a3mx/blob/main/docs/REPORTING_ISSUES.md).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw instead. A screenshot or a short video helps.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: From the MODE MENU, how to make it happen. Every time, or once in a while?
+      placeholder: "1. Arcade, Ryu vs Ken\n2. ..."
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: The version, your system, the disc's serial and how you ran it (the launcher fills this in).
+      placeholder: "- Version: v0.83.0\n- System: Windows 11\n- Disc: ULUS-10062\n- Launcher: preset release, features ..."
+    validations:
+      required: true
+  - type: textarea
+    id: last_run
+    attributes:
+      label: The last run
+      description: Renderer and frame times, from logs/last_run.txt (the launcher fills this in). Most useful for a slow or stuttering game.
+      render: text
+  - type: textarea
+    id: console
+    attributes:
+      label: The end of the launcher's console
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Drag a3mx-report.zip here (the launcher makes it in your logs folder and opens the folder), or logs/a3mx.log. Please don't attach your ISO or anything extracted from it.

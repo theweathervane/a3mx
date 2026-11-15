@@ -1,31 +1,51 @@
 # Reporting a problem
 
-Found a bug, or have an idea? Please open an issue on
-[GitLab](https://gitlab.com/theweathervane-group/a3mx/-/issues). This page says what
-to include, so the problem can be found without a lot of back and forth.
+Found a bug, or have an idea? Please open an issue. This page says where, and what to include, so the
+problem can be found without a lot of back and forth.
+
+## Where
+
+The project's home is GitLab, and it is mirrored to GitHub and Gitea. **Issues opened on any of the
+three are read and handled**, so use whichever you already have an account on (each needs one):
+
+| | Issues | New issue |
+|---|---|---|
+| **GitLab** (the project's home) | [gitlab.com/theweathervane-group/a3mx](https://gitlab.com/theweathervane-group/a3mx/-/issues) | [Bug](https://gitlab.com/theweathervane-group/a3mx/-/issues/new?issuable_template=Bug) · [Feature request](https://gitlab.com/theweathervane-group/a3mx/-/issues/new?issuable_template=Feature%20request) |
+| **GitHub** (mirror) | [github.com/theweathervane/a3mx](https://github.com/theweathervane/a3mx/issues) | [Bug](https://github.com/theweathervane/a3mx/issues/new?template=bug_report.yml) · [Feature request](https://github.com/theweathervane/a3mx/issues/new?template=feature_request.yml) |
+| **Gitea** (mirror) | [gitea.com/theweathervane/a3mx](https://gitea.com/theweathervane/a3mx/issues) | [Choose a form](https://gitea.com/theweathervane/a3mx/issues/new/choose) |
+
+Please open each problem in one place only: the same report on two sites is read twice and answered
+in two places. The code, the releases and the merge requests are on GitLab; the mirrors are copies of
+it, updated from it.
 
 ## The quickest way: the launcher
 
 1. Set **Logging** (under Game) to **INFO**, or **DEBUG** if the problem is hard to pin down. The
-   default, OFF, writes nothing, so the log would be empty.
-2. Make the problem happen again: press **Run** and do what you did before.
-3. Click the **bug** icon in the top right corner (or **About > Report a bug**). Your browser opens
-   a new issue on GitLab with these already filled in:
-   - the version, your system and the disc's serial
-   - the launcher's settings (preset, extensions, full screen, logging, options)
-   - the end of the launcher's console
-4. Click **Log folder** (above the console) and **drag `a3mx.log` into the form's Log box**. The
-   launcher can't attach files for you. A web address is too short to carry a whole log, and
-   only you can upload to your account.
-5. Fill in the steps, what happened and what you expected, then submit.
+   default, OFF, writes nothing, so the log would be empty. (The Report window has a button for this.)
+2. Make the problem happen again: press **Run** and do what you did before, then quit the game.
+3. Click the **bug** icon in the top left corner (or **About > Report a bug**).
+4. Choose **GitLab**, **GitHub** or **Gitea**. The launcher remembers your choice.
+5. Click **Open the form on ...**. The launcher:
+   - opens a new issue on that site in your browser, filled in with the version, your system, the
+     disc's serial, the launcher's settings, the last run's renderer and frame times, and the end of
+     the launcher's console (on GitHub, in the bug form's fields);
+   - makes **`a3mx-report.zip`** in your logs folder, and opens the folder. The zip holds
+     `a3mx.log`, `last_run.txt`, `launcher.log` (this session and the one before),
+     `launcher.ini` and `controllers.cfg`, each cut to its end if very long;
+   - puts the report on the clipboard too, should the page open empty.
+6. **Drag `a3mx-report.zip` into the form.** This is the one step the launcher can't do for you: no
+   site lets a web address carry a file, and only you can upload to your account.
+7. Fill in the steps, what happened and what you expected, then submit.
 
-You need a GitLab account to open an issue.
+Your home folder's path (it has your user name in it) is written as `~` in the form and in the zip.
+Nothing is sent anywhere until you submit the form, and you can look inside the zip first.
 
 ## Without the launcher
 
-Open a [new issue](https://gitlab.com/theweathervane-group/a3mx/-/issues/new) (the launcher's bug icon fills one in for you).
-The log is `logs/a3mx.log` in your a3mx folder (`%APPDATA%\a3mx` on Windows; [SAVES.md](SAVES.md)). To get more in it, run the game with `--log-level info` (the
-default when run by hand) or `--log-level debug`, for example:
+Open a new issue on any of the three sites (the links above give you the form). Attach the logs
+from `logs/` in your a3mx folder (`%APPDATA%\a3mx` on Windows; [SAVES.md](SAVES.md)): `a3mx.log`
+and, for a slow or stuttering game, `last_run.txt`. To get more in the log, run the game with
+`--log-level info` (the default when run by hand) or `--log-level debug`, for example:
 
 ```
 ./build.sh --run -- --log-level debug              # build.cmd --run -- --log-level debug on Windows
@@ -50,7 +70,7 @@ the full version for you, which tells us exactly which code it was. A nightly's 
 | **The mode and controllers** | Arcade, Dramatic Battle, NETWORK ...; keyboard, which pads |
 | **Steps** | What to do, from the MODE MENU, to see it happen. "Every time" or "once in a while" helps too. |
 | **What happened, and what you expected** | A screenshot or a short video, if it is something you can see |
-| **The log** | `logs/a3mx.log`, attached as a file |
+| **The log** | `a3mx-report.zip` from the launcher, or `logs/a3mx.log`, attached as a file |
 | **Renderer and frame times** (slow or stuttering games) | Filled in by the launcher's bug button from your last run (`logs/last_run.txt`: the renderer, your GPU, the scale, vsync, FRAME TIMING and which timing was used, the monitor's refresh rate, how long frames took, and how often a frame was shown twice: `hitches`). Run the slow part first, quit the game, then press the bug button. Without the launcher, paste that file. With Logging at INFO, the log also has a frame time line every 10 seconds. |
 
 **A build that fails:** first try starting from nothing: **Clean and try again** in
@@ -82,7 +102,10 @@ the log level.
 
 ## Ideas and questions
 
-- **Feature request** form: an idea, and why it would help.
+Each of the three sites has the same forms:
+
+- **Report a problem**: the form the launcher fills in.
+- **Request a feature**: an idea, and why it would help (**About > Request a feature** in the launcher).
 - **A blank issue**: anything else, such as a question or a problem with the docs.
 
-Merge requests are welcome too; see [CONTRIBUTING.md](../CONTRIBUTING.md).
+Merge requests are welcome too, on GitLab; see [CONTRIBUTING.md](../CONTRIBUTING.md).

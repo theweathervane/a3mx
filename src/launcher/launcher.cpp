@@ -36,7 +36,7 @@
  * Options (for tests and screenshots): --settings FILE (instead of launcher.ini), --user-dir DIR,
  * --autostart (press the button once), --screenshot FILE.bmp --frames N (save the window after N
  * frames and quit), --root DIR (the source checkout), --theme light|dark, --tab paths|dependencies|
- * controllers|extensions|run, --show options|about (open that window, for screenshots), --gpus (print
+ * controllers|extensions|run, --show options|about|report (open that window, for screenshots), --gpus (print
  * the graphics cards found, fastest first, and quit; A3MX_TEST_SYSFS / A3MX_TEST_PCI_IDS stand in for
  * /sys and pci.ids in tests).
  */
@@ -87,14 +87,15 @@ extern "C" {
 #endif
 #include "icons.h"
 #include "process.h"
+#include "report.h"                  /* the Report window's addresses and the .zip of the logs */
 
 #ifndef A3MX_VERSION
 #define A3MX_VERSION "v?"
 #endif
 
-/* the project on GitLab (.recomp.json has the same addresses) */
+/* the project's home on GitLab, for the docs' links. Its mirrors on GitHub and Gitea, and the issue forms
+   on all three, are in report.cpp (.recomp.json has the same addresses) */
 static const char *const REPO_URL = "https://gitlab.com/theweathervane-group/a3mx";
-static const char *const NEW_ISSUE = "/-/work_items/new?type=Issue&initialCreationContext=list-route";   /* as .recomp.json's link */
 
 /* ================================================================ files and settings */
 static bool is_file(const std::string &p) {
@@ -186,15 +187,6 @@ static std::string json_string(const std::string &json, const char *key) {
     }
     return v;
 }
-static std::string url_encode(const std::string &s) {
-    static const char *hex = "0123456789ABCDEF";
-    std::string o;
-    for (unsigned char c : s) {
-        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '~') o += (char)c;
-        else { o += '%'; o += hex[c >> 4]; o += hex[c & 15]; }
-    }
-    return o;
-}
 /* a folder as a file:// URL, for the file manager */
 static std::string file_url(const std::string &dir) {
     std::string p = dir;
@@ -248,6 +240,7 @@ struct Settings {
     std::string tools_dir;          /* where the build tools are downloaded ("": .tools/ in the checkout) */
     std::string saves_dir, configs_dir, logs_dir;   /* the Paths tab: each "" for its folder in your a3mx folder */
     std::string consent;            /* deps_signature() of the downloads the player agreed to ("": not asked yet) */
+    std::string report_host = "gitlab";   /* where the Report window opens issues: gitlab, github or gitea (report.h) */
     int tab = T_RUN;
     int console_h = 180;
     int win_w = 1000, win_h = 740;
@@ -287,6 +280,7 @@ static void settings_load(Settings &s, const std::string &path) {
         else if (k == "configs_dir") s.configs_dir = v;
         else if (k == "logs_dir") s.logs_dir = v;
         else if (k == "consent") s.consent = v;
+        else if (k == "report_host") s.report_host = ISSUE_HOSTS[issue_host_find(v)].id;
         else if (k == "tab") s.tab = n >= 0 && n < T_COUNT ? n : T_RUN;
         else if (k == "console_h" && n >= 60) s.console_h = n;
         else if (k == "win_w" && n >= 400) s.win_w = n;
@@ -318,6 +312,7 @@ static void settings_save(const Settings &s, const std::string &path) {
     t += "configs_dir=" + s.configs_dir + "\n";
     t += "logs_dir=" + s.logs_dir + "\n";
     t += "consent=" + s.consent + "\n";
+    t += "report_host=" + s.report_host + "\n";
     t += "tab=" + std::to_string(s.tab) + "\n";
     t += "console_h=" + std::to_string(s.console_h) + "\n";
     t += "win_w=" + std::to_string(s.win_w) + "\n";
@@ -457,6 +452,8 @@ struct App {
     bool start_after_tools = false; /* Run was pressed with tools missing: carry on when they are here */
     bool consent_modal = false;     /* the one-time "these will be downloaded" question is up */
     bool lr_modal = false;          /* the "build librashader" question is up */
+    bool report_modal = false;      /* the Report window is to open */
+    bool report_feature = false;    /* ... for a feature request, not a problem */
     std::string cargo_path;         /* Rust's cargo, if it is on this PC (find_cargo) */
     int msvc = -1;                  /* Windows: Microsoft's C++ build tools found (1), not found (0); elsewhere 1 */
     /* Controllers */
@@ -492,7 +489,7 @@ struct App {
     float scale = 1;
     bool dark = true;
     int theme = THEME_AUTO;         /* the system's light / dark setting, followed as it changes */
-    std::string show_at_start;      /* --show options|about */
+    std::string show_at_start;      /* --show options|about|report|consent|librashader */
     std::vector<Gpu> gpus;          /* this PC's graphics cards, fastest first (gpu.cpp); empty: Automatic only */
     bool gpu_checked = true;        /* the last run's GPU compared with the choice (false while a run is due) */
 
@@ -982,9 +979,17 @@ struct App {
         SDL_ShowOpenFileDialog(on_dialog, this, window, filters, 2, where.empty() ? NULL : where.c_str(), false);
     }
 
-    /* a new issue on GitLab, filled in with what the launcher knows. The address is .recomp.json's
-       "Report a problem" link; the report is also put on the clipboard, in case the page opens empty */
-    void report_bug() {
+    /* ---- reporting a problem (docs/REPORTING_ISSUES.md). The project is on GitLab, mirrored to GitHub and
+       Gitea, and issues opened on any of them are handled: the Report window lets the player choose */
+    void open_report(bool feature) { report_feature = feature; report_modal = true; }
+    int report_host() const { return issue_host_find(set.report_host); }
+    /* the home folder, to write as ~ in what is sent */
+    static std::string home_path() { const char *h = SDL_GetUserFolder(SDL_FOLDER_HOME); return h ? h : ""; }
+    IssueFields report_fields(bool feature) {
+        IssueFields f;
+        f.feature = feature;
+        f.version = A3MX_VERSION;
+        if (feature) return f;
         const char *os = SDL_GetPlatform();
         std::string how = std::string("Launcher: preset ") + PRESET_ARGS[set.preset] + ", features " + features_arg() +
                           (set.fullscreen ? ", full screen" : ", windowed") + (ctl_file ? ", controllers.cfg" : ", controllers automatic") +
@@ -992,26 +997,103 @@ struct App {
                           (gpus.size() < 2 ? std::string() : ", GPU " + (gpu_find(gpus, set.gpu) ? gpu_find(gpus, set.gpu)->name : std::string("automatic"))) +
                           (set.extra.empty() ? "" : ", options: " + set.extra);
         DiscResult r = disc.result();
-        /* GitLab's new-issue page takes a title and a description in its address: the report, filled in */
-        std::string body = "## What happened\n\n(what you did, what you expected, what you saw instead)\n\n## Details\n\n";
-        body += std::string("- Version: ") + A3MX_VERSION + "\n- System: " + (os ? os : "") + "\n- " + how + "\n";
-        if (!r.serial.empty()) body += "- Disc: " + r.serial + (r.exact ? " (the known dump)" : "") + "\n";
+        f.details = std::string("- Version: ") + A3MX_VERSION + "\n- System: " + (os ? os : "") + "\n- " + how + "\n";
+        if (!r.serial.empty()) f.details += "- Disc: " + r.serial + (r.exact ? " (the known dump)" : "") + "\n";
         /* the renderer the game actually used and its frame times, from the last run (logs/last_run.txt) */
-        std::string last = last_run_summary();
-        if (!last.empty()) body += "\n## The last run\n\n```\n" + last + "\n```\n";
-        body += "\n## Log\n\nPlease attach `logs/a3mx.log` (the launcher's **Log folder** button opens the folder).\n";
-        std::string base_url = std::string(REPO_URL) + NEW_ISSUE + "&issue[title]=" + url_encode("Bug: ") + "&issue[description]=";
-        std::string log = console.tail(2500);
-        /* very long addresses are refused: the end of the console only, then the file by hand */
-        while (!log.empty() && base_url.size() + url_encode(body).size() + url_encode(log).size() > 7000) {
-            size_t nl = log.find('\n');
-            log = nl == std::string::npos ? std::string() : log.substr(nl + 1);
+        f.last_run = last_run_summary();
+        f.console = console.tail(2500);
+        std::string home = home_path();
+        f.details = redact_home(f.details, home);
+        f.console = redact_home(f.console, home);
+        return f;
+    }
+    /* logs/a3mx-report.zip: the logs, the end of each if long, with the home folder written as ~. "" if it
+       couldn't be written */
+    std::string make_report_zip() {
+        const std::string logs = user_dir("logs"), home = home_path();
+        std::vector<ZipEntry> files;
+        auto add = [&](const char *name, const std::string &text, size_t keep) {
+            if (!text.empty()) files.push_back({ name, redact_home(keep_tail(text, keep), home) });
+        };
+        add("a3mx.log", read_text(join(logs, "a3mx.log")), 8u << 20);
+        add("last_run.txt", read_text(join(logs, "last_run.txt")), 1u << 20);
+        add("launcher.log", console.all(), 4u << 20);                        /* this session's: the file is open for writing */
+        add("launcher.log.1", read_text(join(logs, "launcher.log.1")), 2u << 20);   /* the session before */
+        add("launcher.ini", read_text(settings_path), 64u << 10);
+        add("controllers.cfg", read_text(controls_path()), 64u << 10);
+        std::string zip = zip_build(files), path = join(logs, "a3mx-report.zip");
+        SDL_CreateDirectory(logs.c_str());
+        if (zip.empty() || !SDL_SaveFile(path.c_str(), zip.data(), zip.size())) {
+            console.note("Could not write " + path + (zip.empty() ? std::string() : std::string(": ") + SDL_GetError()) + ". Attach the files in the logs folder instead.", K_WARN);
+            return std::string();
         }
-        if (!log.empty()) body += "\nThe end of the launcher's console:\n\n```\n" + log + "\n```\n";
-        std::string url = base_url + url_encode(body);
-        SDL_SetClipboardText(body.c_str());
-        if (!SDL_OpenURL(url.c_str())) console.note(std::string("Could not open the browser: ") + SDL_GetError() + ". The address: " + url, K_WARN);
-        else console.note("Opened a new issue on GitLab in your browser. If it isn't filled in, paste: the report is on the clipboard. Please attach logs/a3mx.log (Log folder, bottom right).", K_NOTE);
+        return path;
+    }
+    /* the Report window's button: the form on the chosen site, filled in; for a problem, the zip made and its folder opened */
+    void send_report(bool feature) {
+        const int host = report_host();
+        const IssueHost &h = ISSUE_HOSTS[host];
+        IssueFields f = report_fields(feature);
+        std::string zip = feature ? std::string() : make_report_zip();
+        std::string url = issue_url(host, f);
+        SDL_SetClipboardText(issue_body(f).c_str());                         /* in case the page opens empty */
+        if (!SDL_OpenURL(url.c_str())) { console.note(std::string("Could not open the browser: ") + SDL_GetError() + ". The address: " + url, K_WARN); return; }
+        if (feature) { console.note(std::string("Opened a feature request on ") + h.name + " in your browser. The template is on the clipboard too.", K_NOTE); return; }
+        if (!zip.empty()) open_folder(user_dir("logs"));
+        console.note(std::string("Opened a new issue on ") + h.name + " in your browser, filled in (it's on the clipboard too, should the page open empty). " +
+                     (zip.empty() ? std::string("Please attach logs/a3mx.log.") : "Drag a3mx-report.zip from the logs folder (just opened) into the form: " + zip), K_NOTE);
+    }
+    void report_window() {
+        const float em = ImGui::GetFontSize();
+        const char *title = "Report###report";
+        if (report_modal) { ImGui::OpenPopup(title); report_modal = false; }
+        ImGuiViewport *vp = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(vp->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(std::min(em * 36, vp->WorkSize.x - em * 2), 0), ImGuiCond_Always);   /* as About: a fixed width */
+        if (!ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings)) return;
+        const bool feature = report_feature;
+        ImGui::TextUnformatted(feature ? "Request a feature" : "Report a problem");
+        ImGui::PushTextWrapPos(0);
+        ImGui::TextDisabled("A3MX lives on GitLab and is mirrored to GitHub and Gitea. Issues opened on any of the three are "
+                            "read and handled, so use whichever you have an account on (each needs one).");
+        ImGui::SeparatorText("Where");
+        int host = report_host();
+        for (int i = 0; i < HOST_COUNT; i++) {
+            ImGui::PushID(i);
+            if (ImGui::RadioButton(ISSUE_HOSTS[i].name, host == i)) { host = i; set.report_host = ISSUE_HOSTS[i].id; settings_save(set, settings_path); }
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s", ISSUE_HOSTS[i].role);
+            ImGui::SameLine(em * 13);
+            if (link(ISSUE_HOSTS[i].repo + 8)) open_url(issues_page(i));     /* without https:// */
+            ImGui::SetItemTooltip("The issues already open there");
+            ImGui::PopID();
+        }
+        if (!feature) {
+            ImGui::SeparatorText("What is sent");
+            if (set.log_level == 0) {
+                ImGui::TextColored(colour(K_WARN), "Logging is OFF, so the game's log (a3mx.log) is empty.");
+                if (ImGui::Button("Set Logging to INFO")) { set.log_level = 3; settings_save(set, settings_path); }
+                ImGui::SameLine();
+                ImGui::TextWrapped("then Run, make the problem happen again, and report.");
+            }
+            if (child.busy() && running == RUN_GAME) ImGui::TextColored(colour(K_WARN), "Quit the game first, so its log and last_run.txt are complete.");
+            ImGui::Bullet(); ImGui::TextWrapped("The form, filled in: the version, your system, the disc's serial, these settings, the last run's frame times and the end of the console.");
+            ImGui::Bullet(); ImGui::TextWrapped("a3mx-report.zip, made in your logs folder, which opens: drag it into the form. It holds a3mx.log, last_run.txt, launcher.log, "
+                                                "launcher.ini and controllers.cfg. A web address can't carry a file, so this one step is yours.");
+            ImGui::Bullet(); ImGui::TextWrapped("Your home folder's path is written as ~ in both. Nothing is sent until you submit the form.");
+        }
+        ImGui::PopTextWrapPos();
+        ImGui::Spacing();
+        if (link("How to report a problem, and what to include")) open_url(repo_file_page(host, "docs/REPORTING_ISSUES.md"));
+        ImGui::Spacing();
+        std::string go = std::string("Open the form on ") + ISSUE_HOSTS[host].name;
+        const float bw = ImGui::CalcTextSize(go.c_str()).x + ImGui::GetStyle().FramePadding.x * 2, cw = em * 5.5f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - bw - cw - ImGui::GetStyle().ItemSpacing.x);
+        if (ImGui::Button(go.c_str(), ImVec2(bw, 0))) { send_report(feature); ImGui::CloseCurrentPopup(); }
+        ImGui::SetItemTooltip(feature ? "Opens a feature request in your browser." : "Opens a new issue in your browser, makes a3mx-report.zip and opens the logs folder.");
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(cw, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
     }
     /* one value from logs/last_run.txt */
     std::string last_run(const char *k) const {
@@ -1267,11 +1349,15 @@ struct App {
         ImGui::Spacing();
         ImGui::TextWrapped("A decompilation of the PSP game, built from your own disc. No game data is included.");
         ImGui::SeparatorText("Project");
-        if (link("The project's page")) open_url(REPO_URL);
-        if (link("Report a bug")) report_bug();
-        if (link("Request a feature")) open_url(std::string(REPO_URL) + NEW_ISSUE + "&issue[title]=" + url_encode("Feature request: ") + "&issue[description]=" + url_encode(std::string("(what you would like, and why)\n\nVersion: ") + A3MX_VERSION + "\n"));
-        if (link("Something else (a question, an idea, a problem building)")) open_url(std::string(REPO_URL) + "/-/issues");
-        if (link("How to report a problem, and what to include")) open_url(std::string(REPO_URL) + "/-/blob/main/docs/REPORTING_ISSUES.md");
+        if (link("The project's page (GitLab, its home)")) open_url(REPO_URL);
+        ImGui::TextDisabled("Mirrors:");
+        ImGui::SameLine(); if (link("GitHub")) open_url(ISSUE_HOSTS[HOST_GITHUB].repo);
+        ImGui::SameLine(); if (link("Gitea")) open_url(ISSUE_HOSTS[HOST_GITEA].repo);
+        ImGui::TextDisabled("Issues are handled on all three.");
+        if (link("Report a bug")) { open_report(false); ImGui::CloseCurrentPopup(); }
+        if (link("Request a feature")) { open_report(true); ImGui::CloseCurrentPopup(); }
+        if (link("Something else (a question, an idea, a problem building)")) open_url(issues_page(report_host()));
+        if (link("How to report a problem, and what to include")) open_url(repo_file_page(report_host(), "docs/REPORTING_ISSUES.md"));
         ImGui::SeparatorText("Licences");
         ImGui::PushTextWrapPos(0);                                   /* wrap at the window's (fixed) edge */
         ImGui::TextDisabled("GPL-3.0-or-later. The launcher uses SDL3 (zlib) and Dear ImGui (MIT).");
@@ -1422,12 +1508,13 @@ struct App {
         if (icon_button("bug", bh, [](ImDrawList *dl, ImVec2 p, float s, ImU32) {
                 ImU32 body = bug_dark ? IM_COL32(205, 205, 210, 255) : IM_COL32(150, 150, 158, 255);
                 ImU32 shade = bug_dark ? IM_COL32(140, 140, 148, 255) : IM_COL32(95, 95, 104, 255);
-                draw_bug(dl, ImVec2(p.x + 2, p.y + 2), s - 4, body, shade); })) report_bug();
-        ImGui::SetItemTooltip("Report a problem: opens a new issue on GitLab, filled in with the version, your system,\n"
-                              "these settings and the end of the console. Attach logs/a3mx.log there.");
+                draw_bug(dl, ImVec2(p.x + 2, p.y + 2), s - 4, body, shade); })) open_report(false);
+        ImGui::SetItemTooltip("Report a problem: on GitLab, GitHub or Gitea (your choice), a new issue filled in with the\n"
+                              "version, your system, these settings and the end of the console, and your logs in one .zip.");
         ImGui::SameLine();
         if (ImGui::Button("About", ImVec2(w - bh - st.ItemSpacing.x, bh))) ImGui::OpenPopup("About");
         about_window();
+        report_window();
         if (show_at_start == "about") { ImGui::OpenPopup("About"); show_at_start.clear(); }
         ImGui::Dummy(ImVec2(0, em * 0.7f));                            /* a little air before the tabs */
         const float row_h = em * 1.9f, bar_w = 3 * scale, text_x = em * 0.9f;
@@ -2095,6 +2182,7 @@ struct App {
         if (want_tab >= 0) { set.tab = want_tab; want_tab = -1; }
         if (show_at_start == "consent") { consent_modal = true; show_at_start.clear(); }          /* --show, for screenshots */
         if (show_at_start == "librashader") { lr_modal = true; show_at_start.clear(); }
+        if (show_at_start == "report") { open_report(false); show_at_start.clear(); }
 
         /* three bands: the side and the tab's page; the console, on every tab; the status line */
         const float footer = ImGui::GetFrameHeightWithSpacing();

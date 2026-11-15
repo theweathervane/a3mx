@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Issues on GitLab (the project's home)
+    url: https://gitlab.com/theweathervane-group/a3mx/-/issues
+    about: The same project. Issues on GitLab, GitHub and Gitea are all handled; open yours on whichever you prefer.
+  - name: Issues on Gitea (mirror)
+    url: https://gitea.com/theweathervane/a3mx/issues
+    about: The Gitea mirror takes issues too.
+  - name: How to report a problem, and what to include
+    url: https://github.com/theweathervane/a3mx/blob/main/docs/REPORTING_ISSUES.md
+    about: The launcher's bug button fills a report in and collects your logs.

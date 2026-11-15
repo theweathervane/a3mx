@@ -60,6 +60,16 @@ The overall bar is the share of the program's instructions that is now hand-writ
 The first build takes a few minutes; after that, Run starts the game much more quickly. The detailed
 guide, including building from a clone: [docs/BUILDING.md](docs/BUILDING.md).
 
+## Where to find the project, and reporting a problem
+
+The project's home is **GitLab**: [gitlab.com/theweathervane-group/a3mx](https://gitlab.com/theweathervane-group/a3mx).
+It is mirrored to **GitHub** ([github.com/theweathervane/a3mx](https://github.com/theweathervane/a3mx)) and
+**Gitea** ([gitea.com/theweathervane/a3mx](https://gitea.com/theweathervane/a3mx)), kept up to date from GitLab.
+
+You can open an issue on whichever of the three you have an account on: they are all read and handled.
+The easiest way is the launcher's **bug** button, which lets you choose the site, fills the report in and
+gathers your logs into one file to attach. See [docs/REPORTING_ISSUES.md](docs/REPORTING_ISSUES.md).
+
 ## Documentation
 
 Please refer to the [docs folder](docs) for more details.

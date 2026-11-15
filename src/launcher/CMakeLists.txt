@@ -19,7 +19,7 @@ file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/logo_png.h"
      CONTENT "/* generated from res/launcher_logo.png (src/launcher/CMakeLists.txt) */\nstatic const unsigned char LOGO_PNG[] = {${LOGO_BYTES}};\n")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${LOGO_PNG}")
 
-add_executable(a3mx-launcher WIN32 launcher.cpp process.cpp disc_check.cpp icons.cpp gpu.cpp deps.cpp shortcut.cpp
+add_executable(a3mx-launcher WIN32 launcher.cpp process.cpp disc_check.cpp icons.cpp gpu.cpp deps.cpp shortcut.cpp report.cpp
                "${CMAKE_SOURCE_DIR}/src/platform/png_decode.c")   # WIN32: no console window of its own on Windows
 target_include_directories(a3mx-launcher PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated" "${CMAKE_SOURCE_DIR}/src/platform")
 target_link_libraries(a3mx-launcher PRIVATE imgui SDL3::SDL3-static)

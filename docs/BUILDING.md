@@ -31,7 +31,7 @@ CMake 3.25+, Ninja and Clang, and Python 3.9+, on every system. No Visual Studio
 ## First build
 
 ```
-git clone https://gitlab.com/theweathervane-group/a3mx.git
+git clone https://gitlab.com/theweathervane-group/a3mx.git   # or a mirror: github.com/theweathervane/a3mx, gitea.com/theweathervane/a3mx
 cd a3mx
 # copy your ISO(s) into imports/psp/ (any name: discs are recognised by checksum)
 ./build.sh --run                          # build.cmd --run on Windows
@@ -68,7 +68,7 @@ shortcut unless you ask. Nothing compiled is committed to the repository.
 
 | Part | What it does |
 |---|---|
-| left | the project's picture, the version right-aligned under it (`VERSION`, the one EX. SETTING shows), the **bug** icon (a new issue on GitLab, filled in: [below](#reporting-a-problem-from-the-launcher)) and **About**, then the tabs. The colours follow the system's light or dark setting. |
+| left | the project's picture, the version right-aligned under it (`VERSION`, the one EX. SETTING shows), the **bug** icon (a new issue on GitLab, GitHub or Gitea, filled in: [below](#reporting-a-problem-from-the-launcher)) and **About**, then the tabs. The colours follow the system's light or dark setting. |
 | **Paths** | **Your ISO**, typed or picked with **Browse...** (empty: the US one in `imports/psp/`), with the disc's flag from its program's checksum; only the US disc builds. The folders for **Saves**, **Configs**, **Logs** and the **Build tools**: each can be typed or browsed for, **Open** shows it, and **Defaults** puts every path back. They're kept in `launcher.ini`; changing a folder doesn't move what was in the old one. **Create a Desktop shortcut** / **Start menu shortcut** make one only when pressed. ![Paths](images/launcher-paths.png) |
 | **Dependencies** | **Check build dependencies** lists what the build needs on this system (from `tools/data/pins.json`) with a green tick for each one that is here (on Linux, also pkg-config and the window and sound
 libraries, which come from your package manager). Anything missing is listed with its address, its SHA-256 and the folder it goes into, and nothing is downloaded until you press **I agree** (asked again only if the pinned list changes). Run or Build with something missing sends you here first. The FILTER setting's shaders are a separate button, only if you want them. ![Dependencies](images/launcher-dependencies.png) |
@@ -89,11 +89,17 @@ first, then stops it.
 
 ### Reporting a problem from the launcher
 
-The bug icon opens a new issue on GitLab with the version, your system, the disc's serial, the
-launcher's settings, the last run's renderer and frame times and the end of its console filled in.
-The log file itself has to be dragged in by hand (**Log folder**); a whole log doesn't fit in a link.
-Set **Logging** to INFO or DEBUG first, or the log stays empty. What to include:
-[REPORTING_ISSUES.md](REPORTING_ISSUES.md).
+The bug icon (or **About > Report a bug**) opens the **Report** window: choose **GitLab** (the
+project's home), **GitHub** or **Gitea** (its mirrors; issues on all three are handled, and the choice
+is kept as `report_host` in `launcher.ini`), then **Open the form**. That opens a new issue on the
+site with the version, your system, the disc's serial, the launcher's settings, the last run's
+renderer and frame times and the end of its console filled in (on GitHub, the fields of
+`.github/ISSUE_TEMPLATE/bug_report.yml` by id), makes `a3mx-report.zip` in the logs folder (the logs,
+`launcher.ini` and `controllers.cfg`, with the home folder's path written as `~`) and opens the
+folder, so the zip can be dragged into the form: no site takes a file from an address. Set
+**Logging** to INFO or DEBUG first, or the log stays empty (the window warns, and has a button for
+it). `--show report` opens the window for a screenshot. The addresses and the zip are in
+`src/launcher/report.cpp`. What to include: [REPORTING_ISSUES.md](REPORTING_ISSUES.md).
 
 ### Testing the launcher
 
@@ -186,6 +192,10 @@ and never makes a tag itself: tagging on GitLab is still the one way to release.
 `.gitlab-ci.yml` belongs in the workflow too. The actions it uses are pinned by commit.
 
 ### The Gitea mirror
+
+Both mirrors take issues (the forms are in `.github/ISSUE_TEMPLATE/` and `.gitea/ISSUE_TEMPLATE/`,
+GitLab's in `.gitlab/issue_templates/`); the launcher's Report window can open one on any of the
+three.
 
 GitLab also push-mirrors to Gitea (both the cloud instance at `gitea.com/theweathervane/a3mx` and a
 local one). `.gitea/workflows/ci.yml` runs just the `pins` check and the Linux x64 build and test

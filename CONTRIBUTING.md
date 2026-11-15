@@ -1,7 +1,9 @@
 # Contributing
 
-Issues and merge requests are welcome. To report a problem, see
-[docs/REPORTING_ISSUES.md](docs/REPORTING_ISSUES.md) (what to include, and how to attach your log).
+Issues and merge requests are welcome. Issues can be opened on GitLab (the project's home) or on
+either mirror, GitHub or Gitea: all three are read and handled. To report a problem, see
+[docs/REPORTING_ISSUES.md](docs/REPORTING_ISSUES.md) (where, what to include, and how to attach your logs).
+Merge requests go to GitLab: the mirrors are copies of it, updated from it.
 
 ## Before you start
 

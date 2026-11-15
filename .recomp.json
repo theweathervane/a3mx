@@ -18,9 +18,12 @@
   "links": [
     { "label": "Source (GitLab, the project's home)", "url": "https://gitlab.com/theweathervane-group/a3mx" },
     { "label": "Source (GitHub mirror)", "url": "https://github.com/theweathervane/a3mx" },
+    { "label": "Source (Gitea mirror)", "url": "https://gitea.com/theweathervane/a3mx" },
     { "label": "Releases (stable)", "url": "https://gitlab.com/theweathervane-group/a3mx/-/releases" },
     { "label": "Releases on the GitHub mirror (stable, and a nightly pre-release)", "url": "https://github.com/theweathervane/a3mx/releases" },
-    { "label": "Report a problem", "url": "https://gitlab.com/theweathervane-group/a3mx/-/work_items/new?type=Issue&initialCreationContext=list-route" }
+    { "label": "Report a problem", "url": "https://gitlab.com/theweathervane-group/a3mx/-/work_items/new?type=Issue&initialCreationContext=list-route" },
+    { "label": "Report a problem on the GitHub mirror", "url": "https://github.com/theweathervane/a3mx/issues/new?template=bug_report.yml" },
+    { "label": "Report a problem on the Gitea mirror", "url": "https://gitea.com/theweathervane/a3mx/issues/new/choose" }
   ],
   "tags": ["fighting", "capcom", "widescreen", "local-multiplayer"],
   "notes": "Plays from day one: functions not yet decompiled run as translated code, which will disappear as the C replaces it. Decomp is the priority right now."
