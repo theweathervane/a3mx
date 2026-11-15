@@ -19,6 +19,11 @@ There are two separate ways a pad gets a fighter, and they don't depend on each 
      Arcade, so the opponent is still the computer);
    - in modes where a pad *can't* join at all (World Tour, R.Dramatic Battle from the MODE MENU).
 
+   A box a pad can join with Start on the select screen (every box in Free Battle, the partner in
+   Survival Dramatic and Variable) is **never** taken over by JOIN-IN: it stays the computer's until a
+   pad presses Start, so Free Battle keeps its computer opponent with a second pad plugged in
+   (issue #17).
+
 With **1P / 2P / 3P JOIN-IN all on CPU** (the default), every mode plays as on a PSP, except that
 pads 2 and 3 can still join wherever the mode allows it.
 
@@ -47,19 +52,19 @@ roadmap checks them.
 | **Arcade** | One player against the Arcade ladder; every opponent is the computer | **Yes**, in a fight: HERE COMES A NEW CHALLENGER. Both humans keep the character they chose (the PSP's challenger path had been cut and took the ladder's) | The opponent goes to the first free pad, for a player who didn't press Start |
 | **World Tour** | One player travels the map, fighting computer opponents and levelling up their ISM | **No** | The opponent goes to the first free pad |
 | **Survival:** Arcade, Original, Boss, Infinity | One player against a run of computer opponents on one health bar | Not offered by the project (not checked whether the game's own challenger path is reachable) | The opponent goes to the first free pad |
-| **Survival:** Dramatic | You and a partner against computer opponents; the starter picks every box, the partner is the computer | **Yes**, on the select screen: the partner's box says JOIN; the first other pad to press Start picks the partner and plays it (the box says WAIT until its turn) | Partner to the first free pad, opponent to the second |
-| **Survival:** Variable | A tag team (you and a partner) against computer opponents; the starter picks every box | **Yes**, on the select screen: JOIN / WAIT on the 2P box; the first other pad to press Start picks and plays the partner | Partner to the first free pad, next opponent to the second |
+| **Survival:** Dramatic | You and a partner against computer opponents; the starter picks every box, the partner is the computer | **Yes**, on the select screen: the partner's box says JOIN; the first other pad to press Start picks the partner and plays it (the box says WAIT until its turn) | Partner: no change (it joins with Start); opponent to the second free pad |
+| **Survival:** Variable | A tag team (you and a partner) against computer opponents; the starter picks every box | **Yes**, on the select screen: JOIN / WAIT on the 2P box; the first other pad to press Start picks and plays the partner | Partner: no change (it joins with Start); next opponent to the second free pad |
 | **Survival:** R.Dramatic | One player against two computer opponents at once | **No** | The two opponents go to the free pads, in order |
 | **Dramatic Battle** | You and a computer partner against a boss | **Yes**, player 2, on the select screen (an empty box says JOIN). Its box says WAIT until the starter has chosen, then player 2 picks the partner on pad 2 and plays it; the cursors take turns as on the PSP | Partner to the first free pad, boss to the second |
 | **R.Dramatic Battle** | One player against two computer opponents at once | **No**. Another pad's Start pauses the fight instead (the game would otherwise have made it the opponent) | The two opponents go to the free pads, in order |
 | **Variable Battle** | A tag team (you and a computer partner) against computer opponents | **Yes**, player 2, on the select screen, as in Dramatic Battle (JOIN, then WAIT, then picks the partner on pad 2) | Partner to the first free pad, next opponent to the second |
 | **VS 100 Kumite** | One player against 100 computer opponents | Not offered by the project (not checked) | The opponent goes to the first free pad |
 | **Final Battle** | One player against the final boss | Not offered by the project (not checked) | The opponent goes to the first free pad |
-| **Free Battle:** Arcade | A single match; the starter picks both fighters, the opponent is the computer | **Yes**, on the select screen: the opponent's box says JOIN; the first other pad to press Start picks and plays the opponent | The opponent goes to the first free pad |
-| **Free Battle:** Team | Team against team; the starter picks both teams, the opponent team is the computer | **Yes**, on the select screen: the opponent's team-size icons say JOIN; the first other pad to press Start picks the team size and characters and plays them | The opponent team goes to the first free pad |
-| **Free Battle:** Variable | Tag team against an opponent; the starter picks every box | **Yes**, on the select screen: the partner's box (pad 1 or 2) and the ENEMY box (pad 3) say JOIN | Partner to the first free pad, opponent to the second |
-| **Free Battle:** Dramatic | You and a partner against an opponent; the starter picks every box | **Yes**, on the select screen: the partner's box (pad 1 or 2) and the ENEMY box (pad 3) say JOIN | Partner to the first free pad, opponent to the second |
-| **Free Battle:** R.Dramatic | One player against two opponents; the starter picks every box | **Yes**, on the select screen: the opponents' boxes say JOIN; pad 3 takes the 3P box, pad 1 or 2 the other | The two opponents go to the free pads, in order |
+| **Free Battle:** Arcade | A single match; the starter picks both fighters, the opponent is the computer | **Yes**, on the select screen: the opponent's box says JOIN; the first other pad to press Start picks and plays the opponent | **No change**: the opponent stays the computer's until a pad presses Start |
+| **Free Battle:** Team | Team against team; the starter picks both teams, the opponent team is the computer | **Yes**, on the select screen: the opponent's team-size icons say JOIN; the first other pad to press Start picks the team size and characters and plays them | **No change**: the computer's until a pad presses Start |
+| **Free Battle:** Variable | Tag team against an opponent; the starter picks every box | **Yes**, on the select screen: the partner's box (pad 1 or 2) and the ENEMY box (pad 3) say JOIN | **No change**: the boxes are the computer's until a pad presses Start |
+| **Free Battle:** Dramatic | You and a partner against an opponent; the starter picks every box | **Yes**, on the select screen: the partner's box (pad 1 or 2) and the ENEMY box (pad 3) say JOIN | **No change**: the boxes are the computer's until a pad presses Start |
+| **Free Battle:** R.Dramatic | One player against two opponents; the starter picks every box | **Yes**, on the select screen: the opponents' boxes say JOIN; pad 3 takes the 3P box, pad 1 or 2 the other | **No change**: the boxes are the computer's until a pad presses Start |
 | **Training** | One player and a training dummy, which TRAINING's own options control | **No** | **No change**: the dummy stays TRAINING's |
 | **Edit, Entry** | Menus (Edit has a test fight against the computer) | No (not checked) | Edit's test fight: the opponent goes to the first free pad (not checked) |
 | **Option, Score Ranking** | Menus | n/a | n/a |
@@ -95,7 +100,13 @@ host), as it did on the PSP. Real online play is phase 12 of the roadmap.
    (`join_to`), cleared whenever a mode is chosen on the MODE MENU.
 2. Every other fighter, in the game's order, goes to the next free pad.
 3. That pad plays it if its JOIN-IN is HUMAN and the pad is plugged in (pad 1 always counts as plugged in:
-   it has the keyboard). Otherwise the fighter stays the computer's.
+   it has the keyboard), and the fighter's box can't be joined with Start (`joinable_box`: every Free
+   Battle box, Survival Dramatic / Variable's partner). Otherwise the fighter stays the computer's; a
+   joinable box still uses its pad up, so the fighters after it get the same pads as before.
+
+If a pad that step 3 gave a fighter then joins with Start (Arcade's select screen, say), the fighter
+is simply its player's from then on: the computer flag the game's join cleared stays clear (issue #17;
+scenario `arcade_join_select`).
 
 Start joins only on a select screen that allows it, or through the game's own joins (Arcade's
 new challenger, Dramatic and Variable Battle's 0x0883465C). Start during a fight is the pause.

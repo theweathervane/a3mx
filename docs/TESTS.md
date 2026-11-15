@@ -64,6 +64,8 @@ touches nothing the hashes cover.
 | `arcade_other_fighter` | the same fight as E. HONDA (one box right on the select screen) against DAN | fighter and stage code RYU's first fight doesn't run | 7 min |
 | `arcade_match` | a whole match and what follows it | round ends, win screens | 8 min |
 | `arcade_ending` | the final fight, the ending, the save error questions | endings and the save path's failures | 8 min |
+| `arcade_join_select` | Arcade with 2P JOIN-IN HUMAN: pad 2 joins with Start on the select screen, picks Ken and jumps in the fight | a pad that JOIN-IN gave a fighter keeps it when it joins (issue #17) | 6 min |
+| `free_battle_join_in` | Free Battle with 2P JOIN-IN HUMAN and pad 2 idle | JOIN-IN leaves a box that can be joined with Start to the computer (issue #17) | 5 min |
 | `quit_to_menu` | pause, QUIT GAME, back to the MODE MENU | leaving a fight cleanly | 5 min |
 | `free_battle`, `free_battle_rows`, `free_battle_team`, `free_battle_dramatic`, `free_battle_rdramatic` | Free Battle's select in each kind, every row moved | the multi-player select and its turns | 5 min each |
 | `option_tour` | every OPTION MODE submenu with the extensions | the option screens and our additions | 6 min |

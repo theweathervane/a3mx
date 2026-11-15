@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.82.1
+- **Player 2 joining Arcade on the select screen is no longer played by the computer (issue #17):** with 2P JOIN-IN on HUMAN, pad 2 already plays the opponent before it presses Start; pressing Start on the select screen then put the computer flag back on that fighter, so the computer played player 2's character for the whole fight. The fighter now stays player 2's. The same applies in every mode where a pad that JOIN-IN gave a fighter then joins with Start. New scenario `arcade_join_select`.
+- **Free Battle keeps its computer opponent with 2P JOIN-IN on HUMAN (issue #17):** JOIN-IN no longer takes over a box a pad can join with Start on the select screen (every Free Battle box, and the partner in Survival Dramatic and Variable). Those stay the computer's until a pad presses Start, so with a second pad plugged in you can still play Free Battle against the computer, and pad 2 joins by pressing Start as before. JOIN-IN still lets a pad take over fighters it can't otherwise reach (World Tour, R.Dramatic Battle, Arcade's opponents, Survival's opponents). New scenario `free_battle_join_in`.
+
 ## 0.82.0
 - **More of the game decompiled:** 7 more functions are hand-written C. They include where each part of a sprite goes once it is scaled and turned (run tens of thousands of times a fight), the camera following the fighters across the stage, damage lessened by the number of hits in a row, the pad effects of a hit, a reward and score for a count, a value kept within a limit by the level and the round, and fourteen objects made by the layout. Nothing changes in play.
 
