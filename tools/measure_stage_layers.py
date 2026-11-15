@@ -26,6 +26,10 @@ layer's colour with the stage number, side and layer written on them in a darker
 but transparent, a layer colour or the text colour) is somebody's painting: it is kept, and its place
 in widescreen.json too.
 
+Before 0.88.2 the runs didn't turn the Stage Extensions feature on, so from 0.60.0 the measuring hook never
+ran: every run found nothing, and a re-measure would have removed every unpainted placeholder. A run
+where the hook didn't run (no layer depth in its log) now stops before writing anything.
+
 Usage: python tools/measure_stage_layers.py [--exe build/a3mx] [--work work] [-j 2] [--stages 1,6,12]
                                             [--dry-run]
 US program only (the addresses are ULUS-10062's). Needs Pillow.
@@ -89,7 +93,8 @@ def run(exe, work, out, k, side, lifted):
     cmd = [exe, '--work', work, '--assets', os.path.join(ROOT, 'assets', 'us'), '--save-dir', d,
            '--log', os.path.join(d, 'log'), '--headless', '--fast', '--renderer', 'lazy',
            '--frames', str(last + 1), '--input', inp, '--dump', d, '--dump-from', str(e), '--dump-every', '1',
-           '--snap', '%d:%s' % (e, os.path.join(d, 'mem.bin'))]
+           '--snap', '%d:%s' % (e, os.path.join(d, 'mem.bin')),
+           '--features', 'default,stage_extensions']   # the measuring hook is the extension's (off by default since 0.60.0)
     for q in pokes: cmd += ['--poke', q]
     env = dict(os.environ, A3MX_STRIP_MEASURE=spec)
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, check=True, env=env)
@@ -211,6 +216,10 @@ def main():
     jobs = [(k, s, u) for k in ks for s in 'LR' for u in (False, True)]
     with concurrent.futures.ThreadPoolExecutor(a.j) as pool:
         res = dict(zip(jobs, pool.map(lambda j: run(a.exe, a.work, a.out, *j), jobs)))
+    blind = [j for j in jobs if not res[j]['depth']]
+    if blind:   # the measuring hook never ran: measuring nothing would remove every placeholder
+        sys.exit('error: no layer was measured in %d of %d runs (first: menu %d %s): is the build older than '
+                 'stage_extensions, or the hook gone? Nothing written.' % (len(blind), len(jobs), blind[0][0], blind[0][1]))
     print('| # | Menu name | Stage | Layers (depth) | Left: pixels by layer | Right: pixels by layer |')
     print('|---|---|---|---|---|---|')
     for k in ks:

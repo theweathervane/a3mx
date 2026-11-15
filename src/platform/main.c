@@ -668,6 +668,7 @@ int main(int argc, char **argv) {
     }
     rt_work_dir = work;
     if (rt_extensions) { void settings_load(void); rt_log("features: %s", features_describe()); settings_load(); }
+    else rt_log("extensions: off (%s): the PSP program alone", rt_extensions_built() ? "no feature is on (--no-extensions)" : "built without them");
     if (filter_arg) {                         /* --filter NAME: this run only (the setting is SCREEN SETTING > FILTER) */
         extern int rt_filter_cli; int found = -1;
         for (int k = 0; k < SHADER_FILTER_COUNT; k++) {               /* letters and digits only, any case: crt-curved is CRT CURVED */
@@ -685,7 +686,6 @@ int main(int argc, char **argv) {
         if (found < 0) rt_fatal("--filter: off, crt-curved, crt-lottes, crt-royale, crt-guest, crt-light, scan-light, scan-strong, scan-ossc, scan-dark, xbrz or scalefx, not %s", filter_arg);
         rt_filter_cli = found;
     }
-    else rt_log("extensions: off (%s): the PSP program alone", rt_extensions_built() ? "no feature is on (--no-extensions)" : "built without them");
 
     if (!rt_mem_init()) rt_fatal("could not reserve guest memory");
     snprintf(path, sizeof path, "%s/analysis.image.bin", work);

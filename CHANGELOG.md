@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.88.2
+### For players
+- **Stage Extensions' placeholders re-measured:** the coloured edge strips are now on the plane each gap really continues (on RYU 1 the sky's strip is the sky layer's, for one). The edges they cover are the same; a strip painted from now on joins the right layer. If you have painted one, it is kept as it is.
+
+### Technical
+- `tools/measure_stage_layers.py` turns the `stage_extensions` feature on for its runs (`--features default,stage_extensions`). Since 0.60.0 made it a feature, off by default, the measuring hook never ran, so a re-measure found nothing and would have removed every unpainted placeholder. A run where no layer was measured now stops before writing anything.
+- Re-measured all 38 stages (158 placeholders, none painted). The layers' depths are now read in the fight itself (0.88.1's gate): before, they were read on the screens before the fight, which use the same layers for their own backdrops, and STAGE_EXTENSIONS.md said layer 2 was always the farthest and layer 0 the nearest. It depends on the stage (RYU 1: 0 sky, 2 castle, 1 floor; ADON: 2, 1, 0). Table and text updated.
+- `src/platform/main.c`: "extensions: off" was logged on every run without `--filter` (its `else` belonged to the wrong `if`).
+
 ## 0.88.1
 ### For players
 - **Stage Extensions: no more coloured strips on the select, map, profile and VS screens.** With WIDE FORCED and Stage Extensions on, the next stage's edge strips (the coloured placeholders) were drawn in the middle of the character select screen, Arcade's world map, the fighter's profile and the VS screen. They now appear only in the fight itself.

@@ -1,7 +1,7 @@
 # Stage extensions
 
 **Status:** drawn in WIDE FORCED since 0.50.0 (`src/extensions/stagestrips.c`), one strip per layer
-and side where that layer leaves a gap: 152 placeholders across the 38 stages, waiting to be painted.
+and side where that layer leaves a gap: 158 placeholders across the 38 stages, waiting to be painted.
 See [How the game draws them](#how-the-game-draws-them).
 
 WIDE FORCED shows 48 more pixels on each side of the screen than the stage's art was made for. At the
@@ -20,8 +20,12 @@ edge, drawn just behind that layer.
 
 ## The images
 
-A stage has up to 8 layers (layer 1 is the fighters' layer; on every stage layer 2 is the farthest
-plane, the background, and layer 0 the nearest). Each scrolls at its own rate, so each one's art ends
+A stage has up to 8 layers (layer 1 is the fighters' layer). Which plane each one is depends on the
+stage: the depth the game draws it at decides (the table below lists them farthest first). On RYU 1,
+layer 0 is the sky and sun, layer 2 the castle and trees, layer 1 the floor in front; on ADON, layer 2
+is the farthest and layer 0 the nearest. Before 0.88.2 the measured depths were read on the screens
+before the fight, which use the same layers for their own backdrops, so this page said layer 2 was
+always the farthest and layer 0 the nearest. Each scrolls at its own rate, so each one's art ends
 at its own place, and each can have a strip at each side, joined to that layer. They go in the stage's
 folder under `assets/extensions/`, for example `stages/0c_dan/`: the same name as the stage's extracted
 folder (`assets/us/stages/0c_dan/`, which holds `st0c.pac`; [assets/LAYOUT.md](../assets/LAYOUT.md)).
@@ -101,47 +105,49 @@ If a coloured patch shows in a fight, nobody has painted that strip yet.
 How many pixels each layer's strip fills at each wall (both camera heights together), from
 `python tools/measure_stage_layers.py --exe build-headless/a3mx` (about 5 minutes; `--dry-run`
 writes nothing, `--stages 1,6` measures some). The layers are listed farthest first, with their depth.
+Re-measured in 0.88.2 with the depths read in the fight itself; every placeholder was rewritten (none
+had been painted).
 
 | # | Menu name | Stage | Layers (depth) | Left: pixels by layer | Right: pixels by layer |
 |---|---|---|---|---|---|
-| 1 | RYU 1 | 0x00 | 2 (3), 1 (5), 0 (5) | 0: 1176, 1: 616, 2: 4424 | 1: 2084, 2: 5890 |
-| 2 | RYU 2 | 0x17 | 2 (3), 1 (5), 0 (5) | 1: 6417, 2: 6343 | 1: 1894, 2: 4808 |
-| 3 | KEN | 0x01 | 2 (3), 1 (5), 0 (5) | 1: 8272, 2: 4324 | 1: 1157, 2: 8375 |
-| 4 | AKUMA 1 | 0x02 | 2 (3), 1 (5), 0 (5) | 1: 8015, 2: 7560 | 1: 3294, 2: 3883 |
-| 5 | AKUMA 2 | 0x24 | 2 (3), 1 (5), 0 (5) | 1: 6384, 2: 6343 | 1: 1894, 2: 4808 |
-| 6 | CHARLIE | 0x03 | 2 (3), 1 (5), 0 (5) | 0: 5542, 1: 1367, 2: 3485 | 0: 1665, 1: 1253, 2: 5151 |
-| 7 | CHUNLI | 0x04 | 2 (3), 1 (5), 0 (5) | 0: 666, 1: 136, 2: 2788 | 0: 900, 1: 349, 2: 2593 |
-| 8 | ADON | 0x05 | 2 (3), 1 (5), 0 (13) | 1: 10044, 2: 7217 | 1: 8000, 2: 5956 |
-| 9 | SODOM | 0x06 | 2 (3), 1 (5), 0 (13) | 1: 2121, 2: 11030 | 1: 1664, 2: 10134 |
-| 10 | GUY | 0x07 | 2 (3), 1 (5), 0 (9) | 1: 3520, 2: 5312 | 1: 1296, 2: 7768 |
-| 11 | BIRDIE | 0x08 | 2 (3), 1 (5), 0 (9) | 1: 280, 2: 3615 | 1: 362, 2: 3419 |
-| 12 | ROSE | 0x09 | 2 (3), 1 (5), 0 (13) | 0: 235, 1: 3478, 2: 8648 | 2: 7917 |
-| 13 | SAGAT | 0x0B | 2 (3), 1 (5), 0 (5) | 0: 4601, 1: 3311, 2: 3955 | 0: 756, 1: 7725, 2: 4961 |
-| 14 | DAN | 0x0C | 2 (3), 1 (5), 0 (9) | 0: 2132, 2: 8323 | 2: 3519 |
-| 15 | SAKURA | 0x0D | 2 (3), 1 (5), 0 (13) | 1: 4292, 2: 5059 | 0: 180, 1: 2952, 2: 5688 |
-| 16 | ROLENTO | 0x0E | 2 (3), 1 (5), 0 (9) | 1: 4116, 2: 5597 | 1: 9578, 2: 5530 |
-| 17 | DHALSIM | 0x0F | 2 (3), 1 (5), 0 (5) | 1: 4482, 2: 5493 | 0: 84, 1: 4533, 2: 6220 |
-| 18 | ZANGIEF | 0x10 | 2 (3), 1 (5), 0 (5) | 1: 1888, 2: 3123 | 0: 195, 1: 1240, 2: 3293 |
-| 19 | GEN | 0x11 | 2 (3), 1 (5), 0 (9) | 2: 1247 | 1: 6303, 2: 2640 |
-| 20 | BALROG | 0x15 | 2 (3), 1 (5), 0 (13) | 1: 4480, 2: 5624 | 1: 2200, 2: 5659 |
-| 21 | CAMMY | 0x16 | 2 (3), 1 (5), 0 (5) | 0: 1200, 1: 240, 2: 9878 | 0: 1728, 1: 6240, 2: 6830 |
-| 22 | HONDA | 0x18 | 2 (3), 1 (5), 0 (13) | 2: 9815 | 1: 336, 2: 8770 |
-| 23 | BLANKA | 0x19 | 2 (3), 1 (5), 0 (5) | 1: 371, 2: 8759 | 2: 8454 |
-| 24 | MIKA | 0x1A | 2 (3), 1 (5), 0 (9) | 2: 2121 | 1: 496, 2: 3513 |
-| 25 | CODY | 0x1B | 2 (3), 1 (5), 0 (13) | 1: 7462, 2: 7298 | 1: 640, 2: 3853 |
-| 26 | VEGA | 0x1C | 2 (3), 1 (5), 0 (13) | 1: 853, 2: 9170 | 1: 849, 2: 9204 |
-| 27 | KARIN 1 | 0x1D | 2 (3), 1 (5), 0 (13) | 1: 752, 2: 3488 | 0: 5136, 1: 6066, 2: 6421 |
-| 28 | KARIN 2 | 0x29 | 2 (3), 1 (5), 0 (13) | 1: 4292, 2: 6130 | 1: 2952, 2: 5868 |
-| 29 | BISON1 | 0x0A | 2 (3), 1 (5) | nothing | 2: 714 |
-| 30 | BISON2 | 0x1E | 2 (3), 1 (5) | nothing | 2: 714 |
-| 31 | GUILE | 0x20 | 2 (3), 1 (5), 0 (9) | 1: 480, 2: 1281 | 1: 352, 2: 1072 |
-| 32 | FEILONG | 0x21 | 2 (3), 1 (5), 0 (13) | 1: 728, 2: 10944 | nothing |
-| 33 | DEEJAY | 0x22 | 2 (3), 1 (5), 0 (5) | 1: 574, 2: 9387 | 1: 6416, 2: 8148 |
-| 34 | HAWK | 0x23 | 2 (3), 1 (5), 0 (9) | 1: 758, 2: 5795 | 1: 1256, 2: 4936 |
-| 35 | BATTLE1 | 0x25 | 2 (3), 1 (5), 0 (5) | 1: 1260, 2: 864 | 1: 896, 2: 837 |
-| 36 | BATTLE2 | 0x26 | 2 (3), 1 (5), 0 (5) | 1: 192, 2: 1488 | 1: 160, 2: 1253 |
-| 37 | BATTLE3 | 0x27 | 2 (3), 1 (5), 0 (5) | 1: 240, 2: 1478 | 1: 192, 2: 1253 |
-| 38 | BATTLE4 | 0x28 | 2 (3), 1 (5), 0 (5) | 1: 192, 2: 1488 | 1: 160, 2: 1253 |
+| 1 | RYU 1 | 0x00 | 0 (5), 2 (9), 1 (13) | 0: 4094, 1: 616, 2: 1750 | 0: 7072, 2: 333 |
+| 2 | RYU 2 | 0x17 | 0 (5), 2 (9), 1 (13) | 0: 8745 | 0: 3995, 1: 175, 2: 1713 |
+| 3 | KEN | 0x01 | 0 (5), 1 (9), 2 (13) | 0: 6345, 1: 6956 | 0: 8443, 1: 364 |
+| 4 | AKUMA 1 | 0x02 | 0 (5), 2 (9), 1 (13) | 0: 8758 | 0: 3657, 1: 1575, 2: 451 |
+| 5 | AKUMA 2 | 0x24 | 0 (5), 2 (9), 1 (13) | 0: 8745, 1: 126 | 0: 3995, 1: 175, 2: 1713 |
+| 6 | CHARLIE | 0x03 | 0 (5), 2 (9), 1 (13) | 0: 9362 | 0: 8119 |
+| 7 | CHUNLI | 0x04 | 0 (5), 1 (9), 2 (13) | 0: 3145 | 0: 3452 |
+| 8 | ADON | 0x05 | 2 (5), 1 (9), 0 (13) | 1: 10044, 2: 7217 | 1: 8000, 2: 5956 |
+| 9 | SODOM | 0x06 | 1 (5), 2 (9), 0 (13) | 1: 10513, 2: 1392 | 1: 11114 |
+| 10 | GUY | 0x07 | 2 (5), 0 (9), 1 (13) | 0: 2160, 1: 1504, 2: 5312 | 1: 1296, 2: 7768 |
+| 11 | BIRDIE | 0x08 | 2 (5), 0 (9), 1 (13) | 0: 229, 2: 3615 | 0: 218, 1: 144, 2: 3419 |
+| 12 | ROSE | 0x09 | 2 (5), 1 (9), 0 (13) | 0: 235, 1: 3478, 2: 8648 | 2: 7917 |
+| 13 | SAGAT | 0x0B | 0 (5), 1 (9), 2 (13) | 0: 8254, 1: 167 | 0: 8068, 1: 4419 |
+| 14 | DAN | 0x0C | 2 (5), 0 (9), 1 (13) | 0: 2132, 2: 8323 | 2: 3519 |
+| 15 | SAKURA | 0x0D | 2 (5), 1 (9), 0 (13) | 1: 4292, 2: 5059 | 0: 180, 1: 2952, 2: 5688 |
+| 16 | ROLENTO | 0x0E | 2 (5), 0 (9), 1 (13) | 0: 2052, 1: 3168, 2: 5597 | 0: 2217, 1: 7377, 2: 5530 |
+| 17 | DHALSIM | 0x0F | 0 (5), 2 (9), 1 (13) | 0: 5654 | 0: 8700 |
+| 18 | ZANGIEF | 0x10 | 0 (5), 2 (9), 1 (13) | 0: 2169, 1: 1291, 2: 2415 | 0: 2639, 1: 967, 2: 2259 |
+| 19 | GEN | 0x11 | 2 (5), 0 (9), 1 (13) | 2: 1247 | 0: 66, 1: 6303, 2: 2640 |
+| 20 | BALROG | 0x15 | 2 (5), 1 (9), 0 (13) | 1: 4480, 2: 5624 | 1: 2200, 2: 5659 |
+| 21 | CAMMY | 0x16 | 0 (5), 2 (9), 1 (13) | 0: 10061, 1: 240, 2: 2342 | 0: 9810, 1: 192, 2: 2096 |
+| 22 | HONDA | 0x18 | 2 (5), 1 (9), 0 (13) | 2: 9815 | 1: 336, 2: 8770 |
+| 23 | BLANKA | 0x19 | 0 (5), 2 (9), 1 (13) | 0: 8250, 1: 247, 2: 1120 | 0: 8470 |
+| 24 | MIKA | 0x1A | 2 (5), 0 (9), 1 (13) | 2: 2121 | 0: 496, 2: 3513 |
+| 25 | CODY | 0x1B | 2 (5), 1 (9), 0 (13) | 1: 7462, 2: 7298 | 1: 640, 2: 3853 |
+| 26 | VEGA | 0x1C | 2 (5), 1 (9), 0 (13) | 1: 853, 2: 9170 | 1: 849, 2: 9204 |
+| 27 | KARIN 1 | 0x1D | 2 (5), 1 (9), 0 (13) | 1: 752, 2: 3488 | 0: 5136, 1: 6066, 2: 6421 |
+| 28 | KARIN 2 | 0x29 | 2 (5), 1 (9), 0 (13) | 1: 4292, 2: 6130 | 1: 2952, 2: 5868 |
+| 29 | BISON1 | 0x0A | 2 (13) | nothing | 2: 714 |
+| 30 | BISON2 | 0x1E | 2 (13) | nothing | 2: 714 |
+| 31 | GUILE | 0x20 | 2 (5), 0 (9), 1 (13) | 1: 480, 2: 1281 | 1: 352, 2: 1072 |
+| 32 | FEILONG | 0x21 | 2 (5), 1 (9), 0 (13) | 1: 728, 2: 10944 | 1: 11520 |
+| 33 | DEEJAY | 0x22 | 0 (5), 2 (9), 1 (13) | 0: 9289, 1: 574, 2: 320 | 0: 9236, 1: 5600, 2: 320 |
+| 34 | HAWK | 0x23 | 2 (5), 0 (9), 1 (13) | 0: 520, 1: 238, 2: 5795 | 1: 1256, 2: 4936 |
+| 35 | BATTLE1 | 0x25 | 0 (5), 2 (9), 1 (13) | 0: 1320, 1: 240, 2: 576 | 0: 991, 1: 192, 2: 752 |
+| 36 | BATTLE2 | 0x26 | 0 (5), 2 (9), 1 (13) | 0: 1226, 1: 192, 2: 958 | 0: 927, 1: 160, 2: 848 |
+| 37 | BATTLE3 | 0x27 | 0 (5), 2 (9), 1 (13) | 0: 656, 1: 240, 2: 1478 | 0: 463, 1: 192, 2: 1232 |
+| 38 | BATTLE4 | 0x28 | 0 (5), 2 (9), 1 (13) | 0: 1226, 1: 192, 2: 958 | 0: 927, 1: 160, 2: 848 |
 
 Measured at the camera's limits with both fighters pinned at the wall, on the ground and high in the
 air. A gap is a pixel where a magenta probe drawn behind everything shows through (so black that a
