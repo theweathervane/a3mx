@@ -3153,3 +3153,175 @@ SFA_FUNC(0889E46C, row_of_nine_by_width) {
     c->r[29] += 0x20;
     c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
 }
+
+/* ---- 0.81.0 ---- */
+
+/* (object, fighter): the next step (+4); +148 = 1, +86 = 8, 0x092E3E98 = 0x08A28418, layer 1; +96 /
+   +32 / +34 / +36 cleared; x acceleration +104 = 3.0 (1.5 with the fighter's +424 bit 0), turned on
+   the second side; +13 = the other side, +12 = 0xFF on the first; +118 / +119 / +112 / +114 / +100 /
+   +108 from the s16 around 0x08A2AAA4 + 16 × side; then its animation by side and drawn. */
+SFA_FUNC(0889BAE8, setup_slide_by_side) {
+    gaddr o = ARG(0), f = ARG(1), s[4] = { c->r[16], c->r[17], c->r[18], c->r[19] };
+    c->r[29] -= 0x30;
+    c->r[16] = f; c->r[17] = o; c->r[18] = 0xFF; c->r[19] = 0;
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *W(o + 148) = 1; *H(o + 86) = 8;
+    *W(0x092E3E98u) = 0x08A28418u;
+    c->r[4] = o; c->r[5] = 1; f_0889CFE8(c);
+    *W(o + 96) = 0; *H(o + 36) = 0; *H(o + 34) = 0; *H(o + 32) = 0;
+    uint32_t accel = (S16(f + 424) & 1) ? 0x18000u : 0x30000u;
+    int32_t side = S8(f + 337);
+    uint8_t b12 = 0xFF;
+    if (side != 0) { accel = 0u - accel; b12 = 0; }
+    *W(o + 104) = accel;
+    *B(o + 13) = (uint8_t)(side ^ 1);
+    gaddr t = 0x08A2AAA4u + (uint32_t)(side * 16);
+    *B(o + 12) = b12;
+    *B(o + 118) = (uint8_t)S16(t - 8);
+    *B(o + 119) = (uint8_t)S16(t - 2);
+    *H(o + 112) = (uint16_t)S16(t);
+    *H(o + 114) = (uint16_t)S16(t + 2);
+    *W(o + 100) = (uint32_t)(int32_t)S16(t + 4) << 8;
+    *W(o + 108) = (uint32_t)(int32_t)S16(t + 6) << 8;
+    c->r[4] = o; c->r[5] = f; f_0889BEC4(c);
+    c->r[4] = o; f_088215C4(c);
+    c->r[29] += 0x30;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3];
+}
+
+/* (object, fighter): with the fighter's +424 bit 0, the next substep's count (+5) on; otherwise layer
+   1, +148 cleared, +86 = 8, the next part, +78 / +73 / +12 = -1, +80 / +81 = -128, +13 = 0x20 + 2 ×
+   side, facing by GAME + 53 bit 0 in modes 8 and 15 (else the other side's), motion entry 0x43 + side,
+   y 0x20, and a pool-42 object (kind 0x21, type 6) pointing back with the fighter, kept in +48. */
+SFA_FUNC(0889A8C0, setup_side_43_with_marker) {
+    gaddr o = ARG(0), f = ARG(1), s[3] = { c->r[16], c->r[17], c->r[18] };
+    if (S16(f + 424) & 1) { *B(o + 5) = (uint8_t)(*B(o + 5) + 1); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o; c->r[18] = 1;
+    c->r[4] = o; c->r[5] = 1; f_0889CFE8(c);
+    *W(o + 148) = 0; *H(o + 86) = 8;
+    next_part(o);
+    *B(o + 78) = 0xFF; *B(o + 73) = 0xFF; *B(o + 80) = 0x80; *B(o + 81) = 0x80; *B(o + 12) = 0xFF;
+    *B(o + 13) = (uint8_t)((S8(f + 337) << 1) + 0x20);
+    int8_t mode = S8(GAME + 114);
+    if (mode == 15 || mode == 8) *B(o + 11) = (S8(GAME + 53) & 1) ? 1 : 0;
+    else *B(o + 11) = (uint8_t)(S8(f + 337) ^ 1);
+    c->r[4] = o; c->r[5] = (uint32_t)(S8(f + 337) + 0x43) & 0xFFFF; f_0889CEE4(c);
+    *H(o + 22) = 0x20;
+    gaddr n = CALL2(f_08822F54, 0x21, 6);
+    if (n != 0) {
+        *B(n) = 1; *W(n + 88) = o; *W(n + 92) = f; *B(n + 78) = 2;
+        *W(o + 48) = n;
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}
+
+/* (record): in the usual layout only (BATTLE + 56 = 0): the two fighters' gauges (+556) placed at
+   +0x6FA (0xAA - fighter 1's) and +0xD3A (0xD6 + fighter 2's); while a fighter's +590 is set and its
+   gauge is 17 or more, a kind-0x1F marker is made once (+27 / +47) at its gauge's end, y 0xDC, and the
+   flag is dropped when +590 clears. */
+SFA_FUNC(0888D924, gauge_markers) {
+    gaddr r = ARG(0), s[3] = { c->r[16], c->r[17], c->r[18] };
+    if (S16(BATTLE + 56) != 0) return;
+    gaddr f1 = FIGHTER_1, f2 = FIGHTER_2;
+    c->r[29] -= 0x20;
+    c->r[16] = r; c->r[17] = f2; c->r[18] = f1;
+    *H(r + 0x6F4 + 6) = (uint16_t)(0xAA - S8(f1 + 556));
+    if (S8(f1 + 590) != 0) {
+        if (S8(f1 + 556) >= 17 && S8(r + 27) == 0) {
+            gaddr n = CALL2(f_08822EAC, 0x1F, 0);
+            if (n != 0) {
+                *W(n + 88) = f1; *B(n + 11) = 0;
+                *H(n + 18) = (uint16_t)(0xBC - S8(f1 + 556)); *H(n + 22) = 0xDC;
+                *B(r + 27) = 1;
+            }
+        }
+    } else if (S8(r + 27) != 0) *B(r + 27) = 0;
+    *H(r + 0xD34 + 6) = (uint16_t)(S8(f2 + 556) + 0xD6);
+    if (S8(f2 + 590) != 0) {
+        if (S8(f2 + 556) >= 17 && S8(r + 47) == 0) {
+            gaddr n = CALL2(f_08822EAC, 0x1F, 0);
+            if (n != 0) {
+                *W(n + 88) = f2; *B(n + 11) = 1;
+                *H(n + 18) = (uint16_t)(S8(f2 + 556) + 0xC4); *H(n + 22) = 0xDC;
+                *B(r + 47) = 1;
+            }
+        }
+    } else if (S8(r + 47) != 0) *B(r + 47) = 0;
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}
+
+/* (object): layer 0, the next step (+4), +24 = 5, +82 = 8, +148 = 2, +86 = 8; it starts at the place
+   for BATTLE + 98 (the stage itself when its byte at 0x08A2AF54 is set) from the pairs at 0x08A2AFB0
+   (x less 64) and travels to the stage's (BATTLE + 0): speeds +96 / +100 = the distance × 2^21 /
+   0x21000 << 8, accelerations +104 / +108 = minus that << 3; animation 0x08A283EC[10], then drawn
+   unless the stage says not. */
+SFA_FUNC(0889DE64, travel_to_stage) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[4] = o; c->r[5] = 0; f_0889CFE8(c);
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *H(o + 24) = 5; *H(o + 82) = 8; *W(o + 148) = 2; *H(o + 86) = 8;
+    int32_t stage = S16(BATTLE + 0);
+    int32_t from = S16(BATTLE + 98);
+    if (*B(0x08A2AF54u + (uint32_t)stage) != 0) from = stage;
+    gaddr p = 0x08A2AFB0u + (uint32_t)(from << 2);
+    *H(o + 18) = (uint16_t)(S16(p) - 0x40);
+    *H(o + 22) = (uint16_t)S16(p + 2);
+    gaddr q = 0x08A2AFB0u + (uint32_t)((int32_t)S16(BATTLE + 0) << 2);
+    int32_t tx = S16(q) - 0x40;
+    *H(o + 112) = (uint16_t)tx;
+    int32_t ty = S16(q + 2);
+    uint32_t dx = (uint32_t)(tx - S16(o + 18)), dy = (uint32_t)(ty - S16(o + 22));
+    DIV(c, dx << 21, 0x21000);
+    uint32_t a = c->lo;
+    *H(o + 114) = (uint16_t)ty;
+    DIV(c, dy << 21, 0x21000);
+    uint32_t b = c->lo;
+    *W(o + 104) = 0u - (a << 3);
+    *W(o + 96) = a << 8;
+    *W(o + 108) = 0u - (b << 3);
+    *W(o + 100) = b << 8;
+    c->r[4] = o; c->r[5] = *W(0x08A283ECu + 40); f_0882196C(c);
+    c->r[4] = o; f_0889E3F8(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object, fighter): with the fighter's +424 bit 0, the next substep's count (+5) on; otherwise the
+   next part: +148 cleared, +86 = 8, +78 = -1, layer 1, +13 the fighter's +2 (+12 = 0xFF when set),
+   motion entry by side, y 0x31. With +10: +12 / +13 cleared, facing by GAME + 53 bit 0 in modes 8 and
+   15 (0 when set), else the side; +160 = 0xC0, animation 0x08A28950[3]. Without: 5 lower, the side's
+   entry at 0x08A287FE (+4 = 0x127) as its animation. */
+SFA_FUNC(08899B6C, setup_by_side_or_10) {
+    gaddr o = ARG(0), f = ARG(1), s16 = c->r[16], s17 = c->r[17];
+    if (S16(f + 424) & 1) { *B(o + 5) = (uint8_t)(*B(o + 5) + 1); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = o;
+    next_part(o);
+    *W(o + 148) = 0; *H(o + 86) = 8; *B(o + 78) = 0xFF;
+    c->r[4] = o; c->r[5] = 1; f_0889CFE8(c);
+    uint8_t v = *B(f + 2);
+    *B(o + 13) = v;
+    *B(o + 12) = v != 0 ? 0xFF : 0;
+    c->r[4] = o; c->r[5] = (uint32_t)(int32_t)S8(f + 337) & 0xFFFF; f_0889CEE4(c);
+    *H(o + 22) = 0x31;
+    if (*B(o + 10) != 0) {
+        *B(o + 12) = 0; *B(o + 13) = 0;
+        int8_t mode = S8(GAME + 114);
+        if (mode == 15 || mode == 8) *B(o + 11) = (S8(GAME + 53) & 1) ? 0 : 1;
+        else *B(o + 11) = (uint8_t)S8(f + 337);
+        *B(o + 160) = 0xC0;
+        c->r[4] = o; c->r[5] = *W(0x08A28950u + 12); f_0882196C(c);
+    } else {
+        *H(o + 22) = (uint16_t)(S16(o + 22) + 5);
+        gaddr e = 0x08A287FEu + (uint32_t)(S8(f + 337) << 3);
+        *H(e + 4) = 0x127;
+        c->r[4] = o; c->r[5] = 0x08A287FEu + (uint32_t)(S8(f + 337) << 3); f_0882196C(c);
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s16; c->r[17] = s17;
+}

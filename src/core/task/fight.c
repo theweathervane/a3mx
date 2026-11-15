@@ -1508,3 +1508,91 @@ SFA_FUNC(0885847C, game_add_score_by_record) {
     if (amount == 0) return;
     score_add(f, amount);
 }
+
+/* ---- 0.81.0 ---- */
+
+/* (amount, fighter): score added as 0x088211CC does, but in the team modes a CPU fighter's score goes
+   up too when it has a human partner (+1168); outside them only a human's. World Tour's total only for
+   a human. */
+SFA_FUNC(08821080, game_add_score_team) {
+    uint32_t amount = ARG(0);
+    gaddr f = ARG(1);
+    int8_t mode = S8(GAME + G_MODE);
+    if (mode == 3 && S8(WORLD_TOUR + 899) != 0) return;
+    if (S8(BATTLE + 61) != 0) return;
+    int team = mode == 15 || (mode == 7 && S8(BATTLE + 79) == 5) || (mode == 16 && S8(BATTLE + 159) == 3);
+    if (team) {
+        gaddr partner = *W(f + 1168);
+        if (S8(f + 373) == 0 || (partner != 0 && S8(partner + 373) == 0)) {
+            add_capped(f + 352, amount);
+            add_capped(partner + 352, amount);
+        }
+    } else if (S8(f + 373) == 0) add_capped(f + 352, amount);
+    if (S8(GAME + G_MODE) == 3 && S8(f + 373) == 0) add_capped(WORLD_TOUR + 920, amount);
+}
+
+/* (game, battle, fighter, n): the round's pick (BATTLE + 100) and its first word into + 98. In a
+   continuing match a pick at random (0x0883021C with n) when + 90 is set; otherwise in every mode but
+   1, 2, 13, 16 and 19. Then, unless + 90: + 17 cleared, and in Final Battle (9) or for rounds 8 and 9
+   (+ 20; not in mode 3 of GAME + 57) the s8 from 0x08A0F341 (the fighter's character, + 0x2A for
+   round 9; entry 0x2A in Final Battle) becomes the pick with + 17 = -1 when not negative; a fighter
+   with + 413 takes 10 for round 26. */
+SFA_FUNC(0882FC2C, game_round_pick) {
+    gaddr g = ARG(0), b = ARG(1), f = ARG(2);
+    uint32_t n = ARG(3);
+    gaddr s[3] = { c->r[16], c->r[17], c->r[18] };
+    c->r[29] -= 0x20;
+    c->r[16] = b; c->r[17] = f; c->r[18] = g;
+    *H(b + 98) = *H(b);
+    if (S8(g + 186) != 0) {
+        if (S8(b + 90) != 0) *H(b + 100) = (uint16_t)CALL1(f_0883021C, n);
+    } else {
+        int8_t mode = S8(g + G_MODE);
+        if (mode != 1 && mode != 13 && mode != 19 && mode != 2 && mode != 16) *H(b + 100) = (uint16_t)CALL1(f_0883021C, n);
+    }
+    int8_t flag = S8(b + 90);
+    *B(b + 17) = 0;
+    if (flag == 0) {
+        int32_t index = -1;
+        if (S8(g + G_MODE) == 9) index = 0x2A;
+        else if (S8(g + 57) != 3) {
+            int16_t round = (int16_t)*H(b + 20);
+            if (S8(f + 413) != 0) { if (round == 0x1A) *H(b + 100) = 0xA; }
+            else if (round == 8) index = S8(f + 338);
+            else if (round == 9) index = S8(f + 338) + 0x2A;
+        }
+        if (index >= 0) {
+            int8_t v = S8(0x08A0F341u + (uint32_t)index);
+            if (v >= 0) { *H(b + 100) = (uint16_t)v; *B(b + 17) = 0xFF; }
+        }
+    }
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
+}
+
+/* (game, battle): which sides have lost every fighter (health + 112 negative): bit 0 the second side,
+   bit 1 the first, by the layout (+ 56): 0 fighters 1 / 2; 1 fighter 1 against the pair 3 / 4 (only 3
+   counts while 4's + 810 is 4); 2 fighter 2 against 3 / 4 the same way; 3 fighters 1 and 2 (either
+   one, or both while the game's + 137 is clear) against 3. 0 for other layouts. */
+static int down(gaddr f) { return (int16_t)*H(f + 112) < 0; }
+SFA_FUNC(088262C0, game_sides_down) {
+    gaddr g = ARG(0);
+    int16_t layout = (int16_t)*H(ARG(1) + 56);
+    uint32_t r = 0;
+    switch (layout) {
+    case 0: r = (down(FIGHTER_2) ? 1 : 0) + (down(FIGHTER_1) ? 2 : 0); break;
+    case 1: case 2: {
+        int pair = S8(FIGHTER_4 + 810) == 4 ? down(FIGHTER_3) : (down(FIGHTER_3) && down(FIGHTER_4));
+        r = (pair ? 1 : 0) + (down(layout == 1 ? FIGHTER_1 : FIGHTER_2) ? 2 : 0);
+        break;
+    }
+    case 3: {
+        r = down(FIGHTER_3) ? 1 : 0;
+        int lost = S8(g + 137) != 0 ? (down(FIGHTER_1) || down(FIGHTER_2)) : (down(FIGHTER_1) && down(FIGHTER_2));
+        if (lost) r += 2;
+        break;
+    }
+    default: break;
+    }
+    RETURN(r);
+}

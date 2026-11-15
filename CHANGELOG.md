@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.81.0
+- **More of the game decompiled:** 10 more functions are hand-written C. They include which side has lost all its fighters, the fighters' starting places, the round's stage pick in modes that change it, score for a team, a search through a fighter's move slots, markers on two gauges, and more objects of the screens around a fight (one travelling to the stage's place, sliding panels by side). Nothing changes in play.
+
 ## 0.80.0
 - **More of the game decompiled:** 9 more functions are hand-written C. They include how long both fighters are held when a hit lands, a human fighter's punch or kick starting an attack, a CPU script starting an attack routine, score from a record, a value set by which two characters meet, and more objects of the screens around a fight (the round's pictures, a row of nine by a character's width, records lit for the mode, the director's start). Nothing changes in play.
 

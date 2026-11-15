@@ -1716,3 +1716,66 @@ SFA_FUNC(08878798, fighter_script_routine_1_5) {
     c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
     RETURN(p + 2);
 }
+
+/* ---- 0.81.0 ---- */
+
+/* (fighter, v, mask): for each of the fighter's eight slots (+1150, s16 each) named by the mask, its
+   number less 15 picks an 8-byte entry of the character's first table (0x08A1B3F8; under 24, below its
+   count at 0x08A1B4A0) or second (0x08A1B4F4, less 24 again; count 0x08A1B59C); an entry whose up to
+   three s16 after its first (until -1) include v answers its first u16. Otherwise 0. */
+SFA_FUNC(08867A60, fighter_find_in_slots) {
+    gaddr f = ARG(0);
+    uint32_t v = ARG(1), mask = ARG(2) & 0xFF;
+    int32_t ch = S8(f + 338);
+    gaddr first = *W(0x08A1B3F8u + (uint32_t)(ch << 2)), second = *W(0x08A1B4F4u + (uint32_t)(ch << 2));
+    int32_t count1 = *H(0x08A1B4A0u + (uint32_t)(ch * 2)) & 0xFF, count2 = *H(0x08A1B59Cu + (uint32_t)(ch * 2)) & 0xFF;
+    for (uint32_t i = 0; i < 8; i++) {
+        if ((mask & (1u << i)) == 0) continue;
+        int32_t k = (int32_t)(((uint32_t)S16(f + 1150 + i * 2) - 15) & 0xFFFF);
+        gaddr e;
+        if (k < 24) { if (k >= count1) continue; e = first + (uint32_t)k * 8u; }
+        else { k = (k - 24) & 0xFFFF; if (k >= count2) continue; e = second + (uint32_t)k * 8u; }
+        for (int j = 0; j < 3; j++) {
+            int16_t h = S16(e + 2 + (uint32_t)j * 2);
+            if (h == -1) break;
+            if ((uint32_t)(int32_t)h == v) { RETURN(*H(e)); return; }
+        }
+    }
+    RETURN(0);
+}
+
+void f_088D5E44(Cpu *c);   /* game_network_battle (task/fight.c) */
+
+/* (fighter): its place at the start: facing and opponent side (+11 / +697) 1 for the first of a pair
+   (+121 clear), else 0; turned round in the layouts 2 and 3 when GAME + 57 bit 0 is clear, or in a
+   network battle; at x 0x280 (+16 / +20 cleared), y 0x28 (+132 too), moved back 0x60 (0x4A for the
+   fighter on the side GAME + 57 names in layout 3, 0x40 for the third in layouts 1 and 2), towards
+   the way it faces. */
+SFA_FUNC(08864BC8, fighter_start_place) {
+    gaddr f = ARG(0), s[4] = { c->r[16], c->r[17], c->r[18], c->r[19] };
+    c->r[29] -= 0x20;
+    c->r[16] = f; c->r[17] = 0xFFFFFFA0u; c->r[18] = 3; c->r[19] = BATTLE;
+    uint8_t first = S8(f + 121) == 0;
+    *B(f + F_FACING) = first; *B(f + F_OPPONENT_SIDE) = first;
+    int turn = 0, zero20 = 1;
+    if (S16(BATTLE + BT_LAYOUT) >= 2) {
+        if ((S8(GAME + 57) & 1) == 0) turn = 1;
+        else { f_088D5E44(c); turn = c->r[2] != 0; }
+    }
+    if (turn) {
+        *B(f + F_FACING) = (uint8_t)(*B(f + F_FACING) ^ 1);
+        *B(f + F_OPPONENT_SIDE) = (uint8_t)(S8(f + F_OPPONENT_SIDE) ^ 1);
+    }
+    if (zero20) *H(f + 20) = 0;
+    *H(f + 16) = 0; *H(f + 18) = 0x280; *H(f + 132) = 0x28; *H(f + 22) = 0x28;
+    int16_t layout = S16(BATTLE + BT_LAYOUT);
+    int16_t off = -0x60;
+    int8_t side = S8(f + F_SIDE);
+    if (layout == 3) { if ((S8(GAME + 57) & 1) ? side == 1 : side == 0) off = -0x4A; }
+    else if (layout == 1) { if (side == 2) off = -0x40; }
+    else if (layout == 2) { if (side == 3) off = -0x40; }
+    if (*B(f + F_FACING) == 0) off = (int16_t)-off;
+    *H(f + 18) = (uint16_t)(S16(f + 18) + off);
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3];
+}

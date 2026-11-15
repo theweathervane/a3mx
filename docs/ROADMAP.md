@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  9.31% decompiled
+Overall  [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  9.49% decompiled
 
-Functions                                [░░░░░░░░░░]   9.38%  1,396 / 14,881 functions
-Instructions                             [░░░░░░░░░░]   9.31%  45,100 / 484,213 instructions
+Functions                                [░░░░░░░░░░]   9.45%  1,406 / 14,881 functions
+Instructions                             [░░░░░░░░░░]   9.49%  45,958 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  20.63%  42,067 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  21.05%  42,925 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.72%  1,845 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -166,6 +166,9 @@ Done:
 - [x] The frames both fighters are held on a hit (0x0887223C), a button attack (0x0886BE50), a script's
       routine 1.5 (0x08878798), score by a record (0x0885847C), the characters met (0x088644F4), and four
       more screen and director objects (0.80.0)
+- [x] The sides down (0x088262C0), the fighters' starting places (0x08864BC8), the round's pick
+      (0x0882FC2C), team score (0x08821080), the move slots' search (0x08867A60), the gauges' markers, and
+      four more screen objects (0.81.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

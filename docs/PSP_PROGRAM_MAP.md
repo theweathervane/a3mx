@@ -746,6 +746,19 @@ owner at + 88, and frame data at + 296.
 | 0x088AB814 | the director's start: pool 5 emptied, scrolls reset, the layer's + 122 = 6, kind-0x7F objects (types 2, 1, 0, 4 × 9, 6) with 14 free in pool 7 (`director.c`) |
 | `object/screen_steps.c` | 0x0889F5F8 (round pictures from 0x08A2B1F4), 0x0888A224 (lit by mode, 0x08A269B0), 0x0889E46C (nine by width, 0x08A2B0B0) |
 
+**Sides down, starting places and more** (0.81.0).
+
+| Address | What |
+|---|---|
+| 0x088262C0 | (game, battle): bit 0 second side down, bit 1 first, by layout (pairs 3 / 4 by fighter 4's + 810 = 4; layout 3 by the game's + 137) (`task/fight.c`) |
+| 0x08864BC8 | a fighter's start: facing by + 121, turned in layouts 2 / 3 (GAME + 57 bit 0, network), x 0x280 less 0x60 / 0x4A / 0x40 towards its facing, y 0x28 |
+| 0x0882FC2C | (game, battle, fighter, n): BATTLE + 98 / + 100 / + 17: picks at random (0x0883021C) by mode or a continuing match; rounds 8 / 9 and Final Battle from 0x08A0F341 (`task/fight.c`) |
+| 0x08821080 | team score: a CPU fighter's too with a human partner (`task/fight.c`) |
+| 0x08867A60 | (fighter, v, mask): an entry of the character's tables 0x08A1B3F8 / 0x08A1B4F4 by its slots + 1150 naming v; its first u16 |
+| 0x0888D924 | the gauges (+ 556) placed at + 0x6FA / + 0xD3A; kind-0x1F markers at 17 or more while + 590 (flags + 27 / + 47) |
+| 0x0889DE64 | an object travelling from BATTLE + 98's place to the stage's (0x08A2AFB0), speeds by a divide by 0x21000 |
+| `object/screen_steps.c` | 0x0889BAE8 (0x08A2AAA4 by side), 0x0889A8C0, 0x08899B6C |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11
