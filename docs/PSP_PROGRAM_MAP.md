@@ -801,6 +801,23 @@ owner at + 88, and frame data at + 296.
 | 0x08987D8C / 0x089880E4 / 0x089CEF04 | + 84 from 0x08A92E30 (below 345) / 0x08A930E2 (below 346); an animation from the list at 0x09358BE0 + 280 |
 | 0x08817C94 / 0x088B3D94 / 0x089DE61C / 0x088CEE80 | pools reset and + 2 or 0x08B0284C + 8..10 cleared; three steps in a row; + 1 by GAME + 4 / + 6 |
 
+**More small steps** (0.88.0), all in `object/small_steps.c`.
+
+| Address | What |
+|---|---|
+| 0x088B0248 / 0x088B3DDC | 0x08B02848 / 0x08B02E08 = 1, then the step 0x08A2F21C / 0x08A3731C by + 3 |
+| 0x088BDDA8 / 0x089DF82C | the step 0x08A3AFE8[GAME + 4] given (GAME, BATTLE); 0x08AB79CC[GAME + 6] given (GAME, object) |
+| 0x089879F0 / 0x08987DC8 / 0x0888AAFC / 0x0883A388 | steps by + 4 from 0x08A9477C / 0x08A947C4 (+ 38 from the owner first); by + 92 from 0x08A26B3C; by + 6 from 0x08A12230, then 0x08887AFC and the frame's end |
+| 0x0880A7B0 / 0x0880A7F4 | text n of 0x08A03CC0 (kind 5) / 0x08A03CD4 (kind 6) at (x, y), by 0x0880A6CC |
+| 0x08857678 | BATTLE + 112, or the second fighter in layout 3 when GAME + 57's bit 0 is clear |
+| 0x0886D29C | the opponent (+ 92), unless the computer, scores 0x08A1BE04[+ 126] (99 at most) through 0x08821080 |
+| 0x0887763C / 0x0887D900 / 0x08834318 / 0x08827A94 / 0x08876998 | a fighter: script read (+ 696) or routine 1 again; + 9 = 2 and its animation by type; + 340 on and the side's bit out of + 42; + 452 = + 352 (and + 478 / + 451 in mode 0x12); + 208..+ 224 from + 128 |
+| 0x088AC2F0 / 0x088B3628 / 0x088B3BC4 | a word (+ 84 / + 12) counts down, then the fade out and + 9 / + 3 on |
+| 0x08855420 / 0x08855508 / 0x08855934 / 0x08856960 / 0x08856D58 / 0x0890CC04 / 0x0899939C | objects moving until a mark (0x700000, -0x680000, 0xF00000, y in 0x740000..0x8C0000) or by their facing |
+| 0x088B0434 / 0x088B0608 / 0x088B1578 / 0x088B2838 / 0x088B2930 / 0x088B2978 / 0x088B4E74 / 0x088ABACC | objects drawn or moved on by GAME + 10 / + 16 / + 22 |
+| 0x088BD2F0 / 0x088AB1D8 / 0x088A1750 / 0x08892A58 | k's place in 0x08A3AF8C's zero-ended bytes; 0x08B027B0 / 0x08B02810 from 0x08A2C6F8; 0x09517A50 / 7A28 by GAME + 53; 0x08A058A0 + 60 / 62 / 64 |
+| 0x08821A64 / 0x088EAC84 / 0x08826A14 / 0x088B4878 / 0x0896A4D4 / 0x088BD0C8 | fields from a record; + 6 on and cleared; + 5 on and the swap 0x088B48F0; animate and draw; + 4 = 2 by the camera's y |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

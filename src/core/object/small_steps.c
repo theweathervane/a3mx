@@ -601,3 +601,451 @@ SFA_FUNC(088569B0, count_down_74_then_draw) {
     c->r[4] = o; f_088215C4(c);
     c->r[29] += 0x20;
 }
+
+/* ---- 0.88.0 ---- */
+
+void f_0880A6CC(Cpu *c);   /* game_text (text/queue.c) */
+void f_0880AA74(Cpu *c);   /* game_start_fade_out (task/fade.c) */
+void f_08887AFC(Cpu *c);   /* game_objects_3 (lists.c) */
+void f_0880B6CC(Cpu *c);   /* game_end_of_frame (lists.c) */
+void f_08821424(Cpu *c);   /* object_draw_if_on_screen (frame.c) */
+void f_0887D990(Cpu *c);   /* object_set_animation_by_type (motion.c) */
+void f_0887DAC8(Cpu *c);   /* steps.c */
+void f_088B1D10(Cpu *c);   /* draw_by_game_16 (screen_steps.c) */
+void f_088B4AB4(Cpu *c);   /* empty */
+void f_08821080(Cpu *c);   /* game_add_score_team (task/fight.c) */
+void f_0887A10C(Cpu *c);   /* fighter_script_read */
+
+#define FIGHTER_1 0x092E3EA0u
+#define FIGHTER_2 0x092E4338u
+
+/* The first fighter, or the second in layout 3 when GAME + 57's bit 0 is clear; also BATTLE + 112. */
+SFA_FUNC(08857678, fighter_by_layout_3) {
+    uint32_t r = *W(BATTLE + 112);
+    if (S16(BATTLE + 56) == 3 && (S8(GAME + 57) & 1) == 0) r = FIGHTER_2;
+    RETURN(r);
+}
+
+/* (fighter): +208 .. +224 = the five words at its +128. */
+SFA_FUNC(08876998, copy_five_from_128) {
+    gaddr f = ARG(0), w = *W(f + 128);
+    for (int k = 0; k < 5; k++) *W(f + 208 + k * 4) = *W(w + k * 4);
+}
+
+/* 0 only when the s8 at 0x08A058A0 + 60 / 62 / 64 are 3 / 1 / 1; otherwise 1. */
+SFA_FUNC(08892A58, check_058a0) {
+    gaddr t = 0x08A058A0u;
+    RETURN(!(S8(t + 60) == 3 && S8(t + 62) == 1 && S8(t + 64) == 1));
+}
+
+/* (a, b): 0x09517A50 / 0x09517A28 into *a / *b when GAME + 53 is 2, the other way round otherwise. */
+SFA_FUNC(088A1750, pick_7a50_7a28) {
+    gaddr a = ARG(0), b = ARG(1);
+    int two = S8(GAME + 53) == 2;
+    *W(a) = two ? 0x09517A50u : 0x09517A28u;
+    *W(b) = two ? 0x09517A28u : 0x09517A50u;
+}
+
+/* (object): a flag byte set, then the step table[+3] on the object. */
+static void flag_then_step_by_3(Cpu *c, gaddr flag, gaddr table) {
+    gaddr o = ARG(0);
+    *B(flag) = 1;
+    uint32_t fn = *W(table + (uint32_t)*B(o + 3) * 4);
+    c->r[29] -= 0x20;
+    c->r[5] = fn; c->r[6] = table;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(088B0248, step_by_3_f21c) { flag_then_step_by_3(c, 0x08B02848u, 0x08A2F21Cu); }
+SFA_FUNC(088B3DDC, step_by_3_731c) { flag_then_step_by_3(c, 0x08B02E08u, 0x08A3731Cu); }
+
+/* (object): drawn while GAME + 10 has bit 8 and not bit 9. */
+SFA_FUNC(088B0434, draw_on_game_10_100) {
+    uint32_t h = *H(GAME + 10) & 0xFF00;
+    c->r[29] -= 0x20;
+    if (!(h & 0x200) && (h & 0x100)) f_088215C4(c);
+    c->r[29] += 0x20;
+}
+
+/* (object): +8 grows by 0x18000; +128 on when GAME + 16's high byte is set. */
+SFA_FUNC(088B2838, grow_8_step_128) {
+    gaddr o = ARG(0);
+    *W(o + 8) += 0x18000;
+    if (S16(GAME + 16) & 0xFF00) *B(o + 128) = (uint8_t)(*B(o + 128) + 1);
+}
+
+/* The step 0x08A3AFE8[GAME + 4], given (GAME, BATTLE). */
+SFA_FUNC(088BDDA8, step_by_game_4_afe8) {
+    uint32_t fn = *W(0x08A3AFE8u + (uint32_t)*H(GAME + 4) * 4);
+    c->r[29] -= 0x20;
+    c->r[4] = GAME; c->r[5] = BATTLE; c->r[6] = fn;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* (object): x (+16) moved by the speed +96 (backwards while +11 is 0), the speed changed by +104;
+   the new speed. */
+static uint32_t move_x_by_facing(gaddr o) {
+    uint32_t speed = *W(o + 96);
+    *W(o + 16) += *B(o + 11) == 0 ? 0u - speed : speed;
+    uint32_t next = speed + *W(o + 104);
+    *W(o + 96) = next;
+    return next;
+}
+SFA_FUNC(0890CC04, move_x_by_facing_a) { move_x_by_facing(ARG(0)); }
+/* ... and 1 while the new speed is negative. */
+SFA_FUNC(0899939C, move_x_by_facing_b) { RETURN((int32_t)move_x_by_facing(ARG(0)) < 0); }
+
+/* (object): +38 from its owner's (+88), then the step table[+4] on it. */
+static void step_by_4_after_owner_38(Cpu *c, gaddr table) {
+    gaddr o = ARG(0);
+    *H(o + 38) = *H(*W(o + 88) + 38);
+    uint32_t fn = *W(table + (uint32_t)*B(o + 4) * 4);
+    c->r[29] -= 0x20;
+    c->r[5] = fn; c->r[6] = (uint32_t)*B(o + 4) << 2;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+SFA_FUNC(089879F0, step_by_4_477c) { step_by_4_after_owner_38(c, 0x08A9477Cu); }
+SFA_FUNC(08987DC8, step_by_4_47c4) { step_by_4_after_owner_38(c, 0x08A947C4u); }
+
+/* (object): the step 0x08AB79CC[GAME + 6], given (GAME, object). */
+SFA_FUNC(089DF82C, step_by_game_6) {
+    gaddr o = ARG(0);
+    uint32_t fn = *W(0x08AB79CCu + (uint32_t)*H(GAME + 6) * 4);
+    c->r[29] -= 0x20;
+    c->r[4] = GAME; c->r[5] = o; c->r[6] = fn; c->r[7] = 0x08AB79CCu;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* (n, x, y): text n of a list (0x08A03CC0 kind 5, or 0x08A03CD4 kind 6) at (x, y). */
+static void text_from_list(Cpu *c, gaddr list, uint32_t kind) {
+    uint32_t n = ARG(0) & 0xFF;
+    int32_t x = (int16_t)ARG(1), y = (int16_t)ARG(2);
+    c->r[29] -= 0x30;
+    c->r[4] = list + n * 2; c->r[5] = kind;
+    c->r[6] = (uint32_t)x; c->r[7] = (uint32_t)y; c->r[8] = 0;
+    f_0880A6CC(c);
+    c->r[29] += 0x30;
+}
+SFA_FUNC(0880A7B0, text_from_list_3cc0) { text_from_list(c, 0x08A03CC0u, 5); }
+SFA_FUNC(0880A7F4, text_from_list_3cd4) { text_from_list(c, 0x08A03CD4u, 6); }
+
+/* (object, p): +28 = p, +74 .. +77 = p's first four bytes, +152 = 0. */
+SFA_FUNC(08821A64, set_28_from_record) {
+    gaddr o = ARG(0), p = ARG(1);
+    *W(o + 28) = p;
+    for (int k = 0; k < 4; k++) *B(o + 74 + k) = *B(p + k);
+    *W(o + 152) = 0;
+    c->r[5] = 1; c->r[6] = (uint32_t)(int32_t)S8(p + 3);
+}
+
+/* (game, x, fighter): unless x's +61 or the fighter's +373, its +452 = +352; in mode 0x12 also
+   +478 and +451 = +426. */
+SFA_FUNC(08827A94, keep_352_in_452) {
+    gaddr g = ARG(0), x = ARG(1), f = ARG(2);
+    if (S8(x + 61) != 0 || S8(f + 373) != 0) return;
+    *W(f + 452) = *W(f + 352);
+    if (S8(g + 114) != 0x12) return;
+    int16_t v = S16(f + 426);
+    *H(f + 478) = (uint16_t)v;
+    *B(f + 451) = (uint8_t)v;
+}
+
+/* (object): the step 0x08A12230[+6], then game objects 3 and the end of the frame. */
+SFA_FUNC(0883A388, step_by_6_then_frame_end) {
+    gaddr o = ARG(0);
+    uint32_t fn = *W(0x08A12230u + (uint32_t)*H(o + 6) * 4);
+    c->r[29] -= 0x20;
+    c->r[6] = fn; c->r[7] = 0x08A12230u;
+    rt_call_indirect(c, fn);
+    f_08887AFC(c);
+    f_0880B6CC(c);
+    c->r[29] += 0x20;
+}
+
+/* (?, n): four u16 from 0x08A2C6F8 + n * 2 into 0x08B027B0 / B4 and 0x08B02810 / 14. */
+SFA_FUNC(088AB1D8, set_27b0_2810) {
+    gaddr p = 0x08A2C6F8u + ARG(1) * 2;
+    *W(0x08B027B0u) = *H(p);
+    *W(0x08B027B4u) = *H(p + 2);
+    *W(0x08B02810u) = *H(p + 4);
+    *W(0x08B02814u) = *H(p + 6);
+}
+
+/* (object): a word counts down; at 0 the fade out starts and a byte moves on. */
+static void count_down_then_fade_out(Cpu *c, uint32_t count, uint32_t step) {
+    gaddr o = ARG(0), saved = c->r[16];
+    uint32_t n = *W(o + count) - 1;
+    *W(o + count) = n;
+    if (n != 0) return;
+    c->r[29] -= 0x10;
+    c->r[16] = o; c->r[5] = 0;
+    f_0880AA74(c);
+    *B(o + step) = (uint8_t)(*B(o + step) + 1);
+    c->r[29] += 0x10;
+    c->r[16] = saved;
+}
+SFA_FUNC(088AC2F0, count_84_then_fade_out)   { count_down_then_fade_out(c, 84, 9); }
+SFA_FUNC(088B3628, count_12_then_fade_out_a) { count_down_then_fade_out(c, 12, 3); }
+SFA_FUNC(088B3BC4, count_12_then_fade_out_b) { count_down_then_fade_out(c, 12, 3); }
+
+/* (k): where k is in the zero-ended bytes at 0x08A3AF8C, or -1. */
+SFA_FUNC(088BD2F0, index_in_3af8c) {
+    uint32_t k = ARG(0) & 0xFF;
+    for (uint32_t i = 0; *B(0x08A3AF8Cu + i) != 0; i++)
+        if (*B(0x08A3AF8Cu + i) == k) { RETURN(i); return; }
+    RETURN(-1);
+}
+
+/* (object, p): +12 / +24 = 0; +14, +26, +60 (word), +64, +76, +66, +78 from p's 16 bytes. */
+SFA_FUNC(088EAC84, set_from_16_bytes) {
+    gaddr o = ARG(0), p = ARG(1);
+    *H(o + 12) = 0; *H(o + 24) = 0;
+    *H(o + 14) = *H(p);
+    *H(o + 26) = *H(p + 2);
+    *W(o + 60) = *W(p + 4);
+    *H(o + 64) = *H(p + 8);
+    *H(o + 76) = *H(p + 10);
+    *H(o + 66) = *H(p + 12);
+    *H(o + 78) = *H(p + 14);
+}
+
+/* (object): +4 on while +75 is negative; animated, then drawn if on the screen. */
+SFA_FUNC(0896A4D4, step_4_on_75_animate_draw) {
+    gaddr o = ARG(0), saved = c->r[16];
+    if (S8(o + 75) < 0) *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    c->r[4] = o; f_088219B0(c);
+    c->r[4] = o; f_08821424(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object): x (+16) by +96, which drops by 0x10000; once x is -0x680000 or less, +5 on and +82 = 10. */
+SFA_FUNC(08855508, move_x_left_until) {
+    gaddr o = ARG(0);
+    uint32_t speed = *W(o + 96), x = speed + *W(o + 16);
+    *W(o + 16) = x;
+    *W(o + 96) = speed - 0x10000;
+    if (!((int32_t)0xFF980000u < (int32_t)x)) {
+        step_on_5(o);
+        *H(o + 82) = 10;
+    }
+}
+
+/* (object): +9 = 2, its animation by type, then 0x0887DAC8 when it is below its +92 pointer. */
+SFA_FUNC(0887D900, animation_by_type_9_2) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    *B(o + 9) = 2;
+    c->r[4] = o; f_0887D990(c);
+    if (o < *W(o + 92)) { c->r[4] = o; f_0887DAC8(c); }
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object): drawn while GAME + 10 has no bit 9 and +3 is 4. */
+SFA_FUNC(088B0608, draw_on_3_is_4) {
+    gaddr o = ARG(0);
+    c->r[29] -= 0x20;
+    if (!(*H(GAME + 10) & 0x200) && *B(o + 3) == 4) f_088215C4(c);
+    c->r[29] += 0x20;
+}
+
+/* (object): +100 cleared (set first while GAME + 16's high byte is 0), then 0x088B1D10. */
+SFA_FUNC(088B1578, clear_100_then_draw_by_16) {
+    gaddr o = ARG(0);
+    if (((S16(GAME + 16) & 0xFF00) >> 8) == 0) *W(o + 100) = 1;
+    c->r[5] = *W(o + 100);
+    *W(o + 100) = 0;
+    c->r[29] -= 0x20;
+    f_088B1D10(c);
+    c->r[29] += 0x20;
+}
+
+/* (object): +93 = 1 when GAME + 10's low byte is 2; +128 on while GAME + 16's low byte is not +94. */
+SFA_FUNC(088B2930, watch_game_10_16) {
+    gaddr o = ARG(0);
+    if ((*H(GAME + 10) & 0xFF) == 2) *B(o + 93) = 1;
+    if ((S16(GAME + 16) & 0xFF) != S16(o + 94)) *B(o + 128) = (uint8_t)(*B(o + 128) + 1);
+}
+
+/* (object): GAME + 22's low byte: bit 1 without bit 2 flips +93; 7 clears it. */
+SFA_FUNC(088B2978, flip_93_by_game_22) {
+    gaddr o = ARG(0);
+    uint32_t v = S16(GAME + 22) & 0xFF;
+    if (!(v & 4) && (v & 2)) { *B(o + 93) ^= 1; return; }
+    if (v == 7) *B(o + 93) = 0;
+}
+
+/* (object): +79 counts; from 2, +4 moves on while GAME + 10's high byte is 0. */
+SFA_FUNC(088B4E74, count_79_then_4) {
+    gaddr o = ARG(0);
+    uint8_t n = (uint8_t)(*B(o + 79) + 1);
+    *B(o + 79) = n;
+    if (n >= 2 && ((*H(GAME + 10) & 0xFF00) >> 8) == 0) *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+}
+
+/* (object): +4 = 2 unless the camera's y + 4 is below its y (both as u16). */
+SFA_FUNC(088BD0C8, step_4_by_camera_y) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    f_08821330(c);
+    gaddr cam = c->r[2];
+    int32_t a = (S16(cam + 22) + 4) & 0xFFFF, b = S16(o + 22) & 0xFFFF;
+    if (!(a < b)) *B(o + 4) = 2;
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (object): y (+20) by +100; once y is within 0x740000 .. 0x8C0000, +5 on, +22 = +112, +82 = 0x10. */
+SFA_FUNC(08856D58, move_y_until_band) {
+    gaddr o = ARG(0);
+    uint32_t y = *W(o + 20) + *W(o + 100);
+    *W(o + 20) = y;
+    if (!(0x180000u < y - 0x740000u)) {
+        step_on_5(o);
+        *H(o + 22) = *H(o + 112);
+        *H(o + 82) = 0x10;
+    }
+}
+
+/* (object): +128 on, +93 = 1, +3 = 0, then the step 0x08A26B3C[+92]. */
+SFA_FUNC(0888AAFC, step_by_92) {
+    gaddr o = ARG(0);
+    *B(o + 128) = (uint8_t)(*B(o + 128) + 1);
+    *B(o + 93) = 1;
+    *B(o + 3) = 0;
+    uint32_t fn = *W(0x08A26B3Cu + (uint32_t)*B(o + 92) * 4);
+    c->r[29] -= 0x20;
+    c->r[5] = fn; c->r[6] = 0x08A26B3Cu;
+    rt_call_indirect(c, fn);
+    c->r[29] += 0x20;
+}
+
+/* (object): once GAME + 16's low byte is 24 or more: +80 / +78 = 0, +17 on, GAME + 20 bit 15, +75 = 0x2D. */
+SFA_FUNC(088ABACC, step_17_at_game_16_24) {
+    gaddr o = ARG(0);
+    if ((S16(GAME + 16) & 0xFF) < 24) return;
+    *B(o + 80) = 0;
+    *B(o + 78) = 0;
+    *B(o + 17) = (uint8_t)(*B(o + 17) + 1);
+    *H(GAME + 20) = (uint16_t)(S16(GAME + 20) | 0x8000);
+    *B(o + 75) = 0x2D;
+}
+
+/* (object): +5 on, +96 = +74 (signed), +100 = +28, then 0x088B4AB4 and the swap 0x088B48F0. */
+SFA_FUNC(088B4878, step_5_then_swap) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    step_on_5(o);
+    *W(o + 96) = (uint32_t)(int32_t)S8(o + 74);
+    *W(o + 100) = *W(o + 28);
+    c->r[4] = o; f_088B4AB4(c);
+    c->r[4] = o; f_088B48F0(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
+
+/* (record, x): +6 on; +22 / +20 / +18 / +10 / +8 = 0; then +8 = 1 when +137 is 0 and x's +79 or
+   +155 is set. */
+SFA_FUNC(08826A14, next_6_clear) {
+    gaddr r = ARG(0), x = ARG(1);
+    *H(r + 6) = (uint16_t)(*H(r + 6) + 1);
+    *H(r + 22) = 0; *H(r + 20) = 0; *H(r + 18) = 0; *H(r + 10) = 0; *H(r + 8) = 0;
+    if (S8(r + 137) == 0 && (S8(x + 79) != 0 || S8(x + 155) != 0)) *H(r + 8) = 1;
+}
+
+/* (object): x (+16) moves left by 0x100000 down to 0x700000 (there +5 on, +82 = 0x12C); drawn if on the screen. */
+SFA_FUNC(08855420, move_left_to_700000) {
+    gaddr o = ARG(0);
+    int32_t x = (int32_t)(*W(o + 16) - 0x100000);
+    if (x < 0x700000) {
+        step_on_5(o);
+        *H(o + 82) = 0x12C;
+        x = 0x700000;
+    }
+    *W(o + 16) = (uint32_t)x;
+    c->r[29] -= 0x20;
+    f_08821424(c);
+    c->r[29] += 0x20;
+}
+
+/* (object): unless BATTLE + 78, x (+16) by +96 and, while x is not negative, +18 - 0x60; drawn. */
+SFA_FUNC(08855934, move_x_unless_battle_78) {
+    gaddr o = ARG(0);
+    if (S8(BATTLE + 78) == 0) {
+        uint32_t x = *W(o + 16) + *W(o + 96);
+        *W(o + 16) = x;
+        if ((int32_t)x >= 0) *H(o + 18) = (uint16_t)(S16(o + 18) - 0x60);
+    }
+    c->r[29] -= 0x20;
+    f_088215C4(c);
+    c->r[29] += 0x20;
+}
+
+/* (object): x (+16) moves right by 0x100000; from 0xF00000, +5 on and +74 = 4; drawn. */
+SFA_FUNC(08856960, move_right_to_f00000) {
+    gaddr o = ARG(0);
+    int32_t x = (int32_t)(*W(o + 16) + 0x100000);
+    *W(o + 16) = (uint32_t)x;
+    if (x >= 0xF00000) {
+        step_on_5(o);
+        *B(o + 74) = 4;
+    }
+    c->r[29] -= 0x20;
+    f_088215C4(c);
+    c->r[29] += 0x20;
+}
+
+/* (fighter): the opponent (+92), unless it is the computer, scores 0x08A1BE04[+126] (99 at most;
+   nothing for 0), as a team score. */
+SFA_FUNC(0886D29C, opponent_score_by_126) {
+    gaddr f = ARG(0), opp = *W(f + 92);
+    if (S8(opp + 373) != 0) return;
+    int32_t k = S8(f + 126);
+    if (k == 0) return;
+    if (k >= 99) k = 99;
+    c->r[29] -= 0x20;
+    c->r[4] = *W(0x08A1BE04u + (uint32_t)(k * 4)); c->r[5] = opp; c->r[6] = 0x08A1BE04u;
+    f_08821080(c);
+    c->r[29] += 0x20;
+}
+
+/* (fighter, x): the script read with x when +696 is set; otherwise routine 1 started afresh
+   (+482 = 0, +483 / +6 / +4 = 1, +7 / +5 = 0) and the answer is x. */
+SFA_FUNC(0887763C, script_read_or_restart) {
+    gaddr f = ARG(0);
+    uint32_t x = ARG(1);
+    if (S8(f + 696) != 0) {
+        c->r[29] -= 0x20;
+        c->r[2] = x;
+        f_0887A10C(c);
+        c->r[29] += 0x20;
+        return;
+    }
+    RETURN(x);
+    c->r[5] = 1;
+    *B(f + 482) = 0; *B(f + 483) = 1;
+    *B(f + 6) = 1; *B(f + 4) = 1;
+    *B(f + 7) = 0; *B(f + 5) = 0;
+}
+
+/* (record, ?, fighter): the fighter's +340 on, +341 .. +343 / +346 / +348 / +361 / +412 cleared,
+   and its side's bit (+337) cleared in the record's +42. */
+SFA_FUNC(08834318, clear_side_bit_42) {
+    gaddr r = ARG(0), f = ARG(2);
+    *B(f + 340) = (uint8_t)(*B(f + 340) + 1);
+    *B(f + 361) = 0;
+    *H(f + 348) = 0; *H(f + 346) = 0;
+    *B(f + 343) = 0; *B(f + 342) = 0; *B(f + 341) = 0;
+    uint32_t bit = 1u << (S8(f + 337) & 31);
+    *B(r + 42) = (uint8_t)((uint32_t)(int32_t)S8(r + 42) & (0xFFFFu - bit));
+    *B(f + 412) = 0;
+}

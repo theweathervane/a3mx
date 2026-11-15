@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.88.0
+- **More of the game decompiled:** 45 more small functions are hand-written C (`object/small_steps.c`): screen objects that move until a mark, count down, then fade out or move on, the step tables run by GAME's state and by the objects' own fields, text from two of the game's lists, which fighter a layout picks, an opponent's score by a count, and a fighter's CPU script read or started again. Nothing changes in play.
+
 ## 0.87.0
 - **More of the game decompiled:** 45 more small functions are hand-written C (`object/small_steps.c`): counters and waits that move objects' steps on, speeds and places copied or moved, the step tables run by the director, the game's step and BATTLE's, pad checks, a number turned into decimal digits for drawing, a flag bit set in a record, a free slot taken from a list of eight, and a few of a fighter's settings at a round's start. Nothing changes in play.
 
