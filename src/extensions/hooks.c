@@ -37,10 +37,13 @@ int hooks_pad_of(uint32_t f) {            /* the pad playing fighter object f (o
     uint32_t i = (f - FIGHTER(0)) / 0x498u;
     return i < N_FIGHTERS ? pad_of[i] : -1;
 }
-static void give_back(int i) {
+/* Let fighter i go: its own player number back, and the computer flag back on if it goes back to the
+ * computer (to_cpu). Not when its own player has just joined (issue #17): the game's join cleared the
+ * flag for that player, and putting it back left the fighter to the computer for the whole fight. */
+static void give_back(int i, int to_cpu) {
     uint32_t F = FIGHTER(i);
     if (take[i].slot >= 0 && RB(F + 2) == (uint32_t)take[i].slot) WB(F + 2, (uint32_t)take[i].orig2);
-    if (take[i].freed && RB(F + 0x175) == 0) WB(F + 0x175, 1);
+    if (to_cpu && take[i].freed && RB(F + 0x175) == 0) WB(F + 0x175, 1);
     take[i].slot = -1; take[i].freed = 0;
 }
 /* the slot we gave fighter F (its +775 is kept by the game), or -1 */
@@ -102,7 +105,7 @@ int hooks_join_target(int k) {                  /* the box pad k would join by p
 }
 static void give_to(int i, int j) {             /* fighter i is played by pad j */
     uint32_t F = FIGHTER(i);
-    if (take[i].slot >= 0 && take[i].slot != j) give_back(i);
+    if (take[i].slot >= 0 && take[i].slot != j) give_back(i, 1);
     /* (recorded even when its number is already the pad's: Free Battle Variable's opponent is player 3 on
        the select screen, and offline the game reads slot 1 for any number but 0, so pad 3's word has to be
        put in its place: playercfg.c, for a fighter handed to pad 3) */
@@ -112,6 +115,14 @@ static void give_to(int i, int j) {             /* fighter i is played by pad j 
     }
     if (RB(F + 0x175) != 0) { WB(F + 0x175, 0); take[i].freed = 1; }
     pad_of[i] = (int8_t)j;
+}
+static int joinable_box(int i) {                /* fighter i's box can be joined with Start (hooks_join_boxes) */
+    /* Free Battle: every box but the starter's, in every kind; also for the first frames of its select
+       screen, before its kind (+ 0x9F) is written */
+    if (RB(0x08E75910u + 0x72) == 16) return 1;
+    int box[4], p3, n = hooks_join_boxes(box, &p3);
+    for (int b = 0; b < n; b++) if (box[b] == i) return 1;
+    return 0;
 }
 static void apply_local_players(void) {
     static uint32_t prev[3];
@@ -147,13 +158,18 @@ static void apply_local_players(void) {
         int k = take[i].slot >= 0 ? take[i].orig2 : (int8_t)RB(F + 2);   /* the player number the game gave it */
         if (k >= 0 && k < 3 && (present & (1u << k)) && join_to[k] < 0 && !(owned & (1 << k))) {
             owned |= 1 << k; pad_of[i] = (int8_t)k;
-            if (take[i].slot >= 0 || take[i].freed) give_back(i);
+            if (take[i].slot >= 0 || take[i].freed) give_back(i, 0);   /* (its player plays it now) */
             continue;
         }
-        if (next >= nfree) { if (take[i].slot >= 0 || take[i].freed) give_back(i); continue; }
+        if (next >= nfree) { if (take[i].slot >= 0 || take[i].freed) give_back(i, 1); continue; }
         int j = free_pads[next++];
+        /* a box a pad can join with Start (every Free Battle kind, Survival's partner) is the computer's
+           until one does: JOIN-IN is for fighters no pad could otherwise play (issue #17: with 2P HUMAN,
+           Free Battle had no computer opponent while pad 2 was plugged in). The pad is still used up, so
+           the fighters after it get the same pads as before. */
+        if (joinable_box(i)) { if (take[i].slot >= 0 || take[i].freed) give_back(i, 1); continue; }
         int human = rt_join_in[j] && (j == 0 || (rt_human[j] >= 0 ? rt_human[j] : host_pad_connected(j)));
-        if (!human) { if (take[i].slot >= 0 || take[i].freed) give_back(i); continue; }
+        if (!human) { if (take[i].slot >= 0 || take[i].freed) give_back(i, 1); continue; }
         give_to(i, j);
     }
 }
