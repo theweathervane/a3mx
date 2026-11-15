@@ -54,9 +54,9 @@ static uint32_t mem;                        /* our block: two page textures (256
 #define DESC2     (mem + 0x40080u)
 #define LIST      (mem + 0x40100u)          /* our texture list for the buttons' layer: 8 + 6 x 12 bytes */
 #define STR(i)    (mem + 0x40180u + 0x20u * (uint32_t)(i))   /* our strings, 32 bytes each */
-enum { S_TITLE, S_P1, S_P2, S_P3, S_COOP, S_EXIT, S_ON, S_OFF, S_HUMAN, S_CPU, S_PLAYER, S_P1C, S_P2C, S_P3C, S_P4C, S_TAUNT,
+enum { S_TITLE, S_P1, S_P2, S_P3, S_COOP, S_EXIT, S_ON, S_OFF, S_PLAY, S_COM, S_PLAYER, S_P1C, S_P2C, S_P3C, S_P4C, S_TAUNT,
        S_COMMAND, S_TYPE, S_RAPID, S_DEFAULT, S_EXIT2, S_VERSION, S_COUNT };
-static const char *const strings[S_COUNT] = { "EX. SETTING", "1P JOIN-IN", "2P JOIN-IN", "3P JOIN-IN", "COUCH CO-OP", "EXIT", "ON", "OFF", "HUMAN", "CPU",
+static const char *const strings[S_COUNT] = { "EX. SETTING", "1P PRIORITY", "2P PRIORITY", "3P PRIORITY", "COUCH CO-OP", "EXIT", "ON", "OFF", "PLAYER", "COM",
     "PLAYER CONFIG", "P1 CONFIG", "P2 CONFIG", "P3 CONFIG", "P4 CONFIG", "TAUNT", "COMMAND", "TYPE", "RAPID", "DEFAULT", "EXIT", A3MX_VERSION_SCREEN };
 static int clone = -1, item_v, sub_from, built;
 static int starting;                        /* the option menu just started, not laid out yet (f_088B5FB8) */
@@ -247,7 +247,7 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
 enum { R_P1, R_P2, R_P3, R_COOP, R_DEFAULT, R_EXIT, N_ROWS };
 static int *const row_value[N_ROWS] = { &rt_join_in[0], &rt_join_in[1], &rt_join_in[2], &rt_couch_coop, NULL, NULL };
 static const int row_label[N_ROWS] = { S_P1, S_P2, S_P3, S_COOP, S_DEFAULT, S_EXIT };
-static const int row_names[N_ROWS][2] = { { S_CPU, S_HUMAN }, { S_CPU, S_HUMAN }, { S_CPU, S_HUMAN }, { S_OFF, S_ON }, { 0, 0 }, { 0, 0 } };
+static const int row_names[N_ROWS][2] = { { S_COM, S_PLAY }, { S_COM, S_PLAY }, { S_COM, S_PLAY }, { S_OFF, S_ON }, { 0, 0 }, { 0, 0 } };
 static void ex_open(Cpu *c) { mode = M_EX; row = 0; bar_y = -1; WB(OPT + 5, EX_ITEM + 1); WB(OPT + 7, 0); bar_on(c); sound(c, 0x39); }
 static void ex_close(Cpu *c, int snd) { mode = M_MENU; WB(OPT + 5, 0); WB(OPT + 7, 0); bar_off(); settings_save(); sound(c, snd); }
 #define VERSION_Y 0xD4

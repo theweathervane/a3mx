@@ -7,7 +7,7 @@ extern uint32_t rt_pad_buttons[4];
 int rt_local_players = 3;                 /* how many local pads feed player slots (1-3) */
 int rt_human[3] = { 1, -1, -1 };          /* per pad: 1 plugged in, 0 not, -1 ask the host (--p2 / --p3 for tests) */
 int host_pad_connected(int i);
-extern int rt_join_in[3];                 /* settings.c: OPTION MODE > EX. SETTING, 1P / 2P / 3P HUMAN or CPU */
+extern int rt_join_in[3];                 /* settings.c: OPTION MODE > EX. SETTING, 1P / 2P / 3P PRIORITY: PLAYER or COM */
 
 /* Who plays which fighter, offline.
  *
@@ -22,7 +22,7 @@ extern int rt_join_in[3];                 /* settings.c: OPTION MODE > EX. SETTI
  *     0x08E75910 + 0x35, or our own record for select screens that keep none) plays their own fighter
  *     (the first with their number), as the game has it;
  *   - every other fighter, in order, goes to the next pad nobody started with (1, 2, 3 in turn):
- *     HUMAN if that pad's JOIN-IN (OPTION MODE > EX. SETTING) is HUMAN and the pad is plugged in
+ *     HUMAN if that pad's PRIORITY (OPTION MODE > EX. SETTING) is PLAYER and the pad is plugged in
  *     (pad 1 also has the keyboard), otherwise it stays as the game has it (the computer). To make
  *     it read that pad, its +2 is set to the pad's slot (and put back if it goes back).
  * P1 starts R.Dramatic Battle: the two on the right are pads 2 and 3. P2 starts Arcade: the opponent
@@ -164,7 +164,7 @@ static void apply_local_players(void) {
         if (next >= nfree) { if (take[i].slot >= 0 || take[i].freed) give_back(i, 1); continue; }
         int j = free_pads[next++];
         /* a box a pad can join with Start (every Free Battle kind, Survival's partner) is the computer's
-           until one does: JOIN-IN is for fighters no pad could otherwise play (issue #17: with 2P HUMAN,
+           until one does: PRIORITY is for fighters no pad could otherwise play (issue #17: with 2P PLAYER,
            Free Battle had no computer opponent while pad 2 was plugged in). The pad is still used up, so
            the fighters after it get the same pads as before. */
         if (joinable_box(i)) { if (take[i].slot >= 0 || take[i].freed) give_back(i, 1); continue; }
@@ -192,7 +192,7 @@ void hook_f_0883465C(Cpu *c) {
 /* A player who is not playing presses Start (0x08833DDC, a0 = 0x08E75910, a1 = 0x092E1228, a2 = its
  * fighter, +0x19C the request): on a select screen the game lets it join (0x0883465C), in a fight it
  * comes in as a new challenger. Not in R.DRAMATIC BATTLE from the MODE MENU (mode 17): whoever started
- * it plays it, and the others play only through JOIN-IN (EX. SETTING, docs/PLAYERS.md). Their Start
+ * it plays it, and the others play only through PRIORITY (EX. SETTING, docs/PLAYERS.md). Their Start
  * pauses the fight instead (f_08828AF4). (a1 + 6 or + 0x46 set: the continue path, left alone.) */
 #define MODE_RDRAMATIC 17
 void hook_f_08833DDC(Cpu *c) {

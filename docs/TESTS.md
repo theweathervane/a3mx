@@ -64,8 +64,8 @@ touches nothing the hashes cover.
 | `arcade_other_fighter` | the same fight as E. HONDA (one box right on the select screen) against DAN | fighter and stage code RYU's first fight doesn't run | 7 min |
 | `arcade_match` | a whole match and what follows it | round ends, win screens | 8 min |
 | `arcade_ending` | the final fight, the ending, the save error questions | endings and the save path's failures | 8 min |
-| `arcade_join_select` | Arcade with 2P JOIN-IN HUMAN: pad 2 joins with Start on the select screen, picks Ken and jumps in the fight | a pad that JOIN-IN gave a fighter keeps it when it joins (issue #17) | 6 min |
-| `free_battle_join_in` | Free Battle with 2P JOIN-IN HUMAN and pad 2 idle | JOIN-IN leaves a box that can be joined with Start to the computer (issue #17) | 5 min |
+| `arcade_join_select` | Arcade with 2P PRIORITY PLAYER: pad 2 joins with Start on the select screen, picks Ken and jumps in the fight | a pad that PRIORITY gave a fighter keeps it when it joins (issue #17) | 6 min |
+| `free_battle_join_in` | Free Battle with 2P PRIORITY PLAYER and pad 2 idle | PRIORITY leaves a box that can be joined with Start to the computer (issue #17) | 5 min |
 | `boot_to_menu` | the `boot_to_menu` feature: straight to the MODE MENU after the load, then into Arcade's select | the boot path skipping the title and PRESS START | 1 min |
 | `select_start_menu` | SELECT + START in Arcade's first fight | back to the MODE MENU from player 1's pad, no pause menu | 3 min |
 | `quit_to_menu` | pause, QUIT GAME, back to the MODE MENU | leaving a fight cleanly | 5 min |

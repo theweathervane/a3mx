@@ -1,7 +1,7 @@
 /* a3mx.cfg: every setting, by name, in sections. Written by the program (OPTION MODE screens, the
  * game's saves, closing); it can also be edited by hand while the program is closed.
  *
- *   [ex setting]     the project's own options (OPTION MODE > EX. SETTING; JOIN-IN: docs/PLAYERS.md)
+ *   [ex setting]     the project's own options (OPTION MODE > EX. SETTING; PRIORITY: docs/PLAYERS.md)
  *   [game option]    OPTION MODE > GAME OPTION
  *   [screen setting] OPTION MODE > SCREEN SETTING
  *   [p1 config] .. [p4 config]   OPTION MODE > PLAYER CONFIG: each button's attack (names as on the
@@ -27,7 +27,7 @@
 int rt_vsync = 1;                             /* [screen setting] vsync: wait for the monitor (no tearing); ON when missing */
 int rt_filter = 0;                            /* [screen setting] filter: an index into SHADER_FILTERS (shader.h); OFF when missing */
 int rt_frame_timing = 2;                      /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
-int rt_join_in[3] = { 0, 0, 0 }, rt_couch_coop = 1;   /* EX. SETTING: 1P / 2P / 3P JOIN-IN, HUMAN (1) or CPU (0): docs/PLAYERS.md */
+int rt_join_in[3] = { 0, 0, 0 }, rt_couch_coop = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
 extern int rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
 
@@ -39,7 +39,8 @@ int store_is_live(void);
 
 /* ---------------------------------------------------------------- names */
 static const char *const off_on[] = { "OFF", "ON", NULL };
-static const char *const v_human[] = { "CPU", "HUMAN", NULL };
+static const char *const v_human[] = { "COM", "PLAYER", NULL };
+static const char *const v_human_old[] = { "CPU", "HUMAN", NULL };   /* before 0.86.0 */
 static const char *const v_time[] = { "30", "60", "99", "INFINITE", NULL };
 static const char *const v_rounds[] = { "1", "3", "5", NULL };
 static const char *const v_gauge[] = { "0", "MAX", NULL };
@@ -203,8 +204,9 @@ void settings_load(void) {
             *eq = 0; char *key = line, *val = eq + 1; trim(key); trim(val);
             for (char *s = key; *s; s++) *s = (char)tolower((unsigned char)*s);
             /* the project's options (and the flat names of the first versions) */
-            if (key[0] == 'p' && key[1] >= '1' && key[1] <= '3' && (!strcmp(key + 2, "_join_in") || !strcmp(key + 2, "_override"))) {   /* (_override: older builds) */
-                int v = lookup(val, v_human, 2);              /* HUMAN / CPU (or the first versions' ON / OFF) */
+            if (key[0] == 'p' && key[1] >= '1' && key[1] <= '3' && (!strcmp(key + 2, "_priority") || !strcmp(key + 2, "_join_in") || !strcmp(key + 2, "_override"))) {   /* (_join_in: before 0.86.0; _override: older still) */
+                int v = lookup(val, v_human, 2);              /* PLAYER / COM (HUMAN / CPU before 0.86.0; the first versions' ON / OFF) */
+                if (v < 0) v = lookup(val, v_human_old, 2);
                 rt_join_in[key[1] - '1'] = v >= 0 ? v : is_on(val);
                 continue;
             }
@@ -276,7 +278,7 @@ static void cfg_body(FILE *f) {
                "# The game's own data (records, World Tour, ...) is in a3mx.dat; these settings win over it.\n"
                "# Button settings: see docs/PLAYER_CONFIG.md.\n");
     fprintf(f, "\n[ex setting]\n");
-    for (int k = 0; k < 3; k++) { char l[48]; snprintf(l, sizeof l, "p%d_join_in=%s", k + 1, v_human[!!rt_join_in[k]]); fprintf(f, "%-24s # HUMAN: pad %d plays a fighter nobody started with; CPU: the computer does\n", l, k + 1); }
+    for (int k = 0; k < 3; k++) { char l[48]; snprintf(l, sizeof l, "p%d_priority=%s", k + 1, v_human[!!rt_join_in[k]]); fprintf(f, "%-24s # PLAYER: pad %d plays a fighter nobody started with; COM: the computer does\n", l, k + 1); }
     fprintf(f, "couch_coop=%s\n", off_on[!!rt_couch_coop]);
     write_fields(f, o, "progress", 1);         /* ends with [screen setting] */
     { char l[48]; snprintf(l, sizeof l, "vsync=%s", off_on[!!rt_vsync]); fprintf(f, "%-24s # ON: wait for the monitor, no tearing; OFF: never wait\n", l); }
