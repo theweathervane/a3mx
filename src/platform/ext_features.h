@@ -73,8 +73,9 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "SCREEN SETTING > FILTER: CRT, scanline and pixel-smoothing shaders (librashader).\n"
       "Off: the picture is shown as it is drawn, and FILTER can't be chosen.", 1, -1 },
     { "boot_to_menu", "Boot to the MODE MENU",
-      "After the boot screens and the SYSTEM DATA auto-load, the game opens on the MODE MENU: no logos,\n"
-      "story or attract demos first, and no button to press.\n"
+      "The game opens straight on the MODE MENU, with your settings and save loaded: the boot screens and\n"
+      "the load run off screen at full speed, with no title, logos, story, attract demos or PRESS START.\n"
+      "If the save can't be loaded, the game's own question is shown first.\n"
       "Off: the title and attract mode first, as on the PSP.", 0, -1 },
 };
 

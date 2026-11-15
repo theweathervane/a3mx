@@ -434,7 +434,7 @@ static void draw_title(Cpu *c) {
     CALL5(f_0880A6CC, TITLE_LINE_2, FONT_LARGE, 0xA8, 0x38, TITLE_GREEN);
     CALL1(f_0888BB24, 1);
 }
-SFA_FUNC(0888B398, game_title_task)            { FRAME(0x20, title_task(c)); }
+SFA_FUNC_WRAPPED(0888B398, game_title_task, bootmenu_title_task) { FRAME(0x20, title_task(c)); }
 SFA_FUNC(0888B92C, game_title_step)            { FRAME(0x20, title_step(c, ARG(0), ARG(1))); }
 SFA_FUNC(0888BA08, game_read_title_press)      { read_title_press(ARG(0)); }
 SFA_FUNC_WRAPPED(0888B4D8, game_title_screen_first, bootmenu_title_first) { FRAME(0x10, screen_first(c, ARG(0))); }

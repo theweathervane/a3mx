@@ -379,7 +379,7 @@ Either way:
 | Pads | up to four; join-in, JOIN / WAIT, pad icons | player 1's pad only, as on a PSP; no L2 / R2 |
 | Network modes | played on one PC with virtual players | as a PSP's ad-hoc wireless: only other instances linked with `--net-hub` / `--net-join` answer |
 | F2, or SELECT + START on player 1's pad | back to the MODE MENU | nothing |
-| Boot | `boot_to_menu` (off by default): straight to the MODE MENU after the SYSTEM DATA load | the title, PRESS START and the attract mode |
+| Boot | `boot_to_menu` (off by default): straight to the MODE MENU, the boot screens and the load run off screen | the title, PRESS START and the attract mode |
 
 The settings file `a3mx.cfg` is neither read nor written without the extensions, so a faithful run
 leaves a normal one's settings and saves alone. The parity tests run both ways (`parity_*`, and the

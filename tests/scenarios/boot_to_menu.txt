@@ -1,6 +1,7 @@
-# The boot_to_menu feature: after the boot screens and the SYSTEM DATA auto-load the game opens on the
-# MODE MENU with no button pressed (the title's screen 0 sends it to screen 7, the MODE MENU's PRESS START
-# is passed once it has faded in), then Cross chooses ARCADE-MODE and its select screen opens.
+# The boot_to_menu feature: the boot screens run held (off screen, at full speed), the title starts at
+# screen 0, which does the SYSTEM DATA load itself and goes to screen 7; the MODE MENU's PRESS START is
+# passed once it has faded in and the hold ends with the menu drawn (frame ~258). Then Cross chooses
+# ARCADE-MODE and its select screen opens.
 frames 1100
 args --features default,-shaders,boot_to_menu
 input 500=cross;506=
