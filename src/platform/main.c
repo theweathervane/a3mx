@@ -47,7 +47,7 @@
  *   --assets DIR         load each archive that DIR/index.json gives an unpacked folder from it (default:
  *                        assets/<region> beside the work folder, when it exists; docs/ASSET_LOADING.md)
  *   --features LIST      which extensions are on, by name (ext_features.h): saves, unlocks, menus, local_multiplayer, hud,
- *                        quit_key, widescreen, stage_extensions, shaders; also all, none, default, and -name to
+ *                        quit_key, widescreen, stage_extensions, shaders, boot_to_menu; also all, none, default, and -name to
  *                        take one out ("default,-hud"). The launcher's Extensions tab sets it
  *   --no-extensions      none of them: the PSP program alone
  *   --custom-assets      as before 0.60.0: also turns stage_extensions on (the project's own stage edge art)
@@ -346,6 +346,16 @@ void rt_display_vblank(void) {
         menu_prev = menu_now;
         for (int i = 0; i < 4; i++) {
             uint32_t raw = pads[i] | (scripted[i] & ~0x20000000u);
+            if (i == 0 && FEATURE(QUITKEY)) {
+                /* player 1 holding SELECT and pressing START: as F2 (quitkey.c). That START is kept from
+                   the game until it is let go, so it doesn't pause the fight on its way out. */
+                static int start_prev, combo;
+                int start = (raw & PSP_START) != 0;
+                if (start && !start_prev && (raw & PSP_SELECT)) { combo = 1; quitkey_request(); }
+                start_prev = start;
+                if (!start) combo = 0;
+                if (combo) raw &= ~PSP_START;
+            }
             rt_pad_buttons[i] = FEATURE(MENUS) ? pcfg_pad_to_psp(i, raw) : raw & ~0xC0000000u;   /* no L2 / R2 on a PSP */
         }
         if (host_quit_requested()) rt_quit = 1;
@@ -653,7 +663,7 @@ int main(int argc, char **argv) {
     if (renderer_asked) rt_warn("renderer: %s is not available in this version (only OpenGL and the software renderer are): using OpenGL", renderer_asked);
     {   /* which features are on (ext_features.h): --features, --no-extensions, or the defaults */
         const char *bad = NULL;
-        if (!features_set(features_arg, &bad)) rt_fatal("--features: %s is not a feature (saves, unlocks, menus, local_multiplayer, hud, quit_key, widescreen, stage_extensions, shaders; all, none, default)", bad);
+        if (!features_set(features_arg, &bad)) rt_fatal("--features: %s is not a feature (saves, unlocks, menus, local_multiplayer, hud, quit_key, widescreen, stage_extensions, shaders, boot_to_menu; all, none, default)", bad);
         if (rt_custom_assets) features_add(FEAT_STAGE_EXT);
     }
     rt_work_dir = work;

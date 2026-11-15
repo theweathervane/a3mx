@@ -27,6 +27,7 @@ enum {
     FEAT_WIDESCREEN,     /* widescreen.c and the translated 16:9 patch */
     FEAT_STAGE_EXT,      /* stagestrips.c */
     FEAT_SHADERS,        /* platform: shader.c (the FILTER setting) */
+    FEAT_BOOTMENU,       /* bootmenu.c */
     FEAT_COUNT,
     FEAT_ANY = FEAT_COUNT   /* on while any feature is: the plumbing several features share */
 };
@@ -58,8 +59,9 @@ static const Feature FEATURES[FEAT_COUNT] = {
     { "hud", "MODE MENU bar",
       "The numbered bubble for each player's controller and the FRAME TIMING badge (SMOOTH / ORIGINAL)\n"
       "on the MODE MENU's bar.", 1, -1 },
-    { "quit_key", "F2: back to the MODE MENU",
-      "F2 on the keyboard goes straight back to the MODE MENU without saving.", 1, -1 },
+    { "quit_key", "F2 / SELECT + START: back to the MODE MENU",
+      "F2 on the keyboard, or player 1 holding SELECT and pressing START, goes straight back to the\n"
+      "MODE MENU without saving.", 1, -1 },
     { "widescreen", "Widescreen (WIDE FORCED)",
       "SCREEN SETTING > SCREEN SIZE gets a third value, WIDE FORCED: 16:9 with a 4:3 play area, using\n"
       "Rickow's widescreen patch (downloaded when your disc is extracted). Experimental.\n"
@@ -70,6 +72,10 @@ static const Feature FEATURES[FEAT_COUNT] = {
     { "shaders", "Shaders (FILTER)",
       "SCREEN SETTING > FILTER: CRT, scanline and pixel-smoothing shaders (librashader).\n"
       "Off: the picture is shown as it is drawn, and FILTER can't be chosen.", 1, -1 },
+    { "boot_to_menu", "Boot to the MODE MENU",
+      "After the boot screens and the SYSTEM DATA auto-load, the game opens on the MODE MENU: no logos,\n"
+      "story or attract demos first, and no button to press.\n"
+      "Off: the title and attract mode first, as on the PSP.", 0, -1 },
 };
 
 #ifndef FEATURES_TABLE_ONLY

@@ -1,4 +1,5 @@
-/* F2: back to the MODE MENU at once, without saving (keyboard only; no pad has it).
+/* F2, or player 1 holding SELECT and pressing START (main.c): back to the MODE MENU at once, without
+ * saving.
  *
  * The game's tasks are threads; the record of the one running is at *0x08E75C40 (+0 state, +4
  * entry), task 0's at 0x08AD8FE8 runs the game's screens (the MODE MENU is its entry 0x0888C268, a

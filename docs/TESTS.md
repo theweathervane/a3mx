@@ -66,6 +66,8 @@ touches nothing the hashes cover.
 | `arcade_ending` | the final fight, the ending, the save error questions | endings and the save path's failures | 8 min |
 | `arcade_join_select` | Arcade with 2P JOIN-IN HUMAN: pad 2 joins with Start on the select screen, picks Ken and jumps in the fight | a pad that JOIN-IN gave a fighter keeps it when it joins (issue #17) | 6 min |
 | `free_battle_join_in` | Free Battle with 2P JOIN-IN HUMAN and pad 2 idle | JOIN-IN leaves a box that can be joined with Start to the computer (issue #17) | 5 min |
+| `boot_to_menu` | the `boot_to_menu` feature: straight to the MODE MENU after the load, then into Arcade's select | the boot path skipping the title and PRESS START | 1 min |
+| `select_start_menu` | SELECT + START in Arcade's first fight | back to the MODE MENU from player 1's pad, no pause menu | 3 min |
 | `quit_to_menu` | pause, QUIT GAME, back to the MODE MENU | leaving a fight cleanly | 5 min |
 | `free_battle`, `free_battle_rows`, `free_battle_team`, `free_battle_dramatic`, `free_battle_rdramatic` | Free Battle's select in each kind, every row moved | the multi-player select and its turns | 5 min each |
 | `option_tour` | every OPTION MODE submenu with the extensions | the option screens and our additions | 6 min |

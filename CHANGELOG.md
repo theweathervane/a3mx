@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.85.0
+- **SELECT + START: back to the MODE MENU:** player 1 holding SELECT and pressing START goes straight back to the MODE MENU without saving, as F2 does, so a pad alone can get back quickly. That START doesn't also open the pause menu. Part of the "F2 / SELECT + START: back to the MODE MENU" extension (quit_key), on by default.
+- **Boot to the MODE MENU (new extension, off by default):** with "Boot to the MODE MENU" ticked in the launcher's Extensions tab (`--features default,boot_to_menu`), the game opens on the MODE MENU after the boot screens and the SYSTEM DATA auto-load: no logos, story, attract demos or PRESS START. Only at boot: left alone, the MODE MENU still goes back to the title as before. The launcher's Extensions tab screenshot needs retaking.
+
 ## 0.84.0
 - **More of the game decompiled:** 40 more functions are hand-written C, most of them small steps that many objects of the menus and screens share (counters, swaps, objects made beside others, waits on the game's state), from the wider set of modes now profiled. They also include GAME's and World Tour's records being cleared, a fighter's edges for the camera, a few of a fighter's script steps and a network session flag. Nothing changes in play.
 

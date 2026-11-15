@@ -327,7 +327,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 |---|---|
 | `--work DIR` | the work folder made by `extract_assets.py` |
 | `--no-extensions` | run without the extensions: the PSP program alone ([below](#without-the-extensions)) |
-| `--features LIST` | which extensions are on, comma separated: `saves`, `unlocks`, `menus`, `local_multiplayer`, `hud`, `quit_key`, `widescreen`, `stage_extensions`, `shaders`, or `all`, `none`, `default`; `-NAME` turns one off (`default,-hud`). The launcher's **Extensions** tab writes this |
+| `--features LIST` | which extensions are on, comma separated: `saves`, `unlocks`, `menus`, `local_multiplayer`, `hud`, `quit_key`, `widescreen`, `stage_extensions`, `shaders`, `boot_to_menu` (off by default), or `all`, `none`, `default`; `-NAME` turns one off (`default,-hud`). The launcher's **Extensions** tab writes this |
 | `--custom-assets` | before 0.60.0: the `stage_extensions` feature (the project's own art in `assets/extensions/`) |
 | `--assets DIR`, `--no-assets` | load each archive that `DIR/index.json` gives a folder from it (default: `assets/<region>` beside the work folder); or everything from the disc ([ASSET_LOADING.md](ASSET_LOADING.md)) |
 | `--renderer gl\|soft\|none\|lazy` | GPU renderer (default), software reference, nothing, or only dumped frames |
@@ -378,7 +378,8 @@ Either way:
 | OPTION MODE | EX. SETTING, PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE FORCED, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
 | Pads | up to four; join-in, JOIN / WAIT, pad icons | player 1's pad only, as on a PSP; no L2 / R2 |
 | Network modes | played on one PC with virtual players | as a PSP's ad-hoc wireless: only other instances linked with `--net-hub` / `--net-join` answer |
-| F2 | back to the MODE MENU | nothing |
+| F2, or SELECT + START on player 1's pad | back to the MODE MENU | nothing |
+| Boot | `boot_to_menu` (off by default): straight to the MODE MENU after the SYSTEM DATA load | the title, PRESS START and the attract mode |
 
 The settings file `a3mx.cfg` is neither read nor written without the extensions, so a faithful run
 leaves a normal one's settings and saves alone. The parity tests run both ways (`parity_*`, and the
