@@ -370,14 +370,16 @@ Can start once phase 4's join-in item is native code; the rule itself is in [PLA
         (0.86.0; the old `a3mx.cfg` lines are still read)
 - [ ] Free Battle (Arcade and Team): a MODE row on the 2P side too, so the second side's MODE can be
       chosen for the computer, or by player 2 once they join
-- [ ] Training: the other pad can JOIN (2P's box when player 1 started, 1P's when player 2 did), and a
-      MODE row on that side as in Free Battle
-- [ ] Training's pause menu: whoever presses Start sets CPU OPTIONS for the other side
-- [ ] CPU OPTIONS > ACTION gets PLAYER (the other side's pad plays it), set by itself when a pad has
-      joined; with nobody joined it works as PRIORITY PLAYER does
-- [ ] Training's REC with a joined player: the other side's own pad does the recording; without one,
-      the game's own REC (the starter takes the dummy over while recording). PLAY and the other
-      actions override the joined player's inputs
+- [ ] Training for two players ([issue #18](https://github.com/theweathervane/a3mx/issues/18)), once
+      Training's task and menus are decompiled:
+  - [ ] Training: the other pad can JOIN (2P's box when player 1 started, 1P's when player 2 did), and a
+        MODE row on that side as in Free Battle
+  - [ ] Training's pause menu: whoever presses Start sets CPU OPTIONS for the other side
+  - [ ] CPU OPTIONS > ACTION gets PLAYER (the other side's pad plays it), set by itself when a pad has
+        joined; with nobody joined it works as PRIORITY PLAYER does
+  - [ ] Training's REC with a joined player: the other side's own pad does the recording; without one,
+        the game's own REC (the starter takes the dummy over while recording). PLAY and the other
+        actions override the joined player's inputs
 - [ ] Propose new names or a new layout for EX. SETTING (for example, one row per pad: "takes the
       CPU's fighter: YES / NO"), agree it, and implement it, with the saved setting carried over
 - [ ] A parity scenario per changed row: with every row at its default, every mode still plays as on a PSP
