@@ -771,6 +771,16 @@ owner at + 88, and frame data at + 296.
 | 0x08836AA8 | the s16 at 0x09524A68 limited: mode 18 at random from 0x08A0FAC8; World Tour 0xF8; else 0x08A0FA48 by GAME + 73 and BATTLE + 20 (`misc.c`) |
 | 0x08895DD8 | fourteen kind-0x13 objects from 0x08A272C4, their fighters from a table on the guest stack |
 
+**Small steps from the wider profile** (0.84.0). From 0.84.0 the functions come from a profile of ten scenarios (see the decomp log), not only the first fight.
+
+| Address | What |
+|---|---|
+| `object/small_steps.c` | 25 small object and record steps: 0x08881F70, 0x088B098C / 0x088B48F0 (swaps), 0x08987D68, 0x089993E4, 0x089DFCA4, 0x088301F4 (0x08A0F396 by + 55), 0x08856D30 / 0x088815A4 / 0x088B51D8 (+ 82 counts), 0x08856E18, 0x088AA23C, 0x088AC334 / 0x088B366C (GAME + 4 unless + 93), 0x088AC37C, 0x088BDA60 / 8C, 0x089CD7D4, 0x089DEC5C (fade in), 0x088BE36C (0x08A3B01C at random), 0x088CEDA0 / 0x088CFC70, 0x08912FBC (moves by ~speed) / 0x08987474, 0x08858D04 (0x08A17E58) |
+| 0x08822BD8 / 0x08838688 / 0x088392E4 / 0x088B2EFC | GAME's 0xD8 bytes, World Tour's 0x3B8 (0x09517A78), a 0x354-byte record, 0x08B0284C's 16 and the layer's + 123 cleared (`reset.c`) |
+| 0x0881E84C / 0x0881E870 | a fighter's edges (x ± + 232) into two s16 (`stage/camera.c`) |
+| 0x0887192C / 0x08877C30 / 0x0887BB6C / 0x08891FE8 / 0x088344B4 | + 117 by + 588; + 506 then routine 1; nesting 3 and 0x088772C0; + 340 on; + 341 on and + 412 = 10 |
+| 0x088AA8E8 / 0x088E3630 / 0x08823220 / 0x08818EBC | the director's next pair; the session's + 33 from 0x08A3EB96; list 5 freed and counted; x by the save question's cursor |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

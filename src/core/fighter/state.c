@@ -1779,3 +1779,53 @@ SFA_FUNC(08864BC8, fighter_start_place) {
     c->r[29] += 0x20;
     c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3];
 }
+
+/* ---- 0.83.0 ---- */
+
+void f_08877F44(Cpu *c);   /* fighter_to_routine_1 (hit.c) */
+void f_088772C0(Cpu *c);   /* fighter_run_484 (object/runners.c) */
+void f_088347B4(Cpu *c);   /* fighter_set_412 */
+
+/* (fighter): +696 cleared, +117 = 7 with +588, else 8. */
+SFA_FUNC(0887192C, fighter_117_by_588) {
+    gaddr f = ARG(0);
+    *B(f + 696) = 0;
+    *B(f + 117) = S8(f + 588) != 0 ? 7 : 8;
+}
+
+/* (fighter, a): +506 = 1, +482 cleared, +483 = 8, then to routine 1 (with a, 8). */
+SFA_FUNC(08877C30, fighter_506_then_routine_1) {
+    gaddr f = ARG(0);
+    *H(f + 506) = 1; *B(f + 482) = 0; *B(f + 483) = 8;
+    c->r[29] -= 0x20;
+    c->r[4] = f; c->r[6] = 8; f_08877F44(c);
+    c->r[29] += 0x20;
+}
+
+/* (fighter): the script nesting (+484) = 3, +480 - +483 cleared, then run by +484. */
+SFA_FUNC(0887BB6C, fighter_nest_3_and_run) {
+    gaddr f = ARG(0);
+    *B(f + 484) = 3; *B(f + 483) = 0; *B(f + 482) = 0; *B(f + 481) = 0; *B(f + 480) = 0;
+    c->r[29] -= 0x20;
+    c->r[4] = f; f_088772C0(c);
+    c->r[29] += 0x20;
+}
+
+/* (record): +340 on; +460 / +341 / +452 / +346 / +348 / +350 cleared. */
+SFA_FUNC(08891FE8, record_340_on) {
+    gaddr r = ARG(0);
+    *B(r + 340) = (uint8_t)(S8(r + 340) + 1);
+    *B(r + 460) = 0; *W(r + 452) = 0;
+    *H(r + 350) = 0; *H(r + 348) = 0; *H(r + 346) = 0;
+    *B(r + 341) = 0;
+}
+
+/* (?, ?, fighter): +341 on, +347 = 0x5A, +412 set to 10 (0x088347B4). */
+SFA_FUNC(088344B4, fighter_341_on_412_10) {
+    gaddr f = ARG(2);
+    *B(f + 341) = (uint8_t)(S8(f + 341) + 1);
+    *B(f + 347) = 0x5A;
+    c->r[29] -= 0x20;
+    c->r[4] = f; c->r[5] = 0xA; f_088347B4(c);
+    c->r[29] += 0x20;
+}

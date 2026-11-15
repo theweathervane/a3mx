@@ -180,3 +180,11 @@ SFA_FUNC(088DBF88, net_reset_all) {
     f_088DD81C(c);
     c->r[29] += 0x30;
 }
+
+/* While the session is up (+48): +46 / +30 cleared and +33 the byte at 0x08A3EB96. */
+SFA_FUNC(088E3630, net_session_restart_33) {
+    if (S8(SESSION + 48) == 0) return;
+    *B(SESSION + 46) = 0;
+    *(uint16_t *)guest_ptr(SESSION + 30) = 0;
+    *B(SESSION + 33) = (uint8_t)S8(0x08A3EB96u);
+}

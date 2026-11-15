@@ -3367,3 +3367,15 @@ SFA_FUNC(08895DD8, make_fourteen_by_layout) {
     c->r[29] += 0x40;
     c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3]; c->r[20] = s[4];
 }
+
+void f_088232B0(Cpu *c);   /* record_reset (misc.c) */
+/* (object): freed into list 5 (0x088232B0) and list 5's free count (0x095176F5) on. */
+SFA_FUNC(08823220, record_free_5) {
+    c->r[29] -= 0x20;
+    c->r[5] = 5; f_088232B0(c);
+    *B(0x095176F5u) = (uint8_t)(S8(0x095176F5u) + 1);
+    c->r[29] += 0x20;
+}
+
+/* (object): x 0xC0 while the save question's cursor (0x09523C60 + 9) is on, else 0x200. */
+SFA_FUNC(08818EBC, place_by_save_cursor) { *H(ARG(0) + 18) = S8(0x09523C60u + 9) != 0 ? 0xC0 : 0x200; }

@@ -358,3 +358,11 @@ SFA_FUNC(088AB814, director_start_kind_7f) {
     c->r[29] += 0x20;
     c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2];
 }
+
+/* The director's +73 cleared and its next pair from the table (0x088AA980). */
+SFA_FUNC(088AA8E8, director_next_pair_from_start) {
+    c->r[29] -= 0x20;
+    *B(0x08B0274Cu + 73) = 0;
+    c->r[4] = 0x08B0274Cu; f_088AA980(c);
+    c->r[29] += 0x20;
+}

@@ -218,3 +218,17 @@ SFA_FUNC(088226E0, fight_tables_clear) {
     clear_words(0x092E28A0u, 32);
     if (keep == 0) clear_words(0x092E2A00u, 48);
 }
+
+/* ---- 0.83.0 ---- */
+
+/* (record): 0x354 bytes cleared. */
+SFA_FUNC(088392E4, record_354_clear) { gaddr p = ARG(0); for (uint32_t i = 0; i < 0x354; i++) *B(p + i) = 0; }
+/* GAME's 0xD8 bytes cleared. */
+SFA_FUNC(08822BD8, game_clear) { for (uint32_t i = 0; i < 0xD8; i++) *B(0x08E75910u + i) = 0; }
+/* World Tour's 0x3B8-byte record (0x09517A78) cleared. */
+SFA_FUNC(08838688, world_tour_clear) { for (uint32_t i = 0; i < 0x3B8; i++) *B(0x09517A78u + i) = 0; }
+/* The 16 bytes at 0x08B0284C and the fighters' layer + 123 cleared. */
+SFA_FUNC(088B2EFC, scroll_flags_clear) {
+    for (uint32_t i = 0; i < 0x10; i++) *B(0x08B0284Cu + i) = 0;
+    *B(0x092E88A0u + 123) = 0;
+}

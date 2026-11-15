@@ -169,3 +169,12 @@ SFA_FUNC(0881E320, camera_follow_span) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+/* (fighter, ?, left, right) / (?, fighter, left, right): a fighter's edges, x less and plus half its
+   width (+232). */
+static void fighter_edges(gaddr f, gaddr left, gaddr right) {
+    *S(left) = (int16_t)(*S(f + 18) - *S(f + 232));
+    *S(right) = (int16_t)(*S(f + 18) + *S(f + 232));
+}
+SFA_FUNC(0881E84C, fighter_edges_a) { fighter_edges(ARG(0), ARG(2), ARG(3)); }
+SFA_FUNC(0881E870, fighter_edges_b) { fighter_edges(ARG(1), ARG(2), ARG(3)); }
