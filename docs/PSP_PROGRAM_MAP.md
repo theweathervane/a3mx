@@ -781,6 +781,26 @@ owner at + 88, and frame data at + 296.
 | 0x0887192C / 0x08877C30 / 0x0887BB6C / 0x08891FE8 / 0x088344B4 | + 117 by + 588; + 506 then routine 1; nesting 3 and 0x088772C0; + 340 on; + 341 on and + 412 = 10 |
 | 0x088AA8E8 / 0x088E3630 / 0x08823220 / 0x08818EBC | the director's next pair; the session's + 33 from 0x08A3EB96; list 5 freed and counted; x by the save question's cursor |
 
+**More small steps** (0.87.0), all in `object/small_steps.c`.
+
+| Address | What |
+|---|---|
+| 0x088A9F54 / 0x088AAA28 / 0x088AB438 / 0x088AC020 | the director's (0x08B0274C) step from 0x08A2C608 by + 8, 0x08A2C69C by + 2 (u16), 0x08A2C720 by + 16, 0x08A2C780 by + 8 |
+| 0x08812F90 / 0x088B2E2C | the step 0x08A05864[BATTLE + 56]; the step 0x08A36EF0[GAME + 4] |
+| 0x089CD248 / 0x089CF574 / 0x089D9994 / 0x089DFA0C | an object's step by + 4 from 0x08AB6148 / 0x08AB6348 / 0x08AB69F0, given 0x09358BE0; by bits 8-11 of + 66 from 0x08AB79F0 |
+| 0x088212F4 | a number in binary-coded decimal (a digit to each 4 bits) |
+| 0x088230B4 | the first free of 8 slots of 20 bytes at 0x095177C8, marked used |
+| 0x08830348 | bit k set in a record's + 400 (k < 32) or + 404 |
+| 0x089DF1E0 / 0x089E04B0 | the pad word 0x08E75BA0 + 12 (+ 53 is 1) or + 56 has a bit of 0x83F0 / 0x8000 |
+| 0x088BE334 | one of 36 s8 at 0x08A3AFF8 at random |
+| 0x08984604 / 0x088748FC / 0x08837058 | a fighter's + 833 / + 236 when BATTLE is 0x1C; BATTLE + 28..30 once (+ 660); 1 added by 0x08836E60 unless GAME + 57 is 3 or + 373 |
+| 0x08826844 / 0x08855550 / 0x088569B0 / 0x088A27CC / 0x089DF0BC | count-downs (+ 20, + 82, + 74, + 82, + 16) that move a step on |
+| 0x088AD250 / 0x088B38C0 / 0x08856E44 | + 5 on after 0x088AD60C; + 3 on when GAME + 10 has bits 5-10; + 4 on once x passes 0x1C00000 |
+| 0x08987404 / 0x08987440 / 0x0890A19C / 0x089CEF38 / 0x089D7808 | speeds: x and y moved, y then 0x08987474, a jump's four speeds set, four speeds times 256 |
+| 0x088BCD70 / 0x08913098 / 0x088B4578 / 0x089DFD04 / 0x0892EB34 / 0x088AE200 | places and fields from an owner or the object itself; right of the camera + 0xC0; y moved 8 toward the middle |
+| 0x08987D8C / 0x089880E4 / 0x089CEF04 | + 84 from 0x08A92E30 (below 345) / 0x08A930E2 (below 346); an animation from the list at 0x09358BE0 + 280 |
+| 0x08817C94 / 0x088B3D94 / 0x089DE61C / 0x088CEE80 | pools reset and + 2 or 0x08B0284C + 8..10 cleared; three steps in a row; + 1 by GAME + 4 / + 6 |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

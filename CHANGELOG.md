@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.87.0
+- **More of the game decompiled:** 45 more small functions are hand-written C (`object/small_steps.c`): counters and waits that move objects' steps on, speeds and places copied or moved, the step tables run by the director, the game's step and BATTLE's, pad checks, a number turned into decimal digits for drawing, a flag bit set in a record, a free slot taken from a list of eight, and a few of a fighter's settings at a round's start. Nothing changes in play.
+
 ## 0.86.0
 - **EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER or COM:** the rows that were 1P / 2P / 3P JOIN-IN, HUMAN or CPU, are renamed for what they decide: whether a fighter nobody started with goes to the player on that pad first (PLAYER) or to the computer (COM, the game's own word). Nothing else changes: joining with Start works as before, whatever the rows say. `a3mx.cfg` now writes `p1_priority=PLAYER` / `COM`; files from earlier versions, with `p1_join_in=HUMAN` / `CPU`, are still read.
 
