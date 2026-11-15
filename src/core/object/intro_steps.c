@@ -494,3 +494,39 @@ SFA_FUNC(08857E98, setup_parts_by_fighter) {
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* ---- 0.82.0 ---- */
+
+void f_08821080(Cpu *c);   /* game_add_score_team (task/fight.c) */
+
+/* (object): a count's reward. Its count (+142, up to 14) picks a kind-3 object from the s8 table
+   0x08A172B0 (none when negative), made with +78 / +9 + 2 / +88 / +96 / +92 from it; then score for its
+   owner (+88): the s16 at 0x08A172C0 (World Tour: 0x08A172E0) by the count, up to 15, plus 1,000 for
+   each count past 15. */
+SFA_FUNC(088585B0, count_reward) {
+    gaddr o = ARG(0), saved = c->r[16];
+    c->r[29] -= 0x20;
+    c->r[16] = o;
+    int8_t k = S8(o + 142);
+    int8_t kind = S8(0x08A172B0u + (uint32_t)(k < 14 ? k : 14));
+    if (kind >= 0) {
+        c->r[4] = 3; c->r[5] = (uint8_t)kind; f_08822E74(c);
+        gaddr n = c->r[2];
+        if (n != 0) {
+            *B(n + 78) = *B(o + 3);
+            *B(n + 9) = (uint8_t)(*B(o + 9) + 2);
+            *W(n + 88) = o;
+            *W(n + 96) = *W(o + 96);
+            *W(n + 92) = *W(o + 88);
+        }
+    }
+    int32_t count = S8(o + 142), extra = 0;
+    gaddr owner = *W(o + 88);
+    c->r[16] = owner;
+    if (count >= 16) { extra = (count - 15) * 1000; count = 15; }
+    gaddr table = S8(GAME + 114) == 3 ? 0x08A172E0u : 0x08A172C0u;
+    c->r[4] = (uint32_t)(S16(table + (uint32_t)count * 2u) + extra); c->r[5] = owner;
+    f_08821080(c);
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}

@@ -252,3 +252,40 @@ SFA_FUNC(08820A68, random_twist) {
     mt[623] = mt[396] ^ (y >> 1) ^ *W(MT_MAG01 + ((y & 1) << 2));
     RETURN(bit);
 }
+
+void f_08821368(Cpu *c);   /* a random number */
+
+/* The s16 at 0x09524A68 (kept in 0 - 255 and growing on a timer, +4 its wait): while the wait runs it
+   only counts down. Then, in mode 18, a value at random from the eight s8 at 0x08A0FAC8 for BATTLE +
+   20 (rounded down to 8) × 8; in World Tour (GAME + 137) at most 0xF8; otherwise a limit × 8 from the
+   s8 table 0x08A0FA48 by GAME + 73 (16 a row) and BATTLE + 20 (or its entry at 0x08A0F9B8 while
+   BATTLE + 79): under level 4 the value is cut to it (and set to it for the entries 2, 5 and 7 on), from
+   4 on raised to it. */
+#define GROWING 0x09524A68u
+SFA_FUNC(08836AA8, growing_value_limit) {
+    gaddr s16 = c->r[16], s17 = c->r[17];
+    uint16_t wait = *H(GROWING + 4);
+    if (wait != 0) { *H(GROWING + 4) = (uint16_t)(wait - 1); return; }
+    if ((int8_t)*B(GAME + 114) == 18) {
+        int32_t round = (int16_t)*H(0x092E1228u + 20);
+        int32_t base = (round / 8) * 8;
+        c->r[29] -= 0x10;
+        c->r[16] = GROWING; c->r[17] = (uint32_t)base;
+        f_08821368(c);
+        c->r[29] += 0x10;
+        int32_t r = (int32_t)c->r[2], pick = r >= 0 ? (r & 7) : -((-r) & 7);
+        *H(GROWING) = (uint16_t)((int32_t)(int8_t)*B(0x08A0FAC8u + (uint32_t)(base + pick)) << 3);
+        c->r[16] = s16; c->r[17] = s17;
+        return;
+    }
+    int16_t v = (int16_t)*H(GROWING);
+    if ((int8_t)*B(GAME + 137) != 0) { if (v > 0xF8) *H(GROWING) = 0xF8; return; }
+    int32_t entry = (int16_t)*H(0x092E1228u + 20);
+    if ((int8_t)*B(0x092E1228u + 79) != 0) entry = (int8_t)*B(0x08A0F9B8u + (uint32_t)entry);
+    int32_t level = (int8_t)*B(GAME + 73);
+    int32_t limit = (int32_t)(int8_t)*B(0x08A0FA48u + (uint32_t)(entry + (level << 4))) << 3;
+    if (level < 4) {
+        if (limit < v) *H(GROWING) = (uint16_t)limit;
+        if (entry >= 7 || entry == 2 || entry == 5) { if (!(limit < (int16_t)*H(GROWING))) *H(GROWING) = (uint16_t)limit; }
+    } else if (!(limit < v)) *H(GROWING) = (uint16_t)limit;
+}

@@ -276,3 +276,83 @@ SFA_FUNC(0887223C, hit_hold_frames) {
     if (S8(a + 127) >= 31) *B(a + 127) = 0x1E;
     if (S8(d + 127) >= 31) *B(d + 127) = 0x1E;
 }
+
+/* ---- 0.82.0 ---- */
+
+void f_08821368(Cpu *c);   /* a random number */
+
+/* (attacker, v): v lessened by the count of hits in a row (+126; the s8 at 0x08A21F5E, 3 from 16 on):
+   0 halves it, 1 takes a quarter off, 2 an eighth, 3 a sixteenth, 4 a 32nd. +669 / +670 become 4 /
+   10 unless +670 is 11. Only for a human attacker pressing a button (+760) against a CPU or an idle
+   human, while the hit record's +44 is clear; in Training the side the flags at 0x0950FF70 name does it
+   always (with bit 7, at random). */
+SFA_FUNC(08873160, hit_scale_by_count) {
+    gaddr a = ARG(0), other = *W(HIT + 24);
+    int32_t v = (int32_t)ARG(1);
+    gaddr s[4] = { c->r[16], c->r[17], c->r[18], c->r[19] };
+    c->r[29] -= 0x20;
+    c->r[16] = (uint32_t)v; c->r[17] = a; c->r[18] = other; c->r[19] = HIT;
+    int scale = 0;
+    if (S8(0x08E75910u + 114) == 2) {   /* GAME + 114, the mode: Training */
+        uint8_t flags = *B(0x0950FF70u);
+        if (flags & (1u << (S8(a + 337) & 31))) {
+            if ((flags & 0x80) == 0) scale = 1;
+            else { f_08821368(c); if (c->r[2] & 0x80) scale = 1; }
+        }
+    }
+    if (!scale) {
+        if (S8(a + 373) != 0 || *B(HIT + 44) != 0 || *H(a + 760) == 0) goto done;
+        if (S8(other + 373) == 0 && *H(other + 760) != 0) goto done;
+    }
+    if (S8(a + 670) != 0xB) { *B(a + 669) = 4; *B(a + 670) = 0xA; }
+    int8_t n = S8(a + 126);
+    uint32_t k = n < 16 ? (uint32_t)(int32_t)S8(0x08A21F5Eu + (uint32_t)(int32_t)n) : 3;
+    switch (k) {
+    case 0: v >>= 1; break;
+    case 1: v -= v >> 2; break;
+    case 2: v -= v >> 3; break;
+    case 3: v -= v >> 4; break;
+    case 4: v -= v >> 5; break;
+    default: break;
+    }
+done:
+    c->r[29] += 0x20;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3];
+    RETURN(v);
+}
+
+void f_0886E3CC(Cpu *c);   /* fighter_call_08805310_by_kind (state.c) */
+
+/* (attacker, defender, hit): 0x0886E3CC for the defender (and for some kinds the hit record's fighter
+   too) with a kind and a length: 10 / 0x80 for a defender at health -1; with the hit record's +72, 9 /
+   0x10 when the defender's +590 has the bit for its +122, else 7 / 5 for both; with +588, 9 and its
+   +127; otherwise by the hit's +19: 0 → 8, 1 → 9 for both, 2 → 10 for both, with the length from the
+   u16 at 0x08A1FF60 by the hit record fighter's +194 (entry 16 for a +194 of 2 with kind 2). */
+SFA_FUNC(08874CDC, hit_pad_effects) {
+    gaddr d = ARG(1), hit = ARG(2), other = *W(HIT + 24);
+    gaddr s[4] = { c->r[16], c->r[17], c->r[18], c->r[19] };
+    uint32_t k1 = 0xFF, len1 = 0, k2 = 0xFF, len2 = 0;
+    c->r[29] -= 0x30;
+    c->r[16] = d; c->r[19] = 0xFF;
+    if (S16(d + 112) == -1) { k2 = 10; len2 = 0x80; }
+    else if (*B(HIT + 72) != 0) {
+        if (S8(d + 590) & (1 << (S8(d + 122) & 31))) { k2 = 9; len2 = 0x10; }
+        else { k2 = 7; len2 = 5; k1 = 7; len1 = 5; }
+    } else if (S8(d + 588) != 0) { k2 = 9; len2 = *B(d + 127); }
+    else {
+        uint8_t q = *B(hit + 19);
+        int32_t which = S8(other + 194);
+        if (q == 0) { k2 = 8; len2 = *H(0x08A1FF60u + (uint32_t)(which * 2)) & 0xFF; }
+        else if (q == 1) { k2 = 9; len2 = *H(0x08A1FF60u + (uint32_t)(which * 2)) & 0xFF; k1 = k2; len1 = len2; }
+        else if (q == 2) {
+            k2 = 10; k1 = 10;
+            len2 = (which == 2 ? *H(0x08A1FF60u + 32) : *H(0x08A1FF60u + (uint32_t)(which * 2))) & 0xFF;
+            len1 = len2;
+        }
+    }
+    c->r[17] = k2; c->r[18] = len2;
+    if (k1 != 0xFF) { c->r[4] = other; c->r[5] = k1; c->r[6] = len1; f_0886E3CC(c); }
+    if (k2 != 0xFF) { c->r[4] = d; c->r[5] = k2; c->r[6] = len2; f_0886E3CC(c); }
+    c->r[29] += 0x30;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3];
+}

@@ -3325,3 +3325,45 @@ SFA_FUNC(08899B6C, setup_by_side_or_10) {
     c->r[29] += 0x20;
     c->r[16] = s16; c->r[17] = s17;
 }
+
+/* ---- 0.82.0 ---- */
+
+/* (object): unless +40, once pool 4 has 14 free: +10 counts, +20 / +22 cleared, a list-3 object of
+   type 0 made, 0x092E3E98 / + 4 = 0x08A28158 / 0x08A2824E, and fourteen kind-0x13 objects from the
+   entries at 0x08A272C4 (type, +10, then +92 and +88 picked from { none, the two fighters (swapped
+   unless +57 bit 0), fighter 3 in layout 3 } kept on the guest stack); an entry led by a negative byte
+   is only for layout 3. As in the original, the stores go to whatever was made, 0 included. */
+SFA_FUNC(08895DD8, make_fourteen_by_layout) {
+    gaddr o = ARG(0), s[5] = { c->r[16], c->r[17], c->r[18], c->r[19], c->r[20] };
+    if (S8(o + 40) != 0 || S8(0x095176F3u) < 14) return;
+    c->r[29] -= 0x40;
+    gaddr who = c->r[29] + 16;
+    *H(o + 22) = 0;
+    *H(o + 10) = (uint16_t)(*H(o + 10) + 1);
+    *H(o + 20) = 0;
+    CALL2(f_08823338, 0, 0);
+    *W(who) = 0; *W(who + 4) = FIGHTER_1; *W(who + 8) = FIGHTER_2;
+    if ((S8(o + 57) & 1) == 0) { *W(who + 4) = FIGHTER_2; *W(who + 8) = FIGHTER_1; }
+    c->r[16] = 3; c->r[17] = BATTLE;
+    if (S16(BATTLE + 56) == 3) { *W(who + 12) = *W(who + 8); *W(who + 8) = 0x092E47D0u; }
+    *W(0x092E3E98u) = 0x08A28158u;
+    *W(0x092E3E98u + 4) = 0x08A2824Eu;
+    gaddr e = 0x08A272C4u;
+    for (int i = 0; i < 14; i++) {
+        int8_t type = S8(e);
+        if (type < 0) {
+            if (S16(BATTLE + 56) != 3) { e += 5; continue; }
+            e += 1;
+            type = S8(e);
+        }
+        c->r[18] = e + 1;
+        gaddr n = CALL2(f_08822EAC, 0x13, (uint8_t)type);
+        *B(n + 10) = (uint8_t)S8(e + 1);
+        *W(n + 92) = *W(who + (uint32_t)((int32_t)S8(e + 2) << 2));
+        *W(n + 88) = *W(who + (uint32_t)((int32_t)S8(e + 3) << 2));
+        e += 4;
+    }
+    c->r[19] = 14; c->r[20] = e;
+    c->r[29] += 0x40;
+    c->r[16] = s[0]; c->r[17] = s[1]; c->r[18] = s[2]; c->r[19] = s[3]; c->r[20] = s[4];
+}

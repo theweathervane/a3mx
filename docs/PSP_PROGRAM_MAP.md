@@ -759,6 +759,18 @@ owner at + 88, and frame data at + 296.
 | 0x0889DE64 | an object travelling from BATTLE + 98's place to the stage's (0x08A2AFB0), speeds by a divide by 0x21000 |
 | `object/screen_steps.c` | 0x0889BAE8 (0x08A2AAA4 by side), 0x0889A8C0, 0x08899B6C |
 
+**Sprite parts, the camera's x and more** (0.82.0).
+
+| Address | What |
+|---|---|
+| 0x0880D214 | (draw state, sprite, size, offset): a part's offset scaled about its centre by the sprite's + 32 / + 34 (8.8) and turned by + 36's high byte (2 × 2 matrices at 0x08A0432C), added to the draw state's + 80 / + 82 (`object/sprite.c`; ~50,000 calls in the first fight) |
+| 0x0881E320 | the camera's x (+ 34) following the fighters' span (two s16 on the guest stack from 0x0881E64C): centred for a span of 192 or more, else kept within + 0x60 / + 0x120; + 82 added; + 59 = 8 / 0xC by + 42 (`stage/camera.c`) |
+| 0x08873160 | damage less by the hits in a row (+ 126 into the s8 at 0x08A21F5E: ½, ¼, ⅛, 1/16, 1/32 off); Training's flags at 0x0950FF70 (`fighter/hit.c`) |
+| 0x08874CDC | a hit's kinds and lengths for 0x0886E3CC (the length table 0x08A1FF60) (`fighter/hit.c`) |
+| 0x088585B0 | a count's reward: a kind-3 object by + 142 (0x08A172B0) and score from 0x08A172C0 / E0 (+ 1,000 a count past 15) (`intro_steps.c`) |
+| 0x08836AA8 | the s16 at 0x09524A68 limited: mode 18 at random from 0x08A0FAC8; World Tour 0xF8; else 0x08A0FA48 by GAME + 73 and BATTLE + 20 (`misc.c`) |
+| 0x08895DD8 | fourteen kind-0x13 objects from 0x08A272C4, their fighters from a table on the guest stack |
+
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
 object (0x08821424; or 0x088219B0 then 0x088215C4, the animation and the drawing; s0 holds the object):
 26 decompiled. 32 hand the handler the object's owner (the pointer at + 88) as its second argument: 11

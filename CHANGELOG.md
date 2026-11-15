@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.82.0
+- **More of the game decompiled:** 7 more functions are hand-written C. They include where each part of a sprite goes once it is scaled and turned (run tens of thousands of times a fight), the camera following the fighters across the stage, damage lessened by the number of hits in a row, the pad effects of a hit, a reward and score for a count, a value kept within a limit by the level and the round, and fourteen objects made by the layout. Nothing changes in play.
+
 ## 0.81.0
 - **More of the game decompiled:** 10 more functions are hand-written C. They include which side has lost all its fighters, the fighters' starting places, the round's stage pick in modes that change it, score for a team, a search through a fighter's move slots, markers on two gauges, and more objects of the screens around a fight (one travelling to the stage's place, sliding panels by side). Nothing changes in play.
 

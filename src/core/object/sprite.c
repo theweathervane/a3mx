@@ -96,3 +96,39 @@ static void draw_sprite(Cpu *c, gaddr sp) {
 
 SFA_FUNC(0880C308, game_draw_sprite) { c->r[29] -= 0x20; draw_sprite(c, ARG(0)); c->r[29] += 0x20; }
 SFA_FUNC(0880E6E8, game_sprite_anchor) { sprite_anchor(ARG(0), ARG(1)); }
+
+/* ---- 0.82.0 ---- */
+
+/* (draw state, sprite, size, offset): a part's place: the offset (two s16) scaled about the part's
+   centre (size bytes +4 / +5, 16 pixels a step) by the sprite's scale (+32 / +34, 8.8), then turned by
+   its angle (+36's high byte, a 2 × 2 matrix of 8.8 values at 0x08A0432C), added to the draw state's
+   +80 / +82 into +0 / +2. */
+SFA_FUNC(0880D214, sprite_part_place) {
+    gaddr d = ARG(0), s = ARG(1), size = ARG(2), off = ARG(3);
+    int32_t cw = *B(size + 4) << 4, ch = *B(size + 5) << 4;
+    int32_t px = (int16_t)*H(off), py = (int16_t)*H(off + 2);
+    int64_t m = (int64_t)(int16_t)(cw + px + 8) * ((int16_t)*H(s + 32) >> 8);
+    int32_t sx = (int16_t)(uint32_t)m >> 4;
+    uint32_t r2 = (uint32_t)sx << 16;
+    m = (int64_t)(int16_t)(ch + py + 8) * ((int16_t)*H(s + 34) >> 8);
+    int16_t x = (int16_t)(px + (int16_t)sx);
+    int16_t y = (int16_t)(py + (int16_t)((int16_t)(uint32_t)m >> 4));
+    uint32_t angle = (uint32_t)*H(s + 36) >> 8;
+    if (angle != 0) {
+        gaddr e = 0x08A0432Cu + angle * 8u;
+        int32_t c0 = (int16_t)*H(e), c1 = (int16_t)*H(e + 2), c2 = (int16_t)*H(e + 4), c3 = (int16_t)*H(e + 6);
+        int32_t a = (int16_t)(cw + x + 8), b = (int16_t)(ch + y + 8);
+        int32_t ac0 = (int32_t)((uint32_t)a * (uint32_t)c0), bc1 = (int32_t)((uint32_t)b * (uint32_t)c1);
+        int32_t ac2 = (int32_t)((uint32_t)a * (uint32_t)c2);
+        m = (int64_t)b * c3;
+        int16_t rx = (int16_t)((int16_t)(ac0 >> 8) + (bc1 >> 8));
+        int16_t ry = (int16_t)(((int32_t)(uint32_t)m >> 8) + (int16_t)(ac2 >> 8));
+        x = (int16_t)(rx - cw - 8);
+        y = (int16_t)(ry - ch - 8);
+        r2 = (uint32_t)bc1;
+    }
+    c->lo = (uint32_t)m; c->hi = (uint32_t)((uint64_t)m >> 32);
+    *H(d) = (uint16_t)((int16_t)*H(d + 80) + x);
+    *H(d + 2) = (uint16_t)((int16_t)*H(d + 82) + y);
+    RETURN(r2);
+}

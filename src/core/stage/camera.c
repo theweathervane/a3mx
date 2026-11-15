@@ -132,3 +132,40 @@ SFA_FUNC(0881E538, camera_layer_follow_height) {
     c->r[29] += 0x20;
     c->r[16] = saved;
 }
+
+void f_0881E64C(Cpu *c);   /* camera_span_by_layout (object/runners.c) */
+
+/* (layer): the camera's x (+34). While the byte at 0x08B01560 is set it just moves by +82. Otherwise
+   the fighters' span (left, right: two s16 on the guest stack, frame + 16 / + 18) is asked for: a span
+   of 192 or more centres the camera (its x 0xC0 left of the middle); a narrower one is followed when
+   its right end passes x + 0x120 or its left end x + 0x60. The steps are 0x0881E49C / 0x0881E4E4's;
+   then +82 is added, and +59 = 8 below +42 (else 0xC). */
+SFA_FUNC(0881E320, camera_follow_span) {
+    gaddr l = ARG(0), saved = c->r[16];
+    if (*(uint8_t *)guest_ptr(0x08B01560u) != 0) { *S(l + L_CAMERA_X) = (int16_t)(*S(l + L_CAMERA_X) + *S(l + 82)); return; }
+    c->r[29] -= 0x20;
+    c->r[16] = l;
+    gaddr left_at = c->r[29] + 16, right_at = c->r[29] + 18;
+    c->r[4] = left_at; c->r[5] = right_at; f_0881E64C(c);
+    int32_t lo = *S(left_at), hi = *S(right_at), x = *S(l + L_CAMERA_X);
+    int32_t nx;
+    if ((int16_t)(hi - lo) >= 192) {
+        int16_t m = (int16_t)((int16_t)(((hi + lo) >> 1) - x) - 0xC0);
+        c->r[4] = l; c->r[5] = (uint32_t)(int32_t)m;
+        if (m >= 0) f_0881E49C(c); else f_0881E4E4(c);
+        nx = (int32_t)c->r[2];
+    } else {
+        int16_t d = (int16_t)(hi - x - 0x120);
+        if (d >= 0) { c->r[4] = l; c->r[5] = (uint32_t)(int32_t)d; f_0881E49C(c); nx = (int32_t)c->r[2]; }
+        else {
+            int16_t e = (int16_t)(lo - x - 0x60);
+            if (e > 0) nx = x;
+            else { c->r[4] = l; c->r[5] = (uint32_t)(int32_t)e; f_0881E4E4(c); nx = (int32_t)c->r[2]; }
+        }
+    }
+    int16_t y = (int16_t)(nx + *S(l + 82));
+    *(uint8_t *)guest_ptr(l + 59) = y < *S(l + 42) ? 8 : 0xC;
+    *S(l + L_CAMERA_X) = y;
+    c->r[29] += 0x20;
+    c->r[16] = saved;
+}
