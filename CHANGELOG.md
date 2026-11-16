@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.93.3
+### For players
+- Nothing changes in play.
+
+### Technical
+- **Docker test runner: on Docker's default network** (`network_mode: bridge`). A stack's own network uses Docker's built-in DNS, which on a TerraMaster NAS could not resolve gitlab.com, so the clone failed; the default network resolves it. The runner publishes no ports.
+
 ## 0.93.2
 ### For players
 - Nothing changes in play.

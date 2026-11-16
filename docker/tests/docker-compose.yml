@@ -16,6 +16,9 @@ services:
     image: a3mx-tests:latest
     container_name: a3mx-tests
     restart: "no"
+    # Docker's default network: a stack's own network uses Docker's built-in DNS, which can fail to
+    # resolve names on some NAS systems (TerraMaster: "Could not resolve host: gitlab.com"). No ports.
+    network_mode: bridge
     environment:
       A3MX_GIT_URL: ${A3MX_GIT_URL:-https://gitlab.com/theweathervane-group/a3mx.git}
       A3MX_GIT_REF: ${A3MX_GIT_REF:-main}
