@@ -14,6 +14,9 @@ services:
     build:
       context: .
     image: a3mx-tests:latest
+    # Always built here, never pulled: Portainer's "Pull and redeploy" would otherwise look for
+    # a3mx-tests on Docker Hub. Each deploy rebuilds (cached: quick unless this folder changed).
+    pull_policy: build
     container_name: a3mx-tests
     restart: "no"
     # Docker's default network: a stack's own network uses Docker's built-in DNS, which can fail to

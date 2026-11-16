@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.93.4
+### For players
+- Nothing changes in play.
+
+### Technical
+- **Docker test runner: `pull_policy: build`.** Portainer's **Pull and redeploy** pulls every image a stack names, and looked for `a3mx-tests` on Docker Hub ("pull access denied"). The image is now always built on the Docker host, never pulled; a redeploy rebuilds it from cache.
+
 ## 0.93.3
 ### For players
 - Nothing changes in play.
