@@ -43,6 +43,14 @@ static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
 static void next_step(gaddr o) { *B(o + O_STEP) = (uint8_t)(*B(o + O_STEP) + 1); }
 static void next_substep(gaddr o) { *B(o + O_SUBSTEP) = (uint8_t)(*B(o + O_SUBSTEP) + 1); }
 
+/* x and y by their speeds, the speeds by their accelerations (no answer). */
+SFA_FUNC(08821044, object_move) {
+    gaddr o = ARG(0);
+    uint32_t vx = *W(o + O_VX), vy = *W(o + O_VY);
+    *W(o + O_X) += vx; *W(o + O_VX) = vx + *W(o + O_AX);
+    *W(o + O_Y) += vy; *W(o + O_VY) = vy + *W(o + O_AY);
+}
+
 /* x and y by their speeds, the speeds by their accelerations; answers 1 while the object (its y plus
    the frame's height byte) is still short of the floor. */
 SFA_FUNC(08862004, object_fall) {

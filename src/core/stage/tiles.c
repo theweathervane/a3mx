@@ -45,7 +45,7 @@ static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); retur
 #define QUAD_UV      0x08B0150Cu   /* s16 u, v, the same order */
 #define PAUSED       0x08E75969u   /* s8: nonzero stops background animation (with the two below) */
 #define FIGHT        0x092E1228u   /* +15, +37: s8 flags that stop it too */
-#define ANIM_B268    0x092F8800u   /* 0x0881B268's animation for kind 0x85: +60 countdown, +131 frame */
+#define ANIM_B268    0x092E8800u   /* 0x0881B268's animation for kind 0x85: +60 countdown, +131 frame (layer 0's record; 0.49.0 - 0.88.2 had 0x092F8800, writing elsewhere) */
 #define ANIM_B268_ROWS 0x08A08AD8u /* s8[4]: the frame's offset in the map, in steps of 192 bytes */
 
 /* The grid record (halfwords unless marked) */

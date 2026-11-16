@@ -15,6 +15,7 @@ SFA_FUNC(08824624, nothing_08824624) { (void)c; }
 SFA_FUNC(08828C30, nothing_08828C30) { (void)c; }
 SFA_FUNC(0882DB00, nothing_0882DB00) { (void)c; }
 SFA_FUNC(08837688, nothing_08837688) { (void)c; }
+SFA_FUNC(0884D0B4, nothing_0884D0B4) { (void)c; }
 SFA_FUNC(08857CC0, nothing_08857CC0) { (void)c; }
 SFA_FUNC(088870B4, nothing_088870B4) { (void)c; }
 SFA_FUNC(0888ACA4, nothing_0888ACA4) { (void)c; }

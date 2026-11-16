@@ -864,8 +864,22 @@ blend, bits 8-15 the palette (0x089E0EA4), bits 0-7 its 16-texel cell.
 | Address | What |
 |---|---|
 | 0x0881AB28 | 32-pixel tiles, 13 x 9 (WIDE FORCED: 17 columns from 2 tiles left). a0 the layer (+3 kind: 5 a 16-wide map wrapping at 0xD00, 0xDA / 0xEE animated (+60 countdown of 6, +131 frame of 11), else 32 wide; +18 / +98 the scroll; +122 the depth column), a1 the map. Works out the grid record on its stack and draws it |
-| 0x0881B268 | 16-pixel tiles, 25 columns (WIDE FORCED: 31 from 3 tiles left) by the record's +62 rows. a0 a record in game memory, laid out as 0x0881AB28's (kind 0x85 animated by 0x092F8800 and the table 0x08A08AD8; 0x90 strips at +72 onwards) |
+| 0x0881B268 | 16-pixel tiles, 25 columns (WIDE FORCED: 31 from 3 tiles left) by the record's +62 rows. a0 a record in game memory, laid out as 0x0881AB28's (kind 0x85 animated by layer 0's record 0x092E8800 (+60 countdown, +131 frame) and the table 0x08A08AD8; 0x90 strips at +72 onwards) |
 | 0x0881B7C8 | the third drawer, still translated: called only by 0x0881A2C8 (from 0x089DE2C0 / 0x089DE390, when 0x0952F950 + 304 is set and the mode word at + 308 is 2), which no scenario reaches yet |
 | 0x0881A2C8 | sets up the quad list's descriptor and draws a screen's layers through the three drawers |
 
 Paused (0x08E75969) or either fight flag 0x092E1237 / 0x092E124D stops their animation.
+
+### The stage's objects (decompiled: src/core/stage/objects.c)
+
+The pieces of a stage that move or animate but are not tile layers (Ryu's straw and rocks, Ken's crowd,
+Guile's helicopter, Bison's storm and leaves...) are objects of pool 5 (0x09514B70, 16 objects of 0xC0,
+`object_make_16`), run by lists.c's second list through the kind table 0x08A101F0 and drawn as sprites
+(queue D, 0x0880C308). `python tools/stage_objects.py` lists every stage's records.
+
+| Address | What |
+|---|---|
+| 0x0884AE40 | makes the stage's objects (from the fight's set-up and the screens that show a stage): one per 16-byte record of 0x08A143D8[stage] until the record with bit 7 of its first byte. A record: +0 kind (bits 0-6) and last (bit 7), +1 type, +2 layer (+9), +3 (+78), +4 camera (+14), +5 (+11), +6 / +8 x / y, +10 (+26), +12 (+24), +14 depth (+38). Then +164 = 0 on stages 0x06 / 0x09 / 0x18, else 1; +86 / +148 = 15 / 0 on 0x02, 06 - 09, 10, 14, 17, 18, 20, 22, 24, 29, else 4 / 7. BATTLE1 - 4 have none |
+| 0x08A101F0 | u32[85]: the stage objects' routines by kind (+2); 0x0884B034 (kind 0) ... 0x0885498C (84). Their animation tables are by kind, picked by type (+3): 0x08A144A0 (kinds 0 - 2), 0x08A146A0 (3, 4) ... |
+| kinds | The shapes most share (objects.c): *follow* (animated; drawn near the screen when +96 = 16 x +78 gives a margin; moves back with the fighters' layer at +100's rate in sixteenths, or fixed rates of 14 / 15 / 10, gated by +14 = 0 or +26 != 0), *plain*, *pause at the line* (step at +7: stops animating for a frame each time the fighters' layer crosses x +132), *swap at the line* (two looks in a block at +96: the record's and a fixed one, taken while the layer is past x +132), plus about thirty of their own: GUILE's helicopter (0x08852790, its steps by +5 0x0885303C), the things crossing its sky (0x08852B70, sent by 0x08852900 through 0x08852DB0), its three jumping pieces (0x08853500); BISON's storm (0x0884D3D4 / 0x088521D4) and falling leaves (0x0884D5F8 / 0x088523F8); BALROG's pacing figure (0x08850424) and the pieces it throws (0x08850084), its bobbing one (0x0885027C); FEI LONG's crowd that reacts to the fighters' +112 (0x088538A0); HONDA's figure that changes sides with the camera (0x08851004); KARIN's crossing car (0x08851EBC); and more |
+| 0x08821044 | an object moved: x / y (+16 / +20) by their speeds (+96 / +100), the speeds by +104 / +108 (`object/motion.c`) |

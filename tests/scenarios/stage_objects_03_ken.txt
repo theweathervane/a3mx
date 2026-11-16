@@ -1,0 +1,4 @@
+# FREE BATTLE on KEN's stage (menu 3), into the fight and 600 frames of it: the stage's objects made
+# (src/core/stage/objects.c) and run by their kinds' routines.
+frames 4932
+input 1200=start;1206=;1500=start;1506=;1600=down;1606=;1640=down;1646=;1680=down;1686=;1760=cross;1766=;2100=cross;2106=;2300=cross;2306=;2420=cross;2426=;2540=cross;2546=;2660=cross;2666=;2780=cross;2786=;2900=cross;2906=;3020=cross;3026=;3200=down;3204=;3224=down;3228=;3248=down;3252=;3332=cross;3338=

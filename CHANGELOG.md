@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.89.0
+### For players
+- **More of the game decompiled: every stage's objects.** The animated and moving pieces of the stages that are not their scrolling layers (Ryu's straw, Ken's and Chun-Li's crowds, Guile's helicopter, Bison's storm and falling leaves, Balrog's casino, Fei Long's crowd, Honda's figure and the rest: 34 stages) now run as hand-written C. Nothing changes in play.
+- **Balrog's stage:** its animated background tiles no longer write to the wrong place in memory (a slip in the tile drawer decompiled in 0.49.0, only reached on that stage).
+
+### Technical
+- New `src/core/stage/objects.c` (92 functions): the maker 0x0884AE40, which reads each stage's list of 16-byte records (table 0x08A143D8: kind, type, layer, camera, x, y...) into pool-5 objects, and the routines of every kind the stages use (table 0x08A101F0), most of them one of four shapes (*follow*, *plain*, *pause at the line*, *swap at the line*) with their own tables and values, the rest of their own (GUILE, BISON, BALROG, FEI LONG, HONDA, KARIN, SODOM...), with their helpers. Also `object_move` 0x08821044 (`object/motion.c`) and an empty function 0x0884D0B4.
+- `src/core/stage/tiles.c`: 0x0881B268's animation for kind 0x85 keeps its countdown and frame in layer 0's record (0x092E8800 + 60 / + 131) as the original does; since 0.49.0 it used 0x092F8800. Found by the new BALROG scenario.
+- `tools/stage_objects.py`: lists every stage's object records (`--stage`, `--markdown`, `--json`). STAGES.md has a section on stage objects; PSP_PROGRAM_MAP.md the record format and the kinds.
+- 34 new parity scenarios `stage_objects_01_ryu_1` ... `stage_objects_34_hawk`: a Free Battle on each stage into 600 frames of the fight.
+- `--reference-only` takes up to 4096 addresses (it silently used only the first 64, so bisecting with a long list gave wrong answers).
+
 ## 0.88.2
 ### For players
 - **Stage Extensions' placeholders re-measured:** the coloured edge strips are now on the plane each gap really continues (on RYU 1 the sky's strip is the sky layer's, for one). The edges they cover are the same; a strip painted from now on joins the right layer. If you have painted one, it is kept as it is.

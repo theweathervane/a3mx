@@ -9,7 +9,7 @@ extern const DecompEntry decomp_table[];   /* generated: build/generated/decomp_
 extern const unsigned decomp_count;
 
 static int all_original;
-static uint32_t only[64];
+static uint32_t only[4096];
 static int n_only;
 
 int decomp_use_original(uint32_t addr) {

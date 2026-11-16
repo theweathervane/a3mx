@@ -88,6 +88,34 @@ GEN and SODOM slots, and JUNI shares JULI's stage. From 0x25 on the numbers stop
 the character slots 0x25 - 0x29 are BALROG, EAGLE, MAKI, YUN and INGRID, while the stages are BATTLE1
 - 4 and KARIN 2.
 
+## Stage objects
+
+Besides its tile layers, every stage but BATTLE1 - 4 has a few **objects**: the pieces that move or
+animate on their own, drawn as sprites. Ryu's straw and rocks, Ken's crowd, Chun-Li's spectators, Guile's
+helicopter and trees, Bison's storm and leaves, Balrog's casino girls, Fei Long's crowd, Honda's figure
+and the like. Each stage has a list of 16-byte records in the program (table 0x08A143D8 by stage number)
+that says which objects to make, of which kind and type, where (x, y), in which sprite layer and how
+they follow the camera; each kind has its own routine (table 0x08A101F0) and its own animations.
+All of it is native C since 0.89.0 (`src/core/stage/objects.c`; the record format and the kinds are in
+[PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md#the-stages-objects-decompiled-srccorestageobjectsc)).
+
+`python tools/stage_objects.py` lists every stage's records (`--stage 0x00` for one, `--markdown` for a
+table, `--json` for tools). For example RYU 1:
+
+```
+0x00 RYU: 4 objects
+   kind  0 (0x0884B034) type  1  x   256 y    0  layer 0 camera 2  ...
+   kind  1 (0x0884B1C4) type  3  x   976 y   48  layer 1 camera 2  ...
+   kind  0 (0x0884B034) type  2  x   792 y  176  layer 1 camera 2  ...
+   kind  2 (0x0884B2AC) type  0  x   -16 y   80  layer 1 camera 0  ...
+```
+
+The objects are not tile layers, so WIDE FORCED's stage extensions (one strip per layer,
+[STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md)) can't cover them: where an object's art reaches the 4:3 edge
+it is cut there (RYU 1's straw on the left, Guile's trees, Blanka's palm, Mika's ropes, Adon's leaves,
+Charlie's plane, Sagat's lily pads, Karin 1's boat...). Widening them is future work, now that their
+code is native: per-object art, or more objects at the edges, in WIDE FORCED only.
+
 ## Widescreen
 
 WIDE FORCED shows 480 pixels instead of 384, 48 more on each side: at the limits the view spans 208 -

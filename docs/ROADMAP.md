@@ -3,7 +3,7 @@
 **Where things stand:** the boot, title, MODE MENU, task scheduler, loader thread, the fight's
 loop, set-up, most of its screens and its per-frame steps, the end of every frame, the sprite and object
 drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
-OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers,
+OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers and its objects,
 the step dispatchers the tests run, the text queue, objects' queueing, drawing dispatch and animation, the camera's sideways steps and the layers that follow it, the fighters' trail and the small steps and
 questions about a fighter's state, its buttons, the network state, the 2D library's texture lists and
 palettes, and the save files' names and parameters are
@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  10.01% decompiled
+Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  11.31% decompiled
 
-Functions                                [█░░░░░░░░░]  10.37%  1,543 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  10.01%  48,491 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  11.00%  1,637 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  11.31%  54,775 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  22.05%  44,973 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  25.13%  51,257 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.91%  2,330 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -229,6 +229,10 @@ To do, in rough order:
 - [ ] The stage's background drawers (`src/core/stage/`):
   - [x] The tile drawers 0x0881AB28 (32-pixel tiles) and 0x0881B268 (16-pixel), with WIDE FORCED's
         wider grid as native code; scenario `wide_fight` (0.49.0)
+  - [x] The stage's objects (`src/core/stage/objects.c`): the maker 0x0884AE40 (a table of 16-byte
+        records per stage) and the routines of every kind the 34 stages use, with their helpers;
+        `tools/stage_objects.py` lists the records; scenarios `stage_objects_01` - `34`, one Free Battle
+        per stage (0.89.0)
   - [ ] 0x0881B7C8 and its caller 0x0881A2C8 (from 0x089DE2C0 / 0x089DE390): need a scenario that
         reaches them
 - [ ] Battle core: rounds, timer, camera, collision (hit boxes), damage, guard, ISM rules
