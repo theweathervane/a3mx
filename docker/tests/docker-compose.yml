@@ -19,6 +19,10 @@ services:
     pull_policy: build
     container_name: a3mx-tests
     restart: "no"
+    # A small init as PID 1 (reaps the game processes the tests start, passes signals on), and time
+    # for run-tests.sh to stop the running step and write "RESULT: STOPPED" when the container is stopped.
+    init: true
+    stop_grace_period: 30s
     # Docker's default network: a stack's own network uses Docker's built-in DNS, which can fail to
     # resolve names on some NAS systems (TerraMaster: "Could not resolve host: gitlab.com"). No ports.
     network_mode: bridge

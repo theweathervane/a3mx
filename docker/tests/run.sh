@@ -18,7 +18,7 @@ docker build -t a3mx-tests:latest .
 env_file=
 if [ -f .env ]; then env_file="--env-file .env"; fi
 # shellcheck disable=SC2086
-exec docker run --rm --name a3mx-tests $env_file \
+exec docker run --rm --init --stop-timeout 30 --name a3mx-tests $env_file \
     -v "$iso_dir":/iso:ro \
     -v "$tests_dir":/tests \
     "$@" a3mx-tests:latest

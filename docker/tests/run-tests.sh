@@ -46,9 +46,50 @@ out="$RESULTS/$run_id"
 mkdir -p "$out"
 ln -sfn "$run_id" "$RESULTS/latest"
 exec > >(tee -a "$out/run.log") 2>&1
+tee_pid=$!
 
-say()  { printf '\n=== %s  %s\n' "$(date -u +%H:%M:%S)" "$*"; }
+say()  { stage=$*; printf '\n=== %s  %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 die()  { printf '\nERROR: %s\n' "$*"; echo "ERROR: $*" > "$out/summary.txt"; exit 2; }
+
+# --- stopping cleanly ----------------------------------------------------------------------------
+# Exit codes: 0 every test passed, 1 a test failed, 2 a setup step failed, 143 / 130 stopped
+# (docker stop / Ctrl-C). The long steps run in their own process group (step), so a stop ends the
+# whole step at once (ctest and the game it is running included) instead of Docker killing
+# everything after its grace period; the summary then says the run was stopped, not that it failed.
+stage=starting
+child=
+finish() {
+    # Let tee write the last lines to run.log and the container's log before the container stops.
+    exec 1>&- 2>&-
+    wait "$tee_pid" 2>/dev/null
+}
+trap finish EXIT
+stop() {
+    trap - TERM INT
+    [ -n "$child" ] && kill -TERM -- "-$child" 2>/dev/null
+    printf '\n=== %s  Stopped by SIG%s during: %s\n' "$(date -u +%H:%M:%S)" "$1" "$stage"
+    [ -n "$child" ] && wait "$child" 2>/dev/null
+    {
+        echo "a3mx ${version:-?} at ${commit:-?}"
+        echo "suite $SUITE, run $run_id, stopped $(date -u '+%Y-%m-%d %H:%M:%S') UTC during: $stage"
+        echo "RESULT: STOPPED (SIG$1) before the end: not a test result"
+    } > "$out/summary.txt"
+    cat "$out/summary.txt"
+    [ "$1" = INT ] && exit 130
+    exit 143
+}
+trap 'stop TERM' TERM
+trap 'stop INT' INT
+# Run a long step in its own process group and wait for it: unlike a foreground command, a wait
+# lets the trap above run as soon as the signal comes.
+step() {
+    setsid "$@" &
+    child=$!
+    wait "$child"
+    local rc=$?
+    child=
+    return $rc
+}
 
 say "a3mx tests, run $run_id: $GIT_URL ($GIT_REF), suite $SUITE, $JOBS jobs"
 
@@ -128,8 +169,8 @@ if [ "$SUITE" = disc ] || [ "$SUITE" = both ]; then
     fi
     if [ $extract = 1 ]; then
         say "Extracting the disc (extract_assets.py picks it by checksum)"
-        python3 tools/extract_assets.py 2>&1 | tee "$out/extract.log"
-        [ "${PIPESTATUS[0]}" -eq 0 ] || die "extract_assets.py failed (see extract.log): is your ULUS-10062 disc in $ISO_DIR?"
+        step bash -c 'python3 tools/extract_assets.py 2>&1 | tee "$1"; exit "${PIPESTATUS[0]}"' extract "$out/extract.log" \
+            || die "extract_assets.py failed (see extract.log): is your ULUS-10062 disc in $ISO_DIR?"
         used=$(sed -n 's/^disc //p' "$out/extract.log" | head -n 1)
         used=$(readlink -f "$used")
         mkdir -p work && printf '%s\n%s\n' "$used" "$(stat -L -c '%s %Y' "$used")" > "$stamp"
@@ -139,15 +180,15 @@ if [ "$SUITE" = disc ] || [ "$SUITE" = both ]; then
     fi
 
     say "Configuring (preset headless)"
-    cmake --preset headless || die "cmake --preset headless failed"
+    step cmake --preset headless || die "cmake --preset headless failed"
     say "Building"
-    cmake --build --preset headless -j "$JOBS" || die "the build failed"
+    step cmake --build --preset headless -j "$JOBS" || die "the build failed"
 
     say "Testing (build-headless)"
     ctest_args=(--test-dir build-headless -j "$JOBS" --output-on-failure --output-junit "$out/junit-headless.xml")
     [ -n "$TESTS" ]   && ctest_args+=(-R "$TESTS")
     [ -n "$EXCLUDE" ] && ctest_args+=(-E "$EXCLUDE")
-    ctest "${ctest_args[@]}"
+    step ctest "${ctest_args[@]}"
     rc=$?
     [ $rc -ne 0 ] && status=1
     cp -f build-headless/Testing/Temporary/LastTest.log "$out/LastTest-headless.log" 2>/dev/null
@@ -157,8 +198,8 @@ fi
 # --- the disc-free ci preset (what GitLab CI runs) ----------------------------------------------
 if [ "$SUITE" = ci ] || [ "$SUITE" = both ]; then
     say "Configuring, building and testing (preset ci, no disc)"
-    if cmake --preset ci && cmake --build --preset ci -j "$JOBS"; then
-        ctest --preset ci -j "$JOBS" --output-junit "$out/junit-ci.xml" || status=1
+    if step cmake --preset ci && step cmake --build --preset ci -j "$JOBS"; then
+        step ctest --preset ci -j "$JOBS" --output-junit "$out/junit-ci.xml" || status=1
         cp -f build-ci/Testing/Temporary/LastTest.log "$out/LastTest-ci.log" 2>/dev/null
     else
         echo "ERROR: the ci preset did not build"; status=1

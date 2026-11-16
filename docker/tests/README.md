@@ -62,6 +62,11 @@ about your own network ends up in the repository.
   came from changes or goes (adding other ISOs to the folder doesn't), or with `A3MX_REEXTRACT=1`. To start over, delete that folder. The container runs as root, so its files there belong
   to root.
 - Each run writes `TESTS_FOLDER/results/<date-time>/` (`results/latest` points to the newest): `run.log`, `summary.txt`,
-  `commit.txt`, `junit-headless.xml`, `LastTest-headless.log` and `failed-headless.txt`. The exit code is
-  0 when every test passed.
+  `commit.txt`, `junit-headless.xml`, `LastTest-headless.log` and `failed-headless.txt`.
+- The container stops by itself at the end, and its exit code is the result: **0** every test passed,
+  **1** a test failed, **2** a setup step failed (clone, disc, build: see `summary.txt`). So
+  "Exited (0)" in Portainer is the clean, passing finish.
+- Stopping it part-way (**Stop** in Portainer, `docker stop`, Ctrl-C) ends the running step at once and
+  exits with **143** (130 for Ctrl-C), with `RESULT: STOPPED` in `summary.txt`. The build in
+  `a3mx/build-headless/` may then be half-done; the next run just carries on building it.
 - Everything derived from the disc stays in `TESTS_FOLDER/a3mx/` and must never be committed or pushed.
