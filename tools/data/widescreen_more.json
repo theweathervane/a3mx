@@ -1,0 +1,11 @@
+{
+"about": "Words the project adds to the 16:9 patch's overlay (work/boot.widescreen.json), chosen by rt_widescreen like the patch's own. tools/recomp/psp_analyze.py merges them only when the patch is there, and stops if a word in the program is not the one listed as orig. Each has the decompiled code that does the same (src/core/...), so the reference run and the decomp agree with WIDE FORCED on.",
+"text": [
+  {"addr": "0x088110C8", "orig": "0x00075023", "new": "0x240AFFA0", "code": "src/core/object/sprite_grid.c",
+   "why": "0x08810D84's left limit: subu t2,zero,a3 (minus the cell width) -> addiu t2,zero,-96, as the patch does in 0x08811BCC (0x08811E28), so a fighter's parts are drawn into the left margin"},
+  {"addr": "0x088115EC", "orig": "0x00075023", "new": "0x240AFFA0", "code": "src/core/object/sprite_grid.c",
+   "why": "0x088112A8's left limit, the same"},
+  {"addr": "0x08811A30", "orig": "0x00054023", "new": "0x2408FFA0", "code": "src/core/object/sprite_grid.c",
+   "why": "0x088117D0's left limit: subu t0,zero,a1 -> addiu t0,zero,-96, the same"}
+]
+}

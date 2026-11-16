@@ -18,6 +18,12 @@ parts of the game it touches are decompiled.
   (`src/core/stage/tiles.c`), which draw two and three tiles further left and 17 and 31 columns while
   `rt_widescreen` is set, as the patch does. The `wide_fight` scenario checks them against the
   patched translation with WIDE FORCED on. 0x0881B7C8 stays translated (nothing reaches it yet).
+- **The project's own words:** `tools/data/widescreen_more.json` adds words to the patch's overlay
+  (the translator merges them, and stops if a word it replaces is not the one listed). The first three
+  widen the left limit of the sprite cell drawers 0x08810D84, 0x088112A8 and 0x088117D0 to -96, as the
+  patch does in their sibling 0x08811BCC, so fighters are drawn into the left margin. The drawers are
+  decompiled with the same limit (`src/core/object/sprite_grid.c`); the `wide_walls` scenario checks
+  them with a fighter at the left wall.
 - What it changes: [PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md) "Widescreen patch" (viewport 384 -> 480,
   camera centre -192 -> -240, the pillarbox at 0x0880F390, the background tile drawers 0x0881AB28 /
   0x0881B268 / 0x0881B7C8, code caves in `.data`).
@@ -34,10 +40,6 @@ parts of the game it touches are decompiled.
 
 ## Known issues
 
-- **Body parts that touch the invisible wall stop rendering:** To see it: turn WIDE FORCED on and walk
-  backwards with Blanka; his shoulder disappears and flickers at the border of the invisible wall. The
-  wall should stay (characters can't move further back), but the arm should still be drawn in the
-  wider view.
 - **Pop-in and flicker at the edges:** The CPS2 original had a tile limitation, so assets and animated
   characters at the edges flicker and pop in as they load.
 - **Off-screen loading is visible in the pre-battle sequences:**
@@ -86,10 +88,11 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
   which columns the game refreshes before choosing between drawing fewer columns and rebuilding them.
 - **Only widen in fights**, and in modes allowed one by one. That would fix the MODE MENU logo and the
   pre-battle loading in one go: pillarbox those screens instead of widening them.
-- **Blanka's shoulder.** Most likely sprites culled at the 4:3 edges. The decompiled object and sprite
-  drawing (`src/core/object/`) has no such cull, so it is in code still translated (probably the
-  fighters' sprite drawer, or one of the patch's 11 words at 0x088EC0D4 - 0x088EC788). Look there when
-  the fighters are decompiled.
+- **Blanka's shoulder (fixed).** Body parts at the invisible wall were cut at the old 4:3 edge: the
+  sprite cell drawers chosen by 0x0880E150 skip a cell that starts left of minus its width, and the
+  patch moved that limit to -96 in only one of the four (0x08811BCC). A fighter's parts go through
+  three of them, so all three needed it (found with `--watch-pc` on each drawer's left test, then
+  checked in a run). The walls are unchanged: only drawing is.
 - **The shape of a native implementation.** One place the drawers ask each frame (their `Wide`
   struct: the margin, each layer's extra scroll, a per-sprite offset that keeps the HUD centred), in
   place of patched constants. With the margin at 0 everything is the original, so parity holds with

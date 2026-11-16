@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  12.29% decompiled
+Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  12.48% decompiled
 
-Functions                                [█░░░░░░░░░]  11.50%  1,711 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  12.29%  59,503 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  11.52%  1,714 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  12.48%  60,417 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  27.45%  55,985 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  27.90%  56,899 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.91%  2,330 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -332,7 +332,7 @@ Details in [WIDESCREEN.md](WIDESCREEN.md), [STAGES.md](STAGES.md) and
 [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md). Rule for every item: WIDE FORCED must never change move
 timings or balance; parity with it on matches it off, frame for frame, in every fighter's state.
 
-- [ ] Draw body parts past the invisible walls (Blanka's shoulder vanishing at the wall), keeping the walls
+- [x] Draw body parts past the invisible walls (Blanka's shoulder vanishing at the wall), keeping the walls
 - [ ] Stop pop-in and flicker of assets and characters at the screen edges
 - [ ] Hide off-screen loading in the pre-battle sequences
 - [ ] Fill the MODE MENU background's missing left side

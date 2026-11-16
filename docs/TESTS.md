@@ -79,6 +79,7 @@ touches nothing the hashes cover.
 | `save_load` | SAVE, LOAD and DELETE | the silent save path | 4 min |
 | `pause_config`, `pause_config_original`, `pause_config_players` | the pause menu's BUTTON CONFIG, with and without extensions, for players 2 and 3 | per-player button config | 5 min each |
 | `wide_fight` | Arcade's first fight in WIDE FORCED | widescreen changes nothing about the fight | 7 min |
+| `wide_walls` | Free Battle in WIDE FORCED, Blanka against Blanka, player 1 at the left wall then walking right | fighters are drawn into the left margin (the cell drawers' left limit) | 7 min |
 | `disc_faults` | boot with a disc whose reads fail or stall | the loader's retry paths | 4 min |
 | `no_extensions` | the game with every feature off | the PSP program alone still runs, and matches | 2 min |
 

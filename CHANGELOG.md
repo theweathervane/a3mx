@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.95.0
+### For players
+- **WIDE FORCED: fighters are drawn in full at the left wall.** Body parts that went past the old 4:3 edge, such as Blanka's shoulder and back or Zangief's back when walking back into the wall, were cut off and flickered there. They are now drawn into the extra 48 pixels on the left. The walls don't move: only what is drawn changes, so every move and its timing stay as they were.
+
+### Technical
+- The cause: the sprite cell drawers that 0x0880E150 chooses from skip a cell starting left of minus its width. The 16:9 patch widens that limit to -96 in 0x08811BCC only, and a fighter's parts go through the other three as well (found with `--watch-pc` on each drawer's left test).
+- New `src/core/object/sprite_grid.c`: 0x08810D84 and 0x088112A8 (16- and 32-pixel cells from the picture cache) and 0x088117D0 (16-pixel cells, each with its own palette), with the left limit at -96 while `rt_widescreen` is set.
+- New `tools/data/widescreen_more.json`: the project's own words on top of the patch's overlay, merged by `tools/recomp/psp_analyze.py` (which stops if a word it replaces isn't the one listed), so the reference run matches the decompiled code with WIDE FORCED on. The first three are the same left limit in those drawers. CMake retranslates when it changes; no new extraction needed.
+- New scenario `wide_walls`: Free Battle in WIDE FORCED, Blanka against Blanka, player 1 at the left wall and then walking right. Checked with difftest, wide_fight, wide_walls, arcade_fight and arcade_other_fighter.
+
 ## 0.94.0
 ### For players
 - **Art pack for painting the Stage Extensions.** The launcher's new **Build the art pack** option (in Build) renders every stage at its walls from your own disc and puts the pictures together with all the placeholders to paint (the layer strips and the foreground objects' pieces), one folder per stage with a README, in `art-pack/` and a zip you can hand to an artist. It's made from your disc's art, so it's for you and your artist, not for publishing.

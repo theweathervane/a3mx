@@ -15,6 +15,22 @@ BASE = 0x08804000
 
 def sx16(v): return (v & 0xFFFF) - ((v & 0x8000) << 1)
 
+MORE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'widescreen_more.json')
+
+def widescreen_more(prog):
+    """The project's own words for WIDE FORCED (tools/data/widescreen_more.json), added to the patch's
+    overlay: {address: word}. Each must find the word it replaces, or the translation stops."""
+    out = {}
+    if not os.path.exists(MORE): return out
+    for e in json.load(open(MORE))['text']:
+        a, orig, new = int(e['addr'], 16), int(e['orig'], 16), int(e['new'], 16)
+        have = struct.unpack_from('<I', prog.img, a - BASE)[0]
+        if have != orig:
+            raise SystemExit('widescreen_more.json: %08X holds %08X, not %08X' % (a, have, orig))
+        if a in prog.ws_text: raise SystemExit('widescreen_more.json: the patch already changes %08X' % a)
+        out[a] = new
+    return out
+
 class Prog:
     """The relocated program. `extra_code` lists [lo, hi) address ranges outside .text that hold
     code (for example the code caves a binary patch such as the widescreen patch adds in .data)."""
@@ -35,6 +51,7 @@ class Prog:
             j = json.load(open(side))
             self.ws_text = {int(k, 16): v for k, v in j['text'].items()}
             self.caves = {int(k, 16): v for k, v in j['caves'].items()}
+            self.ws_text.update(widescreen_more(self))
             for a in sorted(self.caves):
                 if self.extra and a - self.extra[-1][1] <= 16: self.extra[-1] = (self.extra[-1][0], a + 4)
                 else: self.extra.append((a, a + 4))

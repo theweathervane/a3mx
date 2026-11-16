@@ -126,7 +126,7 @@ add_custom_command(
   COMMAND "${Python3_EXECUTABLE}" -I "${CMAKE_SOURCE_DIR}/tools/recomp/psp_recomp.py"
           "${A3MX_WORK_DIR}/boot.elf" "${A3MX_WORK_DIR}/analysis.json" "${A3MX_WORK_DIR}/imports.json" "${GEN_DIR}"
           --core "${CMAKE_SOURCE_DIR}/src/core" --files ${GEN_FILES} ${GEN_NO_HOOKS}
-  DEPENDS ${TOOL_SRC} "${CMAKE_SOURCE_DIR}/tools/data/hooks.txt" "${A3MX_WORK_DIR}/analysis.json" ${WS_JSON} ${CORE_SRC}
+  DEPENDS ${TOOL_SRC} "${CMAKE_SOURCE_DIR}/tools/data/hooks.txt" "${CMAKE_SOURCE_DIR}/tools/data/widescreen_more.json" "${A3MX_WORK_DIR}/analysis.json" ${WS_JSON} ${CORE_SRC}
   COMMENT "Translating the functions not decompiled yet"
   VERBATIM)
 endif()
