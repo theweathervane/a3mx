@@ -14,9 +14,11 @@ in the image: the ISO is mounted read-only when the container runs.
 
 ## With Portainer
 
-1. On the Docker host, make two folders: one with your ULUS-10062 `.iso` in it (mounted read-only at
-   `/iso`) and one for the tests (mounted at `/tests`: the clone and build go in `a3mx/`, each run's
-   results in `results/`).
+1. On the Docker host, make two folders:
+   - one with your ULUS-10062 `.iso` in it, mounted read-only at `/iso`. Other discs can be there
+     too: the right one is picked by checksum;
+   - one for the tests, mounted at `/tests`: the clone and build go in `a3mx/`, each run's results in
+     `results/`.
 2. **Stacks > Add stack > Repository**: the repository URL (GitLab, or the mirror you use),
    reference `refs/heads/main`, compose path `docker/tests/docker-compose.yml`. Add authentication if
    the repository is private.
@@ -46,6 +48,7 @@ about your own network ends up in the repository.
 | `A3MX_GIT_REF` | `main` | branch, tag or commit |
 | `A3MX_GIT_TOKEN` | | an access token, for a private repository (sent as a header, never stored) |
 | `A3MX_GIT_USER` | `oauth2` | the user name sent with the token: GitLab accepts `oauth2`; on Gitea, your user name |
+| `A3MX_ISO` | | one ISO, as a path inside the container (`/iso/...`). By default every `.iso` in the folder is offered and `extract_assets.py` picks ULUS-10062 by its program's checksum, so other discs can sit beside it |
 | `A3MX_SUITE` | `disc` | `disc`: the headless build's tests (parity and the rest); `ci`: only the disc-free ones, as GitLab CI; `both` |
 | `A3MX_TESTS` / `A3MX_EXCLUDE` | | `ctest -R` / `-E` regexes |
 | `A3MX_JOBS` | every core | parallel jobs. The tests are independent; about 2½ h at 2 jobs on a 2-core machine |
@@ -55,8 +58,8 @@ about your own network ends up in the repository.
 ## What it keeps and writes
 
 - `TESTS_FOLDER/a3mx/` holds the clone, `work/`, `assets/us/` and `build-headless/`, so a later run
-  only fetches, rebuilds what changed and tests. The disc is extracted again only when the ISO
-  changes. To start over, delete that folder. The container runs as root, so its files there belong
+  only fetches, rebuilds what changed and tests. The disc is extracted again only when the ISO it
+  came from changes or goes (adding other ISOs to the folder doesn't), or with `A3MX_REEXTRACT=1`. To start over, delete that folder. The container runs as root, so its files there belong
   to root.
 - Each run writes `TESTS_FOLDER/results/<date-time>/` (`results/latest` points to the newest): `run.log`, `summary.txt`,
   `commit.txt`, `junit-headless.xml`, `LastTest-headless.log` and `failed-headless.txt`. The exit code is

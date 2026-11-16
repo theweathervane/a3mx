@@ -14,7 +14,8 @@
 #   A3MX_GIT_REF     branch, tag or commit   (default: main)
 #   A3MX_GIT_TOKEN   an access token, if the repository is private (GitLab or Gitea)
 #   A3MX_GIT_USER    the user name sent with it (default: oauth2, which GitLab accepts; your user name on Gitea)
-#   A3MX_ISO         the ISO's path inside the container (default: the first *.iso in /iso)
+#   A3MX_ISO         one ISO's path inside the container (default: every *.iso in /iso is offered to
+#                    extract_assets.py, which picks ULUS-10062 by its program's checksum)
 #   A3MX_SUITE       disc (default: every test of the headless build) | ci (disc-free only) | both
 #   A3MX_TESTS       ctest -R regex: only these tests, e.g. "boot_to_select|arcade_fight"
 #   A3MX_EXCLUDE     ctest -E regex: leave these out
@@ -97,20 +98,44 @@ status=0
 
 # --- 2 and 3. the disc and the headless build ---------------------------------------------------
 if [ "$SUITE" = disc ] || [ "$SUITE" = both ]; then
-    if [ -z "$ISO" ]; then
-        ISO=$(find "$ISO_DIR" -maxdepth 2 -type f -iname '*.iso' 2>/dev/null | sort | head -n 1)
-    fi
-    [ -n "$ISO" ] && [ -f "$ISO" ] || die "no ISO found: mount the folder with your ULUS-10062 disc image at $ISO_DIR (or set A3MX_ISO)"
-
-    # The extraction is kept in the volume and redone only for another disc (or A3MX_REEXTRACT=1).
-    disc_id="$(basename "$ISO") $(stat -c '%s %Y' "$ISO")"
-    stamp=work/.docker-extracted
-    if [ "$REEXTRACT" = 1 ] || [ ! -f "$stamp" ] || [ "$(cat "$stamp")" != "$disc_id" ]; then
-        say "Extracting the disc: $ISO"
-        python3 tools/extract_assets.py --iso "$ISO" || die "extract_assets.py failed"
-        mkdir -p work && echo "$disc_id" > "$stamp"
+    # Every ISO in the folder is linked into the clone's imports/psp/ (git-ignored) and extract_assets.py
+    # picks the disc by its program's checksum, as on a player's PC: other discs there (EU, JP, PS2...)
+    # are passed over, and if none is the right one it lists what it found. A3MX_ISO links only that one.
+    mkdir -p imports/psp
+    find imports/psp -maxdepth 1 -type l -delete
+    if [ -n "$ISO" ]; then
+        [ -f "$ISO" ] || die "A3MX_ISO: no file $ISO"
+        ln -sfn "$ISO" "imports/psp/$(basename "$ISO")"
     else
-        say "Disc already extracted ($disc_id)"
+        while IFS= read -r -d '' f; do
+            ln -sfn "$f" "imports/psp/$(basename "$f")"
+        done < <(find "$ISO_DIR" -maxdepth 2 -type f -iname '*.iso' -print0 2>/dev/null)
+    fi
+    n_isos=$(find imports/psp -maxdepth 1 -type l | wc -l)
+    [ "$n_isos" -gt 0 ] || die "no ISO found: mount the folder with your ULUS-10062 disc image at $ISO_DIR (or set A3MX_ISO)"
+    echo "ISOs to choose from ($n_isos):"; find imports/psp -maxdepth 1 -type l -printf '  %f\n' | sort
+
+    # The extraction is kept and redone only when the disc it came from has changed or gone (adding
+    # other ISOs to the folder doesn't), when A3MX_ISO names another one, or with A3MX_REEXTRACT=1.
+    stamp=work/.docker-extracted          # line 1: the ISO used; line 2: its size and date
+    prev_iso=; prev_id=
+    [ -f "$stamp" ] && { prev_iso=$(sed -n 1p "$stamp"); prev_id=$(sed -n 2p "$stamp"); }
+    extract=1
+    if [ "$REEXTRACT" != 1 ] && [ -n "$prev_iso" ] && [ -f "$prev_iso" ] \
+       && [ "$(stat -L -c '%s %Y' "$prev_iso")" = "$prev_id" ] \
+       && { [ -z "$ISO" ] || [ "$(readlink -f "$ISO")" = "$prev_iso" ]; }; then
+        extract=0
+    fi
+    if [ $extract = 1 ]; then
+        say "Extracting the disc (extract_assets.py picks it by checksum)"
+        python3 tools/extract_assets.py 2>&1 | tee "$out/extract.log"
+        [ "${PIPESTATUS[0]}" -eq 0 ] || die "extract_assets.py failed (see extract.log): is your ULUS-10062 disc in $ISO_DIR?"
+        used=$(sed -n 's/^disc //p' "$out/extract.log" | head -n 1)
+        used=$(readlink -f "$used")
+        mkdir -p work && printf '%s\n%s\n' "$used" "$(stat -L -c '%s %Y' "$used")" > "$stamp"
+        echo "Extracted from $used"
+    else
+        say "Disc already extracted from $prev_iso"
     fi
 
     say "Configuring (preset headless)"
