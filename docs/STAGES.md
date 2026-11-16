@@ -138,7 +138,7 @@ after the fighters:
 | 0x23 HAWK | #2: kind 78 type 3, x 736 y 16; #4: kind 78 type 6, x 144 y 16 (camera 2) |
 
 Every other stage object is behind the fighters (sprite layers 1 - 3, or depth 12 and less). Like all
-objects these are cut at the 4:3 edge in WIDE FORCED; the layer strips don't reach them.
+objects these are cut at the 4:3 edge in WIDE FORCED; the layer strips don't reach them, so since 0.92.0 each has its own placeholder pieces pinned to it ([STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md#foreground-objects-0920)).
 
 ## Widescreen
 

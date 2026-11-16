@@ -4,5 +4,13 @@
  "layer1_left": 238,
  "layer1_right": 977,
  "layer2_left": -50,
- "layer2_right": 497
+ "layer2_right": 497,
+ "object_78_3_left": -10,
+ "object_78_3_left_y": -18,
+ "object_78_3_right": 144,
+ "object_78_3_right_y": -18,
+ "object_78_6_left": -96,
+ "object_78_6_left_y": -18,
+ "object_78_6_right": 38,
+ "object_78_6_right_y": -18
 }

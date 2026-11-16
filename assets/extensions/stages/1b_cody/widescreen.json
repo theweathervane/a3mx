@@ -4,5 +4,17 @@
  "layer1_left": 207,
  "layer1_right": 1008,
  "layer2_left": 230,
- "layer2_right": 985
+ "layer2_right": 985,
+ "object_60_4_left": -56,
+ "object_60_4_left_y": 32,
+ "object_60_4_right": 80,
+ "object_60_4_right_y": 32,
+ "object_60_5_left": -66,
+ "object_60_5_left_y": 39,
+ "object_60_5_right": 102,
+ "object_60_5_right_y": 39,
+ "object_60_6_left": -65,
+ "object_60_6_left_y": 38,
+ "object_60_6_right": 82,
+ "object_60_6_right_y": 38
 }

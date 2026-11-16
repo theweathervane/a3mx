@@ -169,6 +169,32 @@ air. A gap is a pixel where a magenta probe drawn behind everything shows throug
 layer or the fight's overlay draws itself is not one). Shares under 64 pixels are dropped as noise
 from the fighters' animation.
 
+## Foreground objects (0.92.0)
+
+The stage objects drawn in front of the fighters (sprite layer 0 at depth 16: the table in
+[STAGES.md](STAGES.md#what-is-drawn-in-front-of-the-fighters)) are sprites, not layers, so the strips
+can't extend them: Ryu's straw, Adon's leaves, Sagat's and Rolento's pieces along the bottom and the
+rest stop at the 4:3 edge. Each can have a **piece** at each side: new art pinned to the object.
+
+| File | What |
+|---|---|
+| `widescreen_object_<kind>_<type>_left.png` / `_right.png` | a piece, up to 224 × 216; objects of the same kind and type share it |
+| `widescreen.json`: `"object_<kind>_<type>_<side>"` / `"..._y"` | the piece's top left, relative to the object's position, in the 2D library's units |
+
+- **Pinned:** drawn right after the object (the sprite drawer 0x0880C308, `stagestrips_object`), from
+  the object's own position worked out as the sprite drawer does (its x / y, anchor, scroll share and
+  shake), so it moves, scrolls and shakes with it; at the object's depth and queued after it, so it is
+  in front of the fighters as the object is. Only in WIDE FORCED with Stage Extensions on.
+- **Placeholders:** `python tools/measure_stage_objects.py` finds each object's outline (a frame with
+  and without it, at the left wall, the middle and the right wall) and writes a 72-wide yellow piece
+  at each side: 64 units out and 8 under the object's art, 2 units taller than the object at top and
+  bottom; labelled `<kind>.<type> L` / `R`. 42 pieces for 21 objects (kind and type pairs: 25 records) on 10 stages. Painted pieces
+  are kept. Paint only what continues the object (Ryu's straw needs the left piece at the left wall;
+  leave the rest transparent).
+- **Not handled:** a flipped object uses the same piece; an object the game stops drawing near the edge
+  (its own on-screen test) takes its pieces with it.
+
+
 ## How the game draws them
 
 `src/extensions/stagestrips.c`, an extension (so `--no-extensions` and a build without the extensions

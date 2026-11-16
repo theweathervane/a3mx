@@ -6,5 +6,9 @@
  "layer1_right": 981,
  "layer1_right_top": 998,
  "layer2_left": 274,
- "layer2_right": 941
+ "layer2_right": 941,
+ "object_0_1_left": -112,
+ "object_0_1_left_y": -38,
+ "object_0_1_right": 102,
+ "object_0_1_right_y": -38
 }

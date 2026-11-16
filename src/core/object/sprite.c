@@ -94,7 +94,9 @@ static void draw_sprite(Cpu *c, gaddr sp) {
     if (*W(sp + SP_NEXT) != 0) CALL1(f_0880C308, *W(sp + SP_NEXT));
 }
 
-SFA_FUNC(0880C308, game_draw_sprite) { c->r[29] -= 0x20; draw_sprite(c, ARG(0)); c->r[29] += 0x20; }
+/* void draw_sprite(sprite *a0): wrapped so WIDE FORCED's stage extensions (stagestrips.c) can add art to a
+   foreground stage object right after it */
+SFA_FUNC_WRAPPED(0880C308, game_draw_sprite, stagestrips_object) { c->r[29] -= 0x20; draw_sprite(c, ARG(0)); c->r[29] += 0x20; }
 SFA_FUNC(0880E6E8, game_sprite_anchor) { sprite_anchor(ARG(0), ARG(1)); }
 
 /* ---- 0.82.0 ---- */

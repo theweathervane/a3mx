@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.92.0
+### For players
+- **Stage Extensions (WIDE FORCED): placeholders for the objects in front of the fighters.** Ryu's straw, Adon's leaves, Sodom's crossing object, Guy's, Sagat's and Rolento's pieces along the bottom, Dan's, Cody's, Guile's and Hawk's foreground objects are sprites, not layers, so the layer strips couldn't extend them. Each now has a yellow placeholder at each side, pinned to the object so it moves with it, and drawn in front of the fighters like the object. These are placeholders only: an artist paints them (STAGE_EXTENSIONS.md says how).
+
+### Technical
+- `src/extensions/stagestrips.c`: `stagestrips_object` around the sprite drawer 0x0880C308 (`object/sprite.c`, now `SFA_FUNC_WRAPPED`) draws a foreground stage object's pieces (`widescreen_object_<kind>_<type>_<side>.png`, placed by `widescreen.json`) right after it, from its position as the sprite drawer works it out, at its depth; packed into the strips' texture below the strips. `A3MX_OBJ_MEASURE` hides an object in chosen frames and logs every foreground object's position, for the new `tools/measure_stage_objects.py`, which wrote the 42 pieces.
+
 ## 0.91.0
 ### For players
 - **Stage Extensions (WIDE FORCED): the strips stay joined to their layers.** Each strip now moves exactly with the art it extends. Before, most strips followed a slightly different scroll value than the art and slid against it by up to about 10 pixels as the camera left the wall. Ryu's and Chun-Li's stages, whose top rows move separately, get the two parts of each strip placed separately. Checked on every stage with the camera at the wall and 16, 32 and 52 pixels away.

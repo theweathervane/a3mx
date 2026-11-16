@@ -4,5 +4,13 @@
  "layer1_left": 200,
  "layer1_right": 1016,
  "layer2_left": 224,
- "layer2_right": 992
+ "layer2_right": 992,
+ "object_10_1_left": -66,
+ "object_10_1_left_y": 19,
+ "object_10_1_right": 125,
+ "object_10_1_right_y": 19,
+ "object_11_4_left": -80,
+ "object_11_4_left_y": -66,
+ "object_11_4_right": 107,
+ "object_11_4_right_y": -66
 }

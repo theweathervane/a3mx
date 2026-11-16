@@ -160,9 +160,58 @@ static int alloc_texture(void) {
     return 1;
 }
 
+/* ---- the foreground objects' pieces ----
+   A stage object drawn in front of the fighters (sprite layer 0, depth index 7: STAGES.md) is a sprite,
+   not a layer, so its art stops at the 4:3 edge however the layers are extended. A piece is new art
+   pinned to such an object: drawn right after it, at its depth, placed from the object's own position as
+   the sprite drawer works it out (sprite.c's anchor), so it moves exactly with it. Files, in the stage's
+   folder: widescreen_object_<kind>_<type>_<side>.png (side: left or right, up to 224 x 216), placed by
+   widescreen.json's "object_<kind>_<type>_<side>": x and "..._y": y, the piece's top left relative to
+   the object's position in the 2D library's units. Objects of the same kind and type share them. */
+#define OBJ_ROW0     296            /* object pieces sit in the strips' texture below the strips */
+#define MAX_OBJS     16
+typedef struct { int kind, type, side, dx, dy, w, h, u, v; } Piece;
+static Piece pieces[MAX_OBJS];
+static int nobjs;
+
+static void load_objects(const char *dir, const char *geo) {
+    nobjs = 0;
+    int pen_x = 0, seen[16][2], nseen = 0;
+    for (uint32_t slot = 0; slot < 16; slot++) {            /* the kinds and types on this stage */
+        uint32_t o = 0x09514B70u + slot * 0xC0u;
+        if (RB(o) == 0 || RB(o + 9) != 0 || RH(o + 24) != 7) continue;
+        int dup = 0;
+        for (int i = 0; i < nseen; i++) dup |= seen[i][0] == (int)RB(o + 2) && seen[i][1] == (int)RB(o + 3);
+        if (!dup) { seen[nseen][0] = RB(o + 2); seen[nseen][1] = RB(o + 3); nseen++; }
+    }
+    for (int i = 0; i < nseen; i++) for (int side = 0; side < 2; side++) {
+        int kind = seen[i][0], type = seen[i][1];
+        static const char *const sides[2] = { "left", "right" };
+        char key[64], path[1400], err[128];
+        double x, y;
+        snprintf(key, sizeof key, "object_%d_%d_%s", kind, type, sides[side]);
+        if (json_file_number(geo, key, &x) != 0) continue;
+        snprintf(key, sizeof key, "object_%d_%d_%s_y", kind, type, sides[side]);
+        if (json_file_number(geo, key, &y) != 0) continue;
+        snprintf(path, sizeof path, "%s/widescreen_object_%d_%d_%s.png", dir, kind, type, sides[side]);
+        PngImage img;
+        if (png_decode_file(path, &img, err, sizeof err) != 0) { rt_log("stage strips: %s: %s", path, err); continue; }
+        if (img.w > 224 || img.h > TEX_H - OBJ_ROW0 || pen_x + img.w > TEX_W || nobjs == MAX_OBJS || !alloc_texture()) {
+            rt_log("stage strips: %s (%d x %d): no room", path, img.w, img.h);
+            png_free(&img); continue;
+        }
+        Piece *p = &pieces[nobjs++];
+        *p = (Piece){ kind, type, side, (int)x, (int)y, img.w, img.h, pen_x, OBJ_ROW0 };
+        for (int yy = 0; yy < img.h; yy++) for (int xx = 0; xx < img.w; xx++)
+            WH(tex + (uint32_t)(((OBJ_ROW0 + yy) * TEX_W + pen_x + xx) * 2), c5551(img.rgba + (yy * img.w + xx) * 4));
+        pen_x += img.w;
+        png_free(&img);
+    }
+}
+
 static void load(int stage) {
     if (stage == loaded) return;
-    loaded = stage; nstrips = 0;
+    loaded = stage; nstrips = 0; nobjs = 0;
     char dir[1200];
     if (!FEATURE(STAGE_EXT)) return;                                           /* Stage Extensions off (the default) */
     if (!rt_assets_root[0] || !strip_folder(stage, dir, sizeof dir)) return;   /* no assets/ (--no-assets, the tests) */
@@ -204,7 +253,8 @@ static void load(int stage) {
         png_free(&img);
         nstrips++;
     }
-    rt_log("stage strips: stage 0x%02X: %d strips", stage, nstrips);
+    load_objects(dir, geo);
+    rt_log("stage strips: stage 0x%02X: %d strips, %d object pieces", stage, nstrips, nobjs);
 }
 
 static float ffrom(uint32_t u) { float f; memcpy(&f, &u, 4); return f; }
@@ -388,4 +438,103 @@ int stagestrips_picture(Cpu *c, uint32_t a0, int after) {
     if (kind == 0xAA || kind == 0xBE) scroll = -(int)(((int32_t)(RW(a0 + 8) - RW(a0 + 16))) >> 17);
     else scroll = (int16_t)(((int32_t)(RW(a0 + 16) - RW(SHAKE_REC + 112))) >> 16);
     return before_layer(c, (int)((a0 - LAYERS) / LAYER_SIZE), RB(a0 + 122), scroll, 0, -10000, 10000);
+}
+
+/* ---- around the sprite drawer 0x0880C308 (src/core/object/sprite.c): a foreground stage object's
+   pieces, after the object ---- */
+#define POOL_5      0x09514B70u   /* the stage objects: 16 of 0xC0 */
+#define ANCHORS     0x08A04014u   /* u32[]: anchor records (+18 x, +22 y) */
+static int is_foreground(uint32_t sp) {
+    return sp >= POOL_5 && sp < POOL_5 + 16u * 0xC0u && (sp - POOL_5) % 0xC0u == 0
+        && RB(sp + 9) == 0 && RH(sp + 24) == 7;
+}
+
+/* The object's position as the sprite drawer works it out (sprite.c: draw_sprite, sprite_anchor). */
+static void object_position(uint32_t sp, int *x, int *y) {
+    int px = (int16_t)RH(sp + 18), py = (int16_t)(0xF0 - (int16_t)RH(sp + 22));
+    uint8_t anchor = RB(sp + 14);
+    if (anchor != 0) {
+        if (anchor == 2) {
+            int share = (int16_t)RH(sp + 38);
+            if (share != 0) px = (int16_t)(px + ((int32_t)(RW(SHAKE_REC + 28) * (uint32_t)share) >> 16));
+        }
+        uint32_t rec = RW(ANCHORS + anchor * 4u);
+        px = (int16_t)(px - (int16_t)RH(rec + 18));
+        py = (int16_t)(py + (int16_t)RH(rec + 22));
+    }
+    if (RB(sp + 15) != 0) py = (int16_t)(py - (int16_t)RH(BATTLE + 74));
+    *x = px; *y = py;
+}
+
+/* measuring (tools/measure_stage_objects.py): A3MX_OBJ_MEASURE="F0-F1:KIND.TYPE" hides that object in
+   frames F0 - F1 (KIND.TYPE -1.-1: every foreground object), and every foreground object's position is
+   logged each frame */
+static int obj_measure_read, obj_measuring, hide_kind = -2, hide_type = -2;
+static long hide_from, hide_to;
+static int in_fight(void) {
+    uint64_t now = rt_vblank_count();
+    return fight_frame != ~0ull && now - fight_frame <= 2 && RH(GAME + 2) == 2 && RH(GAME + 4) == 3 && RB(FIGHTERS_LAYER + 2) == 1;
+}
+
+int stagestrips_object(Cpu *c, uint32_t a0, int after) {
+    if (!is_foreground(a0) || !in_fight()) return 0;
+    if (!obj_measure_read) {
+        obj_measure_read = 1;
+        const char *e = getenv("A3MX_OBJ_MEASURE");
+        if (e && *e) {
+            obj_measuring = 1;
+            if (sscanf(e, "%ld-%ld:%d.%d", &hide_from, &hide_to, &hide_kind, &hide_type) != 4) hide_kind = -2;
+        }
+    }
+    int kind = RB(a0 + 2), type = RB(a0 + 3);
+    if (obj_measuring) {
+        long now = (long)rt_vblank_count();
+        if (!after) {
+            int x, y;
+            object_position(a0, &x, &y);
+            rt_log("stage objects: frame %ld object %d.%d at %d %d scale %g %g offset %g %g", now, kind, type, x, y,
+                   ffrom(RW(SCALE_X)), ffrom(RW(SCALE_Y)), ffrom(RW(OFFSET_X)), ffrom(RW(OFFSET_Y)));
+            if (now >= hide_from && now <= hide_to && (hide_kind == -1 || (hide_kind == kind && hide_type == type))) return 1;
+        }
+        return 0;
+    }
+    if (!after || !rt_widescreen) return 0;
+    load((int16_t)RH(BATTLE));
+    int any = 0;
+    for (int i = 0; i < nobjs; i++) any |= pieces[i].kind == kind && pieces[i].type == type;
+    if (!any) return 0;
+    int ox, oy;
+    object_position(a0, &ox, &oy);
+
+    uint32_t keep_r[32], keep_f12 = c->f[12]; memcpy(keep_r, c->r, sizeof keep_r);
+    uint8_t keep_tex[20], keep_pal = (uint8_t)RB(PAL_SELECTED);
+    memcpy(keep_tex, HOST(TEX_STATE), sizeof keep_tex);
+    uint32_t e = PAGES + 0x18u * STRIP_PAGE, keep_page[6];
+    for (int i = 0; i < 6; i++) keep_page[i] = RW(e + 4u * (uint32_t)i);
+    WW(e, tex); WW(e + 4, tex); WW(e + 8, 0); WW(e + 0xC, 0); WW(e + 0x10, 0x80000000u); WW(e + 0x14, desc);
+    c->r[4] = list; c->r[31] = 0x0880C308; f_089E0CF4(c);
+    int depth = (int)RH(0x08AE03B8u + 2u * RH(a0 + 24));   /* the object's own: 16 */
+    for (int i = 0; i < nobjs; i++) {
+        const Piece *p = &pieces[i];
+        if (p->kind != kind || p->type != type) continue;
+        int x0 = to_screen(ox + p->dx, 0, SCALE_X, OFFSET_X), x1 = to_screen(ox + p->dx + p->w, 0, SCALE_X, OFFSET_X);
+        int y0 = to_screen(oy + p->dy, 0, SCALE_Y, OFFSET_Y), y1 = to_screen(oy + p->dy + p->h, 0, SCALE_Y, OFFSET_Y);
+        int xa = x0 > CLIP_X0 ? x0 : CLIP_X0, xb = x1 < CLIP_X1 ? x1 : CLIP_X1;
+        int ya = y0 > CLIP_Y0 ? y0 : CLIP_Y0, yb = y1 < CLIP_Y1 ? y1 : CLIP_Y1;
+        if (xb <= xa || yb <= ya) continue;
+        int u0 = p->u + (xa - x0) * p->w / (x1 - x0), u1 = p->u + (xb - x0) * p->w / (x1 - x0);
+        int v0 = p->v + (ya - y0) * p->h / (y1 - y0), v1 = p->v + (yb - y0) * p->h / (y1 - y0);
+        uint32_t xy = prim + 0x10, col = xy + 0x10, uv = col + 0x10;
+        WH(xy + 0, xa); WH(xy + 2, ya); WH(xy + 4, xb); WH(xy + 6, ya); WH(xy + 8, xb); WH(xy + 0xA, yb); WH(xy + 0xC, xa); WH(xy + 0xE, yb);
+        for (int k = 0; k < 4; k++) WW(col + 4u * (uint32_t)k, 0xFFFFFFFFu);
+        WH(uv + 0, u0); WH(uv + 2, v0); WH(uv + 4, u1); WH(uv + 6, v0); WH(uv + 8, u1); WH(uv + 0xA, v1); WH(uv + 0xC, u0); WH(uv + 0xE, v1);
+        WW(prim, xy); WW(prim + 4, col); WW(prim + 8, uv); WW(prim + 0xC, 4);
+        c->r[4] = prim; c->r[5] = 4; c->r[6] = 0x80000020u; c->f[12] = fbits((float)depth);
+        c->r[31] = 0x0880C308; f_089E1618(c);
+    }
+    for (int i = 0; i < 6; i++) WW(e + 4u * (uint32_t)i, keep_page[i]);
+    memcpy(HOST(TEX_STATE), keep_tex, sizeof keep_tex);
+    WB(PAL_SELECTED, keep_pal);
+    memcpy(c->r, keep_r, sizeof keep_r); c->f[12] = keep_f12;
+    return 0;
 }

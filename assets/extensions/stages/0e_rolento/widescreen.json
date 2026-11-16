@@ -4,5 +4,21 @@
  "layer1_left": 200,
  "layer1_right": 1016,
  "layer2_left": 224,
- "layer2_right": 992
+ "layer2_right": 992,
+ "object_35_0_left": -104,
+ "object_35_0_left_y": 6,
+ "object_35_0_right": 144,
+ "object_35_0_right_y": 6,
+ "object_35_1_left": -89,
+ "object_35_1_left_y": 16,
+ "object_35_1_right": 127,
+ "object_35_1_right_y": 16,
+ "object_35_2_left": -88,
+ "object_35_2_left_y": 16,
+ "object_35_2_right": 124,
+ "object_35_2_right_y": 16,
+ "object_35_3_left": -126,
+ "object_35_3_left_y": 16,
+ "object_35_3_right": 142,
+ "object_35_3_right_y": 16
 }
