@@ -109,7 +109,10 @@ If a coloured patch shows in a fight, nobody has painted that strip yet.
 **References:** `python tools/dump_stage_references.py` writes each stage at both walls, on the ground and
 in the air, whole and layer by layer (`left_ground.png`, `left_ground_layer0.png` ...), into your
 `assets/us/stages/<stage>/widescreen_reference/` from your own disc: trace from those. They are never
-committed. (Planned: the same as an "art pack" the launcher builds.)
+committed. **The art pack** puts those references and the placeholders to paint together, one folder per
+stage plus a README and a zip, in `art-pack/` (git-ignored): the launcher's **Build the art pack** (Build
+section), `python tools/build.py --art-pack`, or `python tools/art_pack.py` on a built game. It is made
+from your disc's art, so it's for you and your artist, not for publishing.
 
 
 1. Take a WIDE FORCED screenshot at the wall you're painting: walk both fighters into that corner.

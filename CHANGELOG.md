@@ -1,32 +1,11 @@
 # Changelog
 
-## 0.93.4
+## 0.94.0
 ### For players
-- Nothing changes in play.
+- **Art pack for painting the Stage Extensions.** The launcher's new **Build the art pack** option (in Build) renders every stage at its walls from your own disc and puts the pictures together with all the placeholders to paint (the layer strips and the foreground objects' pieces), one folder per stage with a README, in `art-pack/` and a zip you can hand to an artist. It's made from your disc's art, so it's for you and your artist, not for publishing.
 
 ### Technical
-- **Docker test runner: `pull_policy: build`.** Portainer's **Pull and redeploy** pulls every image a stack names, and looked for `a3mx-tests` on Docker Hub ("pull access denied"). The image is now always built on the Docker host, never pulled; a redeploy rebuilds it from cache.
-
-## 0.93.3
-### For players
-- Nothing changes in play.
-
-### Technical
-- **Docker test runner: on Docker's default network** (`network_mode: bridge`). A stack's own network uses Docker's built-in DNS, which on a TerraMaster NAS could not resolve gitlab.com, so the clone failed; the default network resolves it. The runner publishes no ports.
-
-## 0.93.2
-### For players
-- Nothing changes in play.
-
-### Technical
-- **The Docker test runner uses two folders you choose:** `/iso` (your ISO, read-only) and `/tests`, which keeps the clone and build in `a3mx/` and each run's results in `results/`, instead of a named Docker volume. Set them with `A3MX_ISO_DIR` and `A3MX_TESTS_DIR` (both required) in the Portainer stack, or `docker/tests/run.sh ISO_FOLDER TESTS_FOLDER`.
-
-## 0.93.1
-### For players
-- Nothing changes in play.
-
-### Technical
-- **The tests in Docker:** `docker/tests/` builds a Linux container that clones the code (GitLab by default; `A3MX_GIT_URL` for a mirror), extracts your disc from a read-only mount, builds the `headless` preset and runs every `ctest` test, with the log, a summary and JUnit XML in a results folder. It runs as a Portainer stack (`docker-compose.yml`) or with `docker/tests/run.sh`; the clone, `work/`, `assets/us` and the build are kept in a volume, so later runs only rebuild what changed. Your own settings go in the git-ignored `docker/tests/.env`. See `docker/tests/README.md`.
+- New `tools/art_pack.py` (`reference/` from `dump_stage_references.py`, `paint/` copied from `assets/extensions/stages/`); `tools/build.py --art-pack` runs it after building; the launcher's one-go checkbox passes it. Pillow is installed with pip if missing. `art-pack/` added to .gitignore.
 
 ## 0.93.0
 ### For players

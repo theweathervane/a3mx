@@ -229,6 +229,7 @@ struct Settings {
     std::string iso;
     int preset = 0;
     bool extract = false, tests = false, run = true;
+    bool art_pack = false;          /* one go: tools/build.py --art-pack */
     bool fullscreen = true;
     bool feature[FEAT_COUNT];       /* the Extensions tab: --features (ext_features.h) */
     int log_level = 0;              /* OFF */
@@ -638,6 +639,7 @@ struct App {
             args.push_back("--preset"); args.push_back(PRESET_ARGS[set.preset]);
             if (!set.iso.empty()) { args.push_back("--iso"); args.push_back(set.iso); }
             if (set.extract) args.push_back("--extract");
+            if (set.art_pack) args.push_back("--art-pack");
             /* Widescreen off and the patch not extracted yet: don't download it. Once it is in work/ the
                feature alone decides (the game's --features), so ticking it never extracts the disc again */
             if (!set.feature[FEAT_WIDESCREEN] && !is_file(join(work_dir(), "boot.widescreen.json")) && !is_file(join(work_dir(), "boot.elf")))
@@ -885,6 +887,7 @@ struct App {
         status = game_running ? "Game running: close it (" QUIT_KEYS ") to come back here" : !set.run ? "Building..." : "Building, then running...";
         status_kind = K_NOTE;
         set.extract = false;                 /* one go, not a setting */
+        set.art_pack = false;
         settings_save(set, settings_path);
     }
 
@@ -2100,6 +2103,10 @@ struct App {
             ImGui::SetItemTooltip("--preset release: build/   --preset debug: build-debug/ (debug info, unoptimised)");
             ImGui::Checkbox("Extract the disc again", &set.extract);
             ImGui::SetItemTooltip("--extract: for this Run or Build only. A different ISO is extracted again by itself.");
+            ImGui::Checkbox("Build the art pack", &set.art_pack);
+            ImGui::SetItemTooltip("--art-pack: for this Build only. Renders every stage at its walls from your disc and puts the\n"
+                                  "pictures with the Stage Extensions' placeholders in art-pack/ (and a zip), for an artist\n"
+                                  "to paint from. A few minutes. The pictures are your disc's art: not for publishing.");
             ImGui::Checkbox("Run the tests after building", &set.tests);
             ImGui::SetItemTooltip("--test: ctest (the parity tests take a long time; docs/TESTS.md says what each is for)");
             bool run = repo ? set.run : true;

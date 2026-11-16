@@ -368,6 +368,7 @@ def main():
     ap.add_argument('--no-extensions', action='store_true')
     ap.add_argument('--test', action='store_true'); ap.add_argument('--run', action='store_true')
     ap.add_argument('--tools-only', action='store_true')
+    ap.add_argument('--art-pack', action='store_true', help='after building: tools/art_pack.py (stage art for artists, from your disc)')
     ap.add_argument('--launcher', action='store_true')
     ap.add_argument('--shaders', action='store_true')
     ap.add_argument('--clean', action='store_true'); ap.add_argument('--clean-all', action='store_true')
@@ -422,6 +423,9 @@ def main():
         step('Tests')
         run([ctest, '--test-dir', os.path.join(ROOT, out), '--output-on-failure'], env)
     say('\nBuilt: %s\nPlay:  %s --work work' % (os.path.relpath(exe, ROOT), os.path.relpath(exe, ROOT)))
+    if a.art_pack:
+        step('Art pack (stage art for painting the Stage Extensions, from your disc)')
+        run([sys.executable, os.path.join(ROOT, 'tools', 'art_pack.py'), '--exe', exe, '--work', work], env)
     if a.run:
         step('Run' + (': ' + ' '.join(game_args) if game_args else ''))
         sys.exit(subprocess.run([exe, '--work', work] + game_args, cwd=ROOT).returncode)
