@@ -39,6 +39,7 @@ use that stage's files. US and JP have the same stages, so the same files serve 
 | `widescreen_left.png`, `widescreen_right.png` | layer 1, the fighters' layer |
 | `widescreen_layer<n>_left.png`, `widescreen_layer<n>_right.png` | layer n (0, 2 ...) |
 | `widescreen.json` | where each strip goes: `"layer<n>_left"` / `"layer<n>_right"`, the layer x of its left column |
+| | `"layer<n>_<side>_top"`: for a layer whose top rows scroll on their own (RYU 1 and CHUN-LI: layer 1), the x those rows' part of the strip goes at (0.91.0) |
 | | `"layer<n>_<side>_front": 1`: that strip is drawn just in front of its layer instead of behind it, so it covers the layer's own art at the edge (0.50.1) |
 
 `tools/measure_stage_layers.py` writes `widescreen.json` and the placeholders (see below). Without a
@@ -181,12 +182,19 @@ draw no strips):
    run in the last two frames), each time one of the stage tile drawers (0x0881AB28 with the layer,
    0x0881B268 with a record whose kind names the layer) or picture drawers (0x08819498 / 0x0881C0C8,
    BISON's mountains and sky, with the layer; since 0.90.0) is about to draw a layer, that layer's strips,
-   once a frame: textured quads placed like the layer's own tiles (its scroll, the screen's scale and
-   offset), at one less than the layer's depth (the game's 2D library draws a larger depth in front), or one more for a `_front` strip.
+   once a frame: textured quads placed like the layer's own tiles (the screen's scale and offset, its
+   +98, and the horizontal scroll that layer's drawer actually uses: the layer's +18 for the 32-pixel
+   drawer and GUILE's strips, the column and part-tile in 0x0881B268's record otherwise (the fighters'
+   layer and most 16-pixel layers follow the fighters' layer's travel, not +18), BISON's mountains the
+   travel and its sky half of +8 less +16; since 0.91.0, before which a strip slid by up to ~10 px
+   against its layer as the camera left the wall). RYU's and CHUN-LI's layer 1 move their top rows on
+   their own: 0x0881B268 draws them in a first call, and their strip rows there are placed by that
+   call's scroll and `"layer1_<side>_top"` in `widescreen.json`, the rest by the second's, at one less than the layer's depth (the game's 2D library draws a larger depth in front), or one more for a `_front` strip.
    The quads are clipped to the screen with their texels: the library clips a quad's corners without
    moving its texels, which squeezes anything that runs far off the screen.
 3. **Switch:** checked every frame, so changing SCREEN SIZE takes effect at once.
-4. **Checked:** in 0.90.0 on all 38 stages, both walls, on the ground and high: with the placeholders
+4. **Checked:** in 0.91.0 on all 38 stages with the camera 0, 16, 32 and 52 pixels from each wall: no black
+   pixel the strips leave that isn't there with them off (the stages' own black art). In 0.90.0 on all 38 stages, both walls, on the ground and high: with the placeholders
    no black edge pixel is left that the probe calls a gap (up to 13,000 per wall without them);
    the few black pixels left (DAN's right wall, CODY's left, the portraits' frames, a line on BISON 1)
    are the stage's or the overlay's own black art. (0.50.0 checked 7 stages.) Parity tests run

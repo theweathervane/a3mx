@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.91.0
+### For players
+- **Stage Extensions (WIDE FORCED): the strips stay joined to their layers.** Each strip now moves exactly with the art it extends. Before, most strips followed a slightly different scroll value than the art and slid against it by up to about 10 pixels as the camera left the wall. Ryu's and Chun-Li's stages, whose top rows move separately, get the two parts of each strip placed separately. Checked on every stage with the camera at the wall and 16, 32 and 52 pixels away.
+- **More of the game decompiled: the camera and the stages' own animation.** The camera's per-frame update (every layer following the fighters, the floor's perspective, and the stage-specific movement on Gen's, Vega's, Guile's, Karin's, Chun-Li's, Zangief's, Rolento's and Bison's stages), each stage's setup, and the palette and tile animators it creates (flickering lights, Ken's crowd, Balrog's casino, Honda's bath and the rest) now run as hand-written C. Nothing changes in play.
+
+### Technical
+- `src/extensions/stagestrips.c`: strips are placed by the scroll the layer's drawer actually uses (0x0881B268's record: column + part-tile, unwrapped near +18; BISON's pictures: the travel / half of +8 less +16), and a split layer (kinds 0xA0 / 0xA4) draws its strip rows per band, the top band at `"layer1_<side>_top"`. In measuring mode the extension logs that scroll each frame; `measure_stage_layers.py` uses it instead of +18. Re-measured (227 placeholders, unchanged images).
+- New `src/core/stage/camera_frame.c` (14 functions): 0x0881D1A8 and its layers 0x0881D244 / 0x0881D960 / 0x0881DC6C, the lean 0x0881D348, placing 0x0881ECA4, following 0x0881E1B4 / 0x0881E0D8, and the stage-specific 0x0881D4D8, 0x0881D588, 0x0881D5F4, 0x0881D6EC, 0x0881D768, 0x0881D8A8.
+- New `src/core/stage/animators.c` (17 functions): the map animators 0x08819A68 / 0x08819C2C / 0x08819C74 and the palette animators 0x0881F1FC, 0x0881EEF4 ... 0x0881F5D4, 0x0881EBA8.
+- New `src/core/stage/setup.c` (29 functions): 0x08819A20 and the 23 stages' setups (table 0x08A08A14), 0x08819984, the fighters' palettes by layout 0x0881F6A0 / 0x0881F794, the select / VS backdrop palettes 0x0881CE4C / 0x0881CEF4.
+- **Build: `-fno-strict-aliasing`** for every C file (not MSVC). Decompiled code reads and writes the same game memory through pointers of different sizes (a 16.16 word and its whole-pixel halfword); the compiler was free to reorder those, and SODOM's crossing object (0.89.0) read its x before the store that moved it, one frame late at the stage's edge. It only showed in a build whose optimisation happened to reorder (the new stage scenario run for 0.91.0).
+- Left translated in the stage area: 0x0881CBDC, 0x0881CD20, 0x0881CFD0, 0x08819144, 0x0881A040 (the select / VS screens' backdrops; no fight reaches them) and 0x0881A2C8 / 0x0881B7C8 (no scenario reaches them).
+
 ## 0.90.0
 ### For players
 - **More of the game decompiled: the stage backgrounds.** The routine that draws a stage's scrolling layers each frame, every layer drawer it picks from (including Ryu's and Chun-Li's lagging top rows, Guile's strips and Bison's mountains and rippling sky) and the floor band along the bottom of most stages (with Charlie's and Bison's own) now run as hand-written C. Together with 0.89.0's objects, everything a stage draws in a fight is native. Nothing changes in play.

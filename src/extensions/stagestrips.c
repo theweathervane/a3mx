@@ -66,6 +66,7 @@ void f_089E1618(Cpu *c);   /* queues a quad list: a0 its descriptor, a1 vertex c
                                          for their own backdrops, so the timestamp alone let the next stage's
                                          strips show on them (C29). Arcade, Free Battle and Training checked. */
 #define SCALE_Y         0x08E759ECu
+#define SHAKE_REC       0x092E5F78u   /* +112: the screen's shake / scroll (16.16), less which layer 1's +16 is its travel */
 #define OFFSET_X        0x08E75A04u
 #define OFFSET_Y        0x08E75A0Cu
 #define PAGES           0x08B0C334u   /* texture pages, 0x18 bytes each (+0x14 its descriptor) */
@@ -89,12 +90,14 @@ void f_089E1618(Cpu *c);   /* queues a quad list: a0 its descriptor, a1 vertex c
 #define SLOTS           8
 #define STRIP_PAGE      0x3E
 
-typedef struct { int layer, side, x, w, slot, front; } Strip;   /* front: drawn just in front of its layer, over its art */
+typedef struct { int layer, side, x, x_top, w, slot, front; } Strip;   /* x_top: the top band's (see Band) */   /* front: drawn just in front of its layer, over its art */
 static Strip strips[SLOTS];
 static int nstrips;
 static uint32_t tex, desc, list, prim;
 static int loaded = -2;               /* the stage whose strips are in tex; -2 none tried */
-static uint64_t drawn[NLAYERS];       /* the frame each layer's strips were last drawn */
+static uint64_t drawn[NLAYERS][2];    /* the frame each layer's strips were last drawn, by band */
+static uint64_t called[NLAYERS];      /* the frame of the layer's last 0x0881B268 call, and how many that frame */
+static int ncalls[NLAYERS];
 static uint64_t fight_frame = ~0ull;
 
 /* ---- measuring: A3MX_STRIP_MEASURE ---- */
@@ -190,6 +193,9 @@ static void load(int stage) {
         }
         Strip *s = &strips[nstrips];
         s->layer = layer; s->side = side; s->x = (int)x; s->w = img.w; s->slot = nstrips;
+        double xt;
+        snprintf(key, sizeof key, "layer%d_%s_top", layer, sides[side]);
+        s->x_top = json_file_number(geo, key, &xt) == 0 ? (int)xt : s->x;
         double front = 0;
         snprintf(key, sizeof key, "layer%d_%s_front", layer, sides[side]);
         s->front = json_file_number(geo, key, &front) == 0 && front != 0;
@@ -212,8 +218,11 @@ static int to_screen(int v, int scroll, uint32_t scale, uint32_t offset) {
     return (int)f + (int)o;
 }
 
-/* Layer n's strips, just behind it (depth: the layer's own, less one). */
-static void draw(Cpu *c, int layer, int depth) {
+/* Layer n's strips, just behind it (depth: the layer's own, less one), placed by the horizontal scroll
+   the layer's drawer used (scroll_x: not always the layer's +18) and its +98; band 1 (a layer's top rows
+   that move on their own) uses the strips' x_top. Rows outside clip_y0 - clip_y1 (screen, the 2D
+   library's units) are left out: one band's rows only. */
+static void draw(Cpu *c, int layer, int depth, int scroll_x, int band, int clip_y0, int clip_y1) {
     int any = 0;
     for (int i = 0; i < nstrips; i++) any |= strips[i].layer == layer;
     if (!any) return;
@@ -226,18 +235,21 @@ static void draw(Cpu *c, int layer, int depth) {
     c->r[4] = list; c->r[31] = 0x0881AB28; f_089E0CF4(c);
 
     uint32_t l = LAYERS + (uint32_t)layer * LAYER_SIZE;
-    int sx = (int16_t)RH(l + 18), sy = (int16_t)RH(l + 98);
+    int sx = scroll_x, sy = (int16_t)RH(l + 98);
     int y0 = to_screen(0, sy, SCALE_Y, OFFSET_Y), y1 = to_screen(STRIP_H, sy, SCALE_Y, OFFSET_Y);
     float behind = (float)(depth > 0 ? depth - 1 : 0), over = (float)(depth + 1);
     for (int i = 0; i < nstrips; i++) {
         const Strip *s = &strips[i];
         if (s->layer != layer) continue;
         float z = s->front ? over : behind;
-        int x0 = to_screen(s->x, sx, SCALE_X, OFFSET_X), x1 = to_screen(s->x + s->w, sx, SCALE_X, OFFSET_X);
+        int at = band ? s->x_top : s->x;
+        int x0 = to_screen(at, sx, SCALE_X, OFFSET_X), x1 = to_screen(at + s->w, sx, SCALE_X, OFFSET_X);
         /* Clipped to the screen here, texels with it: the library clips a quad's corners without moving
            its texels, which would squeeze a strip that runs off the screen (tiles are too small to). */
         int xa = x0 > CLIP_X0 ? x0 : CLIP_X0, xb = x1 < CLIP_X1 ? x1 : CLIP_X1;
         int ya = y0 > CLIP_Y0 ? y0 : CLIP_Y0, yb = y1 < CLIP_Y1 ? y1 : CLIP_Y1;
+        if (ya < clip_y0) ya = clip_y0;
+        if (yb > clip_y1) yb = clip_y1;
         if (xb <= xa || yb <= ya) continue;                    /* off the screen */
         int base = s->slot * 64;
         int u0 = base + (xa - x0) * s->w / (x1 - x0), u1 = base + (xb - x0) * s->w / (x1 - x0);
@@ -286,8 +298,10 @@ static uint64_t probed = ~0ull;
    while it runs, so never on a menu or select screen that uses the same tile drawers */
 int stagestrips_fight_frame(Cpu *c, uint32_t a0, int after) { (void)c; (void)a0; if (!after) fight_frame = rt_vblank_count(); return 0; }
 
-/* Before a stage layer is drawn: its strips (or, measuring, whether to draw it at all). */
-static int before_layer(Cpu *c, int layer, uint32_t column) {
+/* Before a stage layer (or one band of it) is drawn: its strips (or, measuring, whether to draw it at
+   all). scroll_x: the horizontal scroll the drawer uses; band 0 the layer, 1 its separately moving top
+   rows; clip_y0 - clip_y1 the band's screen rows. */
+static int before_layer(Cpu *c, int layer, uint32_t column, int scroll_x, int band, int clip_y0, int clip_y1) {
     uint64_t now = rt_vblank_count();
     if (fight_frame == ~0ull || now - fight_frame > 2) return 0;          /* not in a fight */
     if (RH(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;               /* not the fight itself (C29) */
@@ -304,33 +318,74 @@ static int before_layer(Cpu *c, int layer, uint32_t column) {
                 if ((windows[i].mask & 0x100) && probed != now) { probed = now; draw_probe(c); }
                 return !((windows[i].mask >> layer) & 1);
             }
+        /* outside the windows: the scroll each layer's strips are placed by, for the measuring tool */
+        rt_log("stage strips: frame %llu layer %d band %d scroll %d", (unsigned long long)now, layer, band, scroll_x);
         return 0;
     }
-    if (!rt_widescreen || drawn[layer] == now) return 0;
-    drawn[layer] = now;
+    if (!rt_widescreen || drawn[layer][band] == now) return 0;
+    drawn[layer][band] = now;
     load((int16_t)RH(BATTLE));
-    draw(c, layer, column < 128 ? (int)RH(DEPTHS + 2u * (1u + 2u * column)) : 0);
+    draw(c, layer, column < 128 ? (int)RH(DEPTHS + 2u * (1u + 2u * column)) : 0, scroll_x, band, clip_y0, clip_y1);
     return 0;
 }
 
-/* around 0x0881AB28 (a0 the layer) */
+/* around 0x0881AB28 (a0 the layer): it scrolls by the layer's +18 */
 int stagestrips_layer_32(Cpu *c, uint32_t a0, int after) {
     if (after || a0 < LAYERS || a0 >= LAYERS + NLAYERS * LAYER_SIZE || (a0 - LAYERS) % LAYER_SIZE) return 0;
-    return before_layer(c, (int)((a0 - LAYERS) / LAYER_SIZE), RB(a0 + 122));
+    return before_layer(c, (int)((a0 - LAYERS) / LAYER_SIZE), RB(a0 + 122), (int16_t)RH(a0 + 18), 0, -10000, 10000);
 }
 
-/* around 0x0881B268 (a0 the layer's record: its kind names the layer) */
+/* v nearest to near among v + k * period */
+static int unwrap(int v, int near, int period) {
+    int d = (v - near) % period;
+    if (d < 0) d += period;
+    if (d > period / 2) d -= period;
+    return near + d;
+}
+
+/* around 0x0881B268 (a0 the layer's record: its kind names the layer). The record's builder
+   (src/core/stage/background.c) chose the scroll: the layer's +18, the fighters' layer's travel, or for
+   RYU's and CHUN-LI's layer 1 (kinds 0xA0 / 0xA4) a lagging one for the top rows, drawn by a first call
+   with fewer than 16 rows, then the rest by a second. The column (+54, in 16-pixel tiles) and the part of
+   a tile scrolled past (+32, on screen) give it back. */
 int stagestrips_layer_16(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
     int kind = RH(a0 + REC_KIND) & 0xFF;
-    for (int n = 0; n < NLAYERS; n++)
-        if (RB(LAYERS + (uint32_t)n * LAYER_SIZE + 3) == (uint32_t)kind)
-            return before_layer(c, n, (uint32_t)(int16_t)RH(a0 + REC_DEPTH));
+    for (int n = 0; n < NLAYERS; n++) {
+        uint32_t l = LAYERS + (uint32_t)n * LAYER_SIZE;
+        if (RB(l + 3) != (uint32_t)kind) continue;
+        uint64_t now = rt_vblank_count();
+        if (called[n] != now) { called[n] = now; ncalls[n] = 0; }
+        int call = ncalls[n]++;
+        int x18 = (int16_t)RH(l + 18), scroll = x18;
+        if (kind != 0x90) {                                   /* (0x90, GUILE's strips: +18 itself) */
+            float sx = ffrom(RW(SCALE_X));
+            int x0 = (int16_t)RH(a0 + 32), part = 0;
+            for (int v = 0; v < 16; v++) { float f = (float)v; f = f * sx; f = -f; if ((int)f == x0) { part = v; break; } }
+            scroll = unwrap(((int16_t)RH(a0 + 54) & 0x3F) * 16 + part, x18, 1024);
+        }
+        int rows = (int16_t)RH(a0 + 62);
+        int split = (kind == 0xA0 || kind == 0xA4) && rows != 16;
+        int band = split && call == 0 ? 1 : 0;
+        int y0 = -10000, y1 = 10000;
+        if (split) {
+            int top = (int16_t)RH(a0 + 12) + (int16_t)RH(a0 + 30);
+            y0 = top; y1 = top + rows * (int16_t)RH(a0 + 26);
+            if (!band) y1 = 10000;                            /* the rest: down to the bottom */
+            else y0 = -10000;                                 /* the top rows: from the top */
+        }
+        return before_layer(c, n, (uint32_t)(int16_t)RH(a0 + REC_DEPTH), scroll, band, y0, y1);
+    }
     return 0;
 }
 
 /* around the picture layers 0x08819498 / 0x0881C0C8 (src/core/stage/background.c; BISON's mountains and
-   sky): a0 the layer, as for 0x0881AB28 */
+   sky): a0 the layer. The mountains scroll by the fighters' layer's travel (+16 less the shake record's
+   +112), the sky by half of +8 less +16. */
 int stagestrips_picture(Cpu *c, uint32_t a0, int after) {
-    return stagestrips_layer_32(c, a0, after);
+    if (after || a0 < LAYERS || a0 >= LAYERS + NLAYERS * LAYER_SIZE || (a0 - LAYERS) % LAYER_SIZE) return 0;
+    int kind = RB(a0 + 3), scroll;
+    if (kind == 0xAA || kind == 0xBE) scroll = -(int)(((int32_t)(RW(a0 + 8) - RW(a0 + 16))) >> 17);
+    else scroll = (int16_t)(((int32_t)(RW(a0 + 16) - RW(SHAKE_REC + 112))) >> 16);
+    return before_layer(c, (int)((a0 - LAYERS) / LAYER_SIZE), RB(a0 + 122), scroll, 0, -10000, 10000);
 }

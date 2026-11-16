@@ -13,8 +13,10 @@ draws (a layer's own black art, the overlay's band under the gauges) is not one.
 For each selectable stage and side it runs a Free Battle in WIDE FORCED with both fighters pinned at
 that wall (--poke), once on the ground (camera y 0) and once high (camera y 16), and dumps the frame
 with every layer, then each layer on its own (A3MX_STRIP_MEASURE, src/extensions/stagestrips.c). From
-a memory snapshot it takes each layer's scroll at that limit, so a layer's strip goes at layer x
-(its scroll - 48) on the left and (its scroll + 384) on the right.
+the extension's log it takes the scroll each layer's drawer used at that limit (the layer's +18, or the
+fighters' layer's travel, or BISON's pictures' own; RYU's and CHUN-LI's layer 1 have a second one for
+their top rows, "layer1_<side>_top"), so a layer's strip goes at layer x (that scroll - 56) on the left
+and (that scroll + 376) on the right.
 
 Writes, per stage folder under assets/extensions/stages/<nn>_<name>/:
   widescreen_left.png / widescreen_right.png               the fighters' layer (layer 1)
@@ -114,11 +116,18 @@ def run(exe, work, out, k, side, lifted):
     for n in range(NLAYERS):
         a = LAYERS + n * LAYER_SIZE
         layers[n] = {'kind': b(a + 3), 'x': h(a + 18), 'y': h(a + 98)}
-    depth = {}
+    depth, scroll = {}, {}
     for line in open(os.path.join(d, 'log'), errors='replace'):
         if 'stage strips: layer' in line:
             w = line.split('stage strips: layer', 1)[1].split()
             depth[int(w[0])] = int(w[2])
+        elif 'stage strips: frame %d ' % e in line:
+            # the scroll the layer's drawer used at the dump frame (not always its +18), by band
+            w = line.split('stage strips: frame', 1)[1].split()
+            scroll[(int(w[2]), int(w[4]))] = int(w[6])
+    for n in range(NLAYERS):
+        if (n, 0) in scroll: layers[n]['x'] = scroll[(n, 0)]
+        if (n, 1) in scroll: layers[n]['x_top'] = scroll[(n, 1)]
     os.remove(os.path.join(d, 'mem.bin'))
     shots = {}
     for key, frame in dumps.items():
@@ -321,6 +330,9 @@ def main():
                     continue
                 scroll = g['layers'][n]['x']
                 geo[key] = scroll - STRIP_W - OUTER if side == 'L' else scroll + VIEW_W - OVERLAP
+                top = g['layers'][n].get('x_top')    # a layer whose top rows scroll on their own (RYU, CHUN-LI)
+                if top is not None: geo[key + '_top'] = top - STRIP_W - OUTER if side == 'L' else top + VIEW_W - OVERLAP
+                else: geo.pop(key + '_top', None)
                 if not a.dry_run:
                     os.makedirs(folder, exist_ok=True)
                     make_placeholder(path, owned[n], COLOURS[n], ['0x%02X' % stage, side, 'L%d' % n])

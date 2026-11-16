@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  11.61% decompiled
+Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  12.19% decompiled
 
-Functions                                [█░░░░░░░░░]  11.06%  1,646 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  11.61%  56,214 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  11.46%  1,706 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  12.19%  59,046 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  25.84%  52,696 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  27.23%  55,528 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.91%  2,330 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -238,6 +238,10 @@ To do, in rough order:
         BISON's picture layers 0x08819498 / 0x0881C0C8, and the floor band 0x0881C5A8 with CHARLIE's
         and BISON's own (`background.c`, `floor.c`; 0.90.0). Every stage's layers, floor and objects
         are now native but for the unreached 0x0881A2C8 path below
+  - [x] The camera's frame 0x0881D1A8 (every layer's follow, the floor's lean, the stages' own camera
+        movement), each stage's setup (0x08819A20 and the 23 stage routines) and its palette and tile
+        animators (`camera_frame.c`, `setup.c`, `animators.c`; 0.91.0)
+  - [ ] The select / VS screens' backdrops (0x0881CBDC, 0x0881CD20, 0x0881CFD0, 0x08819144, 0x0881A040)
   - [ ] 0x0881B7C8 and its caller 0x0881A2C8 (from 0x089DE2C0 / 0x089DE390): need a scenario that
         reaches them
 - [ ] Battle core: rounds, timer, camera, collision (hit boxes), damage, guard, ISM rules

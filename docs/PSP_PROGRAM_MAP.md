@@ -870,6 +870,28 @@ blend, bits 8-15 the palette (0x089E0EA4), bits 0-7 its 16-texel cell.
 
 Paused (0x08E75969) or either fight flag 0x092E1237 / 0x092E124D stops their animation.
 
+### The camera's frame (decompiled: src/core/stage/camera_frame.c)
+
+| Address | What |
+|---|---|
+| 0x0881D1A8 | once a frame from 0x0881DF10: unless paused (GAME + 89, BATTLE + 15, GAME + 145) the fighters' layer 0x0881D244, the lean 0x0881D348, layer 0 0x0881D960, layer 2 0x0881DC6C, 0x0881EE84, 0x08819BBC; always the background 0x08819CFC |
+| 0x0881ECA4 | places a camera layer at (x, y) by its mode +2 (0 layer 0, 1 the fighters' layer with limits 0x10 / 0x100 / 0x280, 2 layer 2); alignment masks 0x08A09468 |
+| 0x0881D244 / 0x0881E1B4 | the fighters' layer: placed at (0x1C0, 0) the first frame, then follows the fighters (0x0881E320, 0x0881E538); +16 / +96 of layer 1 from +34 / +38 (BISON: +60 counts the sky's ripple) |
+| 0x0881D348 | the screen's lean (0x092E5F78): +130 / +132 heights from 0x08A09268, frames 0x08A092BC by stage (0xFFFF none); each frame +28 = (layer 1's +32 less its +8) / +128, +112 = +28 × (+132 less +130) (SAGAT + 16 × +28, VEGA + 8 ×) |
+| 0x0881D960 / 0x0881DC6C | layers 0 and 2: start from 0x08A08FC8, follow at rates 0x08A09118 (by stage, s16 x4) through 0x0881E058 / 0x0881E148; own drifts: ROLENTO and BATTLE1 - 4 layer 0, GUILE layer 2 (+80); ZANGIEF layer 2's 4 frames; layer 0's +155 off on VEGA / DHALSIM, layer 2's on for KEN, CHARLIE, SAGAT |
+| 0x0881E0D8 | CHUN-LI's layer 2 and VEGA's layer 0: the fighters' layer's travel less the lean × rate |
+| 0x0881D4D8 / 0x0881D588 / 0x0881D5F4 (0x0881D6EC, steps 0x08A093B0: 0x0881D768 ...) / 0x0881D8A8 | GEN's figure (0x08A0938E, random), VEGA's falling cage (sound 0x37), GUILE's train, KARIN 1's boat (0x08A093F8) |
+
+### The stage's setup and animators (decompiled: src/core/stage/setup.c, animators.c)
+
+| Address | What |
+|---|---|
+| 0x08819A20 | the stage's setup: 0x08815818, then 0x08A08A14[stage] (23 stages): palette animators (0x08823074: +8 script of {frames, +3, list, step}, +12 lists of {slot, source \| 0x80 last}, +16 source 0x092EEA00, +20 step) started by 0x0881F1FC, map animators (0x088230B4: +1 tile size, +8 / +10 x / y, +12 12-byte entries {+2, +3, map 0x08A08ABC[n], columns, rows, words}, +16 step) written by 0x08819A68, and palette slots 0xA3 - 0xC3 (0x089E1234) |
+| 0x0881EEF4 / 0x0881EF38 / 0x0881EFB4 / 0x0881F01C / 0x0881F060 / 0x0881F0D0 / 0x0881F114 / 0x0881F148 | palette animators' steps: plain; held until 1 in 128; rotating slots 0xA3 + (0x0881F5D4, table 0x08A09480); random waits (0x0881F48C); BISON's (also the fighters' layer's frame); ZANGIEF's by layer 2's frame (0x0881F308); pairs (0x0881F3E4); HONDA's from the round's start, rewriting the map animator 0x095177C8 |
+| 0x08819C2C / 0x08819C74 | map animators' steps: every +2 frames; KEN's crowd facing the nearer fighter within 48 px |
+| 0x0881F6A0 / 0x0881F794 | the fighters' palettes for the layout (BATTLE + 56): 0x092D9E00[character] + colour × 160 (or × 256 for character 0x29), through 0x0880AEA8 |
+| 0x0881CE4C / 0x0881CEF4 | the select / VS screens' backdrop: layers 1 / 2 set to fixed places, palette slots 0xE0 - 0xE5 and two from 0x08A08D08 |
+
 ### The stage's background and floor (decompiled: src/core/stage/background.c, floor.c)
 
 | Address | What |

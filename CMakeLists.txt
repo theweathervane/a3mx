@@ -203,7 +203,11 @@ endif()
 target_compile_definitions(${GAME} PRIVATE "A3MX_VERSION=\"v${A3MX_VER}\"" "A3MX_VERSION_SCREEN=\"V${A3MX_VER_SCREEN}\"")
 
 target_compile_options(${GAME} PRIVATE -Wall -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable
-                       $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>)
+                       $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
+                       # decompiled code reads and writes game memory through 8-, 16- and 32-bit pointers to the same
+                       # bytes (a word at +16, its halfword at +18): without this the compiler may reorder them
+                       # (MISTAKES M28: SODOM's crossing object read its x before the store that moved it)
+                       $<$<NOT:$<C_COMPILER_ID:MSVC>>:-fno-strict-aliasing>)
 if(APPLE)
   # ucontext (fiber.c) is deprecated on macOS but still the portable way to switch stacks there
   target_compile_options(${GAME} PRIVATE -Wno-deprecated-declarations)
