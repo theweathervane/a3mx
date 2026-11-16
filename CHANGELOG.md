@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.96.1
+### For players
+- **The art pack is marked experimental** (Build art pack (experimental), under advanced settings). It gives screenshots of each stage at its walls, whole and one layer at a time, not each stage layer whole as its own picture yet. That is on the roadmap.
+
 ## 0.96.0
 ### For players
 - **A simpler Build / Run tab.** The launcher now opens with only the settings most players need: full screen, logging, renderer, resolution and GPU, and Run builds Release and starts the game. **Show advanced settings** (off every time the launcher opens) brings back the presets, the build's own choices (Extract the disc again, Build art pack, the tests, Run after building) and the extra game options.

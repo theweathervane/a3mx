@@ -109,10 +109,14 @@ If a coloured patch shows in a fight, nobody has painted that strip yet.
 **References:** `python tools/dump_stage_references.py` writes each stage at both walls, on the ground and
 in the air, whole and layer by layer (`left_ground.png`, `left_ground_layer0.png` ...), into your
 `assets/us/stages/<stage>/widescreen_reference/` from your own disc: trace from those. They are never
-committed. **The art pack** puts those references and the placeholders to paint together, one folder per
-stage plus a README and a zip, in `art-pack/` (git-ignored): the launcher's **Build the art pack** (Build
-section), `python tools/build.py --art-pack`, or `python tools/art_pack.py` on a built game. It is made
-from your disc's art, so it's for you and your artist, not for publishing.
+committed. **The art pack (experimental)** puts those references and the placeholders to paint together,
+one folder per stage plus a README and a zip, in `art-pack/` (git-ignored): the launcher's **Build art
+pack** (Build section, advanced settings), `python tools/build.py --art-pack`, or `python tools/art_pack.py`
+on a built game. It is made from your disc's art, so it's for you and your artist, not for publishing.
+It is experimental because its references are only screenshots at each wall (the 480 x 272 screen, whole and one layer at a time), not each layer whole as its own PNG. Each layer whole is still to do: the stage code is all
+native and a layer can already be drawn on its own (`A3MX_STRIP_MEASURE`), so it needs a capture that pans
+the camera across the layer and stitches the frames by the layer's scroll, plus rebuilding, from the
+stage's layout data, the layers wider than their tile map (the game keeps only the tiles it shows).
 
 
 1. Take a WIDE FORCED screenshot at the wall you're painting: walk both fighters into that corner.

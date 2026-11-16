@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Build an art pack for painting the Stage Extensions (WIDE FORCED), from your own disc.
 
+EXPERIMENTAL: the references are only screenshots at each wall (the 480 x 272 screen, whole and one layer at a time), not each layer whole as its own PNG. Still to do (docs/ROADMAP.md): each layer whole, by panning the camera
+with the layer drawn alone and stitching by its scroll, and rebuilding from the stage's layout data the
+layers wider than their tile map (the game keeps only the tiles it shows).
+
 An artist needs the stage art to trace from and the placeholders to paint over. This puts both in one
 folder (and a zip of it), one folder per stage:
 

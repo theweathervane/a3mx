@@ -2293,10 +2293,11 @@ struct App {
                 ImGui::BeginDisabled(busy || !repo);
                 ImGui::Checkbox("Extract the disc again", &set.extract);
                 ImGui::SetItemTooltip("--extract: for this Run or Build only. A different ISO is extracted again by itself.");
-                ImGui::Checkbox("Build art pack", &set.art_pack);
+                ImGui::Checkbox("Build art pack (experimental)", &set.art_pack);
                 ImGui::SetItemTooltip("--art-pack: for this Build only. Renders every stage at its walls from your disc and puts the\n"
                                       "pictures with the Stage Extensions' placeholders in art-pack/ (and a zip), for an artist\n"
-                                      "to paint from. A few minutes. The pictures are your disc's art: not for publishing.");
+                                      "to paint from. A few minutes. The pictures are your disc's art: not for publishing.\n"
+                                      "Experimental: only screenshots at each wall so far, not each stage layer whole.");
                 ImGui::Checkbox("Run the tests after building", &set.tests);
                 ImGui::SetItemTooltip("--test: ctest (the parity tests take a long time; docs/TESTS.md says what each is for)");
                 bool run = repo ? set.run : true;
