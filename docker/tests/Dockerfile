@@ -1,9 +1,11 @@
 # a3mx test runner: a Linux machine that pulls the code from a git server (the project's GitLab
 # by default; set A3MX_GIT_URL for a mirror), extracts your disc once, builds the headless preset and runs every ctest test.
 #
-# No code and no game data are baked into the image: the code is cloned when the container starts
-# (into the /a3mx volume, kept between runs so rebuilds are incremental), and the ISO is mounted
-# read-only at /iso. Results go to /results/<date-time>/. See README.md beside this file.
+# No code and no game data are baked into the image. Two mounts:
+#   /iso    the folder with your ISO (read-only)
+#   /tests  where everything is kept: the clone, work/, assets/us and the build in /tests/a3mx (so a
+#           later run only rebuilds what changed), and each run's results in /tests/results/<date-time>/
+# See README.md beside this file.
 
 FROM ubuntu:24.04
 
@@ -30,6 +32,6 @@ RUN sed -i 's/\r$//' /usr/local/bin/run-tests && chmod +x /usr/local/bin/run-tes
 ENV A3MX_GIT_URL=https://gitlab.com/theweathervane-group/a3mx.git \
     A3MX_GIT_REF=main
 
-VOLUME ["/a3mx", "/results"]
-WORKDIR /a3mx
+VOLUME ["/tests"]
+WORKDIR /tests
 ENTRYPOINT ["run-tests"]

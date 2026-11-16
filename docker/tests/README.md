@@ -14,12 +14,15 @@ in the image: the ISO is mounted read-only when the container runs.
 
 ## With Portainer
 
-1. Put your ULUS-10062 `.iso` in a folder on the Docker host, e.g. `/srv/a3mx/iso`.
+1. On the Docker host, make two folders: one with your ULUS-10062 `.iso` in it (mounted read-only at
+   `/iso`) and one for the tests (mounted at `/tests`: the clone and build go in `a3mx/`, each run's
+   results in `results/`).
 2. **Stacks > Add stack > Repository**: the repository URL (GitLab, or the mirror you use),
    reference `refs/heads/main`, compose path `docker/tests/docker-compose.yml`. Add authentication if
    the repository is private.
-3. **Environment variables**: `A3MX_ISO_DIR=/srv/a3mx/iso`, and optionally `A3MX_GIT_URL` (to test
-   a mirror, such as a Gitea on your own network), `A3MX_RESULTS_DIR`, `A3MX_TESTS`, `A3MX_JOBS` (below).
+3. **Environment variables**: `A3MX_ISO_DIR` and `A3MX_TESTS_DIR`, the two folders (both required), and
+   optionally `A3MX_GIT_URL` (to test a mirror, such as a Gitea on your own network), `A3MX_TESTS`,
+   `A3MX_JOBS` (below).
 4. **Deploy**. The container runs once and stops; its log is the test output. To test again (the
    newest code is fetched each time), start the container again (**Containers > a3mx-tests > Start**).
    Redeploy the stack only when this folder changes.
@@ -27,8 +30,8 @@ in the image: the ISO is mounted read-only when the container runs.
 ## From a shell
 
 ```
-./run.sh /srv/a3mx/iso                     # everything; results in ./results
-./run.sh /srv/a3mx/iso /srv/a3mx/results -e A3MX_TESTS="boot_to_select|arcade_fight"
+./run.sh ISO_FOLDER TESTS_FOLDER            # everything
+./run.sh ISO_FOLDER TESTS_FOLDER -e A3MX_TESTS="boot_to_select|arcade_fight"
 ```
 
 Settings you always want (a mirror's address, a token) can go in `docker/tests/.env`, one
@@ -51,11 +54,11 @@ about your own network ends up in the repository.
 
 ## What it keeps and writes
 
-- The volume `a3mx-src` holds the clone, `work/`, `assets/us/` and `build-headless/`, so a later run
+- `TESTS_FOLDER/a3mx/` holds the clone, `work/`, `assets/us/` and `build-headless/`, so a later run
   only fetches, rebuilds what changed and tests. The disc is extracted again only when the ISO
-  changes. To start over, delete the volume (`docker volume rm a3mx-tests_a3mx-src` for the stack,
-  `a3mx-src` for `run.sh`).
-- Each run writes `RESULTS/<date-time>/` (`RESULTS/latest` points to the newest): `run.log`, `summary.txt`,
+  changes. To start over, delete that folder. The container runs as root, so its files there belong
+  to root.
+- Each run writes `TESTS_FOLDER/results/<date-time>/` (`results/latest` points to the newest): `run.log`, `summary.txt`,
   `commit.txt`, `junit-headless.xml`, `LastTest-headless.log` and `failed-headless.txt`. The exit code is
   0 when every test passed.
-- Everything derived from the disc stays in the volume and must never be committed or pushed.
+- Everything derived from the disc stays in `TESTS_FOLDER/a3mx/` and must never be committed or pushed.

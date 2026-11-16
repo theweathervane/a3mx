@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.93.2
+### For players
+- Nothing changes in play.
+
+### Technical
+- **The Docker test runner uses two folders you choose:** `/iso` (your ISO, read-only) and `/tests`, which keeps the clone and build in `a3mx/` and each run's results in `results/`, instead of a named Docker volume. Set them with `A3MX_ISO_DIR` and `A3MX_TESTS_DIR` (both required) in the Portainer stack, or `docker/tests/run.sh ISO_FOLDER TESTS_FOLDER`.
+
 ## 0.93.1
 ### For players
 - Nothing changes in play.

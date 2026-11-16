@@ -4,7 +4,10 @@
 #   1. clone the code (or fetch and check out the newest A3MX_GIT_REF if it is already there)
 #   2. extract the disc from /iso into work/ and assets/us (only the first time, or for another disc)
 #   3. build the headless preset and run ctest (and/or the disc-free ci preset)
-#   4. write the log, the JUnit XML and a summary to /results/<date-time>/ (and /results/latest)
+#   4. write the log, the JUnit XML and a summary to /tests/results/<date-time>/ (and results/latest)
+#
+# Mounts: /iso (your ISO, read-only) and /tests (the clone and build in /tests/a3mx, results in
+# /tests/results).
 #
 # Settings (environment variables, all optional):
 #   A3MX_GIT_URL     where to clone from     (default: the project's GitLab; any mirror works)
@@ -24,10 +27,11 @@ GIT_URL=${A3MX_GIT_URL:-https://gitlab.com/theweathervane-group/a3mx.git}
 GIT_REF=${A3MX_GIT_REF:-main}
 GIT_TOKEN=${A3MX_GIT_TOKEN:-}
 GIT_USER=${A3MX_GIT_USER:-oauth2}
-SRC=${A3MX_SRC:-/a3mx/src}
+TESTS_ROOT=${A3MX_TESTS_ROOT:-/tests}
+SRC=${A3MX_SRC:-$TESTS_ROOT/a3mx}
 ISO_DIR=${A3MX_ISO_DIR:-/iso}
 ISO=${A3MX_ISO:-}
-RESULTS=${A3MX_RESULTS:-/results}
+RESULTS=${A3MX_RESULTS:-$TESTS_ROOT/results}
 SUITE=${A3MX_SUITE:-disc}
 TESTS=${A3MX_TESTS:-}
 EXCLUDE=${A3MX_EXCLUDE:-}

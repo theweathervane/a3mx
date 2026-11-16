@@ -1,10 +1,11 @@
 # a3mx test runner as a Portainer stack (or `docker compose up --build` on the Docker host).
 # Each start of the container fetches the newest code and runs the tests, then the container stops.
 # Set these in Portainer's stack "Environment variables" (or a .env file beside this one, which
-# is git-ignored: the place for anything about your own network):
-#   A3MX_GIT_URL      a mirror to clone from instead of GitLab, e.g. your own Gitea
-#   A3MX_ISO_DIR      folder on the Docker host holding your ULUS-10062 .iso   (required)
-#   A3MX_RESULTS_DIR  folder on the Docker host for the results               (default /srv/a3mx/results)
+# is git-ignored: the place for anything about your own machines):
+#   A3MX_ISO_DIR    folder on the Docker host holding your ULUS-10062 .iso       (required) -> /iso
+#   A3MX_TESTS_DIR  folder on the Docker host for the clone, the build and the
+#                   results: a3mx/ and results/ are made in it                     (required) -> /tests
+#   A3MX_GIT_URL    a mirror to clone from instead of GitLab, e.g. your own Gitea
 #   and any A3MX_* setting from run-tests.sh (A3MX_TESTS, A3MX_SUITE, A3MX_GIT_REF, ...)
 name: a3mx-tests
 
@@ -28,9 +29,5 @@ services:
       A3MX_CLEAN: ${A3MX_CLEAN:-0}
       TZ: ${TZ:-Europe/London}
     volumes:
-      - ${A3MX_ISO_DIR:-/srv/a3mx/iso}:/iso:ro
-      - ${A3MX_RESULTS_DIR:-/srv/a3mx/results}:/results
-      - a3mx-src:/a3mx            # the clone, work/, assets/ and build-headless/, kept between runs
-
-volumes:
-  a3mx-src:
+      - ${A3MX_ISO_DIR:?set A3MX_ISO_DIR to the folder holding your ISO}:/iso:ro
+      - ${A3MX_TESTS_DIR:?set A3MX_TESTS_DIR to a folder for the clone, build and results}:/tests
