@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.93.1
+### For players
+- Nothing changes in play.
+
+### Technical
+- **The tests in Docker:** `docker/tests/` builds a Linux container that clones the code (GitLab by default; `A3MX_GIT_URL` for a mirror), extracts your disc from a read-only mount, builds the `headless` preset and runs every `ctest` test, with the log, a summary and JUnit XML in a results folder. It runs as a Portainer stack (`docker-compose.yml`) or with `docker/tests/run.sh`; the clone, `work/`, `assets/us` and the build are kept in a volume, so later runs only rebuild what changed. Your own settings go in the git-ignored `docker/tests/.env`. See `docker/tests/README.md`.
+
 ## 0.93.0
 ### For players
 - **More of the game decompiled: the select, map, profile and VS screens' backdrops** (the stage's layers shown behind those menus) now run as hand-written C. With this, every part of the stage code the game runs is native.

@@ -4,6 +4,9 @@ What is tested, why, and how long it takes. Run them with `ctest` from a build f
 (`ctest --test-dir build-headless -j2`), or `build.cmd --test` / `./build.sh --test`, or the launcher's
 **Run the tests after building**.
 
+To run them in a container instead (a Docker host or Portainer, with your ISO mounted read-only):
+[docker/tests/README.md](../docker/tests/README.md).
+
 Two builds run tests:
 
 | Build | What it is | Needs your disc | Tests |
