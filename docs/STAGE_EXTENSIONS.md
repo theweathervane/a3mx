@@ -106,6 +106,12 @@ If a coloured patch shows in a fight, nobody has painted that strip yet.
 
 ### Painting one
 
+**References:** `python tools/dump_stage_references.py` writes each stage at both walls, on the ground and
+in the air, whole and layer by layer (`left_ground.png`, `left_ground_layer0.png` ...), into your
+`assets/us/stages/<stage>/widescreen_reference/` from your own disc: trace from those. They are never
+committed. (Planned: the same as an "art pack" the launcher builds.)
+
+
 1. Take a WIDE FORCED screenshot at the wall you're painting: walk both fighters into that corner.
 2. Paint over the coloured area so it continues that layer's art outwards from its edge. You can paint
    more of the strip than the coloured area (another layer's art covers it where it's in front), and

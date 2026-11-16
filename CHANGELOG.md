@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.93.0
+### For players
+- **More of the game decompiled: the select, map, profile and VS screens' backdrops** (the stage's layers shown behind those menus) now run as hand-written C. With this, every part of the stage code the game runs is native.
+- **Reference pictures for painting the stage extensions:** `python tools/dump_stage_references.py` writes, from your own disc, what each stage looks like at both walls in WIDE FORCED (whole, and each layer on its own with transparency) into `assets/us/stages/<stage>/widescreen_reference/`. They stay in your assets folder (git ignores it) and are never committed.
+
+### Technical
+- `background.c`: 0x0881A040 (select screens), 0x08819144 (VS), 0x0881CFD0 (a 160 × 32 picture). `setup.c`: 0x0881CBDC (map), 0x0881CD20 (profile). Checked with arcade_match, boot_to_select, free_battle, select_choices and mode_tour (all five run in them).
+- New `tools/dump_stage_references.py` (the runs of `measure_stage_layers.py`): 4 frames per stage and each layer alone.
+- Left translated in the stage area: 0x0881A2C8 / 0x0881B7C8, which no scenario reaches.
+
 ## 0.92.0
 ### For players
 - **Stage Extensions (WIDE FORCED): placeholders for the objects in front of the fighters.** Ryu's straw, Adon's leaves, Sodom's crossing object, Guy's, Sagat's and Rolento's pieces along the bottom, Dan's, Cody's, Guile's and Hawk's foreground objects are sprites, not layers, so the layer strips couldn't extend them. Each now has a yellow placeholder at each side, pinned to the object so it moves with it, and drawn in front of the fighters like the object. These are placeholders only: an artist paints them (STAGE_EXTENSIONS.md says how).

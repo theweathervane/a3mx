@@ -373,3 +373,52 @@ SFA_FUNC(0881CE4C, screen_backdrop) {
     for (int i = 0; i < 6; i++) pal(c, P[i][0], P[i][1], 0x0881CEAC + (uint32_t)i * 12);
     c->r[29] += 0x20;
 }
+
+/* ---- 0x0881CBDC: the map / profile screens' backdrop: layers set to fixed places (depth columns 6 /
+   2 / 4, the 16-pixel drawer on 0 and 1), two palettes copied, a palette animator from 0x08A08C60 /
+   0x08A08CD0 and slots 0xD0 - 0xD4 ---- */
+#define LAYER_0 0x092E8800u
+static void backdrop_layers(void) {
+    *B(LAYER_0 + 122) = 6; *B(LAYER_1 + 122) = 2; *B(LAYER_2 + 122) = 4;
+}
+SFA_FUNC(0881CBDC, screen_map_backdrop) {
+    c->r[29] -= 0x20;
+    *B(LAYER_1 + 123) = 0;
+    backdrop_layers();
+    *B(LAYER_0 + 155) = 1; *B(LAYER_1 + 155) = 1; *B(LAYER_2 + 155) = 0;
+    *H(LAYER_0 + 90) = 0xFFF0; *H(LAYER_1 + 90) = 0xFFF0; *H(LAYER_2 + 90) = 0xFFF0;
+    *W(LAYER_0 + 16) = 0; *W(LAYER_1 + 16) = 0; *W(LAYER_2 + 16) = 0;
+    *W(LAYER_0 + 20) = 0; *W(LAYER_1 + 20) = 0; *W(LAYER_2 + 20) = 0;
+    c->r[4] = 0x092DF980u + 0x400; c->r[5] = SOURCE + 0x20; c->r[6] = 0x10; c->r[31] = 0x0881CC78; f_089E11C8(c);
+    c->r[4] = 0x092DF980u + 0x460; c->r[5] = SOURCE; c->r[6] = 0x10; c->r[31] = 0x0881CC8C; f_089E11C8(c);
+    *W(0x092E0980u) = 1;
+    palette_animator(c, 0x08A08C60u, 0x08A08CD0u, SOURCE, CYCLE, (Back){ 0x0881CC9C, 0x0881CCD0 });
+    static const uint8_t P[][2] = { {0xD0,0x20},{0xD1,0x21},{0xD2,0x22},{0xD3,0x23},{0xD4,0x23} };
+    for (int i = 0; i < 5; i++) pal(c, P[i][0], P[i][1], 0x0881CCDC + (uint32_t)i * 12);
+    c->r[29] += 0x20;
+}
+
+/* ---- 0x0881CD20: (n) the profile screens' backdrop: 0 the stage's layers 0 and 1 with slots 0xD9 /
+   0xDA; 1 fixed places and a palette animator (always the record at 0x09517868, as the original) ---- */
+SFA_FUNC(0881CD20, screen_profile_backdrop) {
+    int32_t n = (int32_t)ARG(0);
+    c->r[29] -= 0x20;
+    *H(LAYER_0 + 90) = 0xFFF0; *H(LAYER_1 + 90) = 0xFFF0; *H(LAYER_2 + 90) = 0xFFF0;
+    if (n == 0) {
+        *B(LAYER_1 + 123) = 0;
+        *B(LAYER_0 + 155) = 1; *B(LAYER_1 + 155) = 1; *B(LAYER_2 + 155) = 0;
+        pal(c, 0xD9, 0x3F, 0x0881CD7C); pal(c, 0xDA, 0x3F, 0x0881CD88);
+    } else if (n == 1) {
+        *B(LAYER_1 + 123) = 7;
+        backdrop_layers();
+        *W(LAYER_0 + 16) = 0x2000000; *W(LAYER_1 + 16) = 0; *W(LAYER_2 + 16) = 0;
+        *W(LAYER_0 + 20) = 0; *W(LAYER_1 + 20) = 0; *W(LAYER_2 + 20) = 0xFC000000u;
+        if (make(c, f_08823074, 0x0881CDE0) != 0) {
+            gaddr a = 0x09517868u;
+            *W(a + 16) = SOURCE; *W(a + 8) = 0x08A08C60u; *W(a + 12) = 0x08A08CD0u; *W(a + 20) = CYCLE;
+            c->r[4] = a; c->r[31] = 0x0881CE28; f_0881F1FC(c);
+        }
+        pal(c, 0xD7, 0x21, 0x0881CE34); pal(c, 0xD8, 0x22, 0x0881CE40);
+    }
+    c->r[29] += 0x20;
+}

@@ -488,3 +488,101 @@ SFA_FUNC(08819CFC, stage_background) {
     draw_background(c);
     c->r[29] += 0x30;
 }
+
+/* ---- the select / VS / map screens' backdrops: the stage's camera layers shown behind a menu ---- */
+
+/* The quad list and its colour as the background sets them (0x08819CFC's start), the texture list a0 and
+   the floor's first texture. */
+static void backdrop_start(Cpu *c, uint32_t textures, uint32_t floor_texture, uint32_t back) {
+    *W(QUADS + 0) = 0x08B014ECu; *W(QUADS + 4) = 0x08B014FCu; *W(QUADS + 8) = 0x08B0150Cu; *W(QUADS + 12) = 4;
+    uint32_t v = (uint32_t)S16(FADE);
+    uint32_t colour = v + (v << 8) + (v << 16) - 0x1000000u;
+    const gaddr floor_quad = 0x08B0151Cu;
+    *W(floor_quad + 60) = colour; *W(floor_quad + 44) = colour;
+    *W(floor_quad + 28) = colour; *W(floor_quad + 12) = colour;
+    *W(0x08B014FCu + 12) = colour; *W(0x08B014FCu + 8) = colour; *W(0x08B014FCu + 4) = colour;
+    *W(0x08B014FCu) = colour;
+    c->r[4] = textures; c->r[31] = back; f_089E0CF4(c);
+    *W(0x08B0155Cu) = floor_texture;
+}
+
+/* A layer's first frame sets it up (+7); later frames draw it when layer 1's +123 has its bit, with
+   the 16-pixel drawer if its +155 says so. */
+static void backdrop_layer(Cpu *c, gaddr layer, uint32_t bit, gaddr map, uint32_t back) {
+    if (*B(layer + 7) == 0) { *B(layer + 7) = 1; return; }
+    if (!(*B(LAYER_1 + 123) & bit)) return;
+    if ((int8_t)*B(layer + 155) != 0) call2(c, f_0881A8E0, layer, map, back);
+    else call2(c, f_0881AB28, layer, map, back + 0x14);
+}
+
+/* ---- 0x0881A040: the select screens' backdrop: kinds 3 × the screen's backdrop number (0x08E75C52)
+   + 0 / 1 / 2, textures 0x08A054D0[it] ---- */
+SFA_FUNC(0881A040, screen_backdrop_draw) {
+    c->r[29] -= 0x20;
+    if ((int8_t)*B(BATTLE + 23) == 0) {
+        uint32_t n = *H(0x08E75C52u);
+        backdrop_start(c, *W(0x08A054D0u + n * 4u), 0xD0, 0x0881A100);
+        n = *H(0x08E75C52u);
+        uint32_t k = n + n * 2;
+        int32_t ks = (int8_t)k;
+        *B(LAYER_0 + 3) = (uint8_t)k;
+        *B(LAYER_1 + 3) = (uint8_t)(ks + 1);
+        *B(LAYER_2 + 3) = (uint8_t)(ks + 2);
+        *W(LAYER_0 + 96) = 0u - *W(LAYER_0 + 20) - ((uint32_t)S16(LAYER_0 + 90) << 16);
+        *W(LAYER_1 + 96) = 0u - *W(LAYER_1 + 20) - ((uint32_t)S16(LAYER_1 + 90) << 16);
+        *W(LAYER_2 + 96) = 0u - *W(LAYER_2 + 20) - ((uint32_t)S16(LAYER_2 + 90) << 16);
+        *W(SHAKE + 112) = 0;
+        backdrop_layer(c, LAYER_1, 2, MAPS + 0x2000, 0x0881A1D8);
+        backdrop_layer(c, LAYER_0, 1, MAPS, 0x0881A234);
+        backdrop_layer(c, LAYER_2, 4, MAPS + 0x4000, 0x0881A290);
+    }
+    c->r[29] += 0x20;
+}
+
+/* ---- 0x08819144: the VS screen's backdrop: layers 1 and 2 (kind 0xFF) from the maps 0x08A0793C /
+   0x08A0813C ---- */
+SFA_FUNC(08819144, screen_vs_backdrop_draw) {
+    c->r[29] -= 0x20;
+    if ((int8_t)*B(BATTLE + 23) == 0) {
+        backdrop_start(c, *W(0x08A0552Cu), 0xE0, 0x088191F0);
+        *B(LAYER_1 + 3) = 0xFF; *B(LAYER_2 + 3) = 0xFF;
+        *W(LAYER_1 + 96) = 0u - *W(LAYER_1 + 20);
+        *W(LAYER_2 + 96) = 0u - *W(LAYER_2 + 20);
+        *W(SHAKE + 112) = 0;
+        if (*B(LAYER_1 + 7) == 0) *B(LAYER_1 + 7) = 1;
+        else if (*B(LAYER_1 + 123) & 2) call2(c, f_0881AB28, LAYER_1, 0x08A0793Cu, 0x08819264);
+        if (*B(LAYER_2 + 7) == 0) *B(LAYER_2 + 7) = 1;
+        else if (*B(LAYER_1 + 123) & 4) call2(c, f_0881AB28, LAYER_2, 0x08A0813Cu, 0x088192A0);
+    }
+    c->r[29] += 0x20;
+}
+
+/* ---- 0x0881CFD0: (x, y): a 160 × 32 picture (texels 0 - 0xA0 × 0xC0 - 0xE0 of the list 0x08A05078,
+   palette 0) at depth column 7, from a quad list on its own stack ---- */
+SFA_FUNC(0881CFD0, screen_backdrop_picture) {
+    int32_t x = (int16_t)ARG(0), y = (int16_t)ARG(1);
+    c->r[29] -= 0x60;
+    gaddr sp = c->r[29], d = sp + 16, xy = sp + 0x20, col = sp + 0x30, uv = sp + 0x40;
+    *W(d) = xy; *W(d + 4) = col; *W(d + 8) = uv; *W(d + 12) = 4;
+    for (int i = 0; i < 4; i++) *W(col + 4u * (uint32_t)i) = 0xFFFFFFFFu;
+    static const uint16_t UV[8] = { 0, 0xC0, 0xA0, 0xC0, 0xA0, 0xE0, 0, 0xE0 };
+    for (int i = 0; i < 8; i++) *H(uv + 2u * (uint32_t)i) = UV[i];
+    c->r[4] = 0x08A05078u; c->r[31] = 0x0881D05C; f_089E0CF4(c);
+    c->r[4] = 0; c->r[31] = 0x0881D064; f_089E0EA4(c);
+    float sx = F(SCALE_X), sy = F(SCALE_Y), ox = F(OFFSET_X), oy = F(OFFSET_Y), f;
+    f = (float)x; f = sx * f; int32_t x0 = (int16_t)CVT_TRUNC(NULL, f);
+    f = (float)(x + 0xA0); f = sx * f; int32_t x1 = (int16_t)CVT_TRUNC(NULL, f);
+    f = (float)y; f = sy * f; int32_t y0 = (int16_t)CVT_TRUNC(NULL, f);
+    f = (float)(y + 0x20); f = sy * f; int32_t y1 = (int16_t)CVT_TRUNC(NULL, f);
+    f = (float)x0; f = f + ox; int32_t l = CVT_TRUNC(NULL, f);
+    f = (float)x1; f = f + ox; int32_t r = CVT_TRUNC(NULL, f);
+    f = (float)y0; f = f + oy; int32_t t = CVT_TRUNC(NULL, f);
+    f = (float)y1; f = f + oy; int32_t b = CVT_TRUNC(NULL, f);
+    SET16(xy + 12, l); SET16(xy + 0, l); SET16(xy + 8, r); SET16(xy + 4, r);
+    SET16(xy + 6, t); SET16(xy + 2, t); SET16(xy + 14, b); SET16(xy + 10, b);
+    int32_t depth = (int32_t)CALL2(f_0880A3C4, 1, 7);
+    set_float_arg(c, (float)depth);
+    c->r[4] = d; c->r[5] = 4; c->r[6] = 0x80000060u; c->r[31] = 0x0881D194;
+    f_089E1618(c);
+    c->r[29] += 0x60;
+}
