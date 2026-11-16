@@ -484,8 +484,10 @@ int host_menu_requested(void) { int r = menu_req; menu_req = 0; return r; }   /*
 /* Pad i is player i+1; player 1 also has the keyboard, so a single gamepad does not make player 2 human.
    With controllers.cfg: the player's controller is plugged in, the player has keys of its own, or an
    unnamed controller was given to it (byod_assign). This is what the MODE MENU's bubbles show. */
+extern int rt_pads_replay;                 /* record.c: the pads plugged in, from a replay (-1: ask SDL) */
 int host_pad_connected(int i) {
     if (i < 0 || i >= 4) return 0;
+    if (rt_pads_replay >= 0) return (rt_pads_replay >> i) & 1;
     if (!byod) return pads_sdl[i] != NULL;
     if (byod_dev[i] || byod_auto[i]) return 1;
     for (int b = 0; b < CB_COUNT; b++) if (byod_key[i][b] != SDL_SCANCODE_UNKNOWN) return 1;

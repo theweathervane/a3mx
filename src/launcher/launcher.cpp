@@ -202,8 +202,12 @@ static std::string file_url(const std::string &dir) {
 
 static const char *const LOG_LEVELS[] = { "OFF", "ERROR", "WARN", "INFO", "DEBUG", "VERBOSE" };
 static const char *const LOG_ARGS[]   = { "off", "error", "warn", "info", "debug", "verbose" };
-static const char *const PRESETS[]    = { "Release", "Debug" };
-static const char *const PRESET_ARGS[] = { "release", "debug" };
+/* Record Output and Play Output build build-watch/ (the watch preset: memory watchpoints) and run it:
+   recording a session, or playing one back, with the addresses to log (record.c, main.c) */
+static const char *const PRESETS[]    = { "Release", "Debug", "Record Output", "Play Output" };
+static const char *const PRESET_ARGS[] = { "release", "debug", "watch", "watch" };
+static const char *const PRESET_DIRS[] = { "build", "build-debug", "build-watch", "build-watch" };
+enum { PRESET_RELEASE, PRESET_DEBUG, PRESET_RECORD, PRESET_PLAY, PRESET_COUNT };
 /* The renderers the game's --renderer takes. Only OpenGL and the software one exist today: the others
  * are listed so the choice and the scripts are in place, and say plainly that OpenGL is used meanwhile. */
 struct RendererChoice { const char *label, *arg; bool written; };
@@ -262,7 +266,7 @@ static void settings_load(Settings &s, const std::string &path) {
         std::string k = line.substr(0, eq), v = line.substr(eq + 1);
         int n = atoi(v.c_str());
         if (k == "iso") s.iso = v;
-        else if (k == "preset") s.preset = n >= 0 && n < 2 ? n : 0;
+        else if (k == "preset") s.preset = n >= 0 && n < PRESET_COUNT ? n : 0;
         else if (k == "tests") s.tests = n != 0;
         else if (k == "run") s.run = n != 0;
         else if (k == "fullscreen") s.fullscreen = n != 0;
@@ -505,6 +509,18 @@ struct App {
 
     std::vector<char> iso_buf = std::vector<char>(4096, 0);
     std::vector<char> extra_buf = std::vector<char>(1024, 0);
+    /* Show advanced settings: off at every start, never saved. Off, the Build / Run tab has only the
+       simplest settings and Run uses plain defaults (Release, run after building, no extra options) */
+    bool advanced = false;
+    /* Record Output / Play Output: the addresses and instructions to log, and the recording to play.
+       Never saved: entered again each time the launcher is opened */
+    std::vector<std::string> rec_addrs, rec_pcs;   /* "08AD9320" or "08AD9320-08AD9380"; "088115E8" */
+    int rec_from = 0;                              /* --watch-from */
+    std::string replay_file, record_dir;           /* record_dir: this Run's recording folder */
+    bool outputs_modal = false;
+    int sel_addr = -1, sel_pc = -1;
+    std::vector<char> addr_from_buf = std::vector<char>(16, 0), addr_to_buf = std::vector<char>(16, 0), pc_buf = std::vector<char>(16, 0);
+    int dialog_for = 0;                            /* the open file dialog: 0 the ISO, 1 a recording */
 
     std::string game_exe() const {
 #ifdef _WIN32
@@ -535,7 +551,7 @@ struct App {
     /* the game the button starts: beside the launcher, or the one build.py builds for the preset */
     std::string run_exe() const {
         if (root.empty()) return game_exe();
-        std::string dir = set.preset == 1 ? "build-debug" : "build";
+        std::string dir = PRESET_DIRS[preset_now()];
 #ifdef _WIN32
         return join(join(root, dir), "a3mx.exe");
 #else
@@ -608,7 +624,26 @@ struct App {
         return false;
     }
 
-    /* the command the button runs */
+    /* ---- what Run does: with advanced settings off, the plain defaults */
+    int preset_now() const { return !root.empty() && advanced ? set.preset : PRESET_RELEASE; }
+    bool run_now() const { return root.empty() || !advanced || set.run; }
+    bool recording_now() const { return preset_now() == PRESET_RECORD; }
+    bool playing_now() const { return preset_now() == PRESET_PLAY; }
+
+    /* ---- Record Output's addresses (main.c: --watch LO-HI, --watch-pc PC, up to 16 of each) */
+    static bool hex_word(const std::string &s, uint32_t &v) {
+        std::string h;
+        for (char ch : s) if (ch != ' ') h += ch;
+        if (h.size() > 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X')) h = h.substr(2);
+        if (h.empty() || h.size() > 8) return false;
+        for (char ch : h) if (!isxdigit((unsigned char)ch)) return false;
+        v = (uint32_t)strtoul(h.c_str(), NULL, 16);
+        return true;
+    }
+    static std::string hex8(uint32_t v) { char b[12]; snprintf(b, sizeof b, "%08X", v); return b; }
+    static const size_t MAX_OUTPUTS = 16;
+
+    /* the command the button runs */    /* the command the button runs */
     void command(std::vector<std::string> &argv, std::string &cmdline, std::string &shown) {
         std::vector<std::string> game;
         game.push_back(set.fullscreen ? "--fullscreen" : "--windowed");
@@ -632,20 +667,33 @@ struct App {
         game.push_back("--log-level"); game.push_back(LOG_ARGS[set.log_level]);
         if (set.renderer != 0) { game.push_back("--renderer"); game.push_back(RENDERERS[set.renderer].arg); }
         if (set.renderer != 1 && set.scale > 0) { game.push_back("--scale"); game.push_back(std::to_string(set.scale)); }
-        for (const std::string &a : split_args(set.extra)) game.push_back(a);
+        if (advanced) for (const std::string &a : split_args(set.extra)) game.push_back(a);
+        if (recording_now() || playing_now()) {
+            /* Record Output: the session into its own folder (start() made it); Play Output: the recording
+               chosen. The addresses' accesses go beside it (memory.log / replay-memory.log) */
+            std::string dir = recording_now() ? record_dir : parent(replay_file);
+            if (recording_now()) { game.push_back("--record"); game.push_back(join(record_dir, "session.a3rec")); }
+            else { game.push_back("--replay"); game.push_back(replay_file); }
+            if (!rec_addrs.empty()) {
+                for (const std::string &a : rec_addrs) { game.push_back("--watch"); game.push_back(a); }
+                for (const std::string &pc : rec_pcs) { game.push_back("--watch-pc"); game.push_back(pc); }
+                if (rec_from > 0) { game.push_back("--watch-from"); game.push_back(std::to_string(rec_from)); }
+                game.push_back("--watch-log"); game.push_back(join(dir, recording_now() ? "memory.log" : "replay-memory.log"));
+            }
+        }
 
         std::vector<std::string> args;
         if (!root.empty()) {
-            args.push_back("--preset"); args.push_back(PRESET_ARGS[set.preset]);
+            args.push_back("--preset"); args.push_back(PRESET_ARGS[preset_now()]);
             if (!set.iso.empty()) { args.push_back("--iso"); args.push_back(set.iso); }
-            if (set.extract) args.push_back("--extract");
-            if (set.art_pack) args.push_back("--art-pack");
+            if (advanced && set.extract) args.push_back("--extract");
+            if (advanced && set.art_pack) args.push_back("--art-pack");
             /* Widescreen off and the patch not extracted yet: don't download it. Once it is in work/ the
                feature alone decides (the game's --features), so ticking it never extracts the disc again */
             if (!set.feature[FEAT_WIDESCREEN] && !is_file(join(work_dir(), "boot.widescreen.json")) && !is_file(join(work_dir(), "boot.elf")))
                 args.push_back("--no-widescreen");
-            if (set.tests) args.push_back("--test");
-            if (set.run) {
+            if (advanced && set.tests) args.push_back("--test");
+            if (run_now()) {
                 args.push_back("--run");
                 args.push_back("--");
                 for (const std::string &a : game) args.push_back(a);
@@ -860,6 +908,20 @@ struct App {
             }
         }
         start_after_tools = false;
+        if (playing_now() && !is_file(replay_file)) {
+            console.note("Play Output: choose a recording first (Choose... beside Recording).", K_ERROR);
+            status = "Choose a recording to play"; status_kind = K_ERROR;
+            return;
+        }
+        if (recording_now()) {               /* this session's folder: logs/recordings/<date and time> */
+            char stamp[32]; time_t now = time(NULL); strftime(stamp, sizeof stamp, "%Y-%m-%d_%H-%M-%S", localtime(&now));
+            record_dir = join(join(user_dir("logs"), "recordings"), stamp);
+            if (!SDL_CreateDirectory(record_dir.c_str())) {
+                console.note("Record Output: can't make " + record_dir + " (" + SDL_GetError() + ")", K_ERROR);
+                return;
+            }
+            console.note("Recording this session to " + record_dir, K_NOTE);
+        }
         std::vector<std::string> argv; std::string cmdline, shown, err;
         command(argv, cmdline, shown);
         console.note("");
@@ -868,7 +930,7 @@ struct App {
         console.note("Features: " + features_arg(), K_NOTE);
         set_child_env();
         running = RUN_GAME;
-        if ((root.empty() || set.run) && set.renderer != 1) {
+        if (run_now() && set.renderer != 1) {
             if (set.gpu != "auto" && !gpu_find(gpus, set.gpu))
                 console.note("GPU: the one chosen before isn't here now; using Automatic.", K_WARN);
             std::string g = gpu_apply(gpus, set.gpu, run_exe(), set.gpu_owned);
@@ -884,7 +946,7 @@ struct App {
         started_at = SDL_GetTicks();
         game_running = root.empty();         /* without a checkout the child is the game itself */
         ctl_test = false; cap_player = -1;
-        status = game_running ? "Game running: close it (" QUIT_KEYS ") to come back here" : !set.run ? "Building..." : "Building, then running...";
+        status = game_running ? "Game running: close it (" QUIT_KEYS ") to come back here" : !run_now() ? "Building..." : "Building, then running...";
         status_kind = K_NOTE;
         set.extract = false;                 /* one go, not a setting */
         set.art_pack = false;
@@ -950,7 +1012,8 @@ struct App {
         if (dialog_done) {
             changed = true;
             dialog_done = false;
-            if (!dialog_result.empty()) {
+            if (!dialog_result.empty() && dialog_for == 1) replay_file = dialog_result;   /* Play Output's recording */
+            else if (!dialog_result.empty()) {
                 set.iso = dialog_result;
                 snprintf(iso_buf.data(), iso_buf.size(), "%s", set.iso.c_str());
                 disc_polled = 0;                 /* check it now */
@@ -976,8 +1039,15 @@ struct App {
         app->dialog_result = (files && files[0]) ? files[0] : "";
         if (!files) app->dialog_error = SDL_GetError();     /* the console is the main thread's: tick() reports it */
     }
+    void browse_recording() {
+        static const SDL_DialogFileFilter filters[] = { { "a3mx recording (*.a3rec)", "a3rec" }, { "All files", "*" } };
+        std::string where = replay_file.empty() ? join(user_dir("logs"), "recordings") : parent(replay_file);
+        dialog_for = 1;
+        SDL_ShowOpenFileDialog(on_dialog, this, window, filters, 2, where.c_str(), false);
+    }
     void browse() {
         static const SDL_DialogFileFilter filters[] = { { "PSP disc image (*.iso)", "iso" }, { "All files", "*" } };
+        dialog_for = 0;
         std::string where = set.iso.empty() ? (root.empty() ? base : join(root, "imports/psp/")) : parent(set.iso);
         SDL_ShowOpenFileDialog(on_dialog, this, window, filters, 2, where.empty() ? NULL : where.c_str(), false);
     }
@@ -2089,37 +2159,158 @@ struct App {
         if (!last.empty()) ImGui::TextDisabled("The last run had:  %s", last.c_str());
     }
 
+    /* ---- Record Output / Play Output (advanced): the session's recording or the one to play, and the
+       addresses to log, which are edited in a window and counted here */
+    void outputs_section(bool busy, float em) {
+        if (!recording_now() && !playing_now()) return;
+        ImGui::SeparatorText(recording_now() ? "Record Output" : "Play Output");
+        ImGui::BeginDisabled(busy);
+        if (playing_now()) {
+            label("Recording", em * 5.5f);
+            ImGui::TextUnformatted(replay_file.empty() ? "(none chosen)" : replay_file.c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Choose...")) browse_recording();
+            ImGui::SetItemTooltip("A session recorded with Record Output (session.a3rec in your logs folder's recordings/).\n"
+                                  "It plays back from its own copy of the settings and save: yours are left alone.");
+        } else {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - em);
+            ImGui::TextDisabled("Run records the session (every button, the starting settings and save) into your logs folder's "
+                                "recordings/, so it can be played back with Play Output.");
+            ImGui::PopTextWrapPos();
+        }
+        label("Addresses", em * 5.5f);
+        ImGui::Text("%d address%s, %d instruction%s", (int)rec_addrs.size(), rec_addrs.size() == 1 ? "" : "es",
+                    (int)rec_pcs.size(), rec_pcs.size() == 1 ? "" : "s");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Edit...")) { outputs_modal = true; ImGui::OpenPopup("Addresses to record"); }
+        ImGui::SetItemTooltip("The game memory to log reads and writes of (memory.log beside the recording).\n"
+                              "Kept only until the launcher closes.");
+        ImGui::EndDisabled();
+        outputs_window(em);
+    }
+
+    /* one list of the window: a drop-down of the entries; choosing one puts it in the boxes to change or
+       delete. `ranges`: an entry can be a range (From and To) */
+    void outputs_list(const char *id, std::vector<std::string> &list, int &sel, std::vector<char> &from, std::vector<char> *to, float em) {
+        ImGui::PushID(id);
+        if (sel >= (int)list.size()) sel = -1;
+        ImGui::SetNextItemWidth(-em);
+        if (ImGui::BeginCombo("##list", sel >= 0 ? list[sel].c_str() : list.empty() ? "(none yet)" : "(choose one to change or delete)")) {
+            for (int i = 0; i < (int)list.size(); i++)
+                if (ImGui::Selectable(list[i].c_str(), sel == i)) {
+                    sel = i;
+                    size_t d = list[i].find('-');
+                    snprintf(from.data(), from.size(), "%s", list[i].substr(0, d).c_str());
+                    if (to) snprintf(to->data(), to->size(), "%s", d == std::string::npos ? "" : list[i].substr(d + 1).c_str());
+                }
+            ImGui::EndCombo();
+        }
+        ImGui::SetNextItemWidth(em * 7);
+        ImGui::InputTextWithHint("##from", to ? "address" : "instruction", from.data(), from.size(), ImGuiInputTextFlags_CharsHexadecimal);
+        if (to) {
+            ImGui::SameLine(); ImGui::TextUnformatted("to"); ImGui::SameLine();
+            ImGui::SetNextItemWidth(em * 7);
+            ImGui::InputTextWithHint("##to", "(optional)", to->data(), to->size(), ImGuiInputTextFlags_CharsHexadecimal);
+            ImGui::SetItemTooltip("Leave empty for the one word at the address; fill in for a range (to the address before it).");
+        }
+        /* the entry the boxes make: "" and why not, if they don't make one */
+        std::string entry, why;
+        uint32_t lo = 0, hi = 0;
+        bool have_to = to && (*to)[0];
+        if (!from[0]) why = " ";
+        else if (!hex_word(from.data(), lo)) why = "Not a hex address.";
+        else if (have_to && !hex_word(to->data(), hi)) why = "The end is not a hex address.";
+        else if (have_to && hi <= lo) why = "The end must be after the start.";
+        else entry = have_to ? hex8(lo) + "-" + hex8(hi) : hex8(lo);
+        bool dup = false;
+        for (int i = 0; i < (int)list.size(); i++) if (list[i] == entry && i != sel) dup = true;
+        ImGui::SameLine();
+        ImGui::BeginDisabled(entry.empty() || dup || list.size() >= MAX_OUTPUTS);
+        if (ImGui::Button("Add")) { list.push_back(entry); sel = (int)list.size() - 1; }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::BeginDisabled(sel < 0 || entry.empty() || dup);
+        if (ImGui::Button("Change")) list[sel] = entry;
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::BeginDisabled(sel < 0);
+        if (ImGui::Button("Delete")) { list.erase(list.begin() + sel); sel = -1; from[0] = 0; if (to) (*to)[0] = 0; }
+        ImGui::EndDisabled();
+        if (!why.empty() && why != " ") ImGui::TextColored(colour(K_WARN), "%s", why.c_str());
+        else if (dup) ImGui::TextColored(colour(K_WARN), "That one is in the list already.");
+        else if (list.size() >= MAX_OUTPUTS) ImGui::TextDisabled("The list is full (%d).", (int)MAX_OUTPUTS);
+        ImGui::PopID();
+    }
+
+    void outputs_window(float em) {
+        ImGui::SetNextWindowSize(ImVec2(em * 30, 0), ImGuiCond_Appearing);
+        if (!ImGui::BeginPopupModal("Addresses to record", &outputs_modal, ImGuiWindowFlags_NoSavedSettings)) return;
+        ImGui::SeparatorText("Addresses");
+        ImGui::TextDisabled("Game memory whose reads and writes are logged: one address, or a range.");
+        outputs_list("addr", rec_addrs, sel_addr, addr_from_buf, &addr_to_buf, em);
+        ImGui::SeparatorText("Only from these instructions");
+        ImGui::TextDisabled("None: whatever code touches the addresses.");
+        ImGui::BeginDisabled(rec_addrs.empty());
+        outputs_list("pc", rec_pcs, sel_pc, pc_buf, NULL, em);
+        label("From frame", em * 5.5f);
+        ImGui::SetNextItemWidth(em * 7);
+        if (ImGui::InputInt("##from_frame", &rec_from, 0) && rec_from < 0) rec_from = 0;
+        ImGui::SetItemTooltip("Start logging at this frame (0: from the start). The log gives each access's frame.");
+        ImGui::EndDisabled();
+        ImGui::Spacing();
+        ImGui::TextDisabled("Kept until the launcher closes, then forgotten.");
+        if (ImGui::Button("Close", ImVec2(em * 6, 0))) { outputs_modal = false; ImGui::CloseCurrentPopup(); }
+        ImGui::EndPopup();
+    }
+
     /* ================================================================ Build / Run */
     void run_tab(bool busy) {
         const float em = ImGui::GetFontSize();
         const bool repo = !root.empty();
+        ImGui::Checkbox("Show advanced settings", &advanced);
+        ImGui::SetItemTooltip("The presets for debugging and recording, the build's own choices and more game options.\n"
+                              "Off (as at every start), Run builds Release and starts the game with the settings shown.");
         if (ImGui::BeginTable("options", 2, ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
             ImGui::SeparatorText("Build");
             ImGui::BeginDisabled(busy || !repo);
             label("Preset", em * 5.5f);
             ImGui::SetNextItemWidth(-em);
-            ImGui::Combo("##preset", &set.preset, PRESETS, 2);
-            ImGui::SetItemTooltip("--preset release: build/   --preset debug: build-debug/ (debug info, unoptimised)");
-            ImGui::Checkbox("Extract the disc again", &set.extract);
-            ImGui::SetItemTooltip("--extract: for this Run or Build only. A different ISO is extracted again by itself.");
-            ImGui::Checkbox("Build the art pack", &set.art_pack);
-            ImGui::SetItemTooltip("--art-pack: for this Build only. Renders every stage at its walls from your disc and puts the\n"
-                                  "pictures with the Stage Extensions' placeholders in art-pack/ (and a zip), for an artist\n"
-                                  "to paint from. A few minutes. The pictures are your disc's art: not for publishing.");
-            ImGui::Checkbox("Run the tests after building", &set.tests);
-            ImGui::SetItemTooltip("--test: ctest (the parity tests take a long time; docs/TESTS.md says what each is for)");
-            bool run = repo ? set.run : true;
-            if (ImGui::Checkbox("Run after building", &run) && repo) set.run = run;
-            ImGui::SetItemTooltip("Checked: Run builds what changed, then starts the game (--run).\nUnchecked: the button only builds.");
+            if (advanced) {
+                if (ImGui::Combo("##preset", &set.preset, PRESETS, PRESET_COUNT)) settings_save(set, settings_path);
+                ImGui::SetItemTooltip("Release: build/   Debug: build-debug/ (debug info, unoptimised)\n"
+                                      "Record Output: build-watch/, records the session and the addresses you choose (slower)\n"
+                                      "Play Output: build-watch/, plays a recorded session back");
+            } else {
+                int release = PRESET_RELEASE;
+                ImGui::BeginDisabled(true);
+                ImGui::Combo("##preset_simple", &release, PRESETS, 1);
+                ImGui::EndDisabled();
+                ImGui::SetItemTooltip("Show advanced settings for the other presets");
+            }
             ImGui::EndDisabled();
+            if (advanced) {
+                ImGui::BeginDisabled(busy || !repo);
+                ImGui::Checkbox("Extract the disc again", &set.extract);
+                ImGui::SetItemTooltip("--extract: for this Run or Build only. A different ISO is extracted again by itself.");
+                ImGui::Checkbox("Build art pack", &set.art_pack);
+                ImGui::SetItemTooltip("--art-pack: for this Build only. Renders every stage at its walls from your disc and puts the\n"
+                                      "pictures with the Stage Extensions' placeholders in art-pack/ (and a zip), for an artist\n"
+                                      "to paint from. A few minutes. The pictures are your disc's art: not for publishing.");
+                ImGui::Checkbox("Run the tests after building", &set.tests);
+                ImGui::SetItemTooltip("--test: ctest (the parity tests take a long time; docs/TESTS.md says what each is for)");
+                bool run = repo ? set.run : true;
+                if (ImGui::Checkbox("Run after building", &run) && repo) set.run = run;
+                ImGui::SetItemTooltip("Checked: Run builds what changed, then starts the game (--run).\nUnchecked: the button only builds.");
+                ImGui::EndDisabled();
+            }
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - em);
             ImGui::TextDisabled("From a terminal, build.cmd / build.sh do the same (docs/BUILDING.md).");
             ImGui::PopTextWrapPos();
 
             ImGui::TableNextColumn();
             ImGui::SeparatorText("Game");
-            ImGui::BeginDisabled(busy || (repo && !set.run));
+            ImGui::BeginDisabled(busy || (repo && !run_now()));
             ImGui::Checkbox("Full screen", &set.fullscreen);
             ImGui::SetItemTooltip("Checked (the default): --fullscreen. Unchecked: --windowed. F11 or Alt+Enter switch while playing.");
             label("Logging", em * 5.5f);
@@ -2146,22 +2337,27 @@ struct App {
             ImGui::SetItemTooltip("The GPU renderer's internal resolution (--scale N). Auto: enough to cover your monitor,\n"
                                   "at most 4x. Fights running slowly? Try 2x or 1x: the GPU's work grows with the square.");
             gpu_row(em);
-            label("Options", em * 5.5f);
-            ImGui::SetNextItemWidth(-em);
-            if (ImGui::InputTextWithHint("##extra", "more game options, e.g. --p2 human", extra_buf.data(), extra_buf.size()))
-                set.extra = extra_buf.data();
+            if (advanced) {
+                label("Options", em * 5.5f);
+                ImGui::SetNextItemWidth(-em);
+                if (ImGui::InputTextWithHint("##extra", "more game options, e.g. --p2 human", extra_buf.data(), extra_buf.size()))
+                    set.extra = extra_buf.data();
+            }
             ImGui::EndDisabled();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + em * 5.5f - ImGui::GetStyle().CellPadding.x);
-            if (link("See option details") || show_at_start == "options") { ImGui::OpenPopup("The game's options"); if (show_at_start == "options") show_at_start.clear(); }
-            options_window();
+            if (advanced) {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + em * 5.5f - ImGui::GetStyle().CellPadding.x);
+                if (link("See option details") || show_at_start == "options") { ImGui::OpenPopup("The game's options"); if (show_at_start == "options") show_at_start.clear(); }
+                options_window();
+            }
             ImGui::EndTable();
         }
+        if (repo && advanced) outputs_section(busy, em);
         ImGui::Spacing();
 
         /* ---- the button */
         DiscResult dr;
         bool disc_ok = !repo || disc_allows_build(dr);
-        const char *what = (repo && !set.run) ? "Build" : "Run";
+        const char *what = (repo && !run_now()) ? "Build" : "Run";
         float bw = em * 7.5f, sw = em * 5.0f;
         ImGui::SetCursorPosX(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - bw - sw - ImGui::GetStyle().ItemSpacing.x);
         ImGui::BeginDisabled(busy || !disc_ok);
@@ -2170,6 +2366,7 @@ struct App {
         ImGui::PopStyleColor(4);
         ImGui::EndDisabled();
         if (!disc_ok) ImGui::SetItemTooltip("Choose the US disc (ULUS-10062) on the Paths tab first");
+        else if (playing_now() && replay_file.empty()) ImGui::SetItemTooltip("Play Output: choose a recording first");
         else ImGui::SetItemTooltip("F5");
         ImGui::SameLine();
         /* Stop is for a build or a download: the game is closed from its own window, even full screen */

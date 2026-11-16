@@ -14,6 +14,9 @@
  *   --watch LO-HI  log loads/stores to that range by game address (build with -DA3MX_WATCH=ON)
  *   --watch-from N start watching at frame N
  *   --watch-pc PC  only report accesses made by the instruction at PC (repeatable, up to 16)
+ *   --watch-log FILE  write the watch's hits there instead of watch.log in the logs folder
+ *   --record FILE  record this session (inputs, starting settings and save, the date) for --replay
+ *   --replay FILE  play a recorded session back, from its own copy of the settings and save
  *   --dump-from N   no screens saved before frame N
  *   --snap F:FILE  save user RAM (0x08800000-0x0A000000) at frame F
  *   --poke F[-G]:ADDR=VAL[/SIZE]  force a byte (or /2, /4) every frame from frame F (to frame G)
@@ -159,28 +162,95 @@ void rt_syscall(Cpu *c, uint32_t code, uint32_t pc) { (void)c; rt_fatal("syscall
 void rt_break(Cpu *c, uint32_t pc) { (void)c; rt_fatal("break at %08X", pc); }
 void rt_unsupported(Cpu *c, uint32_t pc) { (void)c; rt_fatal("unsupported instruction at %08X", pc); }
 
+/* ---------------------------------------------------------------- recording and replay (record.c) */
+static const char *record_path, *replay_path;   /* --record / --replay */
+int record_open(const char *path, const char *version, const char *disc, const char *region, const char *features,
+                int assets, const int human[2], int frame_timing, const char *cfg_path, const char *dat_path);
+int record_active(void);
+void record_frame(uint64_t f, const uint32_t pads[4], unsigned plugged, int menu);
+void record_check(uint64_t f, uint64_t state);
+void record_close(uint64_t frames);
+int replay_load(const char *path, char *err, size_t errn);
+int replay_active(void);
+uint64_t replay_frames(void);
+const char *replay_version(void), *replay_disc(void), *replay_features(void);
+int replay_assets(void), replay_human(int k), replay_frame_timing(void);
+int replay_write_files(const char *dir);
+void replay_frame(uint64_t f, uint32_t pads[4], int *menu);
+void replay_check(uint64_t f, uint64_t state);
+void replay_report(void);
+int json_file_string(const char *path, const char *key, char *out, size_t outn);   /* asset_pac.c */
+int host_pad_connected(int i);
+
 /* ---------------------------------------------------------------- memory watch (A3MX_WATCH builds) */
-uint32_t rt_watch_lo = 1, rt_watch_hi = 0;      /* empty range */
+uint32_t rt_watch_lo = 1, rt_watch_hi = 0;      /* empty range; with several --watch, the span of them all */
+static struct { uint32_t lo, hi; } watch_ranges[16];   /* each --watch: [lo, hi) */
+static int nwatch_ranges;
 static long watch_from;
 static uint32_t watch_pc[16]; static int nwatch_pc;
 typedef struct { uint32_t pc, addr; int write; uint64_t n; uint32_t last; } WatchHit;
 static WatchHit whits[4096];
 static int nwhits;
+static int watch_asked;                         /* a --watch option was given (warned about in other builds) */
+static const char *watch_log_path;              /* --watch-log */
+static FILE *watch_file;                        /* the hits, beside a3mx.log (watch.log) */
 void rt_watch_hit(uint32_t addr, uint32_t pc, uint32_t value, int size, int write) {
     (void)size;
     if ((long)rt_vblank_count() < watch_from) return;
+    if (nwatch_ranges > 1) {                    /* the span holds them all: only the ranges themselves count */
+        uint32_t a = addr & 0x0FFFFFFF; int in = 0;
+        for (int i = 0; i < nwatch_ranges && !in; i++) in = a - watch_ranges[i].lo < watch_ranges[i].hi - watch_ranges[i].lo;
+        if (!in) return;
+    }
     if (nwatch_pc) { int ok = 0; for (int i = 0; i < nwatch_pc; i++) if (watch_pc[i] == pc) ok = 1; if (!ok) return; }
     for (int i = 0; i < nwhits; i++)
         if (whits[i].pc == pc && whits[i].addr == (addr & 0x0FFFFFFF) && whits[i].write == write) { whits[i].n++; whits[i].last = value; return; }
     if (nwhits < 4096) {
         WatchHit *h = &whits[nwhits++]; h->pc = pc; h->addr = addr & 0x0FFFFFFF; h->write = write; h->n = 1; h->last = value;
         rt_log("watch: %s %08X at pc %08X value %X", write ? "write" : "read ", h->addr, pc, value);
+        if (watch_file) {
+            fprintf(watch_file, "frame %llu: %s %08X at pc %08X value %X\n", (unsigned long long)rt_vblank_count(),
+                    write ? "write" : "read ", h->addr, pc, value);
+            fflush(watch_file);
+        }
     }
 }
 static void watch_report(void) {
     for (int i = 0; i < nwhits; i++)
         rt_log("watch summary: %s %08X pc %08X x%llu last %X", whits[i].write ? "W" : "R", whits[i].addr, whits[i].pc,
                (unsigned long long)whits[i].n, whits[i].last);
+    if (watch_file) {
+        fprintf(watch_file, "\n# summary at frame %llu: access, address, pc, times, last value\n", (unsigned long long)rt_vblank_count());
+        for (int i = 0; i < nwhits; i++)
+            fprintf(watch_file, "%s %08X pc %08X x%llu last %X\n", whits[i].write ? "W" : "R", whits[i].addr, whits[i].pc,
+                    (unsigned long long)whits[i].n, whits[i].last);
+        if (nwhits == 0) fprintf(watch_file, "(no accesses)\n");
+        fclose(watch_file); watch_file = NULL;
+    }
+}
+
+/* The watch's own log (A3MX_WATCH builds): watch.log in the logs folder unless --watch-log names one.
+   Other builds have no watchpoints: say so, rather than ignore the options without a word. */
+static void watch_open(const char *logs_dir) {
+#ifdef A3MX_WATCH
+    if (rt_watch_lo > rt_watch_hi) { if (watch_asked) rt_warn("watch: --watch-pc / --watch-from need --watch LO-HI as well"); return; }
+    char path[1200];
+    if (watch_log_path) snprintf(path, sizeof path, "%s", watch_log_path);
+    else snprintf(path, sizeof path, "%s/watch.log", logs_dir);
+    watch_file = fopen(path, "w");
+    if (!watch_file) { rt_warn("watch: can't write %s; the hits go to the log only", path); return; }
+    fprintf(watch_file, "# a3mx %s: watching", A3MX_VERSION);
+    for (int i = 0; i < nwatch_ranges; i++) fprintf(watch_file, " %08X-%08X", watch_ranges[i].lo, watch_ranges[i].hi);
+    fprintf(watch_file, " from frame %ld", watch_from);
+    if (nwatch_pc) { fprintf(watch_file, ", only from pc"); for (int i = 0; i < nwatch_pc; i++) fprintf(watch_file, " %08X", watch_pc[i]); }
+    fprintf(watch_file, "\n# each access's first time: frame, read / write, address, pc, value\n");
+    fflush(watch_file);
+    rt_log("watch: %08X-%08X, hits in %s", rt_watch_lo, rt_watch_hi, path);
+#else
+    (void)logs_dir;
+    if (watch_asked) rt_warn("watch: this build has no watchpoints, so --watch is ignored. Build with -DA3MX_WATCH=ON "
+                             "(cmake --preset watch, or the launcher's Watch build)");
+#endif
 }
 
 /* ---------------------------------------------------------------- snapshots and pokes (reverse-engineering aids) */
@@ -330,6 +400,10 @@ void rt_display_vblank(void) {
     perf_frame(f);
     rt_log_flush();
     snaps_and_pokes((long)f);
+    if ((record_active() || replay_active()) && f && f % 60 == 0) {   /* the recording's checkpoints */
+        uint64_t state = hash_mem(0x08804000u, image_end - 0x08804000u);
+        record_check(f, state); replay_check(f, state);
+    }
     static uint32_t scripted[4];
     while (script_pos < nscript && script[script_pos].frame <= (long)f) { scripted[script[script_pos].player] = script[script_pos].buttons; script_pos++; }
     while (stick_pos < nstick && stick_script[stick_pos].frame <= (long)f) {
@@ -339,10 +413,17 @@ void rt_display_vblank(void) {
     {
         uint32_t pads[4] = { 0 }; uint8_t sticks[4][2];
         host_poll(pads, sticks);
+        int menu_host = host_menu_requested();            /* F2 */
+        if (replay_active()) replay_frame(f, pads, &menu_host);  /* the recording's, in place of this PC's */
+        else if (record_active()) {
+            unsigned plugged = 0;
+            for (int k = 0; k < 4; k++) plugged |= (unsigned)(host_pad_connected(k) != 0) << k;
+            record_frame(f, pads, plugged, menu_host);
+        }
         uint32_t pcfg_pad_to_psp(int player, uint32_t raw);   /* playercfg.c: L2 / R2 by the player's config */
         static int menu_prev;
         int menu_now = (scripted[0] & 0x20000000u) != 0;
-        if (FEATURE(QUITKEY) && (host_menu_requested() || (menu_now && !menu_prev))) quitkey_request();
+        if (FEATURE(QUITKEY) && (menu_host || (menu_now && !menu_prev))) quitkey_request();
         menu_prev = menu_now;
         for (int i = 0; i < 4; i++) {
             uint32_t raw = pads[i] | (scripted[i] & ~0x20000000u);
@@ -441,6 +522,8 @@ void rt_report(void) {
     rt_net_report();
     rt_io_report();
     watch_report();
+    record_close(rt_vblank_count());
+    replay_report();
     rt_ge_census();
     rt_log("report: %llu frames, %llu display lists, %llu GE commands",
            (unsigned long long)rt_vblank_count(), (unsigned long long)rt_ge_lists(), (unsigned long long)rt_ge_cmds());
@@ -580,10 +663,18 @@ int main(int argc, char **argv) {
             for (const char *p = argv[++i]; *p; p++) if (*p >= '1' && *p <= '4') rt_pads_forced |= 1 << (*p - '1');
         }
         else if (!strcmp(argv[i], "--watch") && i + 1 < argc) {      /* LO-HI (hex), A3MX_WATCH builds only */
-            const char *w = argv[++i]; rt_watch_lo = (uint32_t)strtoul(w, NULL, 16) & 0x0FFFFFFF;
-            const char *d = strchr(w, '-'); rt_watch_hi = d ? (uint32_t)strtoul(d + 1, NULL, 16) & 0x0FFFFFFF : rt_watch_lo + 4;
+            const char *w = argv[++i]; watch_asked = 1;                  /* repeatable: up to 16 ranges */
+            uint32_t lo = (uint32_t)strtoul(w, NULL, 16) & 0x0FFFFFFF;
+            const char *d = strchr(w, '-'); uint32_t hi = d ? (uint32_t)strtoul(d + 1, NULL, 16) & 0x0FFFFFFF : lo + 4;
+            if (hi <= lo) hi = lo + 4;
+            if (nwatch_ranges < 16) { watch_ranges[nwatch_ranges].lo = lo; watch_ranges[nwatch_ranges].hi = hi; nwatch_ranges++; }
+            if (lo < rt_watch_lo || rt_watch_lo > rt_watch_hi) rt_watch_lo = lo;
+            if (hi > rt_watch_hi) rt_watch_hi = hi;
         }
-        else if (!strcmp(argv[i], "--watch-from") && i + 1 < argc) watch_from = atol(argv[++i]);
+        else if (!strcmp(argv[i], "--record") && i + 1 < argc) record_path = argv[++i];
+        else if (!strcmp(argv[i], "--replay") && i + 1 < argc) replay_path = argv[++i];
+        else if (!strcmp(argv[i], "--watch-from") && i + 1 < argc) { watch_from = atol(argv[++i]); watch_asked = 1; }
+        else if (!strcmp(argv[i], "--watch-log") && i + 1 < argc) { watch_log_path = argv[++i]; watch_asked = 1; }
         else if (!strcmp(argv[i], "--snap") && i + 1 < argc && nsnaps < 16) {        /* FRAME:FILE */
             char *a = argv[++i], *colon = strchr(a, ':');
             if (colon) { snaps[nsnaps].frame = atol(a); snprintf(snaps[nsnaps].path, sizeof snaps[0].path, "%s", colon + 1); nsnaps++; }
@@ -593,10 +684,32 @@ int main(int argc, char **argv) {
             if (c1 && eq) { char *dash = strchr(a, '-'); pokes[npokes].frame = atol(a); pokes[npokes].until = dash && dash < c1 ? atol(dash + 1) : -1; pokes[npokes].addr = (uint32_t)strtoul(c1 + 1, NULL, 16);
                 pokes[npokes].value = (uint32_t)strtoul(eq + 1, NULL, 16); pokes[npokes].size = sl ? atoi(sl + 1) : 1; npokes++; }
         }
-        else if (!strcmp(argv[i], "--watch-pc") && i + 1 < argc && nwatch_pc < 16) watch_pc[nwatch_pc++] = (uint32_t)strtoul(argv[++i], NULL, 16);
+        else if (!strcmp(argv[i], "--watch-pc") && i + 1 < argc && nwatch_pc < 16) { watch_pc[nwatch_pc++] = (uint32_t)strtoul(argv[++i], NULL, 16); watch_asked = 1; }
         else if (!strcmp(argv[i], "--record-audio") && i + 1 < argc) { extern const char *rt_record_audio_dir; rt_record_audio_dir = argv[++i]; }
     }
     if (rt_trace && rt_log_level < RT_LOG_VERBOSE) rt_log_level = RT_LOG_VERBOSE;   /* --trace is verbose */
+    static char replay_dir[1100];
+    if (record_path && replay_path) rt_fatal("--record and --replay: one or the other");
+    if (replay_path) {
+        /* everything the recorded session started from, in place of this run's own: its settings and save
+           (copied to a folder beside the recording, so the player's are left alone), features, players */
+        char err[700];
+        if (!replay_load(replay_path, err, sizeof err)) rt_fatal("--replay: %s", err);
+        snprintf(replay_dir, sizeof replay_dir, "%s", replay_path);
+        char *dot = strrchr(replay_dir, '.'), *sl = strrchr(replay_dir, '/'), *bs = strrchr(replay_dir, '\\');
+        if (bs > sl) sl = bs;
+        if (dot && dot > (sl ? sl : replay_dir)) *dot = 0;
+        size_t rl = strlen(replay_dir);
+        snprintf(replay_dir + rl, sizeof replay_dir - rl, "-replay");
+        if (!replay_write_files(replay_dir)) rt_fatal("--replay: can't write the recording's settings and save to %s", replay_dir);
+        dir_saves = dir_configs = replay_dir;
+        if (replay_features()[0]) features_arg = replay_features();
+        extern int rt_human[3], rt_frame_timing_cli;
+        rt_human[1] = replay_human(0); rt_human[2] = replay_human(1);
+        rt_frame_timing_cli = replay_frame_timing();
+        if (!replay_assets()) no_assets = 1;
+        if (!rt_max_frames) rt_max_frames = (long)replay_frames();
+    }
     if (rt_log_level == RT_LOG_VERBOSE) rt_trace = 1;
     char path[1200];
     /* The player's folder (userdir.h): saves/, configs/, logs/ and launcher/ in the system's per-user
@@ -628,8 +741,23 @@ int main(int argc, char **argv) {
         else rt_warn("user folder: neither the system's folder nor %s can be written: saves and settings will not be kept", user_root);
         char old_saves[1200];
         snprintf(old_saves, sizeof old_saves, "%s/saves", beside);
-        move_saves_from(old_saves, save_dir, rt_config_dir);     /* 0.44.0 - 0.55.0: saves/ beside the work folder */
-        move_saves_from(work, save_dir, rt_config_dir);          /* before 0.44.0: the work folder */
+        if (!replay_path) {                                      /* (never into a replay's folder) */
+            move_saves_from(old_saves, save_dir, rt_config_dir);     /* 0.44.0 - 0.55.0: saves/ beside the work folder */
+            move_saves_from(work, save_dir, rt_config_dir);          /* before 0.44.0: the work folder */
+        }
+    }
+    watch_open(logs_dir);
+    if (replay_path) {
+        char disc[64] = "", dj[1100];
+        snprintf(dj, sizeof dj, "%s/disc.json", work);
+        json_file_string(dj, "boot_sha1", disc, sizeof disc);
+        if (strcmp(replay_disc(), "-") && disc[0] && strcmp(disc, replay_disc()))
+            rt_fatal("--replay: the recording was made with a different disc (its program %s, this one %s)", replay_disc(), disc);
+        if (strcmp(replay_version(), A3MX_VERSION))
+            rt_warn("replay: recorded with %s, played with %s: where the two versions play differently, the replay parts from the recording",
+                    replay_version(), A3MX_VERSION);
+        rt_log("replay: %s, %llu frames, from the recording's settings and save (copied to %s)", replay_path,
+               (unsigned long long)replay_frames(), replay_dir);
     }
     snprintf(rt_save_root, sizeof rt_save_root, "%s/ms0", save_dir);
     if (!no_assets) {
@@ -665,6 +793,17 @@ int main(int argc, char **argv) {
         const char *bad = NULL;
         if (!features_set(features_arg, &bad)) rt_fatal("--features: %s is not a feature (saves, unlocks, menus, local_multiplayer, hud, quit_key, widescreen, stage_extensions, shaders, boot_to_menu; all, none, default)", bad);
         if (rt_custom_assets) features_add(FEAT_STAGE_EXT);
+    }
+    if (record_path) {   /* before the settings are read: the files as the session starts from them */
+        char disc[64] = "", region[16] = "", dj[1100], cfgp[1200], datp[1200];
+        snprintf(dj, sizeof dj, "%s/disc.json", work);
+        json_file_string(dj, "boot_sha1", disc, sizeof disc);
+        json_file_string(dj, "region", region, sizeof region);
+        snprintf(cfgp, sizeof cfgp, "%s/a3mx.cfg", rt_config_dir[0] ? rt_config_dir : save_dir);
+        snprintf(datp, sizeof datp, "%s/a3mx.dat", save_dir);
+        extern int rt_human[3], rt_frame_timing_cli;
+        int human[2] = { rt_human[1], rt_human[2] };
+        record_open(record_path, A3MX_VERSION, disc, region, features_describe(), !no_assets, human, rt_frame_timing_cli, cfgp, datp);
     }
     rt_work_dir = work;
     if (rt_extensions) { void settings_load(void); rt_log("features: %s", features_describe()); settings_load(); }

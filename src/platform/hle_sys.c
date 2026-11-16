@@ -53,13 +53,17 @@ void hle_sceKernelDcacheInvalidateRange(Cpu *c) { RET(0); }
 void hle_sceKernelDcacheWritebackAll(Cpu *c) { (void)c; }
 void hle_sceKernelDcacheWritebackRange(Cpu *c) { (void)c; }
 void hle_sceKernelLibcClock(Cpu *c) { RET((uint32_t)rt_now_us()); }
+/* The date in seconds. While a session is recorded or played back (record.c), the recorded start plus
+   the virtual time since, so the game is given the same dates both times; else the clock. */
+extern int64_t rt_time_base;
+static uint64_t now_seconds(void) { return rt_time_base ? (uint64_t)rt_time_base + rt_now_us() / 1000000u : (uint64_t)time(NULL); }
 void hle_sceKernelLibcTime(Cpu *c) {
-    uint32_t t = (uint32_t)time(NULL);
+    uint32_t t = (uint32_t)now_seconds();
     if (ARG(0)) WW(ARG(0), t);
     RET(t);
 }
 void hle_sceKernelLibcGettimeofday(Cpu *c) {
-    uint64_t us = (uint64_t)time(NULL) * 1000000u + rt_now_us() % 1000000u;
+    uint64_t us = now_seconds() * 1000000u + rt_now_us() % 1000000u;
     if (ARG(0)) { WW(ARG(0), (uint32_t)(us / 1000000u)); WW(ARG(0) + 4, (uint32_t)(us % 1000000u)); }
     RET(0);
 }

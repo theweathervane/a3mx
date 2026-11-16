@@ -138,6 +138,7 @@ with `--work work` and the Game options: a start for the download-and-run releas
 |---|---|---|
 | `release` | `build/` | the game |
 | `debug` | `build-debug/` | with debug info, unoptimised |
+| `watch` | `build-watch/` | with memory watchpoints (`A3MX_WATCH`) for `--watch` / `--watch-pc`; slower, no tests. The launcher's Record Output and Play Output build it |
 | `headless` | `build-headless/` | no window or sound (`A3MX_SDL=OFF`): tests, and machines without SDL's libraries |
 | `launcher` | `build-launcher/` | only the launcher (`A3MX_LAUNCHER_ONLY`): no disc or Python needed |
 | `ci` | `build-ci/` | no disc (`A3MX_DISC_FREE`): compiles every hand-written file against a stand-in for the generated code and runs the tests that need no game data; what CI runs |
@@ -147,7 +148,7 @@ with `--work work` and the Game options: a start for the download-and-run releas
 | Option | What it does |
 |---|---|
 | `--run` | start the game after building |
-| `--preset release\|debug\|headless` | which build (default `release`) |
+| `--preset release\|debug\|watch\|headless` | which build (default `release`) |
 | `--iso PATH` | your ISO, if it is not in `imports/psp/`; extracted again only if it is not the disc already in `work/` (or the widescreen choice changed) |
 | `--extract` | extract the disc again (after changing the analysis tools) |
 | `--no-widescreen` | extract without the 16:9 patch (no WIDE FORCED) |
@@ -314,7 +315,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `A3MX_ASSETS_DIR` | `assets/us` | the unpacked assets the `asset_pac` and `assets_in_game` tests use |
 | `A3MX_SDL` | ON | window, input and sound through SDL3 (downloaded once). OFF: headless only |
 | `A3MX_EGL` | OFF | headless OpenGL through EGL (Linux tests of the GPU renderer) |
-| `A3MX_WATCH` | OFF | memory watchpoints (`--watch LO-HI`); slower |
+| `A3MX_WATCH` | OFF | memory watchpoints (`--watch LO-HI`); slower. The `watch` preset (`build-watch/`) turns it on |
 | `A3MX_TESTS` | ON | parity tests in `ctest` |
 | `A3MX_EXTENSIONS` | ON | the extensions from the static recomp (`src/extensions/`). OFF: the PSP program alone ([below](#without-the-extensions)) |
 | `A3MX_LAUNCHER` | ON | the launcher (`a3mx-launcher`) beside the game, when `A3MX_SDL` is ON |
@@ -352,6 +353,8 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `--stick "F=LX,LY;..."` | scripted analogue stick by frame |
 | `--io-faults busy=N,error=N,poll=N,read=N` | a misbehaving disc: every Nth async read busy (two in a row) or failing, poll not finished, plain read failing |
 | `--snap FRAME:FILE`, `--poke FRAME[-END]:ADDR=VALUE[/SIZE]` | save memory at a frame / set it every frame from FRAME (to END) |
+| `--record FILE`, `--replay FILE` | record the session (each frame's buttons for every pad, the pads plugged in, F2; copies of `a3mx.cfg` and `a3mx.dat` as they started; the features, `--p2` / `--p3`, frame timing and date; a memory checkpoint every 60 frames), or play one back. A replay uses the recording's copies of the settings and save (written to `<recording>-replay/`, yours are left alone), stops at its last frame, and logs the first checkpoint where it no longer matches. Any build; the launcher's **Record Output** / **Play Output** presets (advanced settings) |
+| `--watch LO-HI`, `--watch-pc PC`, `--watch-from N`, `--watch-log FILE` | log loads and stores to those addresses (hex; repeat `--watch` for up to 16 ranges), only by the instructions given (up to 16), from frame N; each access's first time with its frame, and a summary at the end, go to `watch.log` in the logs folder (or FILE) and to the log. Only in a build with `A3MX_WATCH` (`cmake --preset watch`; the launcher's Record Output and Play Output use it); other builds say they ignore them |
 | `--palette-census FILE` | record each indexed texture drawn and the colours it is drawn with (`tools/pair_palettes.py`) |
 | `--log-level off\|error\|warn\|info\|debug\|verbose` | how much goes to the console and the log (default `info`, as before). Warnings, errors and debug lines start with `WARN: `, `ERROR: `, `DEBUG: `; `verbose` adds every OS call (as `--trace`); `off` writes only a fatal error |
 | `--record-audio DIR`, `--trace`, `--log FILE` | audio channels as WAV; log every OS call; log elsewhere |

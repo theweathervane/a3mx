@@ -30,6 +30,13 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
     },
     {
+      "name": "watch",
+      "displayName": "Watch: the game with memory watchpoints (--watch, --watch-pc); slower",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-watch",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "A3MX_WATCH": "ON", "A3MX_TESTS": "OFF" }
+    },
+    {
       "name": "headless",
       "displayName": "Headless: no window or sound (tests, servers)",
       "inherits": "base",
@@ -54,6 +61,7 @@
   "buildPresets": [
     { "name": "release", "configurePreset": "release" },
     { "name": "debug", "configurePreset": "debug" },
+    { "name": "watch", "configurePreset": "watch" },
     { "name": "headless", "configurePreset": "headless" },
     { "name": "launcher", "configurePreset": "launcher" },
     { "name": "ci", "configurePreset": "ci" }

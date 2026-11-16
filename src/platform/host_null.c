@@ -16,7 +16,8 @@ void host_present(const uint8_t *rgba, int w, int h) { (void)rgba; (void)w; (voi
 void host_poll(uint32_t pads[4], uint8_t sticks[4][2]) { (void)pads; (void)sticks; }
 int  host_quit_requested(void) { return 0; }
 int  host_menu_requested(void) { return 0; }
-int  host_pad_connected(int i) { (void)i; return 0; }
+extern int rt_pads_replay;                 /* record.c: the pads plugged in, from a replay (-1: none) */
+int  host_pad_connected(int i) { return rt_pads_replay >= 0 && i >= 0 && i < 4 ? (rt_pads_replay >> i) & 1 : 0; }
 void host_audio(int ch, const int16_t *s, int f, int st, int l, int r) { (void)ch; (void)s; (void)f; (void)st; (void)l; (void)r; }
 void host_shutdown(void) {}
 #endif

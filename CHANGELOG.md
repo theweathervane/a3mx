@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.96.0
+### For players
+- **A simpler Build / Run tab.** The launcher now opens with only the settings most players need: full screen, logging, renderer, resolution and GPU, and Run builds Release and starts the game. **Show advanced settings** (off every time the launcher opens) brings back the presets, the build's own choices (Extract the disc again, Build art pack, the tests, Run after building) and the extra game options.
+- **Record Output and Play Output** (advanced presets), for chasing problems. Record Output records the whole session (every button on every pad, the starting settings and save) into your logs folder's `recordings/`, and can also log every read and write of the game memory you choose (addresses or ranges, in an **Edit...** window; forgotten when the launcher closes). Play Output plays a recording back on any PC with the same disc, from the recording's own copy of the settings and save, and says whether it matched the recording all the way or from which frame it didn't.
+
+### Technical
+- New `src/platform/record.c`: `--record FILE` / `--replay FILE` (any build). Each frame's `host_poll` pads, the pads plugged in (`host_pad_connected`, which a replay answers) and F2; `a3mx.cfg` / `a3mx.dat` as they started; features, `--p2` / `--p3`, frame timing; the date (`sceKernelLibcTime` / `gettimeofday` give the recorded start plus virtual time while recording or replaying); a memory hash every 60 frames, compared by the replay. A replay writes the recording's files to `<recording>-replay/` and stops at its last frame.
+- `--watch` repeatable (up to 16 ranges), `--watch-log FILE`; the hits go to `watch.log` in the logs folder with their frame. Builds without watchpoints now warn when given `--watch` options.
+- New `watch` preset (`build-watch/`, `A3MX_WATCH`, no tests); `build.py --preset watch`. Record Output and Play Output build it.
+
 ## 0.95.0
 ### For players
 - **WIDE FORCED: fighters are drawn in full at the left wall.** Body parts that went past the old 4:3 edge, such as Blanka's shoulder and back or Zangief's back when walking back into the wall, were cut off and flickered there. They are now drawn into the extra 48 pixels on the left. The walls don't move: only what is drawn changes, so every move and its timing stay as they were.

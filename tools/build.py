@@ -22,7 +22,8 @@ The launcher (a3mx-launcher, src/launcher/) is a window over these same options:
 ./launcher.sh builds it (--launcher: no disc or Python tools needed for that) and opens it.
 
 Options:
-  --preset release|debug|headless   which build (default release: build/)
+  --preset release|debug|watch|headless   which build (default release: build/; watch: build-watch/,
+                      with memory watchpoints for --watch / --watch-pc)
   --iso PATH          your ISO, if it is not in imports/psp/ (extracted again only if it is not the
                       one already in work/)
   --extract           extract the disc again (after changing the analysis tools)
@@ -362,7 +363,7 @@ def launcher(env, cmake):
 
 def main():
     ap = argparse.ArgumentParser(description='Build A3MX from your disc.')
-    ap.add_argument('--preset', default='release', choices=['release', 'debug', 'headless'])
+    ap.add_argument('--preset', default='release', choices=['release', 'debug', 'watch', 'headless'])
     ap.add_argument('--iso'); ap.add_argument('--extract', action='store_true')
     ap.add_argument('--no-widescreen', action='store_true')
     ap.add_argument('--no-extensions', action='store_true')
@@ -407,7 +408,7 @@ def main():
         say('\n==> Your disc: already extracted into work/ (--extract to do it again)')
 
     future_dates()
-    out = {'release': 'build', 'debug': 'build-debug', 'headless': 'build-headless'}[a.preset]
+    out = {'release': 'build', 'debug': 'build-debug', 'watch': 'build-watch', 'headless': 'build-headless'}[a.preset]
     if a.no_extensions:
         out += '-noext'
         step('Configure and build (preset %s, no extensions: %s/)' % (a.preset, out))
