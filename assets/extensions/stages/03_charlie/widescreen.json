@@ -1,6 +1,10 @@
 {
- "layer0_left": 286,
+ "layer0_left": 278,
  "layer0_left_front": 1,
- "layer0_right": 945,
- "layer0_right_front": 1
+ "layer0_right": 937,
+ "layer0_right_front": 1,
+ "layer1_left": 200,
+ "layer1_right": 1016,
+ "layer2_left": 262,
+ "layer2_right": 953
 }

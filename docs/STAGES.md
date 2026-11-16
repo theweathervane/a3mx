@@ -116,6 +116,30 @@ it is cut there (RYU 1's straw on the left, Guile's trees, Blanka's palm, Mika's
 Charlie's plane, Sagat's lily pads, Karin 1's boat...). Widening them is future work, now that their
 code is native: per-object art, or more objects at the edges, in WIDE FORCED only.
 
+### What is drawn in front of the fighters
+
+Measured on every stage in the fight (0.90.0): no tile layer and no floor band is in front of the
+fighters. The layers draw at depths 5, 9 and 13 and the floor at 13, the fighters at 16 (the 2D
+library draws a larger depth in front, and equal depths in the order they were queued). The only stage
+art in front of them is **objects in sprite layer 0 at depth 16** (record layer 0, +24 = 7), queued
+after the fighters:
+
+| Stage | Objects in front (record index: kind, type, camera, x, y) |
+|---|---|
+| 0x00 RYU | #0: kind 0 type 1, camera 2, x 256 y 0 (the straw, bottom left) |
+| 0x05 ADON | #0: kind 11 type 4, camera 2, x 320 y 32; #1: kind 10 type 1, camera 2, x 624 y 24 |
+| 0x06 SODOM, 0x14 SODOM (2) | #0: kind 15 type 2, camera 2, x 1232 y 48 |
+| 0x07 GUY | #0: kind 16 type 0, camera 2, x 288 y 0 |
+| 0x0B SAGAT | #0 - #4: kinds 28 / 29 (types 9, 7, 9, 2, 0), camera 2, along the bottom (x 320 - 704) |
+| 0x0C DAN | #0: kind 30 type 0, camera 2, x 282 y 0 |
+| 0x0E ROLENTO | #0 - #4: kind 35 (types 1, 2, 3, 0, 0), camera 0, y 26 (the pieces along the bottom) |
+| 0x1B CODY | #0 - #2: kind 60 (types 4, 5, 6), camera 2, x 448 / 616 / 880 |
+| 0x20 GUILE | #3: kind 73 type 5, camera 0, x 512 y 0 |
+| 0x23 HAWK | #2: kind 78 type 3, x 736 y 16; #4: kind 78 type 6, x 144 y 16 (camera 2) |
+
+Every other stage object is behind the fighters (sprite layers 1 - 3, or depth 12 and less). Like all
+objects these are cut at the 4:3 edge in WIDE FORCED; the layer strips don't reach them.
+
 ## Widescreen
 
 WIDE FORCED shows 480 pixels instead of 384, 48 more on each side: at the limits the view spans 208 -
@@ -132,7 +156,7 @@ foreground layer covers the edge).
 **Decided: extend the art and keep the limits.** The limits also set where the walls are: fighters
 stay 24 px inside the 4:3 view, between 280 and 1000. Pulling the limits in would make the stage
 narrower and move the corners, which changes how fights play and breaks the WIDE FORCED parity rule.
-Instead, every stage gets a **stage extension**, a 48 × 288 strip per side. The game will draw it
+Instead, every stage gets a **stage extension**, a strip per side for each layer (48 × 288; the placeholders are 64 wide since 0.90.0, reaching 8 columns under the layer's own art and 8 past the screen's edge). The game will draw it
 behind the stage's art, only in WIDE FORCED, so NORMAL and WIDE are untouched. Magenta placeholders
 are committed in `assets/extensions/stages/<number>_<name>/`, ready to be painted. The size, placement, painting
 notes and a per-stage table of what each strip shows are in

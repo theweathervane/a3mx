@@ -17,7 +17,8 @@
  *                     "layer<n>_<side>_front": 1 draws that strip just in front of its layer (one depth
  *                     step nearer) instead of behind it, so it can paint over the layer's own art
  *                     at the edge (Charlie's stage: the bright green filler columns of layer 0).
- * Each strip is 48 x 288, row r at the layer's y r: with the camera at rest (the layer's y scroll 16)
+ * Each strip is 48 - 64 x 288 (the placeholders are 64: 8 columns under the layer's own art and 8 past
+ * the screen's edge, so neither rounding nor a layer's scroll wavering at the wall leaves a gap), row r at the layer's y r: with the camera at rest (the layer's y scroll 16)
  * the screen's top row shows row 16, and rows 0 - 15 when the camera rises. The 2D library's 224 rows
  * are stretched to the screen's 272, so rows 0 - 239 are ever seen. Rounded to 15-bit colour; alpha
  * below 128 is transparent.
@@ -26,7 +27,8 @@
  * Drawn only with --custom-assets (the launcher's Custom Assets, off by default), while WIDE FORCED is
  * on and a fight is running (the fight's per-frame step 0x08823674, src/core/task/fight.c, wraps a
  * timestamp, and the battle task is at its fight screen: GAME + 2 = 2, + 4 = 3), around both tile drawers (0x0881AB28, 0x0881B268,
- * src/core/stage/tiles.c: SFA_FUNC_WRAPPED), as textured quads through the game's 2D library like
+ * src/core/stage/tiles.c: SFA_FUNC_WRAPPED) and the two picture drawers (0x08819498, 0x0881C0C8,
+ * src/core/stage/background.c), as textured quads through the game's 2D library like
  * padicons.c: our 16-bit texture on page STRIP_PAGE only while drawing.
  *
  * The strips change only what is drawn (and the extension's own memory): the game's state is the same
@@ -71,7 +73,8 @@ void f_089E1618(Cpu *c);   /* queues a quad list: a0 its descriptor, a1 vertex c
 #define TEX_STATE       0x08B23334u   /* the selected texture list (8 bytes) and its first entry (12) */
 #define PAL_SELECTED    0x08ACCD80u   /* u8: the palette 0x089E0EA4 last selected */
 
-#define STRIP_W         48
+#define STRIP_W         48            /* the columns WIDE FORCED adds at each side */
+#define STRIP_W_MAX     64            /* a strip can be wider, reaching under its layer's own art (an overlap, so no gap shows) */
 #define STRIP_H         288
 #define FIGHTERS_LEFT_X 208           /* layer 1's strips without widescreen.json */
 #define FIGHTERS_RIGHT_X 1024
@@ -86,7 +89,7 @@ void f_089E1618(Cpu *c);   /* queues a quad list: a0 its descriptor, a1 vertex c
 #define SLOTS           8
 #define STRIP_PAGE      0x3E
 
-typedef struct { int layer, side, x, slot, front; } Strip;   /* front: drawn just in front of its layer, over its art */
+typedef struct { int layer, side, x, w, slot, front; } Strip;   /* front: drawn just in front of its layer, over its art */
 static Strip strips[SLOTS];
 static int nstrips;
 static uint32_t tex, desc, list, prim;
@@ -177,8 +180,8 @@ static void load(int stage) {
             if (layer == FIGHTERS) rt_log("stage strips: %s: %s", path, err);
             continue;
         }
-        if (img.w != STRIP_W || img.h != STRIP_H) {
-            rt_log("stage strips: %s is %d x %d, not %d x %d: not drawn", path, img.w, img.h, STRIP_W, STRIP_H);
+        if (img.w < STRIP_W || img.w > STRIP_W_MAX || img.h != STRIP_H) {
+            rt_log("stage strips: %s is %d x %d, not %d - %d x %d: not drawn", path, img.w, img.h, STRIP_W, STRIP_W_MAX, STRIP_H);
             png_free(&img); continue;
         }
         if (nstrips == SLOTS || !alloc_texture()) {
@@ -186,12 +189,12 @@ static void load(int stage) {
             png_free(&img); continue;
         }
         Strip *s = &strips[nstrips];
-        s->layer = layer; s->side = side; s->x = (int)x; s->slot = nstrips;
+        s->layer = layer; s->side = side; s->x = (int)x; s->w = img.w; s->slot = nstrips;
         double front = 0;
         snprintf(key, sizeof key, "layer%d_%s_front", layer, sides[side]);
         s->front = json_file_number(geo, key, &front) == 0 && front != 0;
-        for (int y = 0; y < STRIP_H; y++) for (int i = 0; i < STRIP_W; i++)
-            WH(tex + (uint32_t)((y * TEX_W + s->slot * 64 + i) * 2), c5551(img.rgba + (y * STRIP_W + i) * 4));
+        for (int y = 0; y < STRIP_H; y++) for (int i = 0; i < img.w; i++)
+            WH(tex + (uint32_t)((y * TEX_W + s->slot * 64 + i) * 2), c5551(img.rgba + (y * img.w + i) * 4));
         png_free(&img);
         nstrips++;
     }
@@ -230,14 +233,14 @@ static void draw(Cpu *c, int layer, int depth) {
         const Strip *s = &strips[i];
         if (s->layer != layer) continue;
         float z = s->front ? over : behind;
-        int x0 = to_screen(s->x, sx, SCALE_X, OFFSET_X), x1 = to_screen(s->x + STRIP_W, sx, SCALE_X, OFFSET_X);
+        int x0 = to_screen(s->x, sx, SCALE_X, OFFSET_X), x1 = to_screen(s->x + s->w, sx, SCALE_X, OFFSET_X);
         /* Clipped to the screen here, texels with it: the library clips a quad's corners without moving
            its texels, which would squeeze a strip that runs off the screen (tiles are too small to). */
         int xa = x0 > CLIP_X0 ? x0 : CLIP_X0, xb = x1 < CLIP_X1 ? x1 : CLIP_X1;
         int ya = y0 > CLIP_Y0 ? y0 : CLIP_Y0, yb = y1 < CLIP_Y1 ? y1 : CLIP_Y1;
         if (xb <= xa || yb <= ya) continue;                    /* off the screen */
         int base = s->slot * 64;
-        int u0 = base + (xa - x0) * STRIP_W / (x1 - x0), u1 = base + (xb - x0) * STRIP_W / (x1 - x0);
+        int u0 = base + (xa - x0) * s->w / (x1 - x0), u1 = base + (xb - x0) * s->w / (x1 - x0);
         int v0 = (ya - y0) * STRIP_H / (y1 - y0), v1 = (yb - y0) * STRIP_H / (y1 - y0);
         uint32_t xy = prim + 0x10, col = xy + 0x10, uv = col + 0x10;
         WH(xy + 0, x0); WH(xy + 2, ya); WH(xy + 4, x1); WH(xy + 6, ya); WH(xy + 8, x1); WH(xy + 0xA, yb); WH(xy + 0xC, x0); WH(xy + 0xE, yb);
@@ -324,4 +327,10 @@ int stagestrips_layer_16(Cpu *c, uint32_t a0, int after) {
         if (RB(LAYERS + (uint32_t)n * LAYER_SIZE + 3) == (uint32_t)kind)
             return before_layer(c, n, (uint32_t)(int16_t)RH(a0 + REC_DEPTH));
     return 0;
+}
+
+/* around the picture layers 0x08819498 / 0x0881C0C8 (src/core/stage/background.c; BISON's mountains and
+   sky): a0 the layer, as for 0x0881AB28 */
+int stagestrips_picture(Cpu *c, uint32_t a0, int after) {
+    return stagestrips_layer_32(c, a0, after);
 }

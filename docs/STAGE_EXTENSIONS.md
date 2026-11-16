@@ -1,7 +1,9 @@
 # Stage extensions
 
 **Status:** drawn in WIDE FORCED since 0.50.0 (`src/extensions/stagestrips.c`), one strip per layer
-and side where that layer leaves a gap: 158 placeholders across the 38 stages, waiting to be painted.
+and side. Since 0.90.0 every layer whose art stops short of a wall has a strip there (227 placeholders across
+the 38 stages, waiting to be painted), each continuing its own layer and reaching 8 columns under that
+layer's art and 8 past the screen's edge, so no gap shows at any camera position; BISON's two picture layers have them too.
 See [How the game draws them](#how-the-game-draws-them).
 
 WIDE FORCED shows 48 more pixels on each side of the screen than the stage's art was made for. At the
@@ -58,7 +60,13 @@ keeps them). The probe only finds black, so these two needed saying:
 **Every image is 48 × 288 pixels**, RGBA: alpha below 128 is transparent (the layers behind show
 through), and colour is rounded to 15 bits.
 
-- **Width 48:** the extra width WIDE FORCED shows on each side (480 instead of 384).
+- **Width 48 - 64:** the extra width WIDE FORCED shows on each side (480 instead of 384) is 48; a strip
+  can be up to 64 wide, the extra columns reaching under its layer's own art (inwards: the left strip's
+  right-hand side, the right strip's left-hand side) or past the screen's edge. The placeholders are
+  64: 8 columns under the art, the 48, and 8 past the edge, so neither rounding at the join nor a
+  farther layer's scroll wavering by a few pixels at the wall leaves a gap. `widescreen.json` gives the
+  strip's leftmost column: a left placeholder starts 56 left of where the layer's view starts at the
+  left limit, a right one 8 left of where it ends at the right limit.
 - **Height 288:** row r is the layer's y r. With the camera at rest (the layer's y scroll 16) the
   screen's top row shows row 16; the camera rises up to 16 px when a fighter is in the air (measured;
   it never goes higher), so rows 0 - 15 only show then. The game's 2D drawing has 224 rows, stretched
@@ -73,11 +81,17 @@ through), and colour is rounded to 15 bits.
 
 ### The placeholders
 
-The committed images are placeholders: transparent except where WIDE FORCED shows black today, and
-there in the colour of the layer whose strip it belongs to, with the stage number, side and layer
-written on it in a darker shade (`0x0C`, `L`, `L2`). Each black pixel at a wall goes to the farthest
-layer with art in that screen row near the edge (the plane the gap continues), or, in a row where no
-layer has art near the edge, to the farthest layer. A strip with nothing to fill has no file.
+The committed images are placeholders, 64 × 288, in the colour of the layer they belong to, with the
+stage number, side and layer written on them in a darker shade (`0x0C`, `L`, `L2`). Since 0.90.0 each is
+filled in whole rows: every row where its layer's art runs into the edge but stops short of the screen's
+end (the layer draws in any of the 8 columns next to the strip but not in all of the outermost 4, at
+either camera height), so each strip carries its own layer on, and a layer whose art already reaches
+the edge gets none there and a
+nearer layer's strip covers a farther one's only where the nearer layer has art; and every row with a
+gap no layer's art explains, given to the farthest layer with art near the edge in that row (or the
+farthest layer); filled rows grow by 2 rows up and down. A strip with nothing to fill has no file. Before 0.90.0 they filled only the pixels
+that were black at the two measured camera positions, exactly, so any other position or a rounding
+step could show a gap.
 
 | Layer | Colour |
 |---|---|
@@ -105,49 +119,49 @@ If a coloured patch shows in a fight, nobody has painted that strip yet.
 How many pixels each layer's strip fills at each wall (both camera heights together), from
 `python tools/measure_stage_layers.py --exe build-headless/a3mx` (about 5 minutes; `--dry-run`
 writes nothing, `--stages 1,6` measures some). The layers are listed farthest first, with their depth.
-Re-measured in 0.88.2 with the depths read in the fight itself; every placeholder was rewritten (none
-had been painted).
+Re-measured in 0.90.0 with the whole-row, overlapping placeholders (none had been painted); every
+layer whose art stops short of a wall has a strip there.
 
 | # | Menu name | Stage | Layers (depth) | Left: pixels by layer | Right: pixels by layer |
 |---|---|---|---|---|---|
-| 1 | RYU 1 | 0x00 | 0 (5), 2 (9), 1 (13) | 0: 4094, 1: 616, 2: 1750 | 0: 7072, 2: 333 |
-| 2 | RYU 2 | 0x17 | 0 (5), 2 (9), 1 (13) | 0: 8745 | 0: 3995, 1: 175, 2: 1713 |
-| 3 | KEN | 0x01 | 0 (5), 1 (9), 2 (13) | 0: 6345, 1: 6956 | 0: 8443, 1: 364 |
-| 4 | AKUMA 1 | 0x02 | 0 (5), 2 (9), 1 (13) | 0: 8758 | 0: 3657, 1: 1575, 2: 451 |
-| 5 | AKUMA 2 | 0x24 | 0 (5), 2 (9), 1 (13) | 0: 8745, 1: 126 | 0: 3995, 1: 175, 2: 1713 |
-| 6 | CHARLIE | 0x03 | 0 (5), 2 (9), 1 (13) | 0: 9362 | 0: 8119 |
-| 7 | CHUNLI | 0x04 | 0 (5), 1 (9), 2 (13) | 0: 3145 | 0: 3452 |
-| 8 | ADON | 0x05 | 2 (5), 1 (9), 0 (13) | 1: 10044, 2: 7217 | 1: 8000, 2: 5956 |
-| 9 | SODOM | 0x06 | 1 (5), 2 (9), 0 (13) | 1: 10513, 2: 1392 | 1: 11114 |
-| 10 | GUY | 0x07 | 2 (5), 0 (9), 1 (13) | 0: 2160, 1: 1504, 2: 5312 | 1: 1296, 2: 7768 |
-| 11 | BIRDIE | 0x08 | 2 (5), 0 (9), 1 (13) | 0: 229, 2: 3615 | 0: 218, 1: 144, 2: 3419 |
-| 12 | ROSE | 0x09 | 2 (5), 1 (9), 0 (13) | 0: 235, 1: 3478, 2: 8648 | 2: 7917 |
-| 13 | SAGAT | 0x0B | 0 (5), 1 (9), 2 (13) | 0: 8254, 1: 167 | 0: 8068, 1: 4419 |
-| 14 | DAN | 0x0C | 2 (5), 0 (9), 1 (13) | 0: 2132, 2: 8323 | 2: 3519 |
-| 15 | SAKURA | 0x0D | 2 (5), 1 (9), 0 (13) | 1: 4292, 2: 5059 | 0: 180, 1: 2952, 2: 5688 |
-| 16 | ROLENTO | 0x0E | 2 (5), 0 (9), 1 (13) | 0: 2052, 1: 3168, 2: 5597 | 0: 2217, 1: 7377, 2: 5530 |
-| 17 | DHALSIM | 0x0F | 0 (5), 2 (9), 1 (13) | 0: 5654 | 0: 8700 |
-| 18 | ZANGIEF | 0x10 | 0 (5), 2 (9), 1 (13) | 0: 2169, 1: 1291, 2: 2415 | 0: 2639, 1: 967, 2: 2259 |
-| 19 | GEN | 0x11 | 2 (5), 0 (9), 1 (13) | 2: 1247 | 0: 66, 1: 6303, 2: 2640 |
-| 20 | BALROG | 0x15 | 2 (5), 1 (9), 0 (13) | 1: 4480, 2: 5624 | 1: 2200, 2: 5659 |
-| 21 | CAMMY | 0x16 | 0 (5), 2 (9), 1 (13) | 0: 10061, 1: 240, 2: 2342 | 0: 9810, 1: 192, 2: 2096 |
-| 22 | HONDA | 0x18 | 2 (5), 1 (9), 0 (13) | 2: 9815 | 1: 336, 2: 8770 |
-| 23 | BLANKA | 0x19 | 0 (5), 2 (9), 1 (13) | 0: 8250, 1: 247, 2: 1120 | 0: 8470 |
-| 24 | MIKA | 0x1A | 2 (5), 0 (9), 1 (13) | 2: 2121 | 0: 496, 2: 3513 |
-| 25 | CODY | 0x1B | 2 (5), 1 (9), 0 (13) | 1: 7462, 2: 7298 | 1: 640, 2: 3853 |
-| 26 | VEGA | 0x1C | 2 (5), 1 (9), 0 (13) | 1: 853, 2: 9170 | 1: 849, 2: 9204 |
-| 27 | KARIN 1 | 0x1D | 2 (5), 1 (9), 0 (13) | 1: 752, 2: 3488 | 0: 5136, 1: 6066, 2: 6421 |
-| 28 | KARIN 2 | 0x29 | 2 (5), 1 (9), 0 (13) | 1: 4292, 2: 6130 | 1: 2952, 2: 5868 |
-| 29 | BISON1 | 0x0A | 2 (13) | nothing | 2: 714 |
-| 30 | BISON2 | 0x1E | 2 (13) | nothing | 2: 714 |
-| 31 | GUILE | 0x20 | 2 (5), 0 (9), 1 (13) | 1: 480, 2: 1281 | 1: 352, 2: 1072 |
-| 32 | FEILONG | 0x21 | 2 (5), 1 (9), 0 (13) | 1: 728, 2: 10944 | 1: 11520 |
-| 33 | DEEJAY | 0x22 | 0 (5), 2 (9), 1 (13) | 0: 9289, 1: 574, 2: 320 | 0: 9236, 1: 5600, 2: 320 |
-| 34 | HAWK | 0x23 | 2 (5), 0 (9), 1 (13) | 0: 520, 1: 238, 2: 5795 | 1: 1256, 2: 4936 |
-| 35 | BATTLE1 | 0x25 | 0 (5), 2 (9), 1 (13) | 0: 1320, 1: 240, 2: 576 | 0: 991, 1: 192, 2: 752 |
-| 36 | BATTLE2 | 0x26 | 0 (5), 2 (9), 1 (13) | 0: 1226, 1: 192, 2: 958 | 0: 927, 1: 160, 2: 848 |
-| 37 | BATTLE3 | 0x27 | 0 (5), 2 (9), 1 (13) | 0: 656, 1: 240, 2: 1478 | 0: 463, 1: 192, 2: 1232 |
-| 38 | BATTLE4 | 0x28 | 0 (5), 2 (9), 1 (13) | 0: 1226, 1: 192, 2: 958 | 0: 927, 1: 160, 2: 848 |
+| 1 | RYU 1 | 0x00 | 0 (5), 2 (9), 1 (13) | 0: 13568, 1: 9536, 2: 12032 | 0: 13568, 1: 7040, 2: 9472 |
+| 2 | RYU 2 | 0x17 | 0 (5), 2 (9), 1 (13) | 0: 13952, 1: 13504, 2: 5696 | 0: 11648, 1: 13440, 2: 10496 |
+| 3 | KEN | 0x01 | 0 (5), 1 (9), 2 (13) | 0: 10688, 1: 13632, 2: 3904 | 0: 14016, 1: 5376, 2: 12736 |
+| 4 | AKUMA 1 | 0x02 | 0 (5), 2 (9), 1 (13) | 0: 14208, 1: 13568, 2: 9408 | 0: 11008, 1: 14016, 2: 7232 |
+| 5 | AKUMA 2 | 0x24 | 0 (5), 2 (9), 1 (13) | 0: 13952, 1: 13568, 2: 5696 | 0: 11648, 1: 13440, 2: 10496 |
+| 6 | CHARLIE | 0x03 | 0 (5), 2 (9), 1 (13) | 0: 14592, 1: 6848, 2: 3904 | 0: 14656, 1: 6464, 2: 5248 |
+| 7 | CHUNLI | 0x04 | 0 (5), 1 (9), 2 (13) | 0: 14080, 1: 6400, 2: 11392 | 0: 14208, 1: 11136, 2: 11904 |
+| 8 | ADON | 0x05 | 2 (5), 1 (9), 0 (13) | 0: 5248, 1: 15360, 2: 10176 | 0: 5312, 1: 14400, 2: 11008 |
+| 9 | SODOM | 0x06 | 1 (5), 2 (9), 0 (13) | 0: 8448, 1: 14592, 2: 14016 | 0: 7936, 1: 15488, 2: 10624 |
+| 10 | GUY | 0x07 | 2 (5), 0 (9), 1 (13) | 0: 8640, 1: 14336, 2: 12096 | 0: 4992, 1: 6976, 2: 15168 |
+| 11 | BIRDIE | 0x08 | 2 (5), 0 (9), 1 (13) | 0: 6848, 1: 7936, 2: 14784 | 0: 6848, 1: 7552, 2: 14784 |
+| 12 | ROSE | 0x09 | 2 (5), 1 (9), 0 (13) | 0: 13184, 1: 12608, 2: 12352 | 0: 5376, 1: 5440, 2: 13760 |
+| 13 | SAGAT | 0x0B | 0 (5), 1 (9), 2 (13) | 0: 14464, 1: 5888, 2: 3904 | 0: 14208, 1: 11008, 2: 5376 |
+| 14 | DAN | 0x0C | 2 (5), 0 (9), 1 (13) | 0: 13376, 1: 6848, 2: 13312 | 0: 5504, 1: 5504, 2: 13824 |
+| 15 | SAKURA | 0x0D | 2 (5), 1 (9), 0 (13) | 0: 5568, 1: 9728, 2: 12736 | 0: 6720, 1: 14144, 2: 11520 |
+| 16 | ROLENTO | 0x0E | 2 (5), 0 (9), 1 (13) | 0: 6400, 1: 14912, 2: 10560 | 0: 6400, 1: 14976, 2: 10432 |
+| 17 | DHALSIM | 0x0F | 0 (5), 2 (9), 1 (13) | 0: 14208, 1: 9280, 2: 10816 | 0: 14208, 1: 5504, 2: 7296 |
+| 18 | ZANGIEF | 0x10 | 0 (5), 2 (9), 1 (13) | 0: 9088, 1: 8256, 2: 10816 | 0: 11392, 1: 12864, 2: 10944 |
+| 19 | GEN | 0x11 | 2 (5), 0 (9), 1 (13) | 0: 9728, 1: 9216, 2: 4480 | 0: 4288, 1: 13760, 2: 7360 |
+| 20 | BALROG | 0x15 | 2 (5), 1 (9), 0 (13) | 0: 9792, 1: 13248, 2: 12608 | 0: 10048, 1: 11136, 2: 13632 |
+| 21 | CAMMY | 0x16 | 0 (5), 2 (9), 1 (13) | 0: 13760, 1: 6848, 2: 11584 | 0: 13568, 1: 12480, 2: 6656 |
+| 22 | HONDA | 0x18 | 2 (5), 1 (9), 0 (13) | 0: 5888, 1: 7488, 2: 14144 | 0: 5376, 1: 14016, 2: 14016 |
+| 23 | BLANKA | 0x19 | 0 (5), 2 (9), 1 (13) | 0: 13504, 1: 9216, 2: 7872 | 0: 13568, 1: 11840, 2: 12928 |
+| 24 | MIKA | 0x1A | 2 (5), 0 (9), 1 (13) | 0: 6016, 1: 14016, 2: 13888 | 0: 13952, 1: 9536, 2: 14144 |
+| 25 | CODY | 0x1B | 2 (5), 1 (9), 0 (13) | 0: 8192, 1: 13568, 2: 11968 | 0: 5440, 1: 9408, 2: 14144 |
+| 26 | VEGA | 0x1C | 2 (5), 1 (9), 0 (13) | 0: 10240, 1: 12352, 2: 13440 | 0: 10368, 1: 13440, 2: 14016 |
+| 27 | KARIN 1 | 0x1D | 2 (5), 1 (9), 0 (13) | 0: 4096, 1: 7296, 2: 14272 | 0: 12416, 1: 10560, 2: 9344 |
+| 28 | KARIN 2 | 0x29 | 2 (5), 1 (9), 0 (13) | 0: 8192, 1: 12032, 2: 13248 | 0: 5376, 1: 14016, 2: 11840 |
+| 29 | BISON1 | 0x0A | 1 (5), 0 (9), 2 (13) | 0: 3392, 1: 3648, 2: 6592 | 0: 8128, 1: 3520, 2: 12416 |
+| 30 | BISON2 | 0x1E | 1 (5), 0 (9), 2 (13) | 0: 5824, 1: 3648, 2: 4864 | 0: 5376, 1: 4096, 2: 12416 |
+| 31 | GUILE | 0x20 | 2 (5), 0 (9), 1 (13) | 0: 2880, 1: 9792, 2: 2112 | 0: 2496, 1: 6464, 2: 2048 |
+| 32 | FEILONG | 0x21 | 2 (5), 1 (9), 0 (13) | 0: 5504, 1: 15424, 2: 14976 | 0: 5376, 1: 14832 |
+| 33 | DEEJAY | 0x22 | 0 (5), 2 (9), 1 (13) | 0: 14784, 1: 9408, 2: 14080 | 0: 14656, 1: 13440, 2: 10368 |
+| 34 | HAWK | 0x23 | 2 (5), 0 (9), 1 (13) | 0: 5248, 1: 10432, 2: 14144 | 0: 5376, 1: 13440, 2: 14208 |
+| 35 | BATTLE1 | 0x25 | 0 (5), 2 (9), 1 (13) | 0: 2048, 1: 7872, 2: 4864 | 0: 2048, 1: 9024, 2: 5760 |
+| 36 | BATTLE2 | 0x26 | 0 (5), 2 (9), 1 (13) | 0: 1920, 1: 9600, 2: 10816 | 0: 1920, 1: 8960, 2: 6528 |
+| 37 | BATTLE3 | 0x27 | 0 (5), 2 (9), 1 (13) | 0: 1216, 1: 6976, 2: 5824 | 0: 960, 1: 9024, 2: 6656 |
+| 38 | BATTLE4 | 0x28 | 0 (5), 2 (9), 1 (13) | 0: 1920, 1: 9600, 2: 10816 | 0: 1920, 1: 8960, 2: 6528 |
 
 Measured at the camera's limits with both fighters pinned at the wall, on the ground and high in the
 air. A gap is a pixel where a magenta probe drawn behind everything shows through (so black that a
@@ -165,14 +179,17 @@ draw no strips):
    unreadable file is skipped (the log says why).
 2. **Draw:** while WIDE FORCED is on and a fight is running (the fight's per-frame step 0x08823674 has
    run in the last two frames), each time one of the stage tile drawers (0x0881AB28 with the layer,
-   0x0881B268 with a record whose kind names the layer) is about to draw a layer, that layer's strips,
+   0x0881B268 with a record whose kind names the layer) or picture drawers (0x08819498 / 0x0881C0C8,
+   BISON's mountains and sky, with the layer; since 0.90.0) is about to draw a layer, that layer's strips,
    once a frame: textured quads placed like the layer's own tiles (its scroll, the screen's scale and
    offset), at one less than the layer's depth (the game's 2D library draws a larger depth in front), or one more for a `_front` strip.
    The quads are clipped to the screen with their texels: the library clips a quad's corners without
    moving its texels, which squeezes anything that runs far off the screen.
 3. **Switch:** checked every frame, so changing SCREEN SIZE takes effect at once.
-4. **Checked:** on 7 stages across the select order (0x00, 0x03, 0x09, 0x15, 0x1C, 0x22, 0x28), both
-   walls, every gap pixel the probe finds (105,920 of them) is filled by a strip. Parity tests run
+4. **Checked:** in 0.90.0 on all 38 stages, both walls, on the ground and high: with the placeholders
+   no black edge pixel is left that the probe calls a gap (up to 13,000 per wall without them);
+   the few black pixels left (DAN's right wall, CODY's left, the portraits' frames, a line on BISON 1)
+   are the stage's or the overlay's own black art. (0.50.0 checked 7 stages.) Parity tests run
    without `assets/` (`--no-assets`), so they draw no strips; the fighters' state is the same either
    way, because the strips change nothing but the picture and the extension's own memory.
 5. **Measuring:** `A3MX_STRIP_MEASURE` (for `tools/measure_stage_layers.py`) turns the strips off and,

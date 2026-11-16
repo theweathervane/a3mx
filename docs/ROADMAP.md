@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  11.31% decompiled
+Overall  [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  11.61% decompiled
 
-Functions                                [█░░░░░░░░░]  11.00%  1,637 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  11.31%  54,775 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  11.06%  1,646 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  11.61%  56,214 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  25.13%  51,257 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  25.84%  52,696 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   0.91%  2,330 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -233,6 +233,11 @@ To do, in rough order:
         records per stage) and the routines of every kind the 34 stages use, with their helpers;
         `tools/stage_objects.py` lists the records; scenarios `stage_objects_01` - `34`, one Free Battle
         per stage (0.89.0)
+  - [x] The background's master 0x08819CFC and the rest of the layer drawers: 16-pixel record builders
+        0x0881A8E0, 0x0881BD28 (RYU's and CHUN-LI's lagging top rows), 0x0881C354 (GUILE's strips),
+        BISON's picture layers 0x08819498 / 0x0881C0C8, and the floor band 0x0881C5A8 with CHARLIE's
+        and BISON's own (`background.c`, `floor.c`; 0.90.0). Every stage's layers, floor and objects
+        are now native but for the unreached 0x0881A2C8 path below
   - [ ] 0x0881B7C8 and its caller 0x0881A2C8 (from 0x089DE2C0 / 0x089DE390): need a scenario that
         reaches them
 - [ ] Battle core: rounds, timer, camera, collision (hit boxes), damage, guard, ISM rules

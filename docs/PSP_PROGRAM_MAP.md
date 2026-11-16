@@ -870,6 +870,21 @@ blend, bits 8-15 the palette (0x089E0EA4), bits 0-7 its 16-texel cell.
 
 Paused (0x08E75969) or either fight flag 0x092E1237 / 0x092E124D stops their animation.
 
+### The stage's background and floor (decompiled: src/core/stage/background.c, floor.c)
+
+| Address | What |
+|---|---|
+| 0x08819CFC | the background, once a frame (skipped while BATTLE + 23): sets the quad list's descriptor and its colour from the brightness 0x08E75C44, then draws by layer 1's +123 bits: layer 1 (2), the stage's own routine 0x088192C0 with layer 1 (8), layer 0 (1), layer 2 (4). The layer's kind (+3) picks the drawer; the first time (+7 = 0) it sets the kind from the stage (layer 0 + 0x70, 1 + 0xA0, 2 + 0xD0) instead. Layer 1: 0xAA / 0xBE 0x0881C0C8, 0xB5 / 0xC0 0x0881A8E0 (maps + 0x2400 / + 0x3400), else 0x0881BD28 (+ 0x2000). Layer 0: 0x7A / 0x8E 0x08819498, 0x90 0x0881C354, +155 set 0x0881A8E0, else 0x0881AB28. Layer 2: 0xE5 / 0xF0 0x0881AB28 (+ 0x4400 / + 0x5400), +155 0x0881A8E0, else 0x0881AB28 (+ 0x4000). Maps at 0x092E8A00 |
+| 0x0881A8E0 | a 16-pixel layer 64 tiles wide: builds 0x0881B268's record (kind 0x85: 16 rows of 0x90 words; else 32 of 0x40); scrolls with the fighters' layer when +2 = 1 |
+| 0x0881BD28 | layer 1's default 16-pixel drawer; kinds 0xA0 (RYU) / 0xA4 (CHUN-LI) draw the rows above a line (0x8F / 0xEF less the scroll and 0x40 / 0x70) lagging by the shake's +28 (× 8, or × the height difference + 2), then the rest with the fighters' layer: 0x0881B268 twice |
+| 0x0881C354 | GUILE's layer 0: strips 16 words wide, 0xD0 a row, picked per 256 pixels of +18 by the table 0x08A08BDD; 0x0881B268's kind 0x90 |
+| 0x08819498 | BISON's layer 0, a picture: one quad, layer rows 0x60 - 0xB0, x 0x200 - 0x300 less the fighters' layer's travel, palette 6, v 0 / 0x50 swapping every 8 frames (+60, +131) |
+| 0x0881C0C8 | BISON's layer 1, the rippling sky: 3 columns of 256 × 160 one-pixel slices nudged by the wave table 0x08A08ADC (s8, 0x7F ends it) from +62; palette 7, then 8 after 256 rows |
+| 0x0881C5A8 | the floor band (22 stages' own routine): 4 quads of 64 texels / 256 pixels from the layer's scroll, leaning with the shake (+28, +130 / +132); texture 0x08B0155C + frame |
+| 0x088196DC / 0x0881C82C | CHARLIE's and the BISON stages' own routines: a band of their own (palette 1; palettes 4 + frame / 2 and the frame), then 0x0881C5A8 |
+
+Draw depths, measured on every stage in the fight: layers 5, 9 and 13 (table 0x08A03B10 row 1), the floor 13; sprites (fighters, stage objects, HUD) take theirs from 0x08AE03B8 by their +24 (2, 4, ... 16, 17), the fighters 16. The 2D library keeps each frame's draws in submission order and sends them by depth 0 - 23 (0x089E4408), so equal depths keep their order: stage objects in sprite layer 0 (+9) at depth 16 are queued after the fighters and are the only stage art in front of them (STAGES.md lists them).
+
 ### The stage's objects (decompiled: src/core/stage/objects.c)
 
 The pieces of a stage that move or animate but are not tile layers (Ryu's straw and rocks, Ken's crowd,

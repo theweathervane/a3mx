@@ -20,7 +20,11 @@ Writes, per stage folder under assets/extensions/stages/<nn>_<name>/:
   widescreen_left.png / widescreen_right.png               the fighters' layer (layer 1)
   widescreen_layer<n>_left.png / widescreen_layer<n>_right.png  other layers
   widescreen.json                                            "layer<n>_left" / "layer<n>_right": layer x
-Each placeholder is 48 x 288, transparent except the pixels that layer has to fill, which are its
+Each placeholder is 64 x 288: the 48 columns WIDE FORCED adds, 8 more reaching under the layer's own art
+(OVERLAP) and 8 past the screen's edge (OUTER), so the strip and the art overlap a little instead of
+leaving a gap, even where a layer's scroll at the wall wavers by a few pixels; filled rows grow by VPAD. It is transparent except
+the rows that layer has to fill: every row where the layer's art runs into the edge (continued(): its strip
+carries the layer on), and every row with a gap nothing else fills (attribute()), which are its
 layer's colour with the stage number, side and layer written on them in a darker shade. A strip that has to fill nothing
 (or one with fewer than MIN_PIXELS) is not written (and an old one of that name is removed). A file that is not a placeholder (any colour
 but transparent, a layer colour or the text colour) is somebody's painting: it is kept, and its place
@@ -42,6 +46,11 @@ import asset_layout
 
 ROOT = ms.ROOT
 STRIP_W, CAM_RISE, SCREEN_W, SCREEN_H = 48, 16, 480, 272
+OVERLAP = 8                          # columns a placeholder reaches under its layer's own art, so no gap shows
+OUTER = 8                            # and past the screen's edge: a farther layer's scroll at the wall wavers by a few pixels
+PH_W = OUTER + STRIP_W + OVERLAP     # a placeholder's width (64, the most the extension takes)
+VPAD = 2                             # rows added above and below every filled run of rows
+CONTINUE = 8                         # inner columns in which a layer's art counts as running into the edge
 STRIP_H = SCREEN_H + CAM_RISE
 VIEW_W = 384                         # the 4:3 view the camera limits apply to
 LIB_H = 224                          # the 2D library's rows, stretched to the screen's 272
@@ -124,6 +133,27 @@ def edge_columns(side):
     return range(0, STRIP_W) if side == 'L' else range(SCREEN_W - STRIP_W, SCREEN_W)
 
 
+def strip_x(side, x):
+    """A screen column's column in a placeholder: on the left 0 - 7 past the screen's edge, 8 - 55 the edge
+    and 56 - 63 under the layer's art; on the right 0 - 7 under the art, 8 - 55 the edge, 56 - 63 past it."""
+    return x + OUTER if side == 'L' else x - (SCREEN_W - STRIP_W - OVERLAP)
+
+
+def inner_columns(side):
+    return range(STRIP_W, STRIP_W + CONTINUE) if side == 'L' else range(SCREEN_W - STRIP_W - CONTINUE, SCREEN_W - STRIP_W)
+
+
+def outer_columns(side):
+    return range(0, 4) if side == 'L' else range(SCREEN_W - 4, SCREEN_W)
+
+
+def strip_row(res, n, y):
+    """The placeholder row of screen row y for layer n: the 2D library's row (the screen's, stretched by
+    272 / 224) + the layer's y scroll; None off the strip."""
+    sy = int((y + 0.5) * LIB_H / SCREEN_H) + res['layers'][n]['y']
+    return sy if 0 <= sy < STRIP_H else None
+
+
 def near_columns(side):
     return range(STRIP_W, STRIP_W + NEAR) if side == 'L' else range(SCREEN_W - STRIP_W - NEAR, SCREEN_W - STRIP_W)
 
@@ -148,13 +178,43 @@ def attribute(res, side):
             shot = res['shots'][n]
             if any(shot.getpixel((x, y)) != none.getpixel((x, y)) for x in near_columns(side)): owner = n; break
         if owner is None: owner = drawn[0]
-        # strip row: the 2D library's row (the screen's, stretched by 272 / 224) + the layer's y scroll
-        sy = int((y + 0.5) * LIB_H / SCREEN_H) + res['layers'][owner]['y']
-        if not 0 <= sy < STRIP_H: continue
-        for x in gaps:
-            sx = x if side == 'L' else x - (SCREEN_W - STRIP_W)
-            owned.setdefault(owner, set()).add((sx, sy))
+        sy = strip_row(res, owner, y)
+        if sy is None: continue
+        owned.setdefault(owner, set()).update((x, sy) for x in range(PH_W))   # the whole row, overlap too
     return owned
+
+
+def continued(res, side):
+    """{layer: set of (strip x, strip y)} for one run: every layer's own art carried on to the edge. A row
+    where the layer draws in any of the CONTINUE columns next to the strip, but not in all of the screen's
+    outermost 4 (its art stops short of the edge), is filled across the whole placeholder, so each layer's strip continues its own shape (a nearer layer's only where it has art,
+    the sky's everywhere) and the strips of all layers together leave nothing uncovered."""
+    none = res['shots'].get('none')
+    if none is None: return {}
+    out = {}
+    for n in res['depth']:
+        shot = res['shots'].get(n)
+        if shot is None: continue
+        for y in range(SCREEN_H):
+            if not any(shot.getpixel((x, y)) != none.getpixel((x, y)) for x in inner_columns(side)): continue
+            # and its art stops short of the screen's edge in this row (where it already reaches it, a strip
+            # would only cover farther layers' art at the edge)
+            if all(shot.getpixel((x, y)) != none.getpixel((x, y)) for x in outer_columns(side)): continue
+            sy = strip_row(res, n, y)
+            if sy is None: continue
+            out.setdefault(n, set()).update((x, sy) for x in range(PH_W))
+    return out
+
+
+def pad_rows(px):
+    """Whole rows grown by VPAD rows up and down (rows the measured camera heights just miss, and the last
+    screen row's rounding); a partly filled row (EXTRAS' 'green') is left as it is."""
+    full = {y for y in {y for _, y in px} if sum(1 for x, yy in px if yy == y) == PH_W}
+    out = set(px)
+    for y in full:
+        for d in range(-VPAD, VPAD + 1):
+            if 0 <= y + d < STRIP_H: out.update((x, y + d) for x in range(PH_W))
+    return out
 
 
 def green(px): return px[1] >= 100 and px[0] <= 60 and px[2] <= 60
@@ -169,9 +229,9 @@ def extra_pixels(res, side, n, cover):
         if cover == 'green': xs = [x for x in edge_columns(side) if shot.getpixel((x, y)) != none.getpixel((x, y)) and green(shot.getpixel((x, y)))]
         elif any(shot.getpixel((x, y)) != none.getpixel((x, y)) for x in near_columns(side)): xs = list(edge_columns(side))
         else: xs = []
-        sy = int((y + 0.5) * LIB_H / SCREEN_H) + res['layers'][n]['y']
-        if not 0 <= sy < STRIP_H: continue
-        for x in xs: out.add((x if side == 'L' else x - (SCREEN_W - STRIP_W), sy))
+        sy = strip_row(res, n, y)
+        if sy is None: continue
+        for x in xs: out.add((strip_x(side, x), sy))
     return out
 
 
@@ -186,8 +246,8 @@ def is_placeholder(path):
 
 def make_placeholder(path, pixels, colour, label):
     from PIL import Image, ImageDraw, ImageFont
-    fill = Image.new('RGBA', (STRIP_W, STRIP_H), colour + (255,))
-    text = Image.new('L', (STRIP_W, STRIP_H), 0)
+    fill = Image.new('RGBA', (PH_W, STRIP_H), colour + (255,))
+    text = Image.new('L', (PH_W, STRIP_H), 0)
     d = ImageDraw.Draw(text)
     try: font = ImageFont.truetype('DejaVuSansMono-Bold.ttf', 14)
     except OSError: font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 14)
@@ -195,9 +255,9 @@ def make_placeholder(path, pixels, colour, label):
     y = (min(rows) + max(rows)) // 2 - 8 * len(label) + 2
     for ch in label:
         l, t, r, bt = d.textbbox((0, 0), ch, font=font)
-        d.text(((STRIP_W - (r - l)) // 2 - l, y - t), ch, font=font, fill=255)
+        d.text(((PH_W - (r - l)) // 2 - l, y - t), ch, font=font, fill=255)
         y += 16
-    out = Image.new('RGBA', (STRIP_W, STRIP_H), (0, 0, 0, 0))
+    out = Image.new('RGBA', (PH_W, STRIP_H), (0, 0, 0, 0))
     for (x, yy) in pixels:
         out.putpixel((x, yy), text_colour(colour) + (255,) if text.getpixel((x, yy)) else colour + (255,))
     out.save(path, optimize=True)
@@ -237,7 +297,9 @@ def main():
             owned = {}
             for r in (g, u):
                 for n, px in attribute(r, side).items(): owned.setdefault(n, set()).update(px)
+                for n, px in continued(r, side).items(): owned.setdefault(n, set()).update(px)
             owned = {n: px for n, px in owned.items() if len(px) >= MIN_PIXELS}
+            owned = {n: pad_rows(px) for n, px in owned.items()}
             word = 'left' if side == 'L' else 'right'
             front = set()
             for x in EXTRAS.get(stage, []):
@@ -258,7 +320,7 @@ def main():
                     geo.pop(key, None)
                     continue
                 scroll = g['layers'][n]['x']
-                geo[key] = scroll - STRIP_W if side == 'L' else scroll + VIEW_W
+                geo[key] = scroll - STRIP_W - OUTER if side == 'L' else scroll + VIEW_W - OVERLAP
                 if not a.dry_run:
                     os.makedirs(folder, exist_ok=True)
                     make_placeholder(path, owned[n], COLOURS[n], ['0x%02X' % stage, side, 'L%d' % n])

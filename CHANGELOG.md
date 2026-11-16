@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.90.0
+### For players
+- **More of the game decompiled: the stage backgrounds.** The routine that draws a stage's scrolling layers each frame, every layer drawer it picks from (including Ryu's and Chun-Li's lagging top rows, Guile's strips and Bison's mountains and rippling sky) and the floor band along the bottom of most stages (with Charlie's and Bison's own) now run as hand-written C. Together with 0.89.0's objects, everything a stage draws in a fight is native. Nothing changes in play.
+- **Stage Extensions (WIDE FORCED): no gaps at the edges.** Every layer of every stage now has a placeholder strip at both walls where its art stops short of the edge (227 placeholders, up from 158), each continuing its own layer in whole rows and reaching 8 columns under that layer's art and 8 past the screen's edge, so there is a small overlap instead of a gap at any camera position. Bison's sky and mountains have strips for the first time (they were drawn by routines the extension couldn't join). Placeholders only: nobody has painted them yet.
+
+### Technical
+- New `src/core/stage/background.c`: the master 0x08819CFC (layer 1, the stage's own routine, layer 0, layer 2 by layer 1's +123 bits, the drawer chosen by the layer's kind), the 16-pixel record builders 0x0881A8E0, 0x0881BD28 (kinds 0xA0 / 0xA4 split into two calls of 0x0881B268) and 0x0881C354, and the picture layers 0x08819498 / 0x0881C0C8. New `src/core/stage/floor.c`: the floor band 0x0881C5A8 and CHARLIE's 0x088196DC and BISON's 0x0881C82C. All 34 `stage_objects_*` scenarios pass.
+- `stagestrips.c` joins the two picture drawers (`SFA_FUNC_WRAPPED`, `stagestrips_picture`) and takes strips 48 - 64 wide.
+- `tools/measure_stage_layers.py`: placeholders are 64 × 288 (`OVERLAP` 8 under the art, `OUTER` 8 past the edge), filled in whole rows grown by 2 (`VPAD`): every row where the layer's art runs into the edge (`continued()`), plus every row of an unexplained gap (`attribute()`, as before). Re-measured all 38 stages.
+- Measured what is drawn in front of the fighters (STAGES.md): no layer or floor band (depths 5, 9, 13; the fighters 16). The 2D library sends each frame's draws by depth 0 - 23 in submission order (0x089E4408), so only stage objects in sprite layer 0 at depth 16, queued after the fighters, are in front: RYU's straw, ADON, SODOM, GUY, SAGAT, DAN, ROLENTO, CODY, GUILE and HAWK have some.
+
 ## 0.89.0
 ### For players
 - **More of the game decompiled: every stage's objects.** The animated and moving pieces of the stages that are not their scrolling layers (Ryu's straw, Ken's and Chun-Li's crowds, Guile's helicopter, Bison's storm and falling leaves, Balrog's casino, Fei Long's crowd, Honda's figure and the rest: 34 stages) now run as hand-written C. Nothing changes in play.
