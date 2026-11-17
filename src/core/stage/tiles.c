@@ -16,6 +16,14 @@
  * reference run (the patched translation) and this code agree with WIDE FORCED on or off. It is the
  * first part of the patch done in native code (docs/WIDESCREEN.md).
  *
+ * One change to the patch (0.97.0): it starts a row further left by moving the map pointer back, so when
+ * the grid's first map column is less than that (0 or 1; 0 - 2 for 16-pixel tiles: layer 0 at the left
+ * wall on many stages) it read the end of the row above. The map wraps across, as the arcade's tile
+ * layers do, so here it wraps round within the same row, and the row's wrap moves to match.
+ * tools/data/widescreen_more.json sends the patch's jumps to added code doing the same, for the reference
+ * run. Not for the maps whose wrap is something else: the animated kinds 0xDA / 0xEE (their wrap distance
+ * isn't set), 0x0881B268's strips (0x90, the next strip) and animated 0x85.
+ *
  * 0x0881B7C8, the third drawer, stays translated: only 0x0881A2C8 calls it, and no scenario reaches it.
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
@@ -146,6 +154,15 @@ static void next_strip(gaddr st, gaddr *strip) {
     *strip += 4;
 }
 
+/* WIDE FORCED: whether a row's extra tiles on the left wrap round within the row (the grid starts at a
+   map column less than the extra tiles, and the map wraps back by its own width) */
+static int wide_wraps_left(gaddr st, const Grid *g) {
+    int32_t col0 = S16(st + GRID_MAP_COL), kind = S16(st + GRID_KIND);
+    if (col0 >= g->wide_tiles) return 0;
+    if (!g->b268) return kind != 0xDA && kind != 0xEE;
+    return kind != 0x85 && S16(st + GRID_COL_BACK) == S16(st + GRID_COLS_TO_WRAP) + col0;
+}
+
 /* The grid, row by row: the map wraps down at GRID_ROW_WRAP rows and across at GRID_COL_WRAP columns. */
 static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
     *W(st + GRID_ROW) = 0;
@@ -160,16 +177,20 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
         int32_t y = S16(st + GRID_Y) + S16(st + GRID_STEP_Y);
         int32_t top = S16(st + GRID_BOTTOM);
         *W(st + GRID_TILE) = *W(st + GRID_LINE);
+        int wrapped = 0;
         if (rt_widescreen) {                                     /* WIDE FORCED: start further left */
             SET16(st + GRID_X, S16(st + GRID_X0) - g->wide_tiles * g->size);
             *W(st + GRID_TILE) -= (uint32_t)(g->wide_tiles * 4);
+            wrapped = wide_wraps_left(st, g);                    /* round within the row: + its width */
+            if (wrapped) *W(st + GRID_TILE) += (uint32_t)((S16(st + GRID_COLS_TO_WRAP) + S16(st + GRID_MAP_COL)) * 4);
         } else {
             SET16(st + GRID_X, S16(st + GRID_X0));
         }
         SET16(st + GRID_Y, y);
         SET16(st + GRID_TOP, top);
         SET16(st + GRID_BOTTOM, S16(st + GRID_Y) + S16(st + GRID_OFS_Y));
-        SET16(st + GRID_COL_WRAP, S16(st + GRID_COLS_TO_WRAP) + (rt_widescreen ? g->wide_tiles : 0));
+        if (wrapped) SET16(st + GRID_COL_WRAP, g->wide_tiles - S16(st + GRID_MAP_COL));   /* where its end is */
+        else SET16(st + GRID_COL_WRAP, S16(st + GRID_COLS_TO_WRAP) + (rt_widescreen ? g->wide_tiles : 0));
 
         *W(st + GRID_COL) = 0;
         gaddr strip = st;

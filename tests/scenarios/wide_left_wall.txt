@@ -1,0 +1,8 @@
+# Free Battle on RYU 1's stage (menu 1) in WIDE FORCED, player 1 walking back to the left wall and
+# holding there: the camera at its left limit, where layer 0 starts at map column 0. The tile drawers'
+# extra columns on the left wrap round within their row there (src/core/stage/tiles.c and the added
+# code in tools/data/widescreen_more.json). The menus are stage_objects_01_ryu_1's.
+frames 5400
+config [screen setting]
+config screen_size=WIDE FORCED
+input 1200=start;1206=;1500=start;1506=;1600=down;1606=;1640=down;1646=;1680=down;1686=;1760=cross;1766=;2100=cross;2106=;2300=cross;2306=;2420=cross;2426=;2540=cross;2546=;2660=cross;2666=;2780=cross;2786=;2900=cross;2906=;3020=cross;3026=;3200=down;3204=;3284=cross;3290=;4300=left;5390=

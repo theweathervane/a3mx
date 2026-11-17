@@ -24,6 +24,17 @@ parts of the game it touches are decompiled.
   patch does in their sibling 0x08811BCC, so fighters are drawn into the left margin. The drawers are
   decompiled with the same limit (`src/core/object/sprite_grid.c`); the `wide_walls` scenario checks
   them with a fighter at the left wall.
+  The next five widen the two "drawn when on the screen" tests objects use (0x08821424, 0x088214E8)
+  by 48 pixels each side, so an object whose art reaches into the margins is drawn there instead of
+  popping in near the 4:3 picture (the foreground posts on Guy's and Dan's stages); `frame.c` does the
+  same. `wide_fight` (on Dan's stage) checks it.
+  The last four send the patch's jumps in the tile drawers 0x0881AB28 / 0x0881B268 to added code of the
+  project's own (`caves`, at 0x08800100: translated only, never loaded into game memory). The patch
+  starts each row 2 (3) tiles further left by moving the map pointer back, which read the end of the
+  row above when the grid's first map column was smaller than that (layer 0 at the left wall on Ryu,
+  Akuma, Sagat, Dhalsim, Balrog and Cammy's stages, layer 2 on Karin's and Hawk's, and the attract
+  sequence's panels). It now wraps round within the row, as the arcade's tile layers do; `tiles.c` does
+  the same, and `wide_left_wall` checks it.
 - What it changes: [PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md) "Widescreen patch" (viewport 384 -> 480,
   camera centre -192 -> -240, the pillarbox at 0x0880F390, the background tile drawers 0x0881AB28 /
   0x0881B268 / 0x0881B7C8, code caves in `.data`).
@@ -41,7 +52,9 @@ parts of the game it touches are decompiled.
 ## Known issues
 
 - **Pop-in and flicker at the edges:** The CPS2 original had a tile limitation, so assets and animated
-  characters at the edges flicker and pop in as they load.
+  characters at the edges flicker and pop in as they load. Objects (stage props, effects) no longer pop
+  in at the edges since 0.97.0: the tests that drew them only near the 4:3 picture take in the margins.
+  What is left is the tile layers' columns past their tile map (see "Off-screen tiles" below).
 - **Off-screen loading is visible in the pre-battle sequences:**
 - **MODE MENU background tiles** (the Street Fighter Alpha logo) are missing on the left side; they
   extend to the right correctly.
@@ -80,12 +93,13 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
   fix for the parallax drift that STAGE_EXTENSIONS.md leaves for later. A good example is the background on
   Ryus's stage which causes the border not to meet the new assets. Note: Per-stage numbers are measured
   by a tool, as `tools/measure_stage_extensions.py` already does here.
-- **Off-screen tiles.** The game keeps only the tiles it shows up to date, so the extra columns show
-  stale tiles (our pop-in). They rebuild edge tiles from the stage's layout data, as the game's own
-  strip routines do (`SideTile`). For us: the drawers 0x0881AB28 / 0x0881B268 read a tile map that
-  wraps (kind 5: 16 columns of 32 px, 0x68 rows). The patch draws 17 columns from 2 tiles left of
-  the 4:3 picture, which is more than the map's 16 columns, so one column comes round twice. Check
-  which columns the game refreshes before choosing between drawing fewer columns and rebuilding them.
+- **Off-screen tiles: not an issue here.** CPS-2 Recomp rebuilds edge tiles because the arcade streams
+  its tile maps. On the PSP each stage layer's whole map is in memory (0x092E8A00, 0x2000 bytes a layer:
+  32 columns, or 16 for kind 5, which repeats across anyway); only the map animators rewrite it. What
+  was wrong at the edge was the patch's start further left not wrapping (fixed in 0.97.0, above).
+- **The MODE MENU's left side** is not a tile layer: its background is the menu's own objects (panels
+  and bands that drift and wrap round within the 4:3 width, `object/drift.c`), so nothing is placed in
+  the left margin. Widening their layout in WIDE FORCED, or pillarboxing the menu, is still to do.
 - **Only widen in fights**, and in modes allowed one by one. That would fix the MODE MENU logo and the
   pre-battle loading in one go: pillarbox those screens instead of widening them.
 - **Blanka's shoulder (fixed).** Body parts at the invisible wall were cut at the old 4:3 edge: the

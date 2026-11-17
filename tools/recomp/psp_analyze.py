@@ -18,18 +18,38 @@ def sx16(v): return (v & 0xFFFF) - ((v & 0x8000) << 1)
 MORE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'widescreen_more.json')
 
 def widescreen_more(prog):
-    """The project's own words for WIDE FORCED (tools/data/widescreen_more.json), added to the patch's
-    overlay: {address: word}. Each must find the word it replaces, or the translation stops."""
-    out = {}
-    if not os.path.exists(MORE): return out
-    for e in json.load(open(MORE))['text']:
-        a, orig, new = int(e['addr'], 16), int(e['orig'], 16), int(e['new'], 16)
-        have = struct.unpack_from('<I', prog.img, a - BASE)[0]
-        if have != orig:
-            raise SystemExit('widescreen_more.json: %08X holds %08X, not %08X' % (a, have, orig))
-        if a in prog.ws_text: raise SystemExit('widescreen_more.json: the patch already changes %08X' % a)
-        out[a] = new
-    return out
+    """The project's own words for WIDE FORCED (tools/data/widescreen_more.json), on top of the patch's
+    overlay: ({address: word} for .text, {address: word} of added code). A .text entry gives the word it
+    replaces: "orig", the program's, or "patch", the patch's own (to send one of its jumps elsewhere).
+    Added code ("caves") goes where the program image has nothing (outside it, or zero) and the patch
+    has no code: it is only translated, never loaded into game memory. Any mismatch stops the
+    translation."""
+    text, caves = {}, {}
+    if not os.path.exists(MORE): return text, caves
+    j = json.load(open(MORE))
+    for e in j['text']:
+        a, new = int(e['addr'], 16), int(e['new'], 16)
+        if 'patch' in e:
+            want = int(e['patch'], 16)
+            if prog.ws_text.get(a) != want:
+                raise SystemExit('widescreen_more.json: the patch has %s at %08X, not %08X'
+                                 % ('%08X' % prog.ws_text[a] if a in prog.ws_text else 'nothing', a, want))
+        else:
+            orig = int(e['orig'], 16)
+            have = struct.unpack_from('<I', prog.img, a - BASE)[0]
+            if have != orig:
+                raise SystemExit('widescreen_more.json: %08X holds %08X, not %08X' % (a, have, orig))
+            if a in prog.ws_text: raise SystemExit('widescreen_more.json: the patch already changes %08X' % a)
+        text[a] = new
+    for e in j.get('caves', []):
+        a = int(e['addr'], 16)
+        for i, w in enumerate(e['words']):
+            b = a + 4 * i
+            inside = 0 <= b - BASE < len(prog.img)
+            if (inside and struct.unpack_from('<I', prog.img, b - BASE)[0]) or b in prog.caves or b in caves or prog.lo <= b < prog.hi:
+                raise SystemExit('widescreen_more.json: %08X is not free for added code' % b)
+            caves[b] = int(w, 16)
+    return text, caves
 
 class Prog:
     """The relocated program. `extra_code` lists [lo, hi) address ranges outside .text that hold
@@ -51,7 +71,9 @@ class Prog:
             j = json.load(open(side))
             self.ws_text = {int(k, 16): v for k, v in j['text'].items()}
             self.caves = {int(k, 16): v for k, v in j['caves'].items()}
-            self.ws_text.update(widescreen_more(self))
+            more_text, more_caves = widescreen_more(self)
+            self.ws_text.update(more_text)
+            self.caves.update(more_caves)
             for a in sorted(self.caves):
                 if self.extra and a - self.extra[-1][1] <= 16: self.extra[-1] = (self.extra[-1][0], a + 4)
                 else: self.extra.append((a, a + 4))

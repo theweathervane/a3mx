@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.97.0
+### For players
+- **WIDE FORCED: objects at the screen's edges no longer pop in.** Stage props and other objects were only drawn once they were near the old 4:3 picture, so they appeared suddenly in the extra 48 pixels at each side (the people in the background on Guy's stage). They are now drawn as soon as they reach the wider view.
+- **WIDE FORCED: no more misplaced art at the left edge of the tile backgrounds.** The leftmost columns could show a strip of the background one row out of place (the panel behind Sakura in the attract sequence, and the far background at the left wall on Ryu's, Akuma's, Sagat's, Dhalsim's, Balrog's, Cammy's, Karin's and Hawk's stages). They now continue the right row.
+
+### Technical
+- `object/frame.c`: 0x08821424 and 0x088214E8 (an object drawn when on the screen, and with its own margin) take in 48 more pixels each side with `rt_widescreen`; five words in `widescreen_more.json` do the same for the reference run.
+- `stage/tiles.c`: the patch starts each row 2 (3) tiles further left by moving the map pointer back, reading the row above when the first map column was smaller; it now wraps round within the row. The patch's jumps in 0x0881AB28 / 0x0881B268 go to added code of the project's own (`caves` in `widescreen_more.json`, at 0x08800100: translated only, never in game memory); `psp_analyze.py` takes added code and patch-word overrides, each checked.
+- New scenario `wide_left_wall` (Ryu's stage, camera at its left limit). Checked with wide_fight, wide_walls, wide_left_wall and arcade_fight.
+- Found, not fixed yet: Dan's crate post is a "swap at the line" object (kind 31) that changes props just off the 4:3 screen, so the change shows in 16:9 (eleven kinds do this); the MODE MENU's left side is the menu's own objects, not tiles (WIDESCREEN.md).
+
 ## 0.96.1
 ### For players
 - **The art pack is marked experimental** (Build art pack (experimental), under advanced settings). It gives screenshots of each stage at its walls, whole and one layer at a time, not each stage layer whole as its own picture yet. That is on the roadmap.

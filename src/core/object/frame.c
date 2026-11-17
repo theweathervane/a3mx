@@ -202,30 +202,37 @@ static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
 void f_08821330(Cpu *c);   /* the camera an object is seen by */
 void f_088215C4(Cpu *c);   /* object_draw */
 #define LAST_CAMERA 0x08B01F28u   /* u32: the camera 0x08821424 asked for last */
+extern int rt_widescreen;           /* WIDE FORCED (extensions/widescreen.c; extensions_off.c: 0) */
+/* WIDE FORCED shows 48 pixels more on each side, so the two tests below take in 48 more on each side
+   there: else an object whose art reaches into those pixels is not drawn until it is near the 4:3
+   picture, and pops in (the foreground posts on Guy's and Dan's stages). tools/data/widescreen_more.json
+   does the same in the translation, so the reference run agrees. Only what is drawn changes. */
+#define WIDE_MORE 48
 
 /* An object in use drawn while its x on the screen (64 to the left of it counted) is within 0 - 511:
    fixed to the screen with +14 = 0, else by its camera's x, and for +14 = 2 moved by the camera's
-   +28 × its depth (+38). Out of it, +1 = 0. */
+   +28 × its depth (+38). Out of it, +1 = 0. WIDE FORCED: 112 to the left counted, within 0 - 607. */
 SFA_FUNC(08821424, object_draw_if_on_screen) {
     gaddr o = ARG(0), saved = c->r[16];
     if (*B(o) == 0) return;
     c->r[29] -= 0x20;
     c->r[16] = o;
     int16_t x;
-    if (*B(o + 14) == 0) x = (int16_t)(S16(o + 18) + 0x40);
+    const int32_t left = rt_widescreen ? 0x40 + WIDE_MORE : 0x40, width = rt_widescreen ? 512 + 2 * WIDE_MORE : 512;
+    if (*B(o + 14) == 0) x = (int16_t)(S16(o + 18) + left);
     else {
         c->r[4] = o;
         f_08821330(c);
         gaddr camera = c->r[2];
         *W(LAST_CAMERA) = camera;
-        x = (int16_t)(S16(o + 18) - S16(camera + 18) + 0x40);
+        x = (int16_t)(S16(o + 18) - S16(camera + 18) + left);
         if (*B(o + 14) == 2) {
             int64_t m = (int64_t)(int32_t)*W(0x092E5F78u + 28) * S16(o + 38);
             c->lo = (uint32_t)m; c->hi = (uint32_t)(m >> 32);
             x = (int16_t)(x + ((int32_t)c->lo >> 16));
         }
     }
-    if (x < 512 && x >= 0) { c->r[4] = o; f_088215C4(c); }
+    if (x < width && x >= 0) { c->r[4] = o; f_088215C4(c); }
     else *B(o + 1) = 0;
     c->r[29] += 0x20;
     c->r[16] = saved;
@@ -234,10 +241,10 @@ SFA_FUNC(08821424, object_draw_if_on_screen) {
 /* ---- 0.76.0 ---- */
 
 /* (object, margin): 0x08821424 with a margin of its own: drawn while x on the screen plus the margin is
-   within 0 - (2 × margin + 0x17F). */
+   within 0 - (2 × margin + 0x17F). WIDE FORCED: the margin 48 more, which takes in 48 more each side. */
 SFA_FUNC(088214E8, object_draw_if_on_screen_margin) {
     gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
-    int16_t margin = (int16_t)ARG(1);
+    int16_t margin = (int16_t)(ARG(1) + (rt_widescreen ? WIDE_MORE : 0));
     if (*B(o) == 0) return;
     c->r[29] -= 0x20;
     c->r[16] = o; c->r[17] = (uint32_t)(int32_t)margin;
