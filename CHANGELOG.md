@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.0
+### For players
+- Nothing changes in play. All of the 16:9 patch's work is now the project's own code, a step towards dropping the patch download.
+
+### Technical
+- Native now, each choosing its width with `rt_widescreen` as the patch does: the third tile drawer 0x0881B7C8 (`stage/tiles.c`, used only by the endings); the screen's setup, extra text layer and pillarbox (0x0880B928, 0x0880F160, 0x0880F390, new `object/screen.c`); the 32-pixel paletted sprite cells 0x08811BCC (`sprite_grid.c`, the last of the four cell drawers); the network menus' eleven rows (new `network/menu.c`); the network screens' panels and message boxes, and two states of Cammy's CPU routine that pass the screen's width on (new `network/screens.c`).
+- New scenarios `network_match` (NETWORK > VS MODE against the virtual peer, through the menus and a whole match) and `arcade_ending_full` (Ryu's ending, not skipped). Checked with them, arcade_fight, wide_fight, wide_walls, wide_left_wall, attract_mode (WIDE FORCED off and on), mode_tour, free_battle and free_battle_team.
+- Not reached by a scenario yet, though native: 0x088D6D3C, three network menu rows and the two Cammy states.
+
 ## 0.98.0
 ### For players
 - **WIDE FORCED: stage props that used to appear from nowhere are now always there.** To save sprites, the arcade moves some props between two places (Dan's crow between a perch and the sign, and props on Ken, Akuma, Adon, Sagat, Sakura, Zangief, E. Ryu, Mika, S. Akuma and Karin 2's stages), timing the move just off the 4:3 screen. On the wider screen you could see it happen. Each now has a twin, so both places show their prop while in view.

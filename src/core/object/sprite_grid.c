@@ -7,13 +7,12 @@
  *   0x088112A8  32-pixel cells from the picture cache: 4 cells to a page
  *   0x088117D0  16-pixel cells with their own palette and texel cell (the fighters use it, with the
  *               other two, for their parts)
- *
- * The fourth, 0x08811BCC (32-pixel cells with their own palette), stays translated.
+ *   0x08811BCC  32-pixel cells with their own palette and texel cell
  *
  * WIDE FORCED: a cell is skipped when it starts left of minus its width, which in the 16:9 picture is
  * still inside the 48 pixels added on the left. That cut a fighter's back at the old 4:3 edge
  * (Blanka's shoulder against the wall). The 16:9 patch (Rickow, sfa3-PSP-widescreen, MIT) moves that
- * limit to -96 in 0x08811BCC only; tools/data/widescreen_more.json does the same in these three, so
+ * limit to -96 in 0x08811BCC only; tools/data/widescreen_more.json does the same in the other three, so
  * the reference run (the translation) and this code agree with WIDE FORCED on or off. The walls and
  * everything else stay as they are: only what is drawn changes (docs/WIDESCREEN.md).
  *
@@ -59,6 +58,7 @@ enum {
     DS_FLIP_X = 56, DS_FLIP_Y = 60,
     DS_PAGE_CELL = 64,            /* the cell's place in the cached page */
     DS_ROWS_LEFT = 68, DS_COLS_LEFT = 72,
+    DS_CELL_WORD = 76,            /* 0x08811BCC: the cell's first two bytes, big-endian */
     DS_EFFECT = 86, DS_SCALED = 87,
 };
 /* The picture (a1): +0 where its cells start (from a2), +4 columns, +5 rows, +6 / +8 its origin */
@@ -269,8 +269,55 @@ static void draw_paletted(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame) 
     } while (--*W(ds + DS_ROWS_LEFT) != 0);
 }
 
+/* ---- 0x08811BCC: 32-pixel cells with their own palette and texel cell ---- */
+
+/* The cell's first two bytes as one big-endian word (+76): the palette above bit 6, and the texel
+   cell in the low 6 bits (8 cells of 32 to a row of the texture). Unlike 0x088117D0 the palette and
+   texel cell are set only for a cell that is drawn. */
+static void draw_paletted32(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame) {
+    gaddr cell = base + *W(pic + PIC_CELLS);
+    place_columns(ds, pic, 32, DS_W32, S16(ds + DS_X));
+    place_rows(ds, pic, 32, S16(ds + DS_H32), S16(ds + DS_Y));
+
+    gaddr v = frame + VERTICES;
+    prepare_vertices(c, ds, v, 0);
+    *W(ds + DS_ROWS_LEFT) = *B(pic + PIC_ROWS);
+    do {
+        SET16(ds + DS_CELL_X, S16(ds + DS_ROW_X));
+        *W(ds + DS_COLS_LEFT) = *B(pic + PIC_COLS);
+        do {
+            uint8_t first = *B(cell);
+            if (first == CELL_EMPTY) {
+                cell++;
+            } else {
+                uint32_t word = (uint32_t)first << 8 | *B(cell + 1);
+                *W(ds + DS_CELL_WORD) = word;
+                SET16(ds + DS_CELL_X_TEST, S16(ds + DS_CELL_X));
+                int16_t cx = S16(ds + DS_CELL_X_TEST);
+                gaddr last = cell + 2;
+                cell += 3;
+                if (cx < S16(ds + DS_RIGHT) && left_limit(S16(ds + DS_W32)) < cx) {
+                    CALL1(f_089E0EA4, (uint32_t)((int32_t)*W(ds + DS_CELL_WORD) >> 6));   /* the palette */
+                    word = *W(ds + DS_CELL_WORD);
+                    SET16(ds + DS_U, (word & 7) << 5);
+                    SET16(ds + DS_V, (word << 2) & 0xE0);
+                    uint8_t flags_byte = *B(last);
+                    cell_quad(ds, v, cx, S16(ds + DS_ROW_Y), S16(ds + DS_W32), S16(ds + DS_H32), flags_byte,
+                              S16(ds + DS_U), S16(ds + DS_V), 32);
+                    uint32_t blend = (flags_byte & CELL_BLEND) != 0 || *W(ds + DS_ALPHA) != ALPHA_OPAQUE;
+                    f_089E1438(c);
+                    uint32_t flags = c->r[2];
+                    CALL5(f_089E1950, v, 4, flags, blend, *B(ds + DS_EFFECT));
+                }
+            }
+            SET16(ds + DS_CELL_X, S16(ds + DS_CELL_X) + S16(ds + DS_STEP_X));
+        } while (--*W(ds + DS_COLS_LEFT) != 0);
+        SET16(ds + DS_ROW_Y, S16(ds + DS_ROW_Y) + S16(ds + DS_STEP_Y));
+    } while (--*W(ds + DS_ROWS_LEFT) != 0);
+}
+
 /* a0 the draw state, a1 the picture, a2 where its cells are counted from, a3 the first cached page
-   (0x088117D0: unused) */
+   (0x088117D0, 0x08811BCC: unused) */
 SFA_FUNC(08810D84, game_draw_cells_cached16) {
     c->r[29] -= FRAME_SIZE; draw_cached(c, &SMALL, ARG(0), ARG(1), ARG(2), ARG(3), c->r[29]); c->r[29] += FRAME_SIZE;
 }
@@ -279,4 +326,7 @@ SFA_FUNC(088112A8, game_draw_cells_cached32) {
 }
 SFA_FUNC(088117D0, game_draw_cells_paletted16) {
     c->r[29] -= FRAME_SIZE; draw_paletted(c, ARG(0), ARG(1), ARG(2), c->r[29]); c->r[29] += FRAME_SIZE;
+}
+SFA_FUNC(08811BCC, game_draw_cells_paletted32) {
+    c->r[29] -= FRAME_SIZE; draw_paletted32(c, ARG(0), ARG(1), ARG(2), c->r[29]); c->r[29] += FRAME_SIZE;
 }

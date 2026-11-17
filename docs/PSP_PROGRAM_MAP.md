@@ -186,6 +186,7 @@ fighter 1 = partner, fighter 2 = the boss.** P2's Start opens the game's own "2P
 | 0x0888CC78 | auto-save error question, Yes / No (0x09523C60 + 9 = cursor), called by 0x0888D2B0 (still translated) |
 | 0x0887C4CC | sound effect (a0 = 0, a1 = id, a2 = 0xC0): 0x38 cursor, 0x39 choose, 0x3A, 0x2F back |
 | 0x088DD5D0 | vertical list menu (a0 = context, cursor at +0x2E; a1 = items; a2 = slot mask): returns 1 chosen, -1 back. Network menus share context 0x09523980: called from 0x088D85C4 (network MODE MENU: VS MODE, TEAM BATTLE, VARIABLE BATTLE, DRAMATIC BATTLE), 0x088D86D8 (SINGLE, LEAGUE, TOURNAMENT), 0x088D8790 (Dramatic: HOST, GUEST) |
+| 0x088EC074 … 0x088EC724 / 0x088D6BC0 / 0x088D6D3C / 0x088E3B8C / 0x088E3BEC / 0x088E3DB0 | the network screens (`network/menu.c`, `network/screens.c`): the menu rows (11, one per row id, text and number from 0x08A3F75C / 0x08A3EA34[menu + 47 × 11], the chosen row's bar 0x088D6D74); the menu's backdrop (bars at row + 56 with + 57, the dark panel with + 58, shorter when 0x088DD114 ≥ 2 in a session of kind 2 / 3); the text's black backdrop (+ 61); the message box's panel (colour 0x08A3EC44[+ 4 set]) and its opening and closing by 12 rows a frame (+ 20, done at 120: + 23). All draw with 0x0880E788 (a0 - a3 the rectangle, t0 colour, t1 depth), the screen's width 384 (WIDE FORCED: 480) |
 | 0x088DD734 | horizontal value adjust (a0 = value, a1 = max): option screens |
 | 0x09524A28 | network task's yes/no dialog ("Save SYSTEM DATA now?"): +0 = 0xFF and +2 = 2 while up, +1 cursor (0 Yes, 1 No). Handled at 0x08833700; the task state (s0 + 6) becomes cursor + 2 when chosen |
 | 0x088331E4 | "confirm pressed" check for a slot (0x80, or 0x280 in two-button mode) |
@@ -515,6 +516,7 @@ owner at + 88, and frame data at + 296.
 | 0x0881E64C / 0x0881EA10 / 0x0882D5D8 | by layout (BATTLE + 56): the camera's span routine 0x08A09428, its height routine 0x08A09448, the trails' routine 0x08A0F1A4; the usual ones are 0x0881E688, 0x0881EA4C and 0x0882D614 (fighters 1 and 2; trails at 0x09523CA8 and + 0x480) |
 | 0x0887A10C | a script command read: the word into fighter + 488, the place after it into + 528, the budget 0x08B0268E up by one; a command whose high byte is -1 goes to 0x0887A154 |
 | 0x0887B504 / 0x0887B7CC | a fighter's own routine (+ 416 → + 84); + 480 - + 484 reset and the + 484 routine run |
+| 0x0895CD24 / 0x0895F2E8 / 0x0895FD00 / 0x0895FDB0 | Cammy's own routine (character 0x16: + 416 → + 84, set up by 0x0895BEEC from 0x08A858C4; reached through the CPU's script commands): by + 236 from 0x08A85984; routines 23 and 24 step by + 7 from 0x08A85C10, whose states 19 and 20 (`network/screens.c`) give 0x0895FF6C the screen's width (WIDE FORCED: 480) once she is far enough from her opponent. In the scenarios a CPU Cammy only ran routine 4 |
 | `object/screen_steps.c` | the screens' objects wait on their fighter's flags at + 424 (bits 1, 2, 4, 8: 0x08899DC8, 0x0889A194, 0x0889ADFC, 0x0889A478, 0x0889A728, 0x0889C604), start animations from 0x08A27744 (0x0889CDC8, 0x0889CDF8) and 0x08A28950 (0x0889CE34), and move to their targets (0x0889B888, 0x0889BE88, 0x08899514) |
 
 **The fight's intro, character routines and script commands** (0.67.0).
@@ -866,7 +868,7 @@ blend, bits 8-15 the palette (0x089E0EA4), bits 0-7 its 16-texel cell.
 |---|---|
 | 0x0881AB28 | 32-pixel tiles, 13 x 9 (WIDE FORCED: 17 columns from 2 tiles left). a0 the layer (+3 kind: 5 a 16-wide map wrapping at 0xD00, 0xDA / 0xEE animated (+60 countdown of 6, +131 frame of 11), else 32 wide; +18 / +98 the scroll; +122 the depth column), a1 the map. Works out the grid record on its stack and draws it |
 | 0x0881B268 | 16-pixel tiles, 25 columns (WIDE FORCED: 31 from 3 tiles left) by the record's +62 rows. a0 a record in game memory, laid out as 0x0881AB28's (kind 0x85 animated by layer 0's record 0x092E8800 (+60 countdown, +131 frame) and the table 0x08A08AD8; 0x90 strips at +72 onwards) |
-| 0x0881B7C8 | the third drawer, still translated: called only by 0x0881A2C8 (from 0x089DE2C0 / 0x089DE390, when 0x0952F950 + 304 is set and the mode word at + 308 is 2), which no scenario reaches yet |
+| 0x0881B7C8 | the third drawer (`tiles.c`, 0.99.0): 32-pixel tiles from a map 24 wide, wrapping down every 64 rows, the horizontal scroll wrapped into 0 - 767; called only by 0x0881A2C8 (from the ending task 0x089DE0E8's steps 0x089DE2C0 / 0x089DE390, when 0x0952F950 + 304 is set and the mode word at + 308 is 2); `arcade_ending_full` reaches it |
 | 0x0881A2C8 | sets up the quad list's descriptor and draws a screen's layers through the three drawers |
 
 Paused (0x08E75969) or either fight flag 0x092E1237 / 0x092E124D stops their animation.

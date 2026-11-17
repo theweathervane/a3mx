@@ -242,8 +242,8 @@ To do, in rough order:
         movement), each stage's setup (0x08819A20 and the 23 stage routines) and its palette and tile
         animators (`camera_frame.c`, `setup.c`, `animators.c`; 0.91.0)
   - [x] The select / map / profile / VS screens' backdrops (0x0881CBDC, 0x0881CD20, 0x0881CFD0, 0x08819144, 0x0881A040; 0.93.0)
-  - [ ] 0x0881B7C8 and its caller 0x0881A2C8 (from 0x089DE2C0 / 0x089DE390): need a scenario that
-        reaches them
+  - [x] 0x0881B7C8 (0.99.0; the endings, `arcade_ending_full`)
+  - [ ] its caller 0x0881A2C8 (from the ending task's 0x089DE2C0 / 0x089DE390)
 - [ ] Battle core: rounds, timer, camera, collision (hit boxes), damage, guard, ISM rules
 - [ ] Fighters: the shared move engine
 - [ ] Fighters: each character's moves and AI
@@ -282,7 +282,10 @@ decompiled.
   - [x] Silent when a save fails too: no "continue without auto-saving?" (0.24.0; the list of save
         messages is in [SAVES.md](SAVES.md#save-messages-kept-off-screen))
 - [ ] WIDE FORCED as a real native setting (Rickow's 16:9 patch is currently used today). Now: widescreen.c + translation
-      overlay. Needs: the camera and background drawers completed before can be dropped.
+      overlay. Since 0.99.0 every function the patch changes is native. Next: drop the patch (its download, pins, `boot.widescreen.json`,
+      the translator's overlay) and test WIDE FORCED by playing each WIDE scenario with it on and off
+      and comparing every fighter's state frame by frame, instead of against the patched translation.
+      Not reached by a scenario yet: 0x088D6D3C, three network menu rows, two of Cammy's CPU states.
 - [x] Pad icons on the MODE MENU: padicons.c, wrapped around the decompiled MODE MENU (0.24.0).
 - [x] F2 back to the MODE MENU: quitkey.c, wrapped around the decompiled frame wait (0.24.0).
 - [x] Boot screen save messages: bootmsg.c, wrapped around the decompiled load screen (0.24.0).

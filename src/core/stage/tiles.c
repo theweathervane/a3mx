@@ -24,7 +24,12 @@
  * run. Not for the maps whose wrap is something else: the animated kinds 0xDA / 0xEE (their wrap distance
  * isn't set), 0x0881B268's strips (0x90, the next strip) and animated 0x85.
  *
- * 0x0881B7C8, the third drawer, stays translated: only 0x0881A2C8 calls it, and no scenario reaches it.
+ *   0x0881B7C8  32-pixel tiles like 0x0881AB28, from a map 24 tiles wide whose horizontal scroll wraps
+ *               every 768 pixels (only 0x0881A2C8 calls it: the endings, arcade_ending_full).
+ *
+ * The patch does the same in 0x0881B7C8 as in 0x0881AB28, but without the wrap round within the row
+ * (below): there the extra tiles still come from the row above, as in the patch, so the reference run
+ * agrees. That goes when the patch is dropped.
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
  * differently from the PSP.
@@ -95,10 +100,12 @@ typedef struct {
     int cols, wide_cols; /* columns, and with WIDE FORCED */
     int wide_tiles;      /* tiles further left with WIDE FORCED */
     int b268;            /* 0x0881B268: its rows, wrap and strips; else 0x0881AB28's */
+    int wraps_left;      /* WIDE FORCED: the extra tiles wrap round within the row (not 0x0881B7C8) */
 } Grid;
 
-static const Grid GRID_AB28 = { 32, 13, 17, 2, 0 };
-static const Grid GRID_B268 = { 16, 25, 31, 3, 1 };
+static const Grid GRID_AB28 = { 32, 13, 17, 2, 0, 1 };
+static const Grid GRID_B268 = { 16, 25, 31, 3, 1, 1 };
+static const Grid GRID_B7C8 = { 32, 13, 17, 2, 0, 0 };
 
 static int columns(const Grid *g) { return rt_widescreen ? g->wide_cols : g->cols; }
 
@@ -158,7 +165,7 @@ static void next_strip(gaddr st, gaddr *strip) {
    map column less than the extra tiles, and the map wraps back by its own width) */
 static int wide_wraps_left(gaddr st, const Grid *g) {
     int32_t col0 = S16(st + GRID_MAP_COL), kind = S16(st + GRID_KIND);
-    if (col0 >= g->wide_tiles) return 0;
+    if (!g->wraps_left || col0 >= g->wide_tiles) return 0;
     if (!g->b268) return kind != 0xDA && kind != 0xEE;
     return kind != 0x85 && S16(st + GRID_COL_BACK) == S16(st + GRID_COLS_TO_WRAP) + col0;
 }
@@ -377,3 +384,67 @@ SFA_FUNC_WRAPPED(0881B268, stage_draw_layer_16, stagestrips_layer_16) {
     RETURN(c->r[2]);
     draw_layer_16(c, st);
 }
+
+/* ---- 0x0881B7C8: a 32-pixel layer from a 24-tile-wide map ----
+   a0 the layer (+2, +3 its kind, kept in the record but not used; +18 horizontal scroll, wrapped into
+   0 - 767; +98 vertical, & 0x7FF; +122 its depth column), a1 the map: 24 tiles across, wrapping down
+   every 64 rows. The record and its frame as 0x0881AB28's. */
+static void draw_layer_32_wide_map(Cpu *c, gaddr layer, gaddr map) {
+    c->r[29] -= 0xB0;
+    gaddr st = c->r[29] + 16;
+
+    SET16(st + 64, *B(layer + 2));
+    SET16(st + GRID_KIND, *B(layer + 3));
+    float sx = F(SCALE_X), sy = F(SCALE_Y), f;
+    f = sx * 32.0f;
+    SET16(st + GRID_STEP_X, CVT_TRUNC(NULL, f));
+    f = sy * 32.0f;
+    SET16(st + GRID_STEP_Y, CVT_TRUNC(NULL, f));
+    *W(st + GRID_LAYER) = layer;
+    SET16(st + GRID_SCROLL, *H(layer + 98));
+    SET16(st + GRID_SCROLL, S16(st + GRID_SCROLL) & 0x7FF);
+    SET16(st + GRID_MAP_COL, *H(layer + 18));
+    int32_t h = S16(st + GRID_MAP_COL);
+    if (h < 0) {
+        do h = (int16_t)(h + 0x300); while (h < 0);
+        SET16(st + GRID_MAP_COL, h);
+    } else if (h >= 768) {
+        do h = (int16_t)(h - 0x300); while (h >= 768);
+        SET16(st + GRID_MAP_COL, h);
+    }
+    int32_t s = S16(st + GRID_SCROLL);
+
+    float part = (float)(s & 0x1F);
+    part = part * sy;
+    part = -part;
+    SET16(st + GRID_Y, CVT_TRUNC(NULL, part));
+    part = (float)(h & 0x1F);
+    part = part * sx;
+    SET16(st + GRID_MAP_COL, h >> 5);
+    int32_t col0 = S16(st + GRID_MAP_COL);
+    *W(st + GRID_LINE) = map;
+    part = -part;
+    SET16(st + GRID_X0, CVT_TRUNC(NULL, part));
+
+    SET16(st + GRID_ROW_WRAP, 0x40 - (s >> 5));
+    SET16(st + GRID_ROWS_PER_WRAP, 0x40);
+    int32_t q = (s & 0xFFE0) >> 2;
+    *W(st + GRID_LINE) = map + (uint32_t)((q * 3) << 2) + (uint32_t)(col0 << 2);
+    SET16(st + GRID_COLS_TO_WRAP, 0x18 - col0);
+
+    f = F(OFFSET_X) + 0.5f;
+    SET16(st + GRID_OFS_X, CVT_TRUNC(NULL, f));
+    SET16(st + GRID_Y0, S16(st + GRID_Y));
+    SET16(st + GRID_LINE_STEP, 0x18);
+    SET16(st + GRID_COL_BACK, 0x18);
+    f = F(OFFSET_Y) + 0.5f;
+    SET16(st + GRID_OFS_Y, CVT_TRUNC(NULL, f));
+    SET16(st + GRID_BOTTOM, S16(st + GRID_Y0) + S16(st + GRID_OFS_Y));
+    *W(st + GRID_MAP) = map;
+
+    draw_grid(c, st, &GRID_B7C8);
+    c->r[29] += 0xB0;
+}
+
+/* void draw_layer_32_wide_map(layer *a0, u32 *map a1) */
+SFA_FUNC(0881B7C8, stage_draw_layer_32_wide_map) { draw_layer_32_wide_map(c, ARG(0), ARG(1)); }

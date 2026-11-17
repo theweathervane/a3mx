@@ -1,0 +1,5 @@
+# NETWORK > VS MODE against the built-in virtual peer: the network menus (src/core/network/menu.c and
+# screens.c: the menu rows, the menu's backdrop, the message boxes opening and closing), the IP OPTION
+# menu, DEFAULT then OK, the select screen, the match against CPU2 and its CONTINUE / SELECT / EXIT.
+frames 12000
+input 1200=start;1206=;1500=start;1506=;1560=right;1566=;1600=down;1606=;1630=down;1636=;1660=down;1666=;1690=down;1696=;1720=cross;1726=;2000=cross;2006=;2400=cross;2406=;2800=down;2806=;2860=cross;2866=;3200=circle;3206=;3300=down;3306=;3330=cross;3336=;5600=cross;5606=;5700=cross;5706=;5800=cross;5806=;6200=cross;6206=

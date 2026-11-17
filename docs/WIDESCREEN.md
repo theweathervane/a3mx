@@ -17,7 +17,17 @@ parts of the game it touches are decompiled.
 - **In native code so far (0.49.0):** the background tile drawers 0x0881AB28 and 0x0881B268
   (`src/core/stage/tiles.c`), which draw two and three tiles further left and 17 and 31 columns while
   `rt_widescreen` is set, as the patch does. The `wide_fight` scenario checks them against the
-  patched translation with WIDE FORCED on. 0x0881B7C8 stays translated (nothing reaches it yet).
+  patched translation with WIDE FORCED on.
+- **In native code since 0.99.0:** the rest of what the patch changes: the third tile drawer
+  0x0881B7C8 (`tiles.c`, the endings; `arcade_ending_full` checks it), the
+  screen's setup, its text layer and the pillarbox (0x0880B928, 0x0880F160, 0x0880F390 in
+  `src/core/object/screen.c`), the 32-pixel paletted sprite cells 0x08811BCC (`sprite_grid.c`), the
+  network menus' rows and cursor bar (0x088EC074 - 0x088EC724, `src/core/network/menu.c`), the network
+  screens' whole-screen panels and message boxes (0x088D6BC0, 0x088D6D3C, 0x088E3B8C, 0x088E3BEC,
+  0x088E3DB0) and two of Cammy's CPU routine states that pass the screen's width on (0x0895FD00,
+  0x0895FDB0) in `src/core/network/screens.c`. `network_match` checks the network screens with WIDE
+  FORCED off and on. No scenario reaches 0x088D6D3C, three of the menu rows (ids 0, 9 and 10) or the
+  two Cammy states yet; they are straight translations of the patched code.
 - **The project's own words:** `tools/data/widescreen_more.json` adds words to the patch's overlay
   (the translator merges them, and stops if a word it replaces is not the one listed). The first three
   widen the left limit of the sprite cell drawers 0x08810D84, 0x088112A8 and 0x088117D0 to -96, as the
