@@ -349,6 +349,8 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
   - [ ] Paint the 76 strips (any time, in parallel: a good job for a collaborator; magenta = still to do)
   - [x] One strip per layer, joined to each layer's own scroll, with placeholders measured per layer
         (`tools/measure_stage_layers.py`) (0.50.0)
+- [ ] Akuma's, E. Ryu's and S. Akuma's caves: the orange placeholders don't meet the black strips in the last
+      background layer (check whether that black is the layer's own art, and the strips' placement)
 - [ ] Art pack (experimental): each stage layer whole as its own PNG, not only screenshots at the walls
       (pan the camera with the layer drawn alone and stitch by its scroll; rebuild the layers wider than
       their tile map from the stage's layout data)

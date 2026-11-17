@@ -97,6 +97,15 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
   its tile maps. On the PSP each stage layer's whole map is in memory (0x092E8A00, 0x2000 bytes a layer:
   32 columns, or 16 for kind 5, which repeats across anyway); only the map animators rewrite it. What
   was wrong at the edge was the patch's start further left not wrapping (fixed in 0.97.0, above).
+- **Objects that change props at a line (twins, 0.98.0).** To save sprites, some stage objects play
+  two props ("swap at the line", `stage/objects.c` swap_kind: kinds 4, 6, 11, 29, 31, 33, 39, 52, 58,
+  82, 84, on Ken, Akuma, Adon, Sagat, Dan, Sakura, Zangief, E. Ryu, Mika, S. Akuma and Karin 2's
+  stages): one place while the fighters' layer is left of a line, another past it, the change timed
+  just off the 4:3 screen. In 16:9 it happens in view (Dan's crow appears on the sign the moment the
+  camera moves off its starting place, x 448, which is the line). `extensions/widescreen_twins.c` gives
+  each, in WIDE FORCED, a twin showing the other look, so both are there while in view. It runs around
+  the decompiled kinds (`SFA_FUNC_WRAPPED`), so the reference run does the same; NORMAL is unchanged
+  byte for byte.
 - **The MODE MENU's left side** is not a tile layer: its background is the menu's own objects (panels
   and bands that drift and wrap round within the 4:3 width, `object/drift.c`), so nothing is placed in
   the left margin. Widening their layout in WIDE FORCED, or pillarboxing the menu, is still to do.

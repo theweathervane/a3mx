@@ -223,6 +223,8 @@ static void line_kind(Cpu *c, gaddr table) {
     c->r[29] += 0x20;
 }
 
+/* ---- "swap at the line" (step at +7). In WIDE FORCED each of these kinds has a twin showing the
+   other look (extensions/widescreen_twins.c), since the change can happen in the 16:9 picture ---- */
 /* ---- "swap at the line" (step at +7): two looks kept in a block at +96, the record's own (look 0)
    and a fixed second one (look 1); while the fighters' layer is past x +132 the object takes look 1,
    else look 0. A look: the animation (+28, +74 - +77), place (+18 / +22), layer (+9), camera (+14),
@@ -302,7 +304,7 @@ static void swap_kind(Cpu *c, const SwapKind *s) {
 }
 
 /* Kind 29 (SAGAT): "swap at the line" with look 1 and the line from a table by type. */
-SFA_FUNC(0884DB20, stage_object_kind_29) {
+SFA_FUNC_WRAPPED(0884DB20, stage_object_kind_29, widescreen_twins) {
     swap_kind(c, &(const SwapKind){ .table = 0x08A14EC0u, .by_type = 0x08A14EE8u - 0x62u });
 }
 
@@ -1411,39 +1413,39 @@ SFA_FUNC(08851004, stage_object_kind_54) {
 SFA_FUNC(0884B034, stage_object_kind_0) { follow_kind(c, &(const FollowKind){ 0x08A144A0u, FOLLOW_UNLESS_CAMERA, RATE_7BITS, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884B1C4, stage_object_kind_1) { line_kind(c, 0x08A144A0u); }
 SFA_FUNC(0884B398, stage_object_kind_3) { follow_kind(c, &(const FollowKind){ 0x08A146A0u, FOLLOW_IF_26, RATE_SIGNED, 0, DRAW_NEAR, 15, 15 }); }
-SFA_FUNC(0884B520, stage_object_kind_4) { swap_kind(c, &(const SwapKind){ 0x08A146A0u, 0, 560, 3, 1, 2, 944, 112, 7, 14, 0, 0 }); }
+SFA_FUNC_WRAPPED(0884B520, stage_object_kind_4, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A146A0u, 0, 560, 3, 1, 2, 944, 112, 7, 14, 0, 0 }); }
 SFA_FUNC(0884B7B4, stage_object_kind_5) { follow_kind(c, &(const FollowKind){ 0x08A146D8u, FOLLOW_IF_26, RATE_SIGNED, 41, DRAW_NEAR, 15, 15 }); }
-SFA_FUNC(0884B948, stage_object_kind_6) { swap_kind(c, &(const SwapKind){ 0x08A146D8u, 41, 352, 1, 1, 2, 912, 256, 7, 8, 0, 0 }); }
+SFA_FUNC_WRAPPED(0884B948, stage_object_kind_6, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A146D8u, 41, 352, 1, 1, 2, 912, 256, 7, 8, 0, 0 }); }
 SFA_FUNC(0884BBE8, stage_object_kind_7) { plain_kind(c, 0x08A147F0u, 0); }
 SFA_FUNC(0884BCBC, stage_object_kind_8) { follow_kind(c, &(const FollowKind){ 0x08A148E0u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 15 }); }
 SFA_FUNC(0884BE44, stage_object_kind_9) { line_kind(c, 0x08A148E0u); }
 SFA_FUNC(0884BF2C, stage_object_kind_10) { follow_kind(c, &(const FollowKind){ 0x08A14918u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
-SFA_FUNC(0884C0B4, stage_object_kind_11) { swap_kind(c, &(const SwapKind){ 0x08A14918u, 0, 448, 2, 0, 2, 944, 32, 7, 0, 0, 0 }); }
+SFA_FUNC_WRAPPED(0884C0B4, stage_object_kind_11, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A14918u, 0, 448, 2, 0, 2, 944, 32, 7, 0, 0, 0 }); }
 SFA_FUNC(0884C344, stage_object_kind_12) { follow_kind(c, &(const FollowKind){ 0x08A14A60u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884C91C, stage_object_kind_16) { follow_kind(c, &(const FollowKind){ 0x08A14B30u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884CD0C, stage_object_kind_19) { follow_kind(c, &(const FollowKind){ 0x08A14C30u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884D0BC, stage_object_kind_22) { follow_kind(c, &(const FollowKind){ 0x08A14C70u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884D990, stage_object_kind_28) { follow_kind(c, &(const FollowKind){ 0x08A14EC0u, FOLLOW_UNLESS_CAMERA, RATE_7BITS, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884DDD8, stage_object_kind_30) { follow_kind(c, &(const FollowKind){ 0x08A14FC8u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
-SFA_FUNC(0884DF60, stage_object_kind_31) { swap_kind(c, &(const SwapKind){ 0x08A14FC8u, 0, 448, 5, 1, 1, 856, 152, 5, 0, 0, 0 }); }
+SFA_FUNC_WRAPPED(0884DF60, stage_object_kind_31, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A14FC8u, 0, 448, 5, 1, 1, 856, 152, 5, 0, 0, 0 }); }
 SFA_FUNC(0884E1E8, stage_object_kind_32) { follow_kind(c, &(const FollowKind){ 0x08A150C8u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
-SFA_FUNC(0884E690, stage_object_kind_33) { swap_kind(c, &(const SwapKind){ 0x08A150C8u, 0, 496, 4, 1, 2, 912, 208, 7, 8, 0, 0 }); }
+SFA_FUNC_WRAPPED(0884E690, stage_object_kind_33, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A150C8u, 0, 496, 4, 1, 2, 912, 208, 7, 8, 0, 0 }); }
 SFA_FUNC(0884E370, stage_object_kind_34) { run_step(c, *B(ARG(0) + 4), 0x08A150ECu, 5, 0x0884E398u); }
 SFA_FUNC(0884E924, stage_object_kind_35) { follow_kind(c, &(const FollowKind){ 0x08A15148u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884EC74, stage_object_kind_37) { follow_kind(c, &(const FollowKind){ 0x08A151E0u, FOLLOW_UNLESS_CAMERA, RATE_7BITS, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884EE04, stage_object_kind_38) { follow_kind(c, &(const FollowKind){ 0x08A152D8u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_NEAR, 0, 0 }); }
-SFA_FUNC(0884F160, stage_object_kind_39) { swap_kind(c, &(const SwapKind){ 0x08A152D8u, 41, 448, 5, 1, 2, 928, 56, 7, 20, 0, 0 }); }
+SFA_FUNC_WRAPPED(0884F160, stage_object_kind_39, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A152D8u, 41, 448, 5, 1, 2, 928, 56, 7, 20, 0, 0 }); }
 SFA_FUNC(0884F400, stage_object_kind_41) { follow_kind(c, &(const FollowKind){ 0x08A15388u, FOLLOW_UNLESS_CAMERA, RATE_7BITS_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0884F7C8, stage_object_kind_43) { run_step(c, *B(ARG(0) + 4), 0x08A15448u, 5, 0x0884F7F0u); }
 SFA_FUNC(0884FC68, stage_object_kind_44) { run_step(c, *B(ARG(0) + 4), 0x08A154B0u, 5, 0x0884FC90u); }
 SFA_FUNC(08850784, stage_object_kind_49) { follow_kind(c, &(const FollowKind){ 0x08A15738u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0885090C, stage_object_kind_50) { line_kind(c, 0x08A15738u); }
 SFA_FUNC(088509F4, stage_object_kind_51) { follow_kind(c, &(const FollowKind){ 0x08A15770u, FOLLOW_IF_26, RATE_SIGNED, 40, DRAW_NEAR, 15, 15 }); }
-SFA_FUNC(08850B88, stage_object_kind_52) { swap_kind(c, &(const SwapKind){ 0x08A15770u, 41, 352, 1, 1, 2, 912, 256, 7, 8, 0, 0 }); }
+SFA_FUNC_WRAPPED(08850B88, stage_object_kind_52, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A15770u, 41, 352, 1, 1, 2, 912, 256, 7, 8, 0, 0 }); }
 SFA_FUNC(08850E28, stage_object_kind_53) { follow_kind(c, &(const FollowKind){ 0x08A15860u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(0885125C, stage_object_kind_55) { follow_kind(c, &(const FollowKind){ 0x08A159C0u, FOLLOW_ALWAYS, RATE_7BITS_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(088515B4, stage_object_kind_57) { follow_kind(c, &(const FollowKind){ 0x08A15A98u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR, 0, 0 }); }
-SFA_FUNC(088517D8, stage_object_kind_58) { swap_kind(c, &(const SwapKind){ 0x08A15A98u, 0, 384, 1, 1, 2, 896, 80, 7, 8, 0, 0 }); }
+SFA_FUNC_WRAPPED(088517D8, stage_object_kind_58, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A15A98u, 0, 384, 1, 1, 2, 896, 80, 7, 8, 0, 0 }); }
 SFA_FUNC(08851D34, stage_object_kind_62) { follow_kind(c, &(const FollowKind){ 0x08A15BF8u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR_OR_ON_SCREEN, 0, 0 }); }
 SFA_FUNC(08853718, stage_object_kind_74) { follow_kind(c, &(const FollowKind){ 0x08A16460u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 0, DRAW_NEAR_OR_ON_SCREEN, 0, 0 }); }
 SFA_FUNC(08853C8C, stage_object_kind_77) { run_step(c, *B(ARG(0) + 4), 0x08A165D0u, 5, 0x08853CB4u); }
@@ -1451,7 +1453,7 @@ SFA_FUNC(08853E00, stage_object_kind_78) { run_step(c, *B(ARG(0) + 4), 0x08A165E
 SFA_FUNC(08853EB0, stage_object_kind_79) { run_step(c, *B(ARG(0) + 4), 0x08A165F0u, 5, 0x08853ED8u); }
 SFA_FUNC(08853FC0, stage_object_kind_80) { follow_kind(c, &(const FollowKind){ 0x08A165A8u, FOLLOW_UNLESS_CAMERA, RATE_7BITS, 0, DRAW_NEAR, 0, 0 }); }
 SFA_FUNC(088543E8, stage_object_kind_81) { follow_kind(c, &(const FollowKind){ 0x08A16618u, FOLLOW_IF_26, RATE_SIGNED, 41, DRAW_NEAR, 15, 15 }); }
-SFA_FUNC(0885457C, stage_object_kind_82) { swap_kind(c, &(const SwapKind){ 0x08A16618u, 41, 352, 1, 1, 2, 912, 256, 7, 8, 0, 0 }); }
+SFA_FUNC_WRAPPED(0885457C, stage_object_kind_82, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A16618u, 41, 352, 1, 1, 2, 912, 256, 7, 8, 0, 0 }); }
 SFA_FUNC(0885481C, stage_object_kind_83) { follow_kind(c, &(const FollowKind){ 0x08A166B8u, FOLLOW_UNLESS_CAMERA, RATE_SIGNED, 41, DRAW_ALWAYS, 0, 0 }); }
-SFA_FUNC(0885498C, stage_object_kind_84) { swap_kind(c, &(const SwapKind){ 0x08A166B8u, 41, 496, 4, 1, 2, 912, 208, 7, 8, 0, 1 }); }
+SFA_FUNC_WRAPPED(0885498C, stage_object_kind_84, widescreen_twins) { swap_kind(c, &(const SwapKind){ 0x08A166B8u, 41, 496, 4, 1, 2, 912, 208, 7, 8, 0, 1 }); }
 /* GENERATED-KINDS-END */

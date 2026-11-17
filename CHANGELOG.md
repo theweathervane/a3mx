@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.98.0
+### For players
+- **WIDE FORCED: stage props that used to appear from nowhere are now always there.** To save sprites, the arcade moves some props between two places (Dan's crow between a perch and the sign, and props on Ken, Akuma, Adon, Sagat, Sakura, Zangief, E. Ryu, Mika, S. Akuma and Karin 2's stages), timing the move just off the 4:3 screen. On the wider screen you could see it happen. Each now has a twin, so both places show their prop while in view.
+
+### Technical
+- New `extensions/widescreen_twins.c` around the eleven "swap at the line" kinds (`stage/objects.c`, now `SFA_FUNC_WRAPPED`): in WIDE FORCED a copy of the object in memory of its own takes the other look, steps its animation when the object's would, and is queued for drawing after it. Checked with wide_fight and arcade_fight (NORMAL byte for byte as before), and on eleven stages by eye.
+- To come back to: on Akuma's, E. Ryu's and S. Akuma's stages the orange Stage Extension placeholders don't meet the black strips in the last background layer (maybe that black is the layer's own art).
+
 ## 0.97.0
 ### For players
 - **WIDE FORCED: objects at the screen's edges no longer pop in.** Stage props and other objects were only drawn once they were near the old 4:3 picture, so they appeared suddenly in the extra 48 pixels at each side (the people in the background on Guy's stage). They are now drawn as soon as they reach the wider view.
