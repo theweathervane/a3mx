@@ -11,10 +11,9 @@
  *
  * WIDE FORCED: a cell is skipped when it starts left of minus its width, which in the 16:9 picture is
  * still inside the 48 pixels added on the left. That cut a fighter's back at the old 4:3 edge
- * (Blanka's shoulder against the wall). The 16:9 patch (Rickow, sfa3-PSP-widescreen, MIT) moves that
- * limit to -96 in 0x08811BCC only; tools/data/widescreen_more.json does the same in the other three, so
- * the reference run (the translation) and this code agree with WIDE FORCED on or off. The walls and
- * everything else stay as they are: only what is drawn changes (docs/WIDESCREEN.md).
+ * (Blanka's shoulder against the wall). The 16:9 patch (Rickow, sfa3-PSP-widescreen, MIT) moved that
+ * limit to -96 in 0x08811BCC only; here all four have it with rt_widescreen. The walls and everything
+ * else stay as they are: only what is drawn changes (docs/WIDESCREEN.md).
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
  * differently from the PSP.

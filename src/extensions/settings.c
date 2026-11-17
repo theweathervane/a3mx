@@ -81,7 +81,6 @@ static int count(const char *const *names) { int n = 0; while (names[n]) n++; re
 /* ---------------------------------------------------------------- the settings in the options block */
 enum { K_ENUM, K_STARS, K_NUM, K_SPEED, K_HEX16, K_HEX32, K_SIZE };
 extern int rt_widescreen;                    /* widescreen.c: WIDE FORCED */
-extern const int rt_widescreen_available;
 typedef struct { const char *section, *key; int off, mirror, kind; const char *const *names; int max; const char *note; } Field;
 static const Field fields[] = {
     { "game option", "difficulty", 0x3C, -1, K_STARS, NULL, 8, "stars, 1 - 8" },
@@ -116,8 +115,7 @@ static void field_set(uint8_t *o, const Field *f, int v) {
     case K_SPEED: if (v > 2) { o[f->off] = (uint8_t)(v - 2); o[f->mirror] = 0; } else { o[f->off] = 0; o[f->mirror] = (uint8_t)v; } return;
     case K_HEX16: o[f->off] = (uint8_t)v; o[f->off + 1] = (uint8_t)(v >> 8); return;
     case K_HEX32: for (int i = 0; i < 4; i++) o[f->off + i] = (uint8_t)((uint32_t)v >> (8 * i)); return;
-    case K_SIZE: if (v == 2 && !rt_widescreen_available) v = 0;
-                 rt_widescreen = v == 2; o[f->off] = o[f->mirror] = (uint8_t)(v == 1); return;
+    case K_SIZE: rt_widescreen = v == 2; o[f->off] = o[f->mirror] = (uint8_t)(v == 1); return;
     default: o[f->off] = (uint8_t)v; if (f->mirror >= 0) o[f->mirror] = (uint8_t)v; return;
     }
 }

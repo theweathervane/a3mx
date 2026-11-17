@@ -17,9 +17,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PINS = os.path.join(ROOT, 'tools', 'data', 'pins.json')
 SDL_WHEN = 'its source, by CMake, the first time the launcher or the game is built'
 SDL_DEST = 'build-launcher/_deps and build/_deps'
-# Rickow's 16:9 patch: a pinned source (commit + file hashes), downloaded by tools/extract_assets.py
-WS = ('widescreen', 'work/sfa3-PSP-widescreen', 'sfa3_ws_patternpatcher.py',
-      'when your disc is first extracted, for WIDE FORCED (not with --no-widescreen)')
 
 # (pin id, folder, the file that shows it is unpacked (tools/build.py's PROBES), when; None = to download)
 # SDL has no probe: it is "here" when its source is in either build folder (cmake/SDL3.cmake).
@@ -29,12 +26,12 @@ WANTED = {
                 ('llvm-mingw', '.tools/llvm-mingw', 'bin/clang.exe', None),
                 ('cmake', '.tools/cmake', 'bin/cmake.exe', None),
                 ('ninja', '.tools/ninja', 'ninja.exe', None),
-                ('sdl3', SDL_DEST, None, SDL_WHEN), WS],
+                ('sdl3', SDL_DEST, None, SDL_WHEN)],
     'Darwin': [('cmake-macos', '.tools/cmake-macos', 'CMake.app/Contents/bin/cmake', None),
                ('ninja-macos', '.tools/ninja-macos', 'ninja', None),
-               ('sdl3', SDL_DEST, None, SDL_WHEN), WS],
-    # Linux uses the system's CMake, Ninja and compiler (build.py says which to install): only SDL and the patch
-    'Linux': [('sdl3', SDL_DEST, None, SDL_WHEN), WS],
+               ('sdl3', SDL_DEST, None, SDL_WHEN)],
+    # Linux uses the system's CMake, Ninja and compiler (build.py says which to install): only SDL
+    'Linux': [('sdl3', SDL_DEST, None, SDL_WHEN)],
 }
 # what isn't downloaded, but is needed (shown under the list)
 NOT_DOWNLOADED = {

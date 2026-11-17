@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Extract and verify the game from your own disc image.
 
-Usage:  python tools/extract_assets.py [--region us|jp] [--iso PATH] [--work DIR] [--no-widescreen] [--verify-only]
+Usage:  python tools/extract_assets.py [--region us|jp] [--iso PATH] [--work DIR] [--verify-only]
 
   --region us   A3MX, ULUS-10062 (the default, and the one that builds today)
   --region jp   Street Fighter Zero 3 Double Upper, ULJM-05082 (extracted and verified; not buildable yet)
@@ -13,7 +13,6 @@ here, because the analysis, the hooks and the decompiled code are all written fo
 Writes (all git-ignored):
   work/iso/...                 the disc's files                         (work-jp/ for --region jp)
   work/boot.elf                the game program (BOOT.BIN, unencrypted)
-  work/boot.widescreen.json    the SFA3MAX 16:9 patch as an overlay, switched at run time
   work/imports.json            the OS functions the program calls
   work/analysis.json           functions, switch tables, code pointers
   work/analysis.image.bin      the relocated program image the runtime loads
@@ -167,84 +166,6 @@ def run(*args):
     subprocess.check_call([sys.executable, '-I'] + list(args), stderr=subprocess.STDOUT)
 
 
-# --- the widescreen patch ------------------------------------------------------------------------
-# Pinned to one commit, and its patcher is run only if its SHA-256 is the one recorded (tools/data/pins.json):
-# a change upstream can't change what runs here until the pin is updated.
-sys.path.insert(0, os.path.join(ROOT, 'tools'))
-import pins
-WS = pins.source('widescreen')
-WS_REPO, WS_COMMIT = WS['repo'], WS['commit']
-WS_ZIP = '%s/archive/%s.zip' % (WS_REPO, WS_COMMIT)
-
-
-def widescreen_verified(dst):
-    """True if every pinned file of the patch in DST has its recorded SHA-256."""
-    for name, want in WS['files'].items():
-        path = os.path.join(dst, name)
-        if not os.path.isfile(path) or pins.sha256_file(path) != want: return False
-    return True
-
-
-def fetch_widescreen(dst):
-    """Download the patch's pinned commit as a zip (no git needed) into DST."""
-    import io, zipfile
-    import fetch                          # any Python on the PATH, even one without certificates (#52)
-    data = fetch.fetch(WS_ZIP, timeout=60)
-    with zipfile.ZipFile(io.BytesIO(data)) as z:
-        for m in z.infolist():
-            rel = m.filename.split('/', 1)[1] if '/' in m.filename else ''
-            if not rel or m.is_dir(): continue
-            path = os.path.join(dst, *rel.split('/'))
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'wb') as o: o.write(z.read(m))
-
-
-def widescreen_overlay(boot, work):
-    """The SFA3MAX 16:9 patch (Rickow, MIT) as an overlay on the unpatched program, so it can be
-    switched on and off while running (SCREEN SETTING > SCREEN SIZE > WIDE FORCED). The patch is
-    downloaded and applied to a copy; work/boot.widescreen.json records, by load address, the words
-    it changes in .text (translated both ways, chosen at run time) and the code it adds in unused
-    .data (translated as code). Nothing of the patch is kept in the repository."""
-    sys.path.insert(0, TOOLS)
-    from psp_elf import Elf, relocate
-    from psp_analyze import BASE
-    out = os.path.join(work, 'boot.widescreen.json')
-    if os.path.exists(out): os.remove(out)
-    patcher = os.path.join(work, 'sfa3-PSP-widescreen', 'sfa3_ws_patternpatcher.py')
-    try:
-        dst = os.path.dirname(patcher)
-        if not widescreen_verified(dst):                     # none yet, an older download, or changed
-            shutil.rmtree(dst, ignore_errors=True)
-            try: fetch_widescreen(dst)
-            except Exception as ex:                          # (a network that only lets git through)
-                print('  zip download failed (%s): trying git' % ex)
-                shutil.rmtree(dst, ignore_errors=True)
-                subprocess.check_call(['git', 'init', '-q', dst])
-                subprocess.check_call(['git', '-C', dst, 'fetch', '-q', '--depth', '1', WS_REPO + '.git', WS_COMMIT])
-                subprocess.check_call(['git', '-C', dst, 'checkout', '-q', 'FETCH_HEAD'])
-            if not widescreen_verified(dst):
-                raise RuntimeError('the patch at %s does not match its SHA-256 in tools/data/pins.json, so it was not run' % WS_COMMIT[:12])
-        print('  widescreen patch: %s at %s (SHA-256 checked)' % (WS_REPO, WS_COMMIT[:12]))
-        tmp = os.path.join(work, 'boot.widescreen.elf')
-        run(patcher, boot, tmp)
-    except Exception as ex:
-        print('  widescreen patch not available (%s): WIDE FORCED will be off' % ex); return
-    a_e, b_e = Elf(boot), Elf(tmp)
-    a, _ = relocate(a_e, BASE); b, _ = relocate(b_e, BASE)
-    text = a_e.by_name['.text']; tlo, thi = text['addr'], text['addr'] + text['size']
-    t, caves = {}, {}
-    for off in range(0, min(len(a), len(b)) - 3, 4):
-        if a[off:off + 4] == b[off:off + 4]: continue
-        w = int.from_bytes(b[off:off + 4], 'little')
-        if tlo <= off < thi: t['0x%08X' % (BASE + off)] = w
-        else:
-            if a[off:off + 4] != b'\0\0\0\0': print('  widescreen patch changes data at %08X: not used' % (BASE + off)); return
-            caves['0x%08X' % (BASE + off)] = w
-    json.dump({'patch': WS_REPO, 'text': t, 'caves': caves}, open(out, 'w'), indent=0)
-    os.remove(tmp)
-    print('  widescreen overlay: %d words in .text, %d words of added code' % (len(t), len(caves)))
-
-
 # --- assets --------------------------------------------------------------------------------------
 def same_picture(a, b):
     """Whether two PNGs hold the same picture: the same header, palette and transparency chunks, and
@@ -377,7 +298,6 @@ def main():
     ap.add_argument('--region', choices=sorted(DISCS), default='us')
     ap.add_argument('--iso', help='the ISO (default: the matching one in imports/psp/)')
     ap.add_argument('--work', help='output folder (default work/, or work-jp/ for --region jp)')
-    ap.add_argument('--no-widescreen', action='store_true', help='leave out the 16:9 patch (no WIDE FORCED)')
     ap.add_argument('--verify-only', action='store_true', help='check the disc and stop')
     ap.add_argument('--no-pac', action='store_true', help='do not unpack the .pac archives into assets/')
     a = ap.parse_args()
@@ -402,11 +322,10 @@ def main():
     print('  %d files' % image.extract(os.path.join(work, 'iso')))
     elf = os.path.join(work, 'boot.elf')
     open(elf, 'wb').write(boot_bytes)
-    if a.no_widescreen:
-        p = os.path.join(work, 'boot.widescreen.json')
-        if os.path.exists(p): os.remove(p)
-    elif a.region == 'us':
-        widescreen_overlay(elf, work)
+    # before 0.99.1: Rickow's 16:9 patch, downloaded and kept as an overlay (WIDE FORCED is native now)
+    for old in ('boot.widescreen.json', 'boot.widescreen.elf'):
+        if os.path.exists(os.path.join(work, old)): os.remove(os.path.join(work, old))
+    shutil.rmtree(os.path.join(work, 'sfa3-PSP-widescreen'), ignore_errors=True)
     run(os.path.join(TOOLS, 'psp_imports.py'), elf, '--json', os.path.join(work, 'imports.json'))
     run(os.path.join(TOOLS, 'psp_analyze.py'), elf, os.path.join(work, 'analysis.json'))
     export_assets(a.region, os.path.join(work, 'iso'), unpack_pacs=not a.no_pac)

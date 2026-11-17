@@ -63,8 +63,8 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "F2 on the keyboard, or player 1 holding SELECT and pressing START, goes straight back to the\n"
       "MODE MENU without saving.", 1, -1 },
     { "widescreen", "Widescreen (WIDE FORCED)",
-      "SCREEN SETTING > SCREEN SIZE gets a third value, WIDE FORCED: 16:9 with a 4:3 play area, using\n"
-      "Rickow's widescreen patch (downloaded when your disc is extracted). Experimental.\n"
+      "SCREEN SETTING > SCREEN SIZE gets a third value, WIDE FORCED: 16:9 with a 4:3 play area\n"
+      "(after Rickow's widescreen patch, now the project's own code). Experimental.\n"
       "Off: the game's own NORMAL and WIDE only.", 1, -1 },
     { "stage_extensions", "Stage Extensions",
       "The project's own new art for the stage edges that WIDE FORCED leaves black (assets/extensions/).\n"

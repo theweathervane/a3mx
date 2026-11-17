@@ -205,8 +205,7 @@ void f_088215C4(Cpu *c);   /* object_draw */
 extern int rt_widescreen;           /* WIDE FORCED (extensions/widescreen.c; extensions_off.c: 0) */
 /* WIDE FORCED shows 48 pixels more on each side, so the two tests below take in 48 more on each side
    there: else an object whose art reaches into those pixels is not drawn until it is near the 4:3
-   picture, and pops in (the foreground posts on Guy's and Dan's stages). tools/data/widescreen_more.json
-   does the same in the translation, so the reference run agrees. Only what is drawn changes. */
+   picture, and pops in (the foreground posts on Guy's and Dan's stages). Only what is drawn changes. */
 #define WIDE_MORE 48
 
 /* An object in use drawn while its x on the screen (64 to the left of it counted) is within 0 - 511:

@@ -94,7 +94,6 @@ std::string on_path(const char *name) {
 struct Want { const char *id, *dest, *probe, *when; bool tool; };
 const char *const SDL_WHEN = "its source, by CMake, the first time the launcher or the game is built";
 const char *const SH_WHEN = "only if you ask (the button below): the shaders SCREEN SETTING > FILTER draws with, about 85 MB";
-const char *const WS_WHEN = "when your disc is first extracted, for WIDE FORCED (not with Widescreen off)";
 #if defined(_WIN32)
 const Want WANTED[] = {
     { "python-embed", "python", "python.exe", "only if this PC has no Python 3.9+ that can check HTTPS certificates (build.cmd decides)", true },
@@ -110,7 +109,6 @@ const Want WANTED[] = {
 #endif
     { "slang-shaders", "slang-shaders", "crt/crt-geom.slangp", SH_WHEN, true },
     { "sdl3", "build/_deps and build-launcher/_deps", nullptr, SDL_WHEN, false },
-    { "widescreen", "work/sfa3-PSP-widescreen", "sfa3_ws_patternpatcher.py", WS_WHEN, false },
 };
 }
 

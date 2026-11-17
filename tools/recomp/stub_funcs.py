@@ -30,7 +30,7 @@ def main():
             if m: names.update(('f_' + m.group(1).upper(), 'orig_f_' + m.group(1).upper(), 'hook_f_' + m.group(1).upper()))
     os.makedirs(out, exist_ok=True)
     text = ('#pragma once\n/* stand-in for the generated funcs.h (tools/recomp/stub_funcs.py): disc-free build */\n'
-            '#include "cpu.h"\nextern int rt_widescreen;\n' + ''.join('void %s(Cpu *c);\n' % n for n in sorted(names)))
+            '#include "cpu.h"\n' + ''.join('void %s(Cpu *c);\n' % n for n in sorted(names)))
     path = os.path.join(out, 'funcs.h')
     if not os.path.exists(path) or open(path).read() != text:
         open(path, 'w').write(text)

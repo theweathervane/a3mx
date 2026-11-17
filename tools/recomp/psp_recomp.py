@@ -202,7 +202,6 @@ class Gen:
                 if a != start and a in self.known and a not in self.case_labels:
                     labels.add(a); seen.add(('fall', a)); break
                 seen.add(a); w = p.u32(a); br = is_branch(w)
-                todo.extend(p.ws_targets(a))                # the switched patch's jumps (caves)
                 if br is None: a += 4; continue
                 kind = br[0]
                 seen.add(a + 4)
@@ -229,38 +228,8 @@ class Gen:
         return 'c->r[31] = 0x%08X; rt_call_indirect(c, 0x%08X);' % (ret, t)
 
     def op(self, a):
-        """One non-branch instruction; where the switched patch (widescreen) gives it a second meaning,
-        both, chosen by rt_widescreen at run time."""
-        o = translate_op(a, self.p.u32(a))
-        w = self.p.ws_text.get(a)
-        if w is None or is_branch(w): return o
-        n = translate_op(a, w)
-        if n == o: return o
-        return 'if (rt_widescreen) { %s } else { %s }' % (n or ';', o or ';')
-
-    def ws_branch(self, a, start):
-        """The switched patch puts a jump at a (into a cave, or an early return) where the program has
-        a plain instruction: taken only with rt_widescreen; the delay slot is the patched one."""
-        w = self.p.ws_text.get(a)
-        if w is None: return ''
-        br = is_branch(w)
-        if not br: return ''
-        if is_branch(self.p.u32(a)): raise Unsupported('%08X: patch changes a branch' % a)
-        dw = self.p.ws_text.get(a + 4, self.p.u32(a + 4))
-        if is_branch(dw): raise Unsupported('%08X: patch puts a branch in a delay slot' % a)
-        d = translate_op(a + 4, dw)
-        kind = br[0]
-        if kind == 'j':
-            t = target(a, w)
-            if t in self.known and t != start:
-                go = self.call(t, 0).split('; ', 1)[1] + ' return;'
-            else:
-                go = 'goto L_%08X;' % t
-        elif kind == 'jr' and ((w >> 21) & 31) == 31:
-            go = 'return;'
-        else:
-            raise Unsupported('%08X: patch jump of kind %s' % (a, kind))
-        return '    if (rt_widescreen) { %s %s }   /* widescreen patch */' % (d, go)
+        """One non-branch instruction"""
+        return translate_op(a, self.p.u32(a))
 
     def func(self, start):
         p = self.p
@@ -278,8 +247,6 @@ class Gen:
             if a in labels or a == start: out.append('L_%08X:;' % a)
             w = p.u32(a); br = is_branch(w)
             try:
-                wb = self.ws_branch(a, start)
-                if wb: out.append(wb)
                 if br is None:
                     s = self.op(a)
                     if s: out.append('    ' + s)
@@ -357,7 +324,7 @@ def main(binp, anap, impp, outdir, core_dir=None, nfiles=40, hooks=True):
         if name.endswith(('.c', '.h')) and name not in keep: os.remove(os.path.join(outdir, name))
     # funcs.h does not depend on what is decompiled (src/core/decomp.h declares orig_f_ itself), so
     # decompiling a function rewrites one code_NNN.c and recompiles only that.
-    hdr = ['#pragma once', '#include "cpu.h"', 'extern int rt_widescreen;   /* the widescreen patch, switched at run time */']
+    hdr = ['#pragma once', '#include "cpu.h"']
     hdr += ['void f_%08X(Cpu *c);' % a for a in g.funcs]
     hdr += ['void orig_f_%08X(Cpu *c);   /* replaced by a native hook */' % a for a in sorted(g.hooks)]
     hdr += ['void hook_f_%08X(Cpu *c);   /* the hook (src/extensions) */' % a for a in sorted(g.hooks)]
@@ -380,7 +347,6 @@ def main(binp, anap, impp, outdir, core_dir=None, nfiles=40, hooks=True):
     stubs = ['const StubEntry rt_stub_table[] = {']
     stubs += ['    {0x%08X, hle_%s, "%s", "%s"},' % (a, n, m, n) for a, (m, n, nid) in sorted(g.stubs.items())]
     stubs += ['};', 'const unsigned rt_stub_count = %d;' % len(g.stubs)]
-    stubs += ['const int rt_widescreen_available = %d;   /* the widescreen patch is translated in (boot.widescreen.json) */' % (1 if p.ws_text else 0)]
     # a hooked function runs its hook, or the original when the extensions are off (--no-extensions)
     sw = ['/* platform/ext_features.c: the flag of the feature a hook belongs to (all off: --no-extensions) */',
           'const unsigned char *feature_flag_hook(unsigned addr);']

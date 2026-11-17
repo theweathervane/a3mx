@@ -5,7 +5,7 @@
                                        up to date, and the vendored folders are as recorded
     python tools/pins.py --write       after changing a pin or vendored code: record the
                                        folders' and the exe's SHA-256 in pins.json and rewrite the doc
-    python tools/pins.py --download    fetch every download and the widescreen patch and check their SHA-256
+    python tools/pins.py --download    fetch every download and source and check their SHA-256
                                        (run it after changing a download in pins.json)
 
 Where each pin is used:

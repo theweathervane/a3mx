@@ -688,10 +688,6 @@ struct App {
             if (!set.iso.empty()) { args.push_back("--iso"); args.push_back(set.iso); }
             if (advanced && set.extract) args.push_back("--extract");
             if (advanced && set.art_pack) args.push_back("--art-pack");
-            /* Widescreen off and the patch not extracted yet: don't download it. Once it is in work/ the
-               feature alone decides (the game's --features), so ticking it never extracts the disc again */
-            if (!set.feature[FEAT_WIDESCREEN] && !is_file(join(work_dir(), "boot.widescreen.json")) && !is_file(join(work_dir(), "boot.elf")))
-                args.push_back("--no-widescreen");
             if (advanced && set.tests) args.push_back("--test");
             if (run_now()) {
                 args.push_back("--run");

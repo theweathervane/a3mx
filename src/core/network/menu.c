@@ -1,9 +1,8 @@
 /* The network task's menu rows (0x088EC074 - 0x088EC724, one per row 1 - 11, called through a table):
  * each draws its row's text, lit if it is the chosen row, and the chosen row's cursor bar.
  *
- * WIDE FORCED: the bar's x is -240 instead of -192, so it stays centred in the 16:9 picture; that was
- * the 16:9 patch's (Rickow, sfa3-PSP-widescreen, MIT) word in each of the eleven, here native and
- * chosen by rt_widescreen as the patch's translation chooses it (docs/WIDESCREEN.md).
+ * WIDE FORCED: the bar's x is -240 instead of -192, so it stays centred in the 16:9 picture, as Rickow's
+ * 16:9 patch (sfa3-PSP-widescreen, MIT) had it (docs/WIDESCREEN.md).
  *
  * network_match reaches eight of them; the rows with ids 0, 9 and 10 belong to menus no scenario opens.
  */

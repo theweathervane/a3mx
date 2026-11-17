@@ -44,7 +44,8 @@
  *                        the game looks (beside it, and .tools/ beside the work folder: shader.h)
  *   --save-dir DIR       keep saves and settings together in DIR, and the log and last_run.txt in the work
  *                        folder, as before 0.60.0 (tests start from an empty DIR)
- *   --hash-log FILE      write one line per frame: frame, hash of the program's memory, hash of the frame buffer
+ *   --hash-log FILE      write one line per frame: frame, hash of the program's memory, hash of the frame buffer,
+ *                        hash of the four fighters (0x092E3EA0 - 0x092E5100: tests/parity.py's WIDE FORCED check)
  *                        (tests/parity.py compares two runs with it)
  *   --stick "F=LX,LY;.." scripted analogue stick by frame (tests)
  *   --assets DIR         load each archive that DIR/index.json gives an unpacked folder from it (default:
@@ -361,7 +362,9 @@ static void hash_frame(uint64_t f) {
     uint64_t state = hash_mem(0x08804000u, image_end - 0x08804000u), fb = 0;
     uint32_t fba = rt_fb_addr();
     if (fba) fb = hash_mem(fba, rt_fb_width() * 272u * (rt_fb_format() == 3 ? 4u : 2u));
-    fprintf(hash_log, "%llu %016llx %016llx\n", (unsigned long long)f, (unsigned long long)state, (unsigned long long)fb);
+    uint64_t fighters = hash_mem(0x092E3EA0u, 4u * 0x498u);
+    fprintf(hash_log, "%llu %016llx %016llx %016llx\n", (unsigned long long)f, (unsigned long long)state, (unsigned long long)fb,
+            (unsigned long long)fighters);
 }
 /* Screens the runtime answers by itself (sysdata.c) are kept off screen: while held, the window keeps
  * showing the last frame presented. */

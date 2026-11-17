@@ -8,6 +8,12 @@ archive from the disc: --no-assets):
 and compares, frame by frame, a hash of the program's memory (code, data, bss) and of the frame
 buffer. The first frame that differs fails the test, with how to look into it.
 
+A scenario with a `wide` line checks WIDE FORCED instead: it is played twice by the decompiled code,
+  narrow   SCREEN SIZE as the game sets it
+  wide     WIDE FORCED (a3mx.cfg's screen_size)
+and the four fighters (0x092E3EA0 - 0x092E5100) must be the same in every frame: WIDE FORCED only
+shows more of the screen, it must never change the fight. (Its drawing is checked by eye.)
+
 Usage: parity.py --exe build/a3mx --work work --scenario tests/scenarios/NAME.txt [--out DIR]
 
 A scenario file:
@@ -18,12 +24,13 @@ A scenario file:
     args --p2 cpu                (optional extra arguments for both runs)
     config [screen setting]      (optional: lines of the runs' a3mx.cfg, in order, written to
     config screen_size=WIDE FORCED    both save folders before they start)
+    wide                         (optional: the WIDE FORCED check above)
 """
 import argparse, os, shutil, subprocess, sys, time
 
 
 def read_scenario(path):
-    sc = {'frames': 600, 'input': None, 'args': [], 'config': []}
+    sc = {'frames': 600, 'input': None, 'args': [], 'config': [], 'wide': False}
     for line in open(path, encoding='utf-8'):
         line = line.split('#', 1)[0].strip()
         if not line: continue
@@ -33,6 +40,7 @@ def read_scenario(path):
         elif key == 'args': sc['args'] += val.split()
         elif key == 'stick': sc['args'] += ['--stick', val.strip()]
         elif key == 'config': sc['config'].append(val.strip())
+        elif key == 'wide': sc['wide'] = True
         else: raise SystemExit('%s: unknown line %r' % (path, line))
     return sc
 
@@ -40,8 +48,9 @@ def read_scenario(path):
 def start(exe, work, sc, out, mode, extra):
     d = os.path.join(out, mode)
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    if sc['config']:
-        with open(os.path.join(d, 'a3mx.cfg'), 'w', encoding='utf-8') as f: f.write('\n'.join(sc['config']) + '\n')
+    config = sc['config'] + (['[screen setting]', 'screen_size=WIDE FORCED'] if mode == 'wide' else [])
+    if config:
+        with open(os.path.join(d, 'a3mx.cfg'), 'w', encoding='utf-8') as f: f.write('\n'.join(config) + '\n')
     cmd = [exe, '--work', work, '--save-dir', d, '--log', os.path.join(d, 'run.log'),
            '--headless', '--fast', '--renderer', 'soft', '--frames', str(sc['frames']),
            '--hash-log', os.path.join(d, 'hashes.txt'), '--no-assets',
@@ -55,10 +64,29 @@ def start(exe, work, sc, out, mode, extra):
 def load(path):
     rows = []
     for line in open(path):
-        f, state, fb = line.split()
-        rows.append((int(f), state, fb))
+        f, state, fb, fighters = line.split()
+        rows.append((int(f), state, fb, fighters))
     return rows
 
+
+def wide_check(a, sc, name, out, t0):
+    runs = {m: start(a.exe, a.work, sc, out, m, []) for m in ('narrow', 'wide')}
+    for m, (cmd, p) in runs.items():
+        if p.wait() != 0:
+            print('%s run failed (exit %d): %s\n  log: %s' % (m, p.returncode, ' '.join(cmd), os.path.join(out, m, 'run.log')))
+            return 1
+    nar, wid = load(os.path.join(out, 'narrow', 'hashes.txt')), load(os.path.join(out, 'wide', 'hashes.txt'))
+    if len(nar) < sc['frames'] - 5:
+        print('narrow run stopped early: %d of %d frames' % (len(nar), sc['frames'])); return 1
+    for n, w in zip(nar, wid):
+        if n[3] != w[3]:
+            print('WIDE FORCED FAIL in %s at frame %d: the fighters differ from the narrow run.' % (name, n[0]))
+            print('  Compare the two with --watch 092E3EA0-092E5100 --watch-from N (a watch build) on both runs.')
+            return 1
+    if len(nar) != len(wid):
+        print('WIDE FORCED FAIL in %s: %d frames against %d' % (name, len(wid), len(nar))); return 1
+    print('WIDE FORCED OK: %s, the fighters identical in all %d frames (%.0fs)' % (name, len(nar), time.time() - t0))
+    return 0
 
 def main():
     ap = argparse.ArgumentParser()
@@ -69,6 +97,7 @@ def main():
     name = os.path.splitext(os.path.basename(a.scenario))[0]
     out = os.path.join(a.out, name)
     t0 = time.time()
+    if sc['wide']: return wide_check(a, sc, name, out, t0)
     report = os.path.join(out, 'decomp', 'decomp_report.txt')
     runs = {m: start(a.exe, a.work, sc, out, m, extra) for m, extra in
             (('reference', ['--reference']), ('decomp', ['--decomp-report', os.path.abspath(report)]))}

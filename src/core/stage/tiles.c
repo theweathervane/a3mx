@@ -10,26 +10,18 @@
  * 28-29 flip it (1 across, 2 up and down); bit 30 picks the blend; bits 8-15 its palette, bits 0-7 its
  * texel cell (16 x 16 cells of 16 texels).
  *
- * WIDE FORCED: the 16:9 patch (Rickow, sfa3-PSP-widescreen, MIT) changes these drawers to start
- * further left and draw more columns: 0x0881AB28 two tiles earlier and 17 columns, 0x0881B268 three
- * tiles earlier and 31. That is done here as the patch does it, while rt_widescreen is set, so the
- * reference run (the patched translation) and this code agree with WIDE FORCED on or off. It is the
- * first part of the patch done in native code (docs/WIDESCREEN.md).
+ *   0x0881B7C8  32-pixel tiles like 0x0881AB28, from a map 24 tiles wide whose horizontal scroll wraps
+ *               every 768 pixels (only 0x0881A2C8 calls it: the endings, arcade_ending_full).
+ *
+ * WIDE FORCED (rt_widescreen), after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT): the 32-pixel
+ * drawers start two tiles further left and draw 17 columns, 0x0881B268 three tiles and 31.
  *
  * One change to the patch (0.97.0): it starts a row further left by moving the map pointer back, so when
  * the grid's first map column is less than that (0 or 1; 0 - 2 for 16-pixel tiles: layer 0 at the left
  * wall on many stages) it read the end of the row above. The map wraps across, as the arcade's tile
- * layers do, so here it wraps round within the same row, and the row's wrap moves to match.
- * tools/data/widescreen_more.json sends the patch's jumps to added code doing the same, for the reference
- * run. Not for the maps whose wrap is something else: the animated kinds 0xDA / 0xEE (their wrap distance
- * isn't set), 0x0881B268's strips (0x90, the next strip) and animated 0x85.
- *
- *   0x0881B7C8  32-pixel tiles like 0x0881AB28, from a map 24 tiles wide whose horizontal scroll wraps
- *               every 768 pixels (only 0x0881A2C8 calls it: the endings, arcade_ending_full).
- *
- * The patch does the same in 0x0881B7C8 as in 0x0881AB28, but without the wrap round within the row
- * (below): there the extra tiles still come from the row above, as in the patch, so the reference run
- * agrees. That goes when the patch is dropped.
+ * layers do, so here it wraps round within the same row, and the row's wrap moves to match (0x0881B7C8
+ * too since 0.99.1). Not for the maps whose wrap is something else: the animated kinds 0xDA / 0xEE
+ * (their wrap distance isn't set), 0x0881B268's strips (0x90, the next strip) and animated 0x85.
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
  * differently from the PSP.
@@ -100,12 +92,12 @@ typedef struct {
     int cols, wide_cols; /* columns, and with WIDE FORCED */
     int wide_tiles;      /* tiles further left with WIDE FORCED */
     int b268;            /* 0x0881B268: its rows, wrap and strips; else 0x0881AB28's */
-    int wraps_left;      /* WIDE FORCED: the extra tiles wrap round within the row (not 0x0881B7C8) */
+    int wraps_left;      /* WIDE FORCED: the extra tiles wrap round within the row */
 } Grid;
 
 static const Grid GRID_AB28 = { 32, 13, 17, 2, 0, 1 };
 static const Grid GRID_B268 = { 16, 25, 31, 3, 1, 1 };
-static const Grid GRID_B7C8 = { 32, 13, 17, 2, 0, 0 };
+static const Grid GRID_B7C8 = { 32, 13, 17, 2, 0, 1 };
 
 static int columns(const Grid *g) { return rt_widescreen ? g->wide_cols : g->cols; }
 

@@ -115,10 +115,6 @@ if(NOT A3MX_EXTENSIONS)
   set(GEN_NO_HOOKS --no-hooks)      # no hooks to call: every hooked function is translated as itself
 endif()
 file(GLOB TOOL_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/tools/recomp/*.py")
-set(WS_JSON "")
-if(EXISTS "${A3MX_WORK_DIR}/boot.widescreen.json")
-  set(WS_JSON "${A3MX_WORK_DIR}/boot.widescreen.json")
-endif()
 # Unchanged outputs keep their timestamps (psp_recomp.py writes only what changed), so decompiling
 # one function recompiles one generated file.
 add_custom_command(
@@ -126,7 +122,7 @@ add_custom_command(
   COMMAND "${Python3_EXECUTABLE}" -I "${CMAKE_SOURCE_DIR}/tools/recomp/psp_recomp.py"
           "${A3MX_WORK_DIR}/boot.elf" "${A3MX_WORK_DIR}/analysis.json" "${A3MX_WORK_DIR}/imports.json" "${GEN_DIR}"
           --core "${CMAKE_SOURCE_DIR}/src/core" --files ${GEN_FILES} ${GEN_NO_HOOKS}
-  DEPENDS ${TOOL_SRC} "${CMAKE_SOURCE_DIR}/tools/data/hooks.txt" "${CMAKE_SOURCE_DIR}/tools/data/widescreen_more.json" "${A3MX_WORK_DIR}/analysis.json" ${WS_JSON} ${CORE_SRC}
+  DEPENDS ${TOOL_SRC} "${CMAKE_SOURCE_DIR}/tools/data/hooks.txt" "${A3MX_WORK_DIR}/analysis.json" ${CORE_SRC}
   COMMENT "Translating the functions not decompiled yet"
   VERBATIM)
 endif()

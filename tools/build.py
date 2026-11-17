@@ -27,7 +27,6 @@ Options:
   --iso PATH          your ISO, if it is not in imports/psp/ (extracted again only if it is not the
                       one already in work/)
   --extract           extract the disc again (after changing the analysis tools)
-  --no-widescreen     extract without the 16:9 patch (no WIDE FORCED)
   --no-extensions     build without the extensions carried over from the static recomp: the PSP
                       program alone (its own menus and saves, one pad), into <preset dir>-noext/
                       (a normal build can also run that way: a3mx --no-extensions)
@@ -252,9 +251,6 @@ def extract_reason(a, work):
             if h.hexdigest() != disc.get('iso_sha1'): return 'a different ISO (%s)' % os.path.basename(a.iso)
             disc.update(iso_path=os.path.abspath(a.iso), iso_size=os.path.getsize(a.iso), iso_mtime=int(os.path.getmtime(a.iso)))
             json.dump(disc, open(os.path.join(work, 'disc.json'), 'w'), indent=1)    # the same disc: no hashing next time
-    has_ws = os.path.exists(os.path.join(work, 'boot.widescreen.json'))
-    if a.no_widescreen and has_ws: return 'without the widescreen patch this time (--no-widescreen)'
-    if not a.no_widescreen and not has_ws and disc.get('region', 'us') == 'us': return 'with the widescreen patch this time'
     assets = os.path.join(ROOT, 'assets', disc.get('region', 'us'))
     if os.path.isdir(os.path.join(assets, 'pac')) and not os.path.exists(os.path.join(assets, 'index.json')):
         return 'to move assets/ to the 0.37.0 layout (your edits are carried over; assets/LAYOUT.md)'
@@ -365,7 +361,6 @@ def main():
     ap = argparse.ArgumentParser(description='Build A3MX from your disc.')
     ap.add_argument('--preset', default='release', choices=['release', 'debug', 'watch', 'headless'])
     ap.add_argument('--iso'); ap.add_argument('--extract', action='store_true')
-    ap.add_argument('--no-widescreen', action='store_true')
     ap.add_argument('--no-extensions', action='store_true')
     ap.add_argument('--test', action='store_true'); ap.add_argument('--run', action='store_true')
     ap.add_argument('--tools-only', action='store_true')
@@ -402,7 +397,6 @@ def main():
         step('Your disc: check and extract (tools/extract_assets.py): %s' % reason)
         cmd = [sys.executable, os.path.join(ROOT, 'tools', 'extract_assets.py')]
         if a.iso: cmd += ['--iso', a.iso]
-        if a.no_widescreen: cmd += ['--no-widescreen']
         run(cmd, env)
     else:
         say('\n==> Your disc: already extracted into work/ (--extract to do it again)')

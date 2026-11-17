@@ -15,45 +15,9 @@ BASE = 0x08804000
 
 def sx16(v): return (v & 0xFFFF) - ((v & 0x8000) << 1)
 
-MORE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'widescreen_more.json')
-
-def widescreen_more(prog):
-    """The project's own words for WIDE FORCED (tools/data/widescreen_more.json), on top of the patch's
-    overlay: ({address: word} for .text, {address: word} of added code). A .text entry gives the word it
-    replaces: "orig", the program's, or "patch", the patch's own (to send one of its jumps elsewhere).
-    Added code ("caves") goes where the program image has nothing (outside it, or zero) and the patch
-    has no code: it is only translated, never loaded into game memory. Any mismatch stops the
-    translation."""
-    text, caves = {}, {}
-    if not os.path.exists(MORE): return text, caves
-    j = json.load(open(MORE))
-    for e in j['text']:
-        a, new = int(e['addr'], 16), int(e['new'], 16)
-        if 'patch' in e:
-            want = int(e['patch'], 16)
-            if prog.ws_text.get(a) != want:
-                raise SystemExit('widescreen_more.json: the patch has %s at %08X, not %08X'
-                                 % ('%08X' % prog.ws_text[a] if a in prog.ws_text else 'nothing', a, want))
-        else:
-            orig = int(e['orig'], 16)
-            have = struct.unpack_from('<I', prog.img, a - BASE)[0]
-            if have != orig:
-                raise SystemExit('widescreen_more.json: %08X holds %08X, not %08X' % (a, have, orig))
-            if a in prog.ws_text: raise SystemExit('widescreen_more.json: the patch already changes %08X' % a)
-        text[a] = new
-    for e in j.get('caves', []):
-        a = int(e['addr'], 16)
-        for i, w in enumerate(e['words']):
-            b = a + 4 * i
-            inside = 0 <= b - BASE < len(prog.img)
-            if (inside and struct.unpack_from('<I', prog.img, b - BASE)[0]) or b in prog.caves or b in caves or prog.lo <= b < prog.hi:
-                raise SystemExit('widescreen_more.json: %08X is not free for added code' % b)
-            caves[b] = int(w, 16)
-    return text, caves
-
 class Prog:
     """The relocated program. `extra_code` lists [lo, hi) address ranges outside .text that hold
-    code (for example the code caves a binary patch such as the widescreen patch adds in .data)."""
+    code."""
     def __init__(self, path, extra_code=None):
         self.e = e = Elf(path)
         self.img, self.rel = relocate(e, BASE)
@@ -63,30 +27,8 @@ class Prog:
             side = os.path.splitext(path)[0] + '.extra_code.json'
             extra_code = json.load(open(side)) if os.path.exists(side) else []
         self.extra = [tuple(r) for r in extra_code]
-        # a patch switched at run time (prepare.py: boot.widescreen.json): .text words with a second
-        # meaning (ws_text) and code added in unused .data (caves, read as code here)
-        self.ws_text, self.caves = {}, {}
-        side = os.path.join(os.path.dirname(os.path.abspath(path)), 'boot.widescreen.json')
-        if os.path.exists(side):
-            j = json.load(open(side))
-            self.ws_text = {int(k, 16): v for k, v in j['text'].items()}
-            self.caves = {int(k, 16): v for k, v in j['caves'].items()}
-            more_text, more_caves = widescreen_more(self)
-            self.ws_text.update(more_text)
-            self.caves.update(more_caves)
-            for a in sorted(self.caves):
-                if self.extra and a - self.extra[-1][1] <= 16: self.extra[-1] = (self.extra[-1][0], a + 4)
-                else: self.extra.append((a, a + 4))
     def u32(self, a):
-        if a in self.caves: return self.caves[a]
         return struct.unpack_from('<I', self.img, a - BASE)[0]
-    def ws_targets(self, a):
-        """Where the patched instruction at a can also go (a jump into a cave)."""
-        w = self.ws_text.get(a)
-        if w is None: return []
-        br = is_branch(w)
-        if br and br[0] in ('j', 'b'): return [target(a, w)]
-        return []
     def in_text(self, a):
         if a % 4: return False
         return self.lo <= a < self.hi or any(l <= a < h for l, h in self.extra)
@@ -161,7 +103,7 @@ def main(path, out):
     p = Prog(path); e = p.e
     seeds = {}
     def seed(a, why):
-        if p.in_text(a) and a not in p.caves: seeds.setdefault(a, set()).add(why)   # (caves: reached only by the patch's jumps)
+        if p.in_text(a): seeds.setdefault(a, set()).add(why)
 
     le = e.by_name['.lib.ent']['addr'] + BASE
     nvar, nfunc = p.img[le - BASE + 9], struct.unpack_from('<H', p.img, le - BASE + 10)[0]
@@ -175,7 +117,7 @@ def main(path, out):
     for a, typ, v in p.rel:
         if typ == 4: seed(v, 'jal')
         elif typ == 6: seed(v, 'la')
-        elif typ == 2 and p.in_text(v) and v not in p.caves: data_ptr[a + BASE] = v     # relocation offsets are 0-based
+        elif typ == 2 and p.in_text(v): data_ptr[a + BASE] = v     # relocation offsets are 0-based
 
     # switch tables
     switches = {}
@@ -205,7 +147,6 @@ def main(path, out):
                 if a != start and a in known and a not in case_labels:
                     break                                   # fell into another function
                 seen.add(a); w = p.u32(a); br = is_branch(w)
-                todo.extend(p.ws_targets(a))                # the switched patch's jumps (caves)
                 if br is None: a += 4; continue
                 kind, _, likely, link = br
                 seen.add(a + 4)                             # delay slot

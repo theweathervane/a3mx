@@ -1,8 +1,7 @@
 /* The screen's setup in the text pass (object/frame.c), the parts the 16:9 patch changes.
  *
- * WIDE FORCED: these were the patch's (Rickow, sfa3-PSP-widescreen, MIT) words; here they are native,
- * chosen by rt_widescreen as the patch's translation chooses them, so the reference run (the patched
- * translation) and this code agree with WIDE FORCED on or off (docs/WIDESCREEN.md).
+ * WIDE FORCED: after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT), chosen by rt_widescreen
+ * (docs/WIDESCREEN.md).
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
  * differently from the PSP.

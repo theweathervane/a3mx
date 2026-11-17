@@ -60,16 +60,6 @@
   ],
   "sources": [
     {
-      "id": "widescreen",
-      "name": "SFA3MAX 16:9 widescreen patch (Rickow, MIT)",
-      "repo": "https://github.com/Rickow/Street-Fighter-Alpha-3-MAX-PSP-widescreen",
-      "commit": "d7fc89b5579d06a55149c862193891ef3da4958c",
-      "files": {
-        "sfa3_ws_patternpatcher.py": "d64b2c826b422a13bfde9bc13deecc303d903c769c6b60d7a79d98ead0c164fb"
-      },
-      "used_by": "tools/extract_assets.py, which downloads that commit and runs the patcher only if its SHA-256 matches (else WIDE FORCED is off)"
-    },
-    {
       "id": "slang-shaders",
       "name": "libretro slang-shaders (the FILTER setting's shaders; each shader under its own licence)",
       "repo": "https://github.com/libretro/slang-shaders",

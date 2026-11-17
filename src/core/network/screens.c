@@ -4,8 +4,8 @@
  * docs/PSP_PROGRAM_MAP.md). No scenario reaches 0x088D6D3C or the two states yet.
  *
  * WIDE FORCED: each panel is 480 wide instead of 384 (and 0x0895FF6C gets 480), so it reaches the
- * sides of the 16:9 picture; that was the 16:9 patch's (Rickow, sfa3-PSP-widescreen, MIT) word in each,
- * here native and chosen by rt_widescreen as the patch's translation chooses it (docs/WIDESCREEN.md).
+ * sides of the 16:9 picture, as Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT) had it
+ * (docs/WIDESCREEN.md).
  *
  * The rectangle drawer 0x0880E788 takes six arguments (a0 - t1) and the original leaves registers the
  * callees see, so the calls here set the registers as the original does and call directly.

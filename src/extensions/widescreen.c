@@ -1,12 +1,10 @@
-/* WIDE FORCED: the SFA3MAX 16:9 patch (Rickow, sfa3-PSP-widescreen, MIT) as a setting.
+/* WIDE FORCED: 16:9 with a 4:3 play area, as a setting.
  *
- * prepare.py applies the patch to a copy of the program and records what it changes
- * (work/boot.widescreen.json): 35 words of .text and code in unused .data. The translation keeps both
- * meanings of those words and runs the patched one while rt_widescreen is set (psp_recomp.py); the
- * added code is translated too. Without the patch (prepare.py --no-widescreen, or no download) the
- * setting is not offered.
+ * Rickow's SFA3MAX 16:9 patch (sfa3-PSP-widescreen, MIT) showed what to change; until 0.99.1 it was
+ * downloaded and translated in as an overlay. Every function it changed is now native and reads
+ * rt_widescreen itself (docs/WIDESCREEN.md lists them).
  *
- * The patch draws for the game's NORMAL screen size (4:3, un-stretched), so OPTION MODE > SCREEN
+ * WIDE FORCED draws for the game's NORMAL screen size (4:3, un-stretched), so OPTION MODE > SCREEN
  * SETTING > SCREEN SIZE gets a third value, WIDE FORCED: the game's own value (0x08A058A0 + 0x58, and
  * + 0x62) is NORMAL and rt_widescreen is set. Choosing NORMAL or WIDE, or anything setting the game's
  * value to WIDE (DEFAULT, a LOAD, an IMPORT), turns it off. Kept in a3mx.cfg as screen_size=WIDE FORCED;
@@ -17,10 +15,8 @@
  */
 #include "rt.h"
 #include <string.h>
-void inner_f_088B700C(Cpu *c);   /* option_mode.c wraps it (decomp.h) */
 
 int rt_widescreen;
-extern const int rt_widescreen_available;      /* generated (dispatch.c) */
 #define OPTS       0x08A058A0u
 #define SIZE       (OPTS + 0x58)
 #define SIZE2      (OPTS + 0x62)
@@ -29,7 +25,6 @@ void f_088B7D08(Cpu *c);
 
 int widescreen_value(void) { return rt_widescreen ? 2 : RH(SIZE) ? 1 : 0; }
 void widescreen_set(int v) {                   /* 0 NORMAL, 1 WIDE, 2 WIDE FORCED */
-    if (v == 2 && !rt_widescreen_available) v = 0;
     rt_widescreen = v == 2;
     WH(SIZE, v == 1); WH(SIZE2, v == 1);
 }
@@ -46,7 +41,6 @@ void widescreen_frame(void) {
 /* SCREEN SIZE, left / right */
 int widescreen_screen_size(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
-    if (!rt_widescreen_available) { inner_f_088B700C(c); return 1; }
     uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
     int v = widescreen_value();
     for (int k = 0; k < 2; k++) {
