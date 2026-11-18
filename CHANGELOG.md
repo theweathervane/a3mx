@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.99.9
+### For players
+- **WIDE FORCED: the ROUND banner's dark band runs right across the screen,** instead of stopping at the old 4:3 edges.
+- **WIDE FORCED: the FIGHT FIGHT rows and the scrolling KNOCK OUT row reach the screen's sides.** The KNOCK OUT row used to stop short of the right edge.
+
+### Technical
+- Decompiled: three sprite drawers, 0x0880C4C8 (one picture), 0x0880C598 (a set of pieces from 0x092E3E98) and 0x0880CF60 (a set of pieces at one place, half-alpha after-images), new `object/sprite_drawers.c`.
+- WIDE FORCED: `widescreen_edge_cells` (the ROUND banner, kind 0 type 0): the band's right-end cells are drawn again out into both margins (`sprite_grid.c`; the left end has the R in it). `widescreen_edge_row` (FIGHT FIGHT kind 1 type 4, KNOCK OUT kind 0 type 3): a row of one piece at even steps gets one more piece past an end that has reached the 4:3 edge, so nothing is added ahead of a row still sliding in. FIGHT itself and its after-image are left as they are. Only the drawing changes.
+- `platform/extensions_off.c`: stand-ins for `widescreen_edge_shift` / `_copy` (since 0.99.4) and the two new ones, so a build without the extensions links.
+- Checked: arcade_fight and arcade_match parity (all three drawers ran), wide_fight and wide_walls (fighters identical); ROUND, FIGHT, KO, PERFECT and ROUND 2 by eye.
+
 ## 0.99.8
 ### For players
 - **WIDE FORCED: the green wipe from the VS screen into the fight covers the whole screen,** and the green shapes that fade into the stage reach the sides too.

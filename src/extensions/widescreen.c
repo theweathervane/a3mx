@@ -118,3 +118,20 @@ int widescreen_edge_copy(uint32_t sp, int n) {
     if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) >= 200) return n ? -320 : 320;
     return 0;
 }
+
+/* WIDE FORCED: sprites whose pictures are bands across the 4:3 picture, continued into the margins
+   (core/object/sprite_drawers.c, sprite_grid.c): in the fight (GAME + 2 = 2, step 3), the ROUND n
+   banner (kind 0 type 0, drawer 11): its dark band. FIGHT (type 1) is the word alone, edge to edge. */
+int widescreen_edge_cells(uint32_t sp) {
+    if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;
+    return RB(sp + 2) == 0 && RB(sp + 3) == 0 && RW(sp + 148) == 11;
+}
+
+/* ... and rows of pieces continued one piece into the margins (sprite_drawers.c), in the fight: the two
+   rows of FIGHT FIGHT ... that slide in with the FIGHT banner (kind 1 type 4, drawer 1) and the
+   scrolling KNOCK OUT row (kind 0 type 3, drawer 1), which stopped at the 4:3 picture's right edge. */
+int widescreen_edge_row(uint32_t sp) {
+    if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RW(sp + 148) != 1) return 0;
+    uint32_t kind = RB(sp + 2), type = RB(sp + 3);
+    return (kind == 1 && type == 4) || (kind == 0 && type == 3);
+}

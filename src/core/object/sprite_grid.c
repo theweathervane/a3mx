@@ -142,6 +142,28 @@ static void cell_quad(gaddr ds, gaddr v, int16_t x, int16_t y, int16_t w, int16_
     SET16(v + 16 * 0 + 8, v0); SET16(v + 16 * 2 + 8, v0); SET16(v + 16 * 1 + 8, v1); SET16(v + 16 * 3 + 8, v1);
 }
 
+/* WIDE FORCED: set by a sprite drawer (sprite_drawers.c) around a picture that is a band across the 4:3
+   picture (the ROUND banner): the cell drawn across the 4:3 picture's right edge (x 384) is drawn
+   again a cell further out each time until the right margin (48 more) is covered, and the same way out
+   from the left edge (x 0). The right end is used for both sides: the band's left end has the first
+   letter in it. Only the drawing changes. */
+int sprite_grid_wide_edges;
+#define PICTURE_W 384
+#define MARGIN_W  48
+
+static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, int16_t w, int16_t h,
+                            uint8_t last, int32_t texels, uint32_t flags, uint32_t blend, uint32_t effect) {
+    if (w <= 0 || cx >= PICTURE_W || cx + w < PICTURE_W) return;
+    for (int32_t x = cx + w; x < PICTURE_W + MARGIN_W; x += w) {
+        cell_quad(ds, v, (int16_t)x, y, w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+    }
+    for (int32_t x = cx - PICTURE_W; x + w > -MARGIN_W; x -= w) {
+        cell_quad(ds, v, (int16_t)x, y, w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+    }
+}
+
 /* ---- 0x08810D84 / 0x088112A8: cells from the picture cache ---- */
 
 typedef struct {
@@ -210,6 +232,9 @@ static void draw_cached(Cpu *c, const CachedKind *k, gaddr ds, gaddr pic, gaddr 
                     uint32_t blend = (k->big && effect != 0) || (flags_byte & CELL_BLEND) != 0 ||
                                      *W(ds + DS_ALPHA) != ALPHA_OPAQUE;
                     CALL5(f_089E1950, v, 4, *W(page + 8), blend, effect);
+                    if (sprite_grid_wide_edges)
+                        wide_edge_cells(c, ds, v, cx, row_y, S16(ds + k->w_at), S16(ds + k->h_at), flags_byte,
+                                        k->size, *W(page + 8), blend, effect);
                     n = *W(ds + DS_PAGE_CELL);
                 }
                 /* culled or not, the cell had its place in the page */
@@ -260,6 +285,9 @@ static void draw_paletted(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame) 
                     f_089E1438(c);
                     uint32_t flags = c->r[2];
                     CALL5(f_089E1950, v, 4, flags, blend, *B(ds + DS_EFFECT));
+                    if (sprite_grid_wide_edges)
+                        wide_edge_cells(c, ds, v, cx, row_y, S16(ds + DS_W16), S16(ds + DS_H16), flags_byte,
+                                        16, flags, blend, *B(ds + DS_EFFECT));
                 }
             }
             SET16(ds + DS_CELL_X, S16(ds + DS_CELL_X) + S16(ds + DS_STEP_X));
@@ -307,6 +335,9 @@ static void draw_paletted32(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame
                     f_089E1438(c);
                     uint32_t flags = c->r[2];
                     CALL5(f_089E1950, v, 4, flags, blend, *B(ds + DS_EFFECT));
+                    if (sprite_grid_wide_edges)
+                        wide_edge_cells(c, ds, v, cx, S16(ds + DS_ROW_Y), S16(ds + DS_W32), S16(ds + DS_H32),
+                                        flags_byte, 32, flags, blend, *B(ds + DS_EFFECT));
                 }
             }
             SET16(ds + DS_CELL_X, S16(ds + DS_CELL_X) + S16(ds + DS_STEP_X));
