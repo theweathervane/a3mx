@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.3
+### For players
+- **WIDE FORCED: the MODE MENU, OPTION MODE and FREE BATTLE MODE menus fill the screen.** The tiled ALPHA-logo background now continues into the left margin, and the menus' title bars reach both sides.
+
+### Technical
+- `object/draw_kinds.c` (kind 2, a set of parts): with `rt_widescreen`, an object whose parts repeat across (the same image again one width on: the menus' 256 x 256 logo tiles from x 0 to 768) but stop short of the 16:9 sides gets more copies of its end columns until they reach x -48 / 432. The scrolling bands already reached and are left alone.
+- `platform/ge_soft.c`: a full-width draw now gets its margin piece on each side it stops short of, even if the other side already reaches the screen's edge (the menus' title bars ran from the 4:3 edge to past the right of the screen).
+- Checked: wide_fight (fighters identical), mode_menu and option_tour parity, and the three menus by eye.
+
 ## 0.99.2
 ### For players
 - **WIDE FORCED: screens drawn across the whole 4:3 picture now reach the sides.** The title screen's light blue now fills the screen, and full-screen fills, fades and flashes cover the margins too. Banners, wipes, the VS screen's bars and the menus' backdrops are drawn in pieces and are still to do.

@@ -8,6 +8,8 @@
  */
 #include "../decomp.h"
 
+extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
 static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
@@ -139,12 +141,70 @@ static void draw_textured(Cpu *c, gaddr ob, gaddr frame) {
 
 /* ---- kind 2: parts ---- */
 
-/* The object's parts (OB_PARTS: 12 bytes each, +0 x, +2 y, +4 image, +8 nonzero on the last), drawn
-   last to first, each as a kind-1 object made on the stack from the object and the part's image
-   (+0 width, +2 height, +4 palette, +8 / +10 / +12 / +14 texture coordinates). Only these fields of
-   the stack object are written; the rest is whatever the stack held, as in the original. */
+/* One part (+0 x, +2 y, +4 image, +8 nonzero on the last) into the stack object, moved dx across:
+   the image gives +0 width, +2 height, +4 palette, +8 / +10 / +12 / +14 texture coordinates. */
+static void set_part(gaddr tmp, gaddr ob, gaddr part, int32_t dx) {
+    gaddr image = *W(part + 4);
+    *H(tmp + OB_X) = (uint16_t)(S16(ob + OB_X) + S16(part + 0) + dx);
+    *H(tmp + OB_Y) = (uint16_t)(S16(ob + OB_Y) + S16(part + 2));
+    *H(tmp + OB_TOP) = 0;
+    *H(tmp + OB_LEFT) = 0;
+    *W(tmp + OB_PALETTE) = *W(image + 4);
+    *H(tmp + OB_WIDTH) = *H(image + 0);
+    *H(tmp + OB_HEIGHT) = *H(image + 2);
+    *H(tmp + OB_UV) = *H(image + 8);
+    *H(tmp + OB_UV2) = *H(image + 10);
+    *H(tmp + OB_UV + 2) = *H(image + 12);
+    *H(tmp + OB_UV2 + 2) = *H(image + 14);
+}
+
+/* WIDE FORCED: a kind-2 object whose parts repeat across (the same image again one width on: the
+   menus' tiled ALPHA-logo backdrop, 256 x 256 tiles from x 0 to 768) but stop short of the 16:9
+   picture's sides (x -48 or 432 on the screen) gets more copies of its end columns until they
+   reach them. The objects that already reach (the menus' scrolling bands) are left alone. */
+#define WIDE_SIDE 48
+static void wide_more_parts(Cpu *c, gaddr ob, gaddr tmp, gaddr first, uint32_t count) {
+    int32_t lo = 0x7FFFFFFF, hi = -0x7FFFFFFF, repeats = 0;
+    for (uint32_t i = 0; i < count; i++) {
+        gaddr p = first + i * 12;
+        int32_t x = S16(p), w = *H(*W(p + 4));
+        if (x < lo) lo = x;
+        if (x + w > hi) hi = x + w;
+        for (uint32_t j = 0; j < count; j++) {
+            gaddr q = first + j * 12;
+            if (S16(q) == x + w && S16(q + 2) == S16(p + 2) && *W(q + 4) == *W(p + 4)) repeats = 1;
+        }
+    }
+    if (!repeats) return;
+    for (uint32_t i = 0; i < count; i++) {
+        gaddr p = first + i * 12;
+        int32_t x = S16(p), w = *H(*W(p + 4));
+        if (w <= 0) continue;
+        int16_t X0, X1, Y0, Y1;
+        if (x == lo) {
+            for (int k = 1; k <= 4; k++) {
+                set_part(tmp, ob, p, -k * w);
+                rect_on_screen(tmp, &X0, &X1, &Y0, &Y1);
+                if (X1 <= -WIDE_SIDE) break;
+                CALL1(f_0881032C, tmp);
+            }
+        }
+        if (x + w == hi) {
+            for (int k = 1; k <= 4; k++) {
+                set_part(tmp, ob, p, k * w);
+                rect_on_screen(tmp, &X0, &X1, &Y0, &Y1);
+                if (X0 >= 384 + WIDE_SIDE) break;
+                CALL1(f_0881032C, tmp);
+            }
+        }
+    }
+}
+
+/* The object's parts (OB_PARTS: 12 bytes each), drawn last to first, each as a kind-1 object made on
+   the stack from the object and the part's image. Only these fields of the stack object are written;
+   the rest is whatever the stack held, as in the original. */
 static void draw_parts(Cpu *c, gaddr ob, gaddr frame) {
-    gaddr part = *W(ob + OB_PARTS);
+    gaddr part = *W(ob + OB_PARTS), first = part;
     uint32_t count = 0;
     while (*H(part + 8) == 0) { part += 12; count++; }
     count++;
@@ -157,21 +217,12 @@ static void draw_parts(Cpu *c, gaddr ob, gaddr frame) {
     };
     for (size_t i = 0; i < sizeof copied; i++) *B(tmp + copied[i]) = *B(ob + copied[i]);
 
+    uint32_t n = count;
     for (; count != 0; count--, part -= 12) {
-        gaddr image = *W(part + 4);
-        *H(tmp + OB_X) = (uint16_t)(S16(ob + OB_X) + S16(part + 0));
-        *H(tmp + OB_Y) = (uint16_t)(S16(ob + OB_Y) + S16(part + 2));
-        *H(tmp + OB_TOP) = 0;
-        *H(tmp + OB_LEFT) = 0;
-        *W(tmp + OB_PALETTE) = *W(image + 4);
-        *H(tmp + OB_WIDTH) = *H(image + 0);
-        *H(tmp + OB_HEIGHT) = *H(image + 2);
-        *H(tmp + OB_UV) = *H(image + 8);
-        *H(tmp + OB_UV2) = *H(image + 10);
-        *H(tmp + OB_UV + 2) = *H(image + 12);
-        *H(tmp + OB_UV2 + 2) = *H(image + 14);
+        set_part(tmp, ob, part, 0);
         CALL1(f_0881032C, tmp);
     }
+    if (rt_widescreen) wide_more_parts(c, ob, tmp, first, n);
 }
 
 SFA_FUNC(0880F4FC, game_draw_plain)    { c->r[29] -= 0x50; draw_plain(c, ARG(0), c->r[29]); c->r[29] += 0x50; }

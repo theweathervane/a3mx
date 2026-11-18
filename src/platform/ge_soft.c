@@ -419,9 +419,9 @@ void ge_census_write(void) {
 /* ---------------------------------------------------------------- WIDE FORCED: full-width draws */
 /* In WIDE FORCED the 4:3 picture is x 48 - 432 of the 480-wide screen. Much of what the game draws
    across its whole picture (title and menu backdrops, the attract sequence's bars and bands, ROUND /
-   FIGHT / KNOCK OUT banners, fades) is one sprite or quad spanning exactly that, which leaves the
-   margins black or showing what is behind. Such a draw gets a piece in each margin carrying on its
-   edge: the edge texel column (or the flat colour) smeared out to the screen's side. Only what is
+   FIGHT / KNOCK OUT banners, fades, menu title bars) is one sprite or quad spanning that, which leaves
+   the margins black or showing what is behind. Such a draw gets a piece in each margin it stops short
+   of, carrying on its edge: the edge texel column (or the flat colour) smeared out to the screen's side. Only what is
    drawn changes; game memory is never touched. */
 extern int rt_widescreen;            /* extensions/widescreen.c (extensions_off.c: 0) */
 #define WIDE_L 48.0f                 /* the 4:3 picture in the 480-wide screen */
@@ -444,8 +444,9 @@ static void emit_sprite(const Vtx *a, const Vtx *b, int flat) {
 static void wide_margins_rect(const Vtx *v, int n, int flat) {
     float lx = v[0].x, rx = v[0].x;
     for (int i = 1; i < n; i++) { if (v[i].x < lx) lx = v[i].x; if (v[i].x > rx) rx = v[i].x; }
-    if (!(lx <= WIDE_L && lx > 0.f && rx >= WIDE_R && rx < 480.f)) return;
+    if (!(lx <= WIDE_L && rx >= WIDE_R)) return;
     for (int side = 0; side < 2; side++) {
+        if (side ? rx >= 480.f : lx <= 0.f) continue;   /* that side already reaches the screen's edge */
         float ex = side ? rx : lx, ox = side ? lx : rx;
         const Vtx *top = NULL, *bot = NULL, *other = NULL;
         for (int i = 0; i < n; i++) {

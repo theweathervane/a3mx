@@ -38,7 +38,10 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     single rectangle the game draws across exactly the 4:3 picture (the title's backdrop, full-screen
     fills, fades and flashes) gets a piece in each margin repeating its edge texel column or colour.
     Renderer only: game memory is untouched. Banners, wipes and menu backdrops built from many pieces
-    are not covered by it and need their own changes (the list in ROADMAP.md).
+    are not covered by it and need their own changes (the list in ROADMAP.md). Since 0.99.3 a draw
+    gets a piece on each side it stops short of, even if the other side reaches the screen's edge;
+  - the menus' tiled backdrops (`src/core/object/draw_kinds.c`, kind 2, 0.99.3): an object whose
+    parts repeat across gets more copies of its end columns until they reach the 16:9 sides.
 - Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
   four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).
