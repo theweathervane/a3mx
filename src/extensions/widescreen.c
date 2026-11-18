@@ -84,6 +84,8 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
      text in the same sprite tree (type 7), as on the VS screen;
    - the VS screen (kind 14): the portraits (type 0). Its name bars (type 2, at x 0 and 384) are
      drawn a second time moved out, so they reach the edges without leaving a gap in the middle.
+   - the select screen's name ticker (kind 16 type 5, the top one): drawn one period further each way,
+     so its words reach the 16:9 sides instead of appearing in the right margin.
    In the sprite's own units: the screen's 48 pixels through SCALE_X. */
 #define SCALE_X 0x08E759E8u
 #define GAME    0x08E75910u
@@ -103,8 +105,11 @@ int widescreen_edge_shift(uint32_t sp) {
     if (kind == 19 && type == 7) return -margin_units();
     return 0;
 }
-int widescreen_edge_copy(uint32_t sp) {
+int widescreen_edge_copy(uint32_t sp, int n) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
-    if (RB(GAME + 2) == 2 && RH(GAME + 4) <= 2 && kind == 14 && type == 2) return away_from_middle(sp, margin_units());
+    if (n == 0 && RB(GAME + 2) == 2 && RH(GAME + 4) <= 2 && kind == 14 && type == 2) return away_from_middle(sp, margin_units());
+    /* the select screen's name ticker at the top (kind 16 type 5, y 232): a strip that scrolls and jumps
+       back by 320 when it has gone that far, too short for the 16:9 sides: copies one period each way */
+    if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) >= 200) return n ? -320 : 320;
     return 0;
 }

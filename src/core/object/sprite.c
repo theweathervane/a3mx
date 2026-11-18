@@ -63,11 +63,11 @@ void f_0880E6E8(Cpu *c);   /* sprite_anchor */
 
 /* WIDE FORCED: some screens' side pieces move out to the 16:9 screen's edges, with the sprites linked
    to them (only where they are drawn: game memory keeps the 4:3 places). widescreen_edge_shift (in
-   extensions/widescreen.c) says by how much for a sprite, widescreen_edge_copy whether it is drawn a
-   second time moved; a linked sprite takes its parent's. */
+   extensions/widescreen.c) says by how much for a sprite, widescreen_edge_copy whether it is drawn again
+   moved (up to twice); a linked sprite takes its parent's. */
 extern int rt_widescreen;
 int widescreen_edge_shift(gaddr sp);
-int widescreen_edge_copy(gaddr sp);   /* a second drawing moved by this much (0: none) */
+int widescreen_edge_copy(gaddr sp, int n);   /* the nth extra drawing, moved by this much (0: none) */
 static int edge_shift, edge_depth;
 
 /* Draws the sprite at `sp` if it is active and shown: the two sprites linked before it, itself, then
@@ -76,10 +76,13 @@ static void draw_sprite(Cpu *c, gaddr sp);
 static void draw_sprite_wide(Cpu *c, gaddr sp) {
     if (!rt_widescreen) { draw_sprite(c, sp); return; }
     int keep = edge_shift;
-    int copy = 0;
-    if (edge_depth == 0) { edge_shift = widescreen_edge_shift(sp); copy = widescreen_edge_copy(sp); }
+    int top = edge_depth == 0;
+    if (top) edge_shift = widescreen_edge_shift(sp);
     edge_depth++;
-    if (copy) { int k = edge_shift; edge_shift = copy; draw_sprite(c, sp); edge_shift = k; }
+    for (int n = 0; top && n < 2; n++) {
+        int copy = widescreen_edge_copy(sp, n);
+        if (copy) { int k = edge_shift; edge_shift = copy; draw_sprite(c, sp); edge_shift = k; }
+    }
     draw_sprite(c, sp);
     edge_depth--;
     edge_shift = keep;

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.5
+### For players
+- **WIDE FORCED: the character select's name ticker no longer pops in.** The scrolling "1P RYU" strip at the top now runs right across the screen, instead of each word appearing whole in the right margin.
+
+### Technical
+- The ticker (select task kind 16 type 5, the top one) is one picture that scrolls and jumps back by 320 when it has gone that far, too short for the 16:9 sides. In WIDE FORCED it is drawn one period further each way as well (`widescreen_edge_copy` in `extensions/widescreen.c`, now up to two extra drawings per sprite tree in `object/sprite.c`).
+- Checked: wide_fight (fighters identical) and the ticker frame by frame by eye.
+
 ## 0.99.4
 ### For players
 - **WIDE FORCED: portraits sit at the screen's edges.** On the character select screen the portrait, the small character and the MODE / SPEED boxes move out to the edge; on the VS screen each portrait moves to its edge (whichever side started, and Dramatic Battle's two as well) and the blue name bars reach the edges; on the map screen (NEXT STAGE) the portrait moves to the left edge to match.

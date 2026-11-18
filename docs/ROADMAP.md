@@ -360,11 +360,10 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
       the VS screen (margins covered, the stray "F" frame hidden); the VS screen's side bars in the
       Versus colour and moving with it, the name bars longer (Dramatic's two as well); the stage fade
       into the fight; ROUND / FIGHT banners; the KNOCK OUT ticker; the map screen's top banner.
-      Since then: the character select's name ticker pops in at the right; EDIT MODE's gradient and
-      WORLD TOUR's map background into the margins.
+      Since then: EDIT MODE's gradient and WORLD TOUR's map background into the margins.
       Done: the title's backdrop and full-screen fills (0.99.2); the MODE MENU, OPTION MODE and FREE
       BATTLE MODE backdrops and title bars (0.99.3); portraits to the edges on the select, VS and map
-      screens, the VS name bars (0.99.4)
+      screens, the VS name bars (0.99.4); the select screen's name ticker (0.99.5)
 - [x] WIDE FORCED on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
       play twice, and the four fighters must be the same in every frame
 
