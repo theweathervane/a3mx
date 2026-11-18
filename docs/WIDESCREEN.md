@@ -40,12 +40,18 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     Renderer only: game memory is untouched. Banners, wipes and menu backdrops built from many pieces
     are not covered by it and need their own changes (the list in ROADMAP.md). Since 0.99.3 a draw
     gets a piece on each side it stops short of, even if the other side reaches the screen's edge;
+    since 0.99.10 a rectangle shaded top to bottom (EDIT MODE's green, WORLD TOUR's blue behind the
+    map) gets a piece shaded the same way, not one flat colour;
   - the menus' tiled backdrops (`src/core/object/draw_kinds.c`, kind 2, 0.99.3): an object whose
     parts repeat across gets more copies of its end columns until they reach the 16:9 sides;
   - side pieces at the screen's edges (0.99.4): the sprite drawer (`src/core/object/sprite.c`) moves
     the drawing of the sprites `widescreen_edge_shift` names (`src/extensions/widescreen.c`) out by
     the margin: the select screen's portrait, small character and MODE / SPEED boxes; the VS screen's
-    portraits (its name bars are drawn a second time moved out); the map screen's portrait.
+    portraits (its name bars are drawn a second time moved out); the map screen's portrait;
+  - the fight's banners (0.99.9): the ROUND banner's band carries on into both margins (its right-end
+    cells, `src/core/object/sprite_grid.c`), and the FIGHT FIGHT rows and the KNOCK OUT row get one
+    more piece past an end that has reached the 4:3 edge (`src/core/object/sprite_drawers.c`), both
+    for the sprites `widescreen_edge_cells` / `widescreen_edge_row` name.
 - Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
   four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).

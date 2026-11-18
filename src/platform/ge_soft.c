@@ -439,8 +439,22 @@ static void emit_sprite(const Vtx *a, const Vtx *b, int flat) {
     } else sprite(a, b);
 }
 
+/* A rectangle as a strip of four (top left, bottom left, top right, bottom right), for a margin
+   piece shaded top to bottom */
+static void emit_strip(const Vtx q[4], int flat) {
+    if (ge_use_gl) {
+        GeVtx g[4];
+        for (int i = 0; i < 4; i++) {
+            g[i].x = q[i].x; g[i].y = q[i].y; g[i].u = q[i].u; g[i].v = q[i].v;
+            g[i].r = (uint8_t)q[i].c.r; g[i].g = (uint8_t)q[i].c.g; g[i].b = (uint8_t)q[i].c.b; g[i].a = (uint8_t)q[i].c.a;
+        }
+        ge_gl_draw(4, g, 4, flat, sc_x1, sc_y1, sc_x2, sc_y2);
+    } else { triangle(&q[0], &q[1], &q[2], flat); triangle(&q[1], &q[2], &q[3], flat); }
+}
+
 /* One axis-aligned rectangle (corners in v[0 .. n-1]): a margin piece each side if it spans the 4:3
-   picture. The piece repeats the edge's texel column (nudged half a texel inside) top to bottom. */
+   picture. The piece repeats the edge's texel column (nudged half a texel inside) top to bottom; a
+   shaded one (EDIT MODE's green gradient) keeps the edge's top and bottom colours. */
 static void wide_margins_rect(const Vtx *v, int n, int flat) {
     float lx = v[0].x, rx = v[0].x;
     for (int i = 1; i < n; i++) { if (v[i].x < lx) lx = v[i].x; if (v[i].x > rx) rx = v[i].x; }
@@ -461,7 +475,14 @@ static void wide_margins_rect(const Vtx *v, int n, int flat) {
         a.u = b.u = u;
         if (side) { a.x = ex; b.x = 480.f; } else { a.x = 0.f; b.x = ex; }
         a.y = top->y; b.y = bot->y;
-        emit_sprite(&a, &b, flat);
+        if (!flat && memcmp(&top->c, &bot->c, sizeof top->c) != 0) {
+            Vtx q[4] = { a, b, a, b };                    /* a: top, b: bottom; then the x of each column */
+            q[0].x = q[1].x = side ? ex : 0.f;
+            q[2].x = q[3].x = side ? 480.f : ex;
+            q[1].y = q[3].y = bot->y; q[0].y = q[2].y = top->y;
+            q[0].c = q[2].c = top->c; q[1].c = q[3].c = bot->c;
+            emit_strip(q, flat);
+        } else emit_sprite(&a, &b, flat);
     }
 }
 

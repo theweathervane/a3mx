@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.10
+### For players
+- **WIDE FORCED: EDIT MODE's green background and WORLD TOUR's blue background behind the map reach the screen's sides,** shaded like the rest instead of a flat dark strip (EDIT MODE) or nothing (WORLD TOUR).
+
+### Technical
+- `platform/ge_soft.c` `wide_margins`: a rectangle across the 4:3 picture whose edge is shaded top to bottom gets its margin pieces as shaded strips with the edge's top and bottom colours, instead of one sprite in the bottom colour. Renderer only, both the software and OpenGL paths (OpenGL not checked here).
+- Checked: mode_tour parity; EDIT MODE's status screen and the WORLD TOUR map by eye, against the build before.
+
 ## 0.99.9
 ### For players
 - **WIDE FORCED: the ROUND banner's dark band runs right across the screen,** instead of stopping at the old 4:3 edges.
