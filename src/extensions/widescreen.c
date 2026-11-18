@@ -107,7 +107,7 @@ int widescreen_edge_shift(uint32_t sp) {
     }
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
     if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
-    if (kind == 19 && type == 7) return -margin_units();
+    if (kind == 19 && type == 7) return away_from_middle(sp, margin_units());   /* P1 left, P2 right */
     return 0;
 }
 int widescreen_edge_copy(uint32_t sp, int n) {

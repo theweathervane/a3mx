@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.7
+### For players
+- **WIDE FORCED: the map screen's portrait is right when player 2 starts.** With PLAYER SIDE 2P (Arcade or Dramatic Battle), the portrait sits at the right edge instead of being pulled left over the banner.
+
+### Technical
+- `extensions/widescreen.c`: the map screen's portrait tree (kind 19 type 7) moves away from the middle like the others, rather than always left.
+- Checked: wide_fight (fighters identical); the select, ISM, profile and map screens with `player_side=2P` by eye.
+
 ## 0.99.6
 ### For players
 - **WIDE FORCED: the character select's chosen MODE and the ISM select move out with the rest.** The highlighted MODE box, the ISM column's chosen panel and its big letter, and the name under the portrait now sit at the edge with the boxes beside them.
