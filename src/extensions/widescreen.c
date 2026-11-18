@@ -79,7 +79,8 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
    the 16:9 screen's edges as they sat at the 4:3 one's. The sprite drawer (core/object/sprite.c)
    asks for each sprite tree it draws; only the drawing moves, game memory keeps the 4:3 places.
    - the character select screen (GAME + 2 = 1): the select tasks (object kind 16) of types 2 - 4,
-     the portrait, the small character sprite and the MODE / SPEED boxes;
+     the portrait, the small character sprite and the MODE / SPEED boxes; type 6, the chosen MODE /
+     ISM panel and the name under the portrait; and the ISM panel's parts (kind 33);
    - the map screen (NEXT STAGE, kind 19): the portrait at the top left, with the scrolling banner
      text in the same sprite tree (type 7), as on the VS screen;
    - the VS screen (kind 14): the portraits (type 0). Its name bars (type 2, at x 0 and 384) are
@@ -99,7 +100,11 @@ static int away_from_middle(uint32_t sp, int units) {
 }
 int widescreen_edge_shift(uint32_t sp) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
-    if (kind == 16 && RB(GAME + 2) == 1 && type >= 2 && type <= 4) return away_from_middle(sp, margin_units());
+    if (RB(GAME + 2) == 1) {                               /* the character select screen */
+        if (kind == 16 && type >= 2 && type <= 4) return away_from_middle(sp, margin_units());
+        if (kind == 16 && type == 6) return away_from_middle(sp, margin_units());   /* the chosen MODE / ISM panel, the name */
+        if (kind == 33) return away_from_middle(sp, margin_units());                /* the ISM panel's parts */
+    }
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
     if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
     if (kind == 19 && type == 7) return -margin_units();

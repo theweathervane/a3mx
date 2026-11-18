@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.6
+### For players
+- **WIDE FORCED: the character select's chosen MODE and the ISM select move out with the rest.** The highlighted MODE box, the ISM column's chosen panel and its big letter, and the name under the portrait now sit at the edge with the boxes beside them.
+
+### Technical
+- `extensions/widescreen.c`: on the select screen, select task type 6 (the chosen MODE / ISM panel and the name strip, with its linked parts) and the ISM panel's parts (object kind 33) move away from the middle by the margin too.
+- Checked: wide_fight (fighters identical); MODE, ISM and SPEED select by eye.
+
 ## 0.99.5
 ### For players
 - **WIDE FORCED: the character select's name ticker no longer pops in.** The scrolling "1P RYU" strip at the top now runs right across the screen, instead of each word appearing whole in the right margin.
