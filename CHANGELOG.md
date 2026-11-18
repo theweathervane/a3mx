@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.4
+### For players
+- **WIDE FORCED: portraits sit at the screen's edges.** On the character select screen the portrait, the small character and the MODE / SPEED boxes move out to the edge; on the VS screen each portrait moves to its edge (whichever side started, and Dramatic Battle's two as well) and the blue name bars reach the edges; on the map screen (NEXT STAGE) the portrait moves to the left edge to match.
+
+### Technical
+- `object/sprite.c`: the sprite drawer asks `widescreen_edge_shift` (in `extensions/widescreen.c`) for each sprite tree it draws, and moves the tree's drawing by that much (a linked sprite takes its parent's); `widescreen_edge_copy` asks for a second drawing moved out. Only the drawing moves: game memory keeps the 4:3 places.
+- Which sprites: the select tasks (object kind 16) of types 2 - 4 on the select screen; on the VS screen (kind 14, battle screen step 2) the portraits (type 0) moved, the name bars (type 2) drawn again moved out; on the map screen (kind 19, step 1) the portrait's tree (type 7, with the scrolling banner text). Each moves away from the middle by the 48-pixel margin.
+- Checked: wide_fight (fighters identical), arcade_fight and select_choices parity, and by eye the select, map and VS screens in Arcade and the VS screen in Dramatic Battle.
+
 ## 0.99.3
 ### For players
 - **WIDE FORCED: the MODE MENU, OPTION MODE and FREE BATTLE MODE menus fill the screen.** The tiled ALPHA-logo background now continues into the left margin, and the menus' title bars reach both sides.

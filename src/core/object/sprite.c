@@ -61,8 +61,29 @@ static void switch_ge_mode(Cpu *c, gaddr sp, uint32_t on) {
 void f_0880C308(Cpu *c);   /* this function: the linked sprites go through it, so --reference-only applies */
 void f_0880E6E8(Cpu *c);   /* sprite_anchor */
 
+/* WIDE FORCED: some screens' side pieces move out to the 16:9 screen's edges, with the sprites linked
+   to them (only where they are drawn: game memory keeps the 4:3 places). widescreen_edge_shift (in
+   extensions/widescreen.c) says by how much for a sprite, widescreen_edge_copy whether it is drawn a
+   second time moved; a linked sprite takes its parent's. */
+extern int rt_widescreen;
+int widescreen_edge_shift(gaddr sp);
+int widescreen_edge_copy(gaddr sp);   /* a second drawing moved by this much (0: none) */
+static int edge_shift, edge_depth;
+
 /* Draws the sprite at `sp` if it is active and shown: the two sprites linked before it, itself, then
    (unless it stands alone) the one linked after it and the next in its chain. */
+static void draw_sprite(Cpu *c, gaddr sp);
+static void draw_sprite_wide(Cpu *c, gaddr sp) {
+    if (!rt_widescreen) { draw_sprite(c, sp); return; }
+    int keep = edge_shift;
+    int copy = 0;
+    if (edge_depth == 0) { edge_shift = widescreen_edge_shift(sp); copy = widescreen_edge_copy(sp); }
+    edge_depth++;
+    if (copy) { int k = edge_shift; edge_shift = copy; draw_sprite(c, sp); edge_shift = k; }
+    draw_sprite(c, sp);
+    edge_depth--;
+    edge_shift = keep;
+}
 static void draw_sprite(Cpu *c, gaddr sp) {
     if (*B(sp + SP_ACTIVE) == 0 || *B(sp + SP_SHOWN) == 0 || *W(DRAW_OFF) != 0) return;
     gaddr ds = DRAW_STATE;
@@ -73,6 +94,7 @@ static void draw_sprite(Cpu *c, gaddr sp) {
     *H(ds + DS_POS_X) = (uint16_t)S16(sp + SP_X);
     *H(ds + DS_POS_Y) = (uint16_t)(0xF0 - S16(sp + SP_Y));
     CALL2(f_0880E6E8, ds, sp);
+    if (edge_shift) *H(ds + DS_POS_X) = (uint16_t)(S16(ds + DS_POS_X) + edge_shift);
     *H(ds + DS_X) = *H(ds + DS_POS_X);
     *H(ds + DS_Y) = *H(ds + DS_POS_Y);
     uint8_t flip = *B(sp + SP_FLIP);
@@ -96,7 +118,7 @@ static void draw_sprite(Cpu *c, gaddr sp) {
 
 /* void draw_sprite(sprite *a0): wrapped so WIDE FORCED's stage extensions (stagestrips.c) can add art to a
    foreground stage object right after it */
-SFA_FUNC_WRAPPED(0880C308, game_draw_sprite, stagestrips_object) { c->r[29] -= 0x20; draw_sprite(c, ARG(0)); c->r[29] += 0x20; }
+SFA_FUNC_WRAPPED(0880C308, game_draw_sprite, stagestrips_object) { c->r[29] -= 0x20; draw_sprite_wide(c, ARG(0)); c->r[29] += 0x20; }
 SFA_FUNC(0880E6E8, game_sprite_anchor) { sprite_anchor(ARG(0), ARG(1)); }
 
 /* ---- 0.82.0 ---- */

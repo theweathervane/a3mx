@@ -41,7 +41,11 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     are not covered by it and need their own changes (the list in ROADMAP.md). Since 0.99.3 a draw
     gets a piece on each side it stops short of, even if the other side reaches the screen's edge;
   - the menus' tiled backdrops (`src/core/object/draw_kinds.c`, kind 2, 0.99.3): an object whose
-    parts repeat across gets more copies of its end columns until they reach the 16:9 sides.
+    parts repeat across gets more copies of its end columns until they reach the 16:9 sides;
+  - side pieces at the screen's edges (0.99.4): the sprite drawer (`src/core/object/sprite.c`) moves
+    the drawing of the sprites `widescreen_edge_shift` names (`src/extensions/widescreen.c`) out by
+    the margin: the select screen's portrait, small character and MODE / SPEED boxes; the VS screen's
+    portraits (its name bars are drawn a second time moved out); the map screen's portrait.
 - Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
   four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).

@@ -73,3 +73,38 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
         if (w == BAR_W || w == wide) WH(o + 0xE, (uint32_t)wide);
     }
 }
+
+/* ---------------------------------------------------------------- side pieces to the screen's edges */
+/* WIDE FORCED: some screens' side pieces move out by the margin, away from the middle, so they sit at
+   the 16:9 screen's edges as they sat at the 4:3 one's. The sprite drawer (core/object/sprite.c)
+   asks for each sprite tree it draws; only the drawing moves, game memory keeps the 4:3 places.
+   - the character select screen (GAME + 2 = 1): the select tasks (object kind 16) of types 2 - 4,
+     the portrait, the small character sprite and the MODE / SPEED boxes;
+   - the map screen (NEXT STAGE, kind 19): the portrait at the top left, with the scrolling banner
+     text in the same sprite tree (type 7), as on the VS screen;
+   - the VS screen (kind 14): the portraits (type 0). Its name bars (type 2, at x 0 and 384) are
+     drawn a second time moved out, so they reach the edges without leaving a gap in the middle.
+   In the sprite's own units: the screen's 48 pixels through SCALE_X. */
+#define SCALE_X 0x08E759E8u
+#define GAME    0x08E75910u
+static int margin_units(void) {
+    uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
+    return scale > 0.f ? (int)(48.f / scale + 0.5f) : 0;
+}
+static int away_from_middle(uint32_t sp, int units) {
+    uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
+    return (float)(int16_t)RH(sp + 18) * scale < 192.f ? -units : units;
+}
+int widescreen_edge_shift(uint32_t sp) {
+    uint32_t kind = RB(sp + 2), type = RB(sp + 3);
+    if (kind == 16 && RB(GAME + 2) == 1 && type >= 2 && type <= 4) return away_from_middle(sp, margin_units());
+    if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
+    if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
+    if (kind == 19 && type == 7) return -margin_units();
+    return 0;
+}
+int widescreen_edge_copy(uint32_t sp) {
+    uint32_t kind = RB(sp + 2), type = RB(sp + 3);
+    if (RB(GAME + 2) == 2 && RH(GAME + 4) <= 2 && kind == 14 && type == 2) return away_from_middle(sp, margin_units());
+    return 0;
+}
