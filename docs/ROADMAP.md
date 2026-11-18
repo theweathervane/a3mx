@@ -355,6 +355,12 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
 - [ ] Art pack (experimental): each stage layer whole as its own PNG, not only screenshots at the walls
       (pan the camera with the layer drawn alone and stitch by its scroll; rebuild the layers wider than
       their tile map from the stage's layout data)
+- [ ] WIDE FORCED outside the fight (the maintainer's screenshots, 2026-11-18): MODE MENU and FREE BATTLE
+      MODE menu backdrops in the left margin; the attract sequence's green band and bars; the wipe into
+      the VS screen (margins covered, the stray "F" frame hidden); the VS screen's side bars in the
+      Versus colour and moving with it, the name bars longer (Dramatic's two as well); the stage fade
+      into the fight; ROUND / FIGHT banners; the KNOCK OUT ticker; the map screen's top banner.
+      Done: the title's backdrop and full-screen fills (0.99.2)
 - [x] WIDE FORCED on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
       play twice, and the four fighters must be the same in every frame
 

@@ -33,7 +33,12 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     map column was smaller (layer 0 at the left wall on Ryu, Akuma, Sagat, Dhalsim, Balrog and Cammy's
     stages, layer 2 on Karin's and Hawk's, the attract sequence's panels);
   - twins for the stage objects that swap props just off the 4:3 screen
-    (`src/extensions/widescreen_twins.c`, 0.98.0).
+    (`src/extensions/widescreen_twins.c`, 0.98.0);
+  - full-width draws carried into the margins (`src/platform/ge_soft.c`, `wide_margins`, 0.99.2): a
+    single rectangle the game draws across exactly the 4:3 picture (the title's backdrop, full-screen
+    fills, fades and flashes) gets a piece in each margin repeating its edge texel column or colour.
+    Renderer only: game memory is untouched. Banners, wipes and menu backdrops built from many pieces
+    are not covered by it and need their own changes (the list in ROADMAP.md).
 - Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
   four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).

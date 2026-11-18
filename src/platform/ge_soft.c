@@ -416,6 +416,65 @@ void ge_census_write(void) {
     rt_log("palette census: %d texture / palette pairs written to %s", census_n, ge_census_path);
 }
 
+/* ---------------------------------------------------------------- WIDE FORCED: full-width draws */
+/* In WIDE FORCED the 4:3 picture is x 48 - 432 of the 480-wide screen. Much of what the game draws
+   across its whole picture (title and menu backdrops, the attract sequence's bars and bands, ROUND /
+   FIGHT / KNOCK OUT banners, fades) is one sprite or quad spanning exactly that, which leaves the
+   margins black or showing what is behind. Such a draw gets a piece in each margin carrying on its
+   edge: the edge texel column (or the flat colour) smeared out to the screen's side. Only what is
+   drawn changes; game memory is never touched. */
+extern int rt_widescreen;            /* extensions/widescreen.c (extensions_off.c: 0) */
+#define WIDE_L 48.0f                 /* the 4:3 picture in the 480-wide screen */
+#define WIDE_R 432.0f
+
+static void emit_sprite(const Vtx *a, const Vtx *b, int flat) {
+    if (ge_use_gl) {
+        GeVtx g[2];
+        const Vtx *s[2] = { a, b };
+        for (int i = 0; i < 2; i++) {
+            g[i].x = s[i]->x; g[i].y = s[i]->y; g[i].u = s[i]->u; g[i].v = s[i]->v;
+            g[i].r = (uint8_t)s[i]->c.r; g[i].g = (uint8_t)s[i]->c.g; g[i].b = (uint8_t)s[i]->c.b; g[i].a = (uint8_t)s[i]->c.a;
+        }
+        ge_gl_draw(6, g, 2, flat, sc_x1, sc_y1, sc_x2, sc_y2);
+    } else sprite(a, b);
+}
+
+/* One axis-aligned rectangle (corners in v[0 .. n-1]): a margin piece each side if it spans the 4:3
+   picture. The piece repeats the edge's texel column (nudged half a texel inside) top to bottom. */
+static void wide_margins_rect(const Vtx *v, int n, int flat) {
+    float lx = v[0].x, rx = v[0].x;
+    for (int i = 1; i < n; i++) { if (v[i].x < lx) lx = v[i].x; if (v[i].x > rx) rx = v[i].x; }
+    if (!(lx <= WIDE_L && lx > 0.f && rx >= WIDE_R && rx < 480.f)) return;
+    for (int side = 0; side < 2; side++) {
+        float ex = side ? rx : lx, ox = side ? lx : rx;
+        const Vtx *top = NULL, *bot = NULL, *other = NULL;
+        for (int i = 0; i < n; i++) {
+            if (v[i].x == ex) {
+                if (!top || v[i].y < top->y) top = &v[i];
+                if (!bot || v[i].y > bot->y) bot = &v[i];
+            } else if (v[i].x == ox) other = &v[i];
+        }
+        if (!top || !bot || !other || top->y == bot->y) continue;
+        float du = other->u - top->u, u = top->u + (du > 0 ? 0.5f : du < 0 ? -0.5f : 0.f);
+        Vtx a = *top, b = *bot;
+        a.u = b.u = u;
+        if (side) { a.x = ex; b.x = 480.f; } else { a.x = 0.f; b.x = ex; }
+        a.y = top->y; b.y = bot->y;
+        emit_sprite(&a, &b, flat);
+    }
+}
+
+static void wide_margins(const Vtx *v, int n, int type, int flat) {
+    if (type == 6) { for (int i = 0; i + 1 < n; i += 2) {
+        /* a sprite is two opposite corners: make the other two so the rectangle code sees all four */
+        Vtx q[4] = { v[i], v[i + 1], v[i], v[i + 1] };
+        q[2].x = v[i + 1].x; q[2].u = v[i + 1].u; q[3].x = v[i].x; q[3].u = v[i].u;
+        q[0].c = q[1].c = q[2].c = q[3].c = v[i + 1].c;   /* sprites take the second vertex's colour */
+        wide_margins_rect(q, 4, flat);
+    } }
+    else if ((type == 4 || type == 5) && n == 4) wide_margins_rect(v, 4, flat);
+}
+
 static void draw_prim(uint32_t arg) {
     int type = (int)((arg >> 16) & 7), n = (int)(arg & 0xFFFF);
     uint32_t vt = R[0x12];
@@ -455,8 +514,10 @@ static void draw_prim(uint32_t arg) {
             gv[i].r = (uint8_t)v[i].c.r; gv[i].g = (uint8_t)v[i].c.g; gv[i].b = (uint8_t)v[i].c.b; gv[i].a = (uint8_t)v[i].c.a;
         }
         ge_gl_draw(type, gv, n, flat, sc_x1, sc_y1, sc_x2, sc_y2);
+        if (rt_widescreen) wide_margins(v, n, type, flat);
         return;
     }
+    if (rt_widescreen) wide_margins(v, n, type, flat);
     switch (type) {
     case 3: for (int i = 0; i + 2 < n; i += 3) triangle(&v[i], &v[i + 1], &v[i + 2], flat); break;
     case 4: for (int i = 0; i + 2 < n; i++) triangle(&v[i], &v[i + 1], &v[i + 2], flat); break;

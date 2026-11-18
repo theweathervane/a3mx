@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.99.2
+### For players
+- **WIDE FORCED: screens drawn across the whole 4:3 picture now reach the sides.** The title screen's light blue now fills the screen, and full-screen fills, fades and flashes cover the margins too. Banners, wipes, the VS screen's bars and the menus' backdrops are drawn in pieces and are still to do.
+
+### Technical
+- `platform/ge_soft.c` (both renderers): with `rt_widescreen`, a single sprite or quad spanning exactly the 4:3 picture (x 48 - 432 of the 480-wide screen) is followed by a piece in each margin repeating its edge texel column (or flat colour). Nothing in game memory changes, so the WIDE FORCED fighter check is unaffected. Checked by eye on the attract sequence and Arcade's first fight (software renderer; the OpenGL path draws the same pieces through `ge_gl_draw`, not checked here).
+
 ## 0.99.1
 ### For players
 - **WIDE FORCED is now entirely the project's own code: Rickow's 16:9 patch is no longer downloaded.** Extracting your disc fetches nothing for it any more, and removes the old download from `work/`. WIDE FORCED looks and plays as before.
