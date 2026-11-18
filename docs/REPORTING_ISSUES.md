@@ -98,7 +98,7 @@ the log level.
 
 - Attach your ISO, or anything extracted from it (`work/`, `assets/`). It's the game's data. The log,
   screenshots and your saves (`saves/a3mx.dat`) are fine.
-- Report problems in other projects here (emulators, the widescreen patch's own repository).
+- Report problems in other projects here (emulators, other ports).
 
 ## Ideas and questions
 

@@ -281,11 +281,9 @@ decompiled.
       Needs: the save task.
   - [x] Silent when a save fails too: no "continue without auto-saving?" (0.24.0; the list of save
         messages is in [SAVES.md](SAVES.md#save-messages-kept-off-screen))
-- [ ] WIDE FORCED as a real native setting (Rickow's 16:9 patch is currently used today). Now: widescreen.c + translation
-      overlay. Since 0.99.0 every function the patch changes is native. Next: drop the patch (its download, pins, `boot.widescreen.json`,
-      the translator's overlay) and test WIDE FORCED by playing each WIDE scenario with it on and off
-      and comparing every fighter's state frame by frame, instead of against the patched translation.
-      Not reached by a scenario yet: 0x088D6D3C, three network menu rows, two of Cammy's CPU states.
+- [x] WIDE FORCED as a real native setting (0.99.1): every function Rickow's 16:9 patch changed is native
+      (0.99.0), and the patch is no longer downloaded or translated in. The WIDE scenarios play with it on
+      and off and compare the fighters frame by frame (TESTS.md). Not reached by a scenario yet: 0x088D6D3C, three network menu rows, two of Cammy's CPU states.
 - [x] Pad icons on the MODE MENU: padicons.c, wrapped around the decompiled MODE MENU (0.24.0).
 - [x] F2 back to the MODE MENU: quitkey.c, wrapped around the decompiled frame wait (0.24.0).
 - [x] Boot screen save messages: bootmsg.c, wrapped around the decompiled load screen (0.24.0).
@@ -357,9 +355,8 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
 - [ ] Art pack (experimental): each stage layer whole as its own PNG, not only screenshots at the walls
       (pan the camera with the layer drawn alone and stitch by its scroll; rebuild the layers wider than
       their tile map from the stage's layout data)
-- [ ] A parity scenario with WIDE FORCED on, compared against it off. (`wide_fight` (0.49.0) runs WIDE
-      FORCED on in both runs, the reference being the patched translation; the on-against-off check
-      of the fighters' state is still to do)
+- [x] WIDE FORCED on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
+      play twice, and the four fighters must be the same in every frame
 
 ## Phase 7: Support for Japanese and EU versions
 - [ ] Map decompiled US functions onto the JP program

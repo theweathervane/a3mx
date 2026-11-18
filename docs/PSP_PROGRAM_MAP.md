@@ -55,13 +55,14 @@ The wireless modes are the ones local 2P/3P should open up.
 
 ## Widescreen patch (Rickow SFA3MAX-PSP-widescreen v1.1)
 
-Applies cleanly to this `BOOT.BIN`. Changes 35 words in `.text` (viewport 384 -> 480 and the camera
+What WIDE FORCED started from (until 0.99.1 downloaded and translated in as an overlay; every function
+below is native now, `rt_widescreen` choosing the width: [WIDESCREEN.md](WIDESCREEN.md)). It applies
+cleanly to this `BOOT.BIN`. Changes 35 words in `.text` (viewport 384 -> 480 and the camera
 -192 -> -240 as immediates; 0x0880F390, the pillarbox, returns at once; six stores in the background
 tile drawers 0x0881AB28 / 0x0881B268 / 0x0881B7C8 become jumps into caves) and adds code in caves in
 unused `.data` (0x08A02ED0, 0x08A02F38, 0x08A031B4; zero in the original, though 0x08A02ED0 is also
-an address the program computes). `prepare.py` records the overlay (`work/boot.widescreen.json`) and the
-translation switches it with `rt_widescreen` (SCREEN SIZE > WIDE FORCED). The game's own display option
-must be **Normal** for it, which WIDE FORCED sees to.
+an address the program computes). The game's own display option must be **Normal** for it, which WIDE
+FORCED sees to.
 
 ## What boot does (from the runtime's trace)
 

@@ -149,9 +149,8 @@ with `--work work` and the Game options: a start for the download-and-run releas
 |---|---|
 | `--run` | start the game after building |
 | `--preset release\|debug\|watch\|headless` | which build (default `release`) |
-| `--iso PATH` | your ISO, if it is not in `imports/psp/`; extracted again only if it is not the disc already in `work/` (or the widescreen choice changed) |
+| `--iso PATH` | your ISO, if it is not in `imports/psp/`; extracted again only if it is not the disc already in `work/` |
 | `--extract` | extract the disc again (after changing the analysis tools) |
-| `--no-widescreen` | extract without the 16:9 patch (no WIDE FORCED) |
 | `--no-extensions` | build without the extensions (the PSP program alone) into `<preset folder>-noext/`, e.g. `build-noext/` ([below](#without-the-extensions)) |
 | `--test` | run the tests after building |
 | `-- ARGS` | with `--run`, everything after `--` goes to the game, e.g. `./build.sh --run -- --log-level debug` |
@@ -303,7 +302,6 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `--region us` / `--region jp` | which disc (default `us`). JP goes to `work-jp/` and is not buildable yet. |
 | `--iso PATH` | the ISO, instead of searching `imports/psp/` (also `A3MX_ISO`) |
 | `--work DIR` | output folder |
-| `--no-widescreen` | leave out the 16:9 patch (no WIDE FORCED) |
 | `--verify-only` | check the disc and stop |
 | `--no-pac` | do not unpack the `.pac` archives into `assets/` |
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.99.1
+### For players
+- **WIDE FORCED is now entirely the project's own code: Rickow's 16:9 patch is no longer downloaded.** Extracting your disc fetches nothing for it any more, and removes the old download from `work/`. WIDE FORCED looks and plays as before.
+- **WIDE FORCED: the endings' backgrounds continue properly into the left margin.** Where they used to show a strip of the row above (Ryu's ending), the extra columns now wrap round within their row, as the fight backgrounds have since 0.97.0.
+
+### Technical
+- Dropped: the patch's pin and download (`tools/data/pins.json`, `extract_assets.py`, `downloads.py`, the launcher's dependency list), `work/boot.widescreen.json` and the translator's switched overlay (`psp_analyze.py` / `psp_recomp.py`: no more `rt_widescreen` in the generated code, no `rt_widescreen_available`), `tools/data/widescreen_more.json`, and `--no-widescreen` (`build.py`, `extract_assets.py`, the launcher).
+- The WIDE scenarios (`wide_fight`, `wide_walls`, `wide_left_wall`) are now a WIDE FORCED check: with a `wide` line, `tests/parity.py` plays the scenario twice with the decompiled code, WIDE FORCED off and on, and the four fighters must be the same in every frame (`--hash-log` writes their hash as a fourth column). What WIDE FORCED draws is checked by eye.
+- `stage/tiles.c`: 0x0881B7C8's extra left columns wrap round within the row (seen in Ryu's ending).
+- Checked: all 75 tests (ctest), and the WIDE FORCED check on network_match and arcade_ending_full as well.
+- Docs: WIDESCREEN.md rewritten for the native WIDE FORCED; TESTS.md, BUILDING.md, PSP_PROGRAM_MAP.md, ROADMAP.md, DEPENDENCIES.md and ACKNOWLEDGMENTS.md updated.
+
 ## 0.99.0
 ### For players
 - Nothing changes in play. All of the 16:9 patch's work is now the project's own code, a step towards dropping the patch download.

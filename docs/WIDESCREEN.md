@@ -1,53 +1,41 @@
 # Widescreen (WIDE FORCED)
 
-WIDE FORCED is using the SFA3MAX 16:9 patch by Rickow ([acknowledgments](../ACKNOWLEDGMENTS.md)), switched at run time in
-game (SCREEN SETTING > SCREEN SIZE).
-
-It was designed for PPSSPP, not for a decomp: it patches immediates and jumps into code caves. This page
-collects what works, what doesn't, and the rules for refining it here, in proper code, once the
-parts of the game it touches are decompiled.
+WIDE FORCED is the project's own 16:9 mode, switched at run time in game (SCREEN SETTING > SCREEN
+SIZE): 16:9 with the 4:3 play area. It started as the SFA3MAX 16:9 patch by Rickow
+([acknowledgments](../ACKNOWLEDGMENTS.md)), which was made for PPSSPP: it patches immediates and jumps
+into code caves. Until 0.99.1 the build downloaded it and translated it in as an overlay. Every
+function it changed is now decompiled and reads `rt_widescreen` itself, and the patch is no longer
+downloaded. This page collects what works, what doesn't, and the rules for refining it.
 
 ## Where it lives
 
-- `src/extensions/widescreen.c`: the SCREEN SIZE setting and switching; `src/extensions/screensetting.c`
-  draws SCREEN SETTING (WIDE FORCED as the size's name).
-- The patch itself (MIT, Rickow): `tools/extract_assets.py` downloads it at the commit pinned in `tools/data/pins.json`, runs its
-  patcher only if the file's SHA-256 matches, and writes the result to `work/boot.widescreen.json`.
-  Once WIDE FORCED is fully native, the dependancy will be dropped;  the translator compiles both versions of each patched word (`rt_widescreen` picks one).
-- **In native code so far (0.49.0):** the background tile drawers 0x0881AB28 and 0x0881B268
-  (`src/core/stage/tiles.c`), which draw two and three tiles further left and 17 and 31 columns while
-  `rt_widescreen` is set, as the patch does. The `wide_fight` scenario checks them against the
-  patched translation with WIDE FORCED on.
-- **In native code since 0.99.0:** the rest of what the patch changes: the third tile drawer
-  0x0881B7C8 (`tiles.c`, the endings; `arcade_ending_full` checks it), the
-  screen's setup, its text layer and the pillarbox (0x0880B928, 0x0880F160, 0x0880F390 in
-  `src/core/object/screen.c`), the 32-pixel paletted sprite cells 0x08811BCC (`sprite_grid.c`), the
-  network menus' rows and cursor bar (0x088EC074 - 0x088EC724, `src/core/network/menu.c`), the network
-  screens' whole-screen panels and message boxes (0x088D6BC0, 0x088D6D3C, 0x088E3B8C, 0x088E3BEC,
-  0x088E3DB0) and two of Cammy's CPU routine states that pass the screen's width on (0x0895FD00,
-  0x0895FDB0) in `src/core/network/screens.c`. `network_match` checks the network screens with WIDE
-  FORCED off and on. No scenario reaches 0x088D6D3C, three of the menu rows (ids 0, 9 and 10) or the
-  two Cammy states yet; they are straight translations of the patched code.
-- **The project's own words:** `tools/data/widescreen_more.json` adds words to the patch's overlay
-  (the translator merges them, and stops if a word it replaces is not the one listed). The first three
-  widen the left limit of the sprite cell drawers 0x08810D84, 0x088112A8 and 0x088117D0 to -96, as the
-  patch does in their sibling 0x08811BCC, so fighters are drawn into the left margin. The drawers are
-  decompiled with the same limit (`src/core/object/sprite_grid.c`); the `wide_walls` scenario checks
-  them with a fighter at the left wall.
-  The next five widen the two "drawn when on the screen" tests objects use (0x08821424, 0x088214E8)
-  by 48 pixels each side, so an object whose art reaches into the margins is drawn there instead of
-  popping in near the 4:3 picture (the foreground posts on Guy's and Dan's stages); `frame.c` does the
-  same. `wide_fight` (on Dan's stage) checks it.
-  The last four send the patch's jumps in the tile drawers 0x0881AB28 / 0x0881B268 to added code of the
-  project's own (`caves`, at 0x08800100: translated only, never loaded into game memory). The patch
-  starts each row 2 (3) tiles further left by moving the map pointer back, which read the end of the
-  row above when the grid's first map column was smaller than that (layer 0 at the left wall on Ryu,
-  Akuma, Sagat, Dhalsim, Balrog and Cammy's stages, layer 2 on Karin's and Hawk's, and the attract
-  sequence's panels). It now wraps round within the row, as the arcade's tile layers do; `tiles.c` does
-  the same, and `wide_left_wall` checks it.
-- What it changes: [PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md) "Widescreen patch" (viewport 384 -> 480,
-  camera centre -192 -> -240, the pillarbox at 0x0880F390, the background tile drawers 0x0881AB28 /
-  0x0881B268 / 0x0881B7C8, code caves in `.data`).
+- `src/extensions/widescreen.c`: the SCREEN SIZE setting and switching (`rt_widescreen`);
+  `src/extensions/screensetting.c` draws SCREEN SETTING (WIDE FORCED as the size's name).
+- What the patch changed, now native (the patch's own words: [PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md)
+  "Widescreen patch"):
+  - the background tile drawers 0x0881AB28, 0x0881B268 (0.49.0) and 0x0881B7C8 (0.99.0, the endings)
+    in `src/core/stage/tiles.c`: two (16-pixel tiles: three) tiles further left and 17 (31) columns;
+  - the screen's setup, its extra text layer and the pillarbox (0x0880B928, 0x0880F160, 0x0880F390 in
+    `src/core/object/screen.c`): the right edge at 480, no wallpaper bars;
+  - the 32-pixel paletted sprite cells 0x08811BCC (`src/core/object/sprite_grid.c`): the left limit -96;
+  - the network menus' rows and cursor bar (0x088EC074 - 0x088EC724, `src/core/network/menu.c`), the
+    network screens' panels and message boxes (0x088D6BC0, 0x088D6D3C, 0x088E3B8C, 0x088E3BEC,
+    0x088E3DB0) and two of Cammy's CPU routine states that pass the screen's width on (0x0895FD00,
+    0x0895FDB0) in `src/core/network/screens.c`. No scenario reaches 0x088D6D3C, three of the menu rows
+    (ids 0, 9 and 10) or the two Cammy states yet.
+- What the project adds beyond the patch:
+  - the other three sprite cell drawers (0x08810D84, 0x088112A8, 0x088117D0) have the -96 left limit
+    too, so fighters are drawn into the left margin (Blanka's shoulder, 0.95.0);
+  - the two "drawn when on the screen" tests objects use (0x08821424, 0x088214E8, `object/frame.c`)
+    take in 48 more pixels each side, so props don't pop in (0.97.0);
+  - the tile drawers' extra left columns wrap round within their row (0.97.0; 0x0881B7C8 in 0.99.1):
+    the patch moved the map pointer back, which read the end of the row above when the grid's first
+    map column was smaller (layer 0 at the left wall on Ryu, Akuma, Sagat, Dhalsim, Balrog and Cammy's
+    stages, layer 2 on Karin's and Hawk's, the attract sequence's panels);
+  - twins for the stage objects that swap props just off the 4:3 screen
+    (`src/extensions/widescreen_twins.c`, 0.98.0).
+- Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
+  four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).
 
 ## What is working
@@ -75,8 +63,9 @@ parts of the game it touches are decompiled.
 ## What to ensure
 
 **WIDE FORCED must not change the timing of any move**, or anything else that affects the game balance. It
-changes what is drawn, never how the game plays: the parity scenarios run with WIDE FORCED on should
-match it off in every fighter's state, frame for frame, and a revision must keep that.
+changes what is drawn, never how the game plays: the WIDE scenarios check that every fighter's state
+matches WIDE FORCED off, frame for frame (`wide` in a scenario, `tests/parity.py`), and a revision must
+keep that.
 
 ## Observations from other projects
 
@@ -114,8 +103,7 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
   just off the 4:3 screen. In 16:9 it happens in view (Dan's crow appears on the sign the moment the
   camera moves off its starting place, x 448, which is the line). `extensions/widescreen_twins.c` gives
   each, in WIDE FORCED, a twin showing the other look, so both are there while in view. It runs around
-  the decompiled kinds (`SFA_FUNC_WRAPPED`), so the reference run does the same; NORMAL is unchanged
-  byte for byte.
+  the decompiled kinds (`SFA_FUNC_WRAPPED`); NORMAL is unchanged byte for byte.
 - **The MODE MENU's left side** is not a tile layer: its background is the menu's own objects (panels
   and bands that drift and wrap round within the 4:3 width, `object/drift.c`), so nothing is placed in
   the left margin. Widening their layout in WIDE FORCED, or pillarboxing the menu, is still to do.
@@ -128,8 +116,5 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
   checked in a run). The walls are unchanged: only drawing is.
 - **The shape of a native implementation.** One place the drawers ask each frame (their `Wide`
   struct: the margin, each layer's extra scroll, a per-sprite offset that keeps the HUD centred), in
-  place of patched constants. With the margin at 0 everything is the original, so parity holds with
-  it off, and the reference run (the patch's translation) checks it with it on until the patch is
-  dropped.
-- **Checked by a recorded run with widescreen on.** We have none yet: a parity scenario with WIDE
-  FORCED on is the first thing to add before moving the patch's behaviour into native code.
+  place of the patch's constants, now that they are all native. With the margin at 0 everything is the
+  original, so parity holds with it off.

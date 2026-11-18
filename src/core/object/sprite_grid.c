@@ -20,7 +20,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* the widescreen patch's switch: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }

@@ -1,4 +1,4 @@
-/* The screen's setup in the text pass (object/frame.c), the parts the 16:9 patch changes.
+/* The screen's setup in the text pass (object/frame.c), the parts WIDE FORCED changes.
  *
  * WIDE FORCED: after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT), chosen by rt_widescreen
  * (docs/WIDESCREEN.md).

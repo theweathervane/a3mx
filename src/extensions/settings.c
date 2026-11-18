@@ -93,7 +93,7 @@ static const Field fields[] = {
     { "game option", "player_side", 0x1FF, -1, K_ENUM, v_side, 0, "1P or 2P" },
     { "game option", "bgm_volume", 0x1FC, -1, K_NUM, NULL, 15, "0 - 15" },
     { "game option", "se_volume", 0x1FD, -1, K_NUM, NULL, 15, "0 - 15" },
-    { "screen setting", "screen_size", 0x58, 0x62, K_SIZE, v_size, 0, "NORMAL, WIDE or WIDE FORCED (16:9 patch)" },
+    { "screen setting", "screen_size", 0x58, 0x62, K_SIZE, v_size, 0, "NORMAL, WIDE or WIDE FORCED (16:9, 4:3 play area)" },
     { "screen setting", "wallpaper", 0x1FE, -1, K_ENUM, v_wall, 0, "NONE or 01 - 10" },
     { "progress", "unlocks", 0x52, -1, K_HEX16, NULL, 0, "modes cleared (hex); all held on" },
     { "progress", "ism_pluses", 0x200, -1, K_HEX32, NULL, 0, "ISM-Pluses earned, a bit each (hex); all held on" },

@@ -3,14 +3,14 @@
  * src/extensions/ is not compiled, tools/data/hooks.txt is ignored (every hooked function is the
  * translated original again) and rt_extensions is 0, so the platform never calls into them. This
  * file only gives the names the platform still refers to something to link against, with the values
- * the game sees without the extensions: no widescreen patch switched on, vsync on, the ad-hoc network
+ * the game sees without the extensions: no WIDE FORCED, vsync on, the ad-hoc network
  * up (no virtual players, so only other linked instances answer), saves on the memory stick.
  * None of the functions below is reached while rt_extensions is 0.
  */
 #ifdef A3MX_NO_EXTENSIONS
 #include <stdint.h>
 
-int rt_widescreen;                       /* the translated widescreen patch stays off */
+int rt_widescreen;                       /* WIDE FORCED stays off */
 int rt_vsync = 1;                        /* host_sdl.c */
 int rt_frame_timing = 2;                 /* pacing.c: AUTO */
 int rt_filter;                           /* shader_gl.c: OFF */

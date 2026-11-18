@@ -28,7 +28,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* the widescreen patch's switch: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
 
 void f_089E0EA4(Cpu *c);   /* selects a palette (a0) */
 void f_0880A3C4(Cpu *c);   /* a draw depth from the depth table: a0 the table's row, a1 its column */

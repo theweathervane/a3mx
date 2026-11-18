@@ -24,7 +24,7 @@ enum {
     FEAT_MULTIPLAYER,    /* hooks.c, netplay.c, vpeer.c, selectscreen.c */
     FEAT_HUD,            /* padicons.c */
     FEAT_QUITKEY,        /* quitkey.c */
-    FEAT_WIDESCREEN,     /* widescreen.c and the translated 16:9 patch */
+    FEAT_WIDESCREEN,     /* widescreen.c: WIDE FORCED (rt_widescreen) */
     FEAT_STAGE_EXT,      /* stagestrips.c */
     FEAT_SHADERS,        /* platform: shader.c (the FILTER setting) */
     FEAT_BOOTMENU,       /* bootmenu.c */
