@@ -363,7 +363,8 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
       Since then: EDIT MODE's gradient and WORLD TOUR's map background into the margins.
       Done: the title's backdrop and full-screen fills (0.99.2); the MODE MENU, OPTION MODE and FREE
       BATTLE MODE backdrops and title bars (0.99.3); portraits to the edges on the select, VS and map
-      screens, the VS name bars (0.99.4); the select screen's name ticker (0.99.5)
+      screens, the VS name bars (0.99.4); the select screen's name ticker (0.99.5); the wipe into the
+      fight and the stray "F" (0.99.8)
 - [x] WIDE FORCED on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
       play twice, and the four fighters must be the same in every frame
 

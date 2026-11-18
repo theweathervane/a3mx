@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.99.8
+### For players
+- **WIDE FORCED: the green wipe from the VS screen into the fight covers the whole screen,** and the green shapes that fade into the stage reach the sides too.
+- **WIDE FORCED: no stray "F" over the VS screen.** The word FIGHTER waits just past the old 4:3 edge to slide in; it is no longer drawn there.
+
+### Technical
+- Decompiled: 0x0880E434, the flat-colour shapes of the wipes (new `object/shapes.c`), and 0x0880D848 / 0x0880D8C8 / 0x0880D988, the single object at 0x092E5100 and its six slots, which carries the logo between the VS screen and the fight (new `object/single_draw.c`).
+- WIDE FORCED: a shape corner on or past the 4:3 edge goes 48 further out; a slot's picture waiting at x 384 or more is not drawn until it moves in. Only the drawing changes.
+- Checked: arcade_fight, attract_mode and arcade_match parity (all four functions ran), wide_fight (fighters identical), the wipe by eye.
+
 ## 0.99.7
 ### For players
 - **WIDE FORCED: the map screen's portrait is right when player 2 starts.** With PLAYER SIDE 2P (Arcade or Dramatic Battle), the portrait sits at the right edge instead of being pulled left over the banner.
