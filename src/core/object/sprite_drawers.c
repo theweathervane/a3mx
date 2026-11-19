@@ -1,4 +1,4 @@
-/* Three of the sprite drawers (0x08A04B48[sprite +148], called by draw_sprite in sprite.c with the
+/* Five of the sprite drawers (0x08A04B48[sprite +148], called by draw_sprite in sprite.c with the
  * draw state set up): a sprite's picture, or a set of pictures, through 0x0880E150 (sprite_grid.c).
  *
  * A sprite's frame record is the u16 at (+28) + 4: bit 15 means nothing to draw, the rest its number.
@@ -9,17 +9,20 @@
  *   drawers 1 and 2 (0x0880C598): a set of pieces from the table 0x092E3E98[drawer - 1], the frame's
  *     entry onwards: 6 bytes each, +0 x, +2 y (added to the sprite's place), +4 the picture (bit 15:
  *     the last piece, bit 14: not drawn); drawn last first
+ *   drawer 3 (0x0880C70C): as drawer 0, the picture number at the sprite's +84 (bit 15: none)
+ *   drawer 6 (0x0880CAA8): as drawers 1 and 2, the pieces from the sprite's +156
  *   drawer 11 (0x0880CF60): the same with the set from the sprite's +156, every piece at the sprite's
  *     place; a piece with a nonzero +0 is drawn at half alpha (the after-images of ROUND and FIGHT)
  *
- * All three copy the sprite's +170 / +171 to the draw state's +86 / +87 first.
+ * All of them copy the sprite's +170 / +171 to the draw state's +86 / +87 first.
  *
  * WIDE FORCED (extensions/widescreen.c says for which sprites): bands whose cells carry on into the
  * margins (widescreen_edge_cells: the ROUND band, FIGHT's translucent box, the continue bar, the GAME
  * OVER band; sprite_grid.c); rows of one piece that get one more piece at an end that has reached the
  * 4:3 edge (widescreen_edge_row 1: FIGHT FIGHT, KNOCK OUT); the continue count's numbers carried on to
  * the left (widescreen_edge_row 2); the map screen's beam drawn again scaled behind itself, in the
- * margins (widescreen_beam).
+ * margins (widescreen_beam); the profile screen's header and text box drawn widened, their halves moved
+ * out (widescreen_widen), its side columns kept between the two (widescreen_clip).
  */
 #include "../decomp.h"
 
@@ -31,10 +34,15 @@ static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); retur
 
 extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_wide_edges; /* sprite_grid.c */
+extern int32_t sprite_grid_left_row;
 int widescreen_edge_cells(gaddr sp);   /* which pieces: */
 enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2, EDGES_MIRROR_LEFT = 4, EDGES_LEFT_ONLY = 8 };   /* and how */
 int widescreen_edge_row(gaddr sp);
 int widescreen_beam(gaddr sp);
+int widescreen_widen(gaddr sp);
+void widescreen_clip(gaddr sp, int *top, int *bottom);
+extern int sprite_grid_clip_top, sprite_grid_clip_bottom;   /* sprite_grid.c */
+extern int sprite_grid_half;   /* sprite_grid.c */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
@@ -44,7 +52,7 @@ void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 dr
 #define SCALE_Y       0x08E759ECu
 #define OFFSET_X      0x08E75A04u
 #define OFFSET_Y      0x08E75A0Cu
-enum { SP_FRAME = 28, SP_LIST = 86, SP_DRAWER = 148, SP_PIECES = 156, SP_EFFECT = 170, SP_SCALED = 171 };
+enum { SP_FRAME = 28, SP_FRAME_84 = 84, SP_LIST = 86, SP_DRAWER = 148, SP_PIECES = 156, SP_EFFECT = 170, SP_SCALED = 171 };
 enum { DS_X = 0, DS_Y = 2, DS_COLOUR = 48, DS_POS_X = 80, DS_POS_Y = 82, DS_BLEND = 85, DS_EFFECT = 86,
        DS_SCALED = 87 };
 enum { PIECE_LAST = 0x8000, PIECE_SKIP = 0x4000 };
@@ -55,6 +63,7 @@ static gaddr sprite_list(gaddr sp) { return *W(PICTURE_LISTS + (uint32_t)*H(sp +
 /* a picture and the ones it goes on into */
 static void draw_picture(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list, int edges) {
     int wide = rt_widescreen ? widescreen_edge_cells(sp) : 0;
+    sprite_grid_left_row = INT32_MIN;
     sprite_grid_wide_edges = !(wide & edges) ? 0 : (wide & EDGES_MIRROR_LEFT) ? 2 : (wide & EDGES_LEFT_ONLY) ? 3 : 1;
     for (;;) {
         int more = S16(pic + 10) != 0;
@@ -143,11 +152,32 @@ static void wide_count_left(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first,
     }
 }
 
+/* drawer 3: like drawer 0, the picture number from the sprite's +84; the effects copied first */
+static void draw_one_84(Cpu *c, gaddr ds, gaddr sp) {
+    copy_effects(ds, sp);
+    uint32_t frame = *H(sp + SP_FRAME_84);
+    if (frame & 0x8000) return;
+    gaddr list = sprite_list(sp);
+    sprite_grid_half = rt_widescreen && widescreen_widen(sp);   /* WIDE FORCED: widened (sprite_grid.c) */
+    draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
+    sprite_grid_half = 0;
+}
+
+static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table);
 static void draw_pieces(Cpu *c, gaddr ds, gaddr sp) {
+    draw_pieces_from(c, ds, sp, *W(PIECE_TABLES + *W(sp + SP_DRAWER) * 4u - 4u));
+}
+static void draw_pieces_at(Cpu *c, gaddr ds, gaddr sp, gaddr table);
+static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
+    if (rt_widescreen) widescreen_clip(sp, &sprite_grid_clip_top, &sprite_grid_clip_bottom);   /* WIDE FORCED (sprite_grid.c) */
+    draw_pieces_at(c, ds, sp, table);
+    sprite_grid_clip_top = sprite_grid_clip_bottom = 0;
+}
+static void draw_pieces_at(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     gaddr list = sprite_list(sp);
     uint32_t frame = sprite_frame(sp);
     if (frame & 0x8000) return;
-    gaddr first = *W(PIECE_TABLES + *W(sp + SP_DRAWER) * 4u - 4u) + frame * 6u;
+    gaddr first = table + frame * 6u;
     gaddr e = last_piece(first), last = e;
     copy_effects(ds, sp);
     int row = rt_widescreen ? widescreen_edge_row(sp) : 0;
@@ -186,4 +216,6 @@ static void draw_ghosted(Cpu *c, gaddr ds, gaddr sp) {
 
 SFA_FUNC(0880C4C8, sprite_drawer_one) { gaddr ds = ARG(0), sp = ARG(1); c->r[29] -= 0x40; draw_one(c, ds, sp); c->r[29] += 0x40; }
 SFA_FUNC(0880C598, sprite_drawer_pieces) { gaddr ds = ARG(0), sp = ARG(1); c->r[29] -= 0x40; draw_pieces(c, ds, sp); c->r[29] += 0x40; }
+SFA_FUNC(0880C70C, sprite_drawer_one_84) { gaddr ds = ARG(0), sp = ARG(1); c->r[29] -= 0x40; draw_one_84(c, ds, sp); c->r[29] += 0x40; }
+SFA_FUNC(0880CAA8, sprite_drawer_pieces_156) { gaddr ds = ARG(0), sp = ARG(1); c->r[29] -= 0x40; draw_pieces_from(c, ds, sp, *W(sp + SP_PIECES)); c->r[29] += 0x40; }
 SFA_FUNC(0880CF60, sprite_drawer_ghosted) { gaddr ds = ARG(0), sp = ARG(1); c->r[29] -= 0x50; draw_ghosted(c, ds, sp); c->r[29] += 0x50; }

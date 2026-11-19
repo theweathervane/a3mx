@@ -366,7 +366,8 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
       screens, the VS name bars (0.99.4); the select screen's name ticker (0.99.5); the wipe into the
       fight and the stray "F" (0.99.8); the ROUND band, the FIGHT FIGHT rows and the KNOCK OUT row
       (0.99.9); EDIT MODE's and WORLD TOUR's gradients (0.99.10); the A / X / V wipe's shapes and FIGHT's box
-      (0.99.11); the map's ladder and beam, GAME OVER, the continue countdown (0.99.12). Left: the attract
+      (0.99.11); the map's ladder and beam, GAME OVER, the continue countdown (0.99.12); the profile and
+      win screens (0.99.13). Left: the attract
       sequence.
 - [x] WIDE FORCED on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
       play twice, and the four fighters must be the same in every frame

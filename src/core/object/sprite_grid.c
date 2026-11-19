@@ -151,7 +151,53 @@ static int32_t round_to(float f) { return (int32_t)(f < 0.0f ? f - 0.5f : f + 0.
 
 /* the quad (corners top left, bottom left, top right, bottom right) drawn, or in the scaled pass its
    scaled copy's parts in the margins */
-static void emit_cell(Cpu *c, gaddr v, uint32_t flags, uint32_t blend, uint32_t effect) {
+/* WIDE FORCED: set by a sprite drawer for a picture drawn widened instead: the left half of its columns
+   moved 48 left, the right half 48 right, and the 96 pixels between them filled with the middle cell's
+   first texel column stretched (the profile screen's header and text box, whose middles are plain).
+   Only the drawing changes. */
+int sprite_grid_half;
+
+/* WIDE FORCED: set by a sprite drawer for a picture cut to the screen rows from sprite_grid_clip_top to
+   sprite_grid_clip_bottom (0: not cut): the profile screen's side columns, kept between its header and
+   its text box, which in WIDE FORCED reach out over them. Only the drawing changes. */
+int sprite_grid_clip_top, sprite_grid_clip_bottom;
+
+static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
+    if (sprite_grid_clip_bottom) {   /* corners top left, bottom left, top right, bottom right */
+        int32_t top = sprite_grid_clip_top, bottom = sprite_grid_clip_bottom;
+        int32_t y0 = S16(v + 2), y1 = S16(v + 16 + 2);
+        if (y1 <= top || y0 >= bottom) return;
+        if (y0 < top || y1 > bottom) {
+            int16_t v0 = S16(v + 8), v1 = S16(v + 16 + 8);
+            int32_t a = y0 < top ? top : y0, b = y1 > bottom ? bottom : y1;
+            int32_t va = v0 + (v1 - v0) * (a - y0) / (y1 - y0), vb = v0 + (v1 - v0) * (b - y0) / (y1 - y0);
+            SET16(v + 2, a); SET16(v + 32 + 2, a); SET16(v + 8, va); SET16(v + 32 + 8, va);
+            SET16(v + 16 + 2, b); SET16(v + 48 + 2, b); SET16(v + 16 + 8, vb); SET16(v + 48 + 8, vb);
+            CALL5(f_089E1950, v, 4, flags, blend, effect);
+            SET16(v + 2, y0); SET16(v + 32 + 2, y0); SET16(v + 8, v0); SET16(v + 32 + 8, v0);
+            SET16(v + 16 + 2, y1); SET16(v + 48 + 2, y1); SET16(v + 16 + 8, v1); SET16(v + 48 + 8, v1);
+            return;
+        }
+    }
+    if (sprite_grid_half) {
+        int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), split = cols / 2;
+        int16_t keep[4][2];
+        for (int i = 0; i < 4; i++) { keep[i][0] = S16(v + 16 * i); keep[i][1] = S16(v + 16 * i + 6); }
+        if (col == split) {   /* the gap: the cell's first texel column (as shown) from x - 48 to x + 48 */
+            int32_t x0 = keep[0][0] < keep[2][0] ? keep[0][0] : keep[2][0];
+            int32_t u = keep[0][0] <= keep[2][0] ? keep[0][1] : keep[2][1];
+            u += keep[0][0] <= keep[2][0] ? (keep[2][1] > keep[0][1] ? 1 : -1) : (keep[0][1] > keep[2][1] ? 1 : -1);
+            SET16(v + 0, x0 - 48); SET16(v + 16, x0 - 48); SET16(v + 32, x0 + 48); SET16(v + 48, x0 + 48);
+            for (int i = 0; i < 4; i++) SET16(v + 16 * i + 6, u);
+            CALL5(f_089E1950, v, 4, flags, blend, effect);
+            for (int i = 0; i < 4; i++) SET16(v + 16 * i + 6, keep[i][1]);
+        }
+        int32_t shift = col < split ? -48 : 48;
+        for (int i = 0; i < 4; i++) SET16(v + 16 * i, keep[i][0] + shift);
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+        for (int i = 0; i < 4; i++) SET16(v + 16 * i, keep[i][0]);
+        return;
+    }
     if (sprite_grid_scale == 0.0f) { CALL5(f_089E1950, v, 4, flags, blend, effect); return; }
     int16_t keep[4][3];
     for (int i = 0; i < 4; i++) {
@@ -172,9 +218,10 @@ static void emit_cell(Cpu *c, gaddr v, uint32_t flags, uint32_t blend, uint32_t 
 }
 
 /* WIDE FORCED: set by a sprite drawer (sprite_drawers.c) around a picture that is a band across the 4:3
-   picture (at least 384 wide; narrower pictures are left alone): 1 for FIGHT's translucent box and
-   the GAME OVER band, 2 for the ROUND banner's band, 3 for the continue screen's bar (its right end
-   breaks up, so only the left margin, from a texel column a quarter into the row's first cell). Each row's last cell carries
+   picture (at least 384 wide, or for 3 starting at its left edge; others are left alone): 1 for
+   FIGHT's translucent box and the GAME OVER band, 2 for the ROUND banner's band, 3 for the continue screen's bar (its right end
+   breaks up, so only the left margin, from a texel column a quarter into the row's first cell drawn:
+   the bar's first cells blink empty, and the margin stays steady). Each row's last cell carries
    on to the right margin (to x 432) as one strip of a single texel column from its far part (so a
    letter's edge in the cell is not repeated), and with 1 the same strip goes from the left margin
    (x -48) to the row's start. With 2 the left margin instead gets the band's glow after the D (picture
@@ -182,6 +229,7 @@ static void emit_cell(Cpu *c, gaddr v, uint32_t flags, uint32_t blend, uint32_t 
    as it does on the right (the band's own left end has the R in it), and the plain strip beyond it.
    Only for a sprite drawn the right way round. Only the drawing changes. */
 int sprite_grid_wide_edges;
+int32_t sprite_grid_left_row;   /* mode 3: the row whose strip is drawn (the drawer resets it for each picture) */
 #define PICTURE_W 384
 #define MARGIN_W  48
 #define TAPER_FROM 284           /* ROUND (mode 2): the glow after the D, from the row's start */
@@ -206,13 +254,17 @@ static int32_t texel_at(gaddr ds, uint8_t last, int32_t texels, int32_t w, int32
 static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, int16_t w, int16_t h,
                             uint8_t last, int32_t texels, uint32_t flags, uint32_t blend, uint32_t effect,
                             int32_t cols) {
-    if (w <= 0 || S16(ds + DS_STEP_X) <= 0 || cols * w < PICTURE_W) return;   /* only a band as wide as the picture */
+    if (w <= 0 || S16(ds + DS_STEP_X) <= 0) return;
     int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), row_x = S16(ds + DS_ROW_X);
     int mode = sprite_grid_wide_edges;
-    if (mode == 3) {   /* the left margin only, from the row's first cell */
-        if (col == 0) {
+    /* only a band as wide as the picture; for mode 3 one that starts at its left edge (the continue bar's
+       frames are 23 or 24 cells) */
+    if (mode == 3 ? row_x > 0 : cols * w < PICTURE_W) return;
+    if (mode == 3) {   /* the left margin only, from the row's first cell drawn */
+        if (y != sprite_grid_left_row) {
+            sprite_grid_left_row = y;
             int32_t u = texel_at(ds, last, texels, w, w / 4);
-            edge_quad(c, ds, v, -MARGIN_W, cx, y, h, last, texels, u, u, flags, blend, effect);
+            edge_quad(c, ds, v, -MARGIN_W, row_x < 0 ? row_x : 0, y, h, last, texels, u, u, flags, blend, effect);
         }
         return;
     }
@@ -297,7 +349,7 @@ static void draw_cached(Cpu *c, const CachedKind *k, gaddr ds, gaddr pic, gaddr 
                     uint8_t effect = *B(ds + DS_EFFECT);
                     uint32_t blend = (k->big && effect != 0) || (flags_byte & CELL_BLEND) != 0 ||
                                      *W(ds + DS_ALPHA) != ALPHA_OPAQUE;
-                    emit_cell(c, v, *W(page + 8), blend, effect);
+                    emit_cell(c, ds, v, *B(pic + PIC_COLS), *W(page + 8), blend, effect);
                     if (sprite_grid_wide_edges)
                         wide_edge_cells(c, ds, v, cx, row_y, S16(ds + k->w_at), S16(ds + k->h_at), flags_byte,
                                         k->size, *W(page + 8), blend, effect, *B(pic + PIC_COLS));
@@ -350,7 +402,7 @@ static void draw_paletted(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame) 
                     uint32_t blend = (flags_byte & CELL_BLEND) != 0 || *W(ds + DS_ALPHA) != ALPHA_OPAQUE;
                     f_089E1438(c);
                     uint32_t flags = c->r[2];
-                    emit_cell(c, v, flags, blend, *B(ds + DS_EFFECT));
+                    emit_cell(c, ds, v, *B(pic + PIC_COLS), flags, blend, *B(ds + DS_EFFECT));
                     if (sprite_grid_wide_edges)
                         wide_edge_cells(c, ds, v, cx, row_y, S16(ds + DS_W16), S16(ds + DS_H16), flags_byte,
                                         16, flags, blend, *B(ds + DS_EFFECT), *B(pic + PIC_COLS));
@@ -400,7 +452,7 @@ static void draw_paletted32(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame
                     uint32_t blend = (flags_byte & CELL_BLEND) != 0 || *W(ds + DS_ALPHA) != ALPHA_OPAQUE;
                     f_089E1438(c);
                     uint32_t flags = c->r[2];
-                    emit_cell(c, v, flags, blend, *B(ds + DS_EFFECT));
+                    emit_cell(c, ds, v, *B(pic + PIC_COLS), flags, blend, *B(ds + DS_EFFECT));
                     if (sprite_grid_wide_edges)
                         wide_edge_cells(c, ds, v, cx, S16(ds + DS_ROW_Y), S16(ds + DS_W32), S16(ds + DS_H32),
                                         flags_byte, 32, flags, blend, *B(ds + DS_EFFECT), *B(pic + PIC_COLS));

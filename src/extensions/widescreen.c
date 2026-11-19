@@ -83,7 +83,9 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
      ISM panel and the name under the portrait; and the ISM panel's parts (kind 33);
    - the map screen (NEXT STAGE, kind 19): the portrait at the top left, with the scrolling banner
      text in the same sprite tree (type 7), as on the VS screen; the ladder of stages with the next
-     opponent's name bar (types 4 - 6) on the other side;
+     opponent's name bar (types 4 - 6) on the other side; the profile screen before it (kind 113): its
+     scrolling columns at the sides (types 3 and 4);
+   - the win screen after a fight (step 4, kind 18): its scrolling columns at the sides (types 4, 6);
    - the VS screen (kind 14): the portraits (type 0). Its name bars (type 2, at x 0 and 384) are
      drawn a second time moved out, so they reach the edges without leaving a gap in the middle.
    - the select screen's name ticker (kind 16 type 5, the top one): drawn one period further each way,
@@ -106,10 +108,14 @@ int widescreen_edge_shift(uint32_t sp) {
         if (kind == 16 && type == 6) return away_from_middle(sp, margin_units());   /* the chosen MODE / ISM panel, the name */
         if (kind == 33) return away_from_middle(sp, margin_units());                /* the ISM panel's parts */
     }
+    /* the win screen after a fight (GAME + 4 = 4): its scrolling columns at the sides (kind 18 types 4, 6) */
+    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 4 && kind == 18 && (type == 4 || type == 6))
+        return away_from_middle(sp, margin_units());
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
     if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
     if (kind == 19 && type == 7) return away_from_middle(sp, margin_units());   /* P1 left, P2 right */
     if (kind == 19 && type >= 4 && type <= 6) return away_from_middle(sp, margin_units());   /* the ladder, opposite */
+    if (RH(GAME + 4) == 1 && kind == 113 && (type == 3 || type == 4)) return away_from_middle(sp, margin_units());   /* the profile screen's side columns */
     return 0;
 }
 int widescreen_edge_copy(uint32_t sp, int n) {
@@ -154,4 +160,27 @@ int widescreen_edge_row(uint32_t sp) {
 int widescreen_beam(uint32_t sp) {
     return RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 19 && RB(sp + 3) == 2 &&
            RW(sp + 148) == 0 && RB(sp + 14) == 3;
+}
+
+/* ... and panels the width of the 4:3 picture drawn widened, their halves moved out to the 16:9 sides
+   and their plain middle stretched (core/object/sprite_drawers.c, drawer 3; sprite_grid.c): the profile screen before the map (GAME + 2 = 2,
+   step 1, kind 113), its header (type 0) and its text box (type 1); the text itself stays centred. */
+int widescreen_widen(uint32_t sp) {
+    return RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 113 && RB(sp + 3) <= 1;
+}
+
+/* ... and the profile screen's side columns (kind 113 types 3 and 4) kept to the rows 40 - 214 on the
+   screen, between its header and its text box: they showed over them once those reached out. */
+void widescreen_clip(uint32_t sp, int *top, int *bottom) {
+    *top = *bottom = 0;
+    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 113 && (RB(sp + 3) == 3 || RB(sp + 3) == 4)) {
+        *top = 40; *bottom = 214;
+    }
+}
+
+/* ... and plain rectangles of the third object list (core/object/draw_kinds.c, kind 0) widened by this
+   much each side: the win screen's pink band under the quote (type 1), so it reaches the side columns
+   once they move out. */
+int widescreen_plain_widen(uint32_t ob) {
+    return RB(GAME + 2) == 2 && RH(GAME + 4) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 ? 48 : 0;
 }

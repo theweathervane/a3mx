@@ -83,9 +83,14 @@ static const uint8_t CORNER_OF_VERTEX[4] = { 0, 3, 1, 2 };
 
 /* Kind 0: a plain rectangle, colour per corner. Vertices at frame + 16, 12 bytes each: x, y, depth,
    colour (+8). */
+int widescreen_plain_widen(gaddr ob);   /* WIDE FORCED: extensions/widescreen.c */
 static void draw_plain(Cpu *c, gaddr ob, gaddr frame) {
     int16_t X0, X1, Y0, Y1;
     rect_on_screen(ob, &X0, &X1, &Y0, &Y1);
+    if (rt_widescreen) {   /* WIDE FORCED: some are drawn wider (the win screen's band); only the drawing */
+        int16_t m = (int16_t)widescreen_plain_widen(ob);
+        X0 = (int16_t)(X0 - m); X1 = (int16_t)(X1 + m);
+    }
     gaddr v = frame + 16;
     const int16_t xy[4][2] = { { X0, Y0 }, { X0, Y1 }, { X1, Y0 }, { X1, Y1 } };
     uint16_t z = *H(DEPTHS + *W(DRAW_STATE + 44) * 2u);

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.99.13
+### For players
+- **WIDE FORCED: the continue screen's countdown bar no longer flickers at the left side.**
+- **WIDE FORCED: the profile screen before the map reaches the screen's sides.** The header with the name plate and the text box at the bottom stretch out to the edges (the text stays centred, the portrait where it was), and the scrolling side columns sit at the edges.
+- **WIDE FORCED: the win screen's side columns sit at the screen's edges,** with the band under the quote reaching them.
+
+### Technical
+- Decompiled: sprite drawers 3 (0x0880C70C, one picture by the sprite's +84) and 6 (0x0880CAA8, pieces from the sprite's +156), in `object/sprite_drawers.c`.
+- `object/sprite_grid.c`: the continue bar's left side (mode 3) is drawn for each row's first drawn cell and for bars starting at the left edge (its frames are 23 or 24 cells, so the width test dropped it every few frames); a widened pass (`sprite_grid_half`: left half 48 left, right half 48 right, the middle cell's first texel column stretched between) for the profile screen's header and text box; a row clip (`sprite_grid_clip_top` / `_bottom`) keeps its side columns between the two.
+- `extensions/widescreen.c`: the profile screen's columns (kind 113 types 3, 4) and the win screen's (kind 18 types 4, 6) move away from the middle; `widescreen_widen`, `widescreen_clip` and `widescreen_plain_widen` (the win screen's band, a plain rectangle in `object/draw_kinds.c`); stand-ins in `extensions_off.c`.
+- Checked: arcade_fight and arcade_match parity (both new drawers ran), wide_fight and wide_walls (fighters identical); the continue bar frame by frame, the profile and win screens by eye.
+
 ## 0.99.12
 ### For players
 - **WIDE FORCED: the ROUND banner's glow tapers away on the left** as it does on the right after the D, instead of stopping short.
