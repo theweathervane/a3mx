@@ -25,8 +25,9 @@
  * A missing or unreadable file is skipped (the log says why).
  *
  * Drawn only with --custom-assets (the launcher's Custom Assets, off by default), while WIDE NATIVE is
- * on and a fight is running (the fight's per-frame step 0x08823674, src/core/task/fight.c, wraps a
- * timestamp, and the battle task is at its fight screen: GAME + 2 = 2, + 4 = 3), around both tile drawers (0x0881AB28, 0x0881B268,
+ * on and the fight's stage is on screen (`stage_shown`: the fight's per-frame step 0x08823674,
+ * src/core/task/fight.c, wraps a timestamp, and the battle task is at the fight, the end of a round,
+ * the win or continue screen; or the attract mode's demo fight), around both tile drawers (0x0881AB28, 0x0881B268,
  * src/core/stage/tiles.c: SFA_FUNC_WRAPPED) and the two picture drawers (0x08819498, 0x0881C0C8,
  * src/core/stage/background.c), as textured quads through the game's 2D library like
  * padicons.c: our 16-bit texture on page STRIP_PAGE only while drawing.
@@ -348,14 +349,30 @@ static uint64_t probed = ~0ull;
    while it runs, so never on a menu or select screen that uses the same tile drawers */
 int stagestrips_fight_frame(Cpu *c, uint32_t a0, int after) { (void)c; (void)a0; if (!after) fight_frame = rt_vblank_count(); return 0; }
 
+/* Whether the stage on screen is the fight's, so its strips are drawn: a stage is set up (the fighters'
+   layer's camera mode) and either
+   - the attract mode's demo fight (GAME + 0 / + 2 / + 4 = 3 / 2 / 1; it runs without the fight's
+     per-frame step; GAME + 0 is 3 at the end of an ending too, with + 2 = 0), or
+   - the fight's per-frame step ran within 2 frames and the battle task is at the fight (GAME + 2 = 2,
+     + 4 = 3), the end of a round or match (2 / 4: after the KO), or the win screen and the continue
+     screen in front of the stage (3 / *).
+   Not the select screen (1 / *) or the world map, profile and VS screens (2 / 1 - 2), which run inside
+   the same step and reuse the stage's layers for their own backdrops (C29), nor GAME OVER (4 / *). */
+static int stage_shown(void) {
+    if (RB(FIGHTERS_LAYER + 2) != 1) return 0;                            /* no stage set up */
+    if (RH(GAME) == 3 && RH(GAME + 2) == 2 && RH(GAME + 4) == 1) return 1;  /* the attract demo's fight */
+    uint64_t now = rt_vblank_count();
+    if (fight_frame == ~0ull || now - fight_frame > 2) return 0;           /* not in a fight */
+    int screen = RH(GAME + 2), step = RH(GAME + 4);
+    return (screen == 2 && (step == 3 || step == 4)) || screen == 3;
+}
+
 /* Before a stage layer (or one band of it) is drawn: its strips (or, measuring, whether to draw it at
    all). scroll_x: the horizontal scroll the drawer uses; band 0 the layer, 1 its separately moving top
    rows; clip_y0 - clip_y1 the band's screen rows. */
 static int before_layer(Cpu *c, int layer, uint32_t column, int scroll_x, int band, int clip_y0, int clip_y1) {
     uint64_t now = rt_vblank_count();
-    if (fight_frame == ~0ull || now - fight_frame > 2) return 0;          /* not in a fight */
-    if (RH(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;               /* not the fight itself (C29) */
-    if (RB(FIGHTERS_LAYER + 2) != 1) return 0;                           /* no stage set up */
+    if (!stage_shown()) return 0;
     read_measure();
     if (measuring) {
         static int logged[NLAYERS];
@@ -472,8 +489,7 @@ static void object_position(uint32_t sp, int *x, int *y) {
 static int obj_measure_read, obj_measuring, hide_kind = -2, hide_type = -2;
 static long hide_from, hide_to;
 static int in_fight(void) {
-    uint64_t now = rt_vblank_count();
-    return fight_frame != ~0ull && now - fight_frame <= 2 && RH(GAME + 2) == 2 && RH(GAME + 4) == 3 && RB(FIGHTERS_LAYER + 2) == 1;
+    return stage_shown();
 }
 
 int stagestrips_object(Cpu *c, uint32_t a0, int after) {

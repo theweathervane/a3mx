@@ -284,11 +284,13 @@ static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, in
             }
             return;
         }
+        /* mirrored, then as it is, and on alternately until the margin is covered (two 32-pixel cells,
+           three 16-pixel ones: the QSound screen) */
         uint8_t mirrored = (uint8_t)(last ^ (1u << CELL_FLIP_X));
-        cell_quad(ds, v, (int16_t)(cx + step), y, w, h, mirrored, S16(ds + DS_U), S16(ds + DS_V), texels);
-        CALL5(f_089E1950, v, 4, flags, blend, effect);
-        cell_quad(ds, v, (int16_t)(cx + 2 * step), y, w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
-        CALL5(f_089E1950, v, 4, flags, blend, effect);
+        for (int k = 1; (k - 1) * w < MARGIN_W; k++) {
+            cell_quad(ds, v, (int16_t)(cx + k * step), y, w, h, (k & 1) ? mirrored : last, S16(ds + DS_U), S16(ds + DS_V), texels);
+            CALL5(f_089E1950, v, 4, flags, blend, effect);
+        }
         return;
     }
     if (mode == 3) {   /* the left margin only, from the row's first cell drawn */

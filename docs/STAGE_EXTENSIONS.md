@@ -217,8 +217,10 @@ draw no strips):
    `assets/extensions/<the stage archive's folder in index.json>/` (`stages/0c_dan` for `st0c`; the
    four numbers you can't pick use the stage they load), up to 8 strips a stage. A missing or
    unreadable file is skipped (the log says why).
-2. **Draw:** while WIDE NATIVE is on and a fight is running (the fight's per-frame step 0x08823674 has
-   run in the last two frames), each time one of the stage tile drawers (0x0881AB28 with the layer,
+2. **Draw:** while WIDE NATIVE is on and the fight's stage is on screen (since 0.99.23: the fight, the
+   end of a round or match after the KO, the win screen and the continue screen, while the fight's
+   per-frame step 0x08823674 has run in the last two frames; and the attract mode's demo fights; not
+   the select, map, profile or VS screens, which reuse the stage's layers), each time one of the stage tile drawers (0x0881AB28 with the layer,
    0x0881B268 with a record whose kind names the layer) or picture drawers (0x08819498 / 0x0881C0C8,
    BISON's mountains and sky, with the layer; since 0.90.0) is about to draw a layer, that layer's strips,
    once a frame: textured quads placed like the layer's own tiles (the screen's scale and offset, its

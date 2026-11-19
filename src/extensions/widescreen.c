@@ -179,10 +179,19 @@ int widescreen_edge_copy(uint32_t sp, int n) {
    left margin only). In the fight (GAME + 2 = 2, step 3), drawer 11: the ROUND n banner (kind 0 type 0),
    its dark band (1 + 4); FIGHT (type 1), its translucent box (2), as it flies in and settles (the word
    itself is edge to edge already). The continue screen (GAME + 2 = 3): its count's bar (kind 13 type 2,
-   1 + 8: its right end breaks up). The GAME OVER screen (GAME + 2 = 4): its band (kind 13 types 4 - 6;
+   1 + 8: its right end breaks up). The GAME OVER screen (GAME + 2 = 4 after the continue; GAME + 0 = 3, + 2 = 0 at the end of an
+   ending, with TRY AGAIN): its band (kind 13 types 4 - 6;
    pictures narrower than the screen, the words, are left alone by sprite_grid.c). */
 int widescreen_edge_cells(uint32_t sp) {
-    if (RB(GAME + 2) == 4 && RB(sp + 2) == 13 && RB(sp + 3) >= 4 && RB(sp + 3) <= 6) return 1;   /* GAME OVER's band */
+    /* textured pictures across the 4:3 picture: its side cells mirrored out, then as they are (16).
+       The QSound screen (GAME + 0 / + 2 = 1 / 7; kind 122) and the attract mode's word screens (TRIUMPH
+       OR DIE, BORN TO FIGHT ...: GAME + 0 = 2, kind 51 types 0 - 2, the words and the top word's noisy
+       banner; kind 54 type 3, the band that lights up behind the middle or bottom word). Their words don't reach the 4:3 sides,
+       so only the banners and the QSound screen's plain background go on. */
+    if (RH(GAME) == 1 && RB(GAME + 2) == 7 && RB(sp + 2) == 122) return 1 | 16;
+    if (RH(GAME) == 2 && ((RB(sp + 2) == 51 && RB(sp + 3) <= 2) || (RB(sp + 2) == 54 && RB(sp + 3) == 3))) return 1 | 16;
+    int game_over = RB(GAME + 2) == 4 || (RH(GAME) == 3 && RB(GAME + 2) == 0);   /* after the continue; after an ending */
+    if (game_over && RB(sp + 2) == 13 && RB(sp + 3) >= 4 && RB(sp + 3) <= 6) return 1;   /* GAME OVER's band */
     if (RB(GAME + 2) == 3 && RB(sp + 2) == 13 && RB(sp + 3) == 2) return 1 | 8;                    /* the continue bar */
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RB(sp + 2) != 0 || RW(sp + 148) != 11) return 0;
     uint32_t type = RB(sp + 3);

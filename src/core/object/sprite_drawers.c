@@ -36,7 +36,7 @@ extern int rt_widescreen;          /* WIDE NATIVE: extensions/widescreen.c (exte
 extern int sprite_grid_wide_edges; /* sprite_grid.c */
 extern int32_t sprite_grid_left_row;
 int widescreen_edge_cells(gaddr sp);   /* which pieces: */
-enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2, EDGES_MIRROR_LEFT = 4, EDGES_LEFT_ONLY = 8 };   /* and how */
+enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2, EDGES_MIRROR_LEFT = 4, EDGES_LEFT_ONLY = 8, EDGES_MIRROR = 16 };   /* and how */
 int widescreen_edge_row(gaddr sp);
 int widescreen_beam(gaddr sp);
 int widescreen_widen(gaddr sp);
@@ -62,7 +62,8 @@ static gaddr sprite_list(gaddr sp) { return *W(PICTURE_LISTS + (uint32_t)*H(sp +
 static void draw_picture(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list, int edges) {
     int wide = rt_widescreen ? widescreen_edge_cells(sp) : 0;
     sprite_grid_left_row = INT32_MIN;
-    sprite_grid_wide_edges = !(wide & edges) ? 0 : (wide & EDGES_MIRROR_LEFT) ? 2 : (wide & EDGES_LEFT_ONLY) ? 3 : 1;
+    sprite_grid_wide_edges = !(wide & edges) ? 0 : (wide & EDGES_MIRROR) ? 4 : (wide & EDGES_MIRROR_LEFT) ? 2
+                           : (wide & EDGES_LEFT_ONLY) ? 3 : 1;   /* 4 with sprite_grid_wide_strip 0: the side cells mirrored out */
     for (;;) {
         int more = S16(pic + 10) != 0;
         c->r[4] = ds; c->r[5] = sp; c->r[6] = pic; c->r[7] = list; c->r[8] = 0;

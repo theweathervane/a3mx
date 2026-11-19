@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.99.23
+### For players
+- **Stage Extensions stay on after the KO:** the stage's edges are still drawn at the end of a round, on the win screen and on the continue screen, and in the attract mode's demo fights.
+- **WIDE NATIVE: the GAME OVER after finishing Arcade Mode** (with TRY AGAIN) no longer has white bars at the sides; its band runs to the edges like the other GAME OVER.
+- **WIDE NATIVE, attract mode:** the QSound screen's background fills the screen, and the banners behind TRIUMPH, BORN, GO, FACE ... and the bands that light up behind the words below run to the edges.
+
+### Technical
+- `extensions/stagestrips.c`: one gate, `stage_shown()`, for the strips and the foreground pieces: a stage set up and either the attract demo (GAME + 0 / + 2 / + 4 = 3 / 2 / 1, no fight step there) or the fight step within 2 frames with GAME + 2 / + 4 = 2 / 3 - 4 or GAME + 2 = 3 (win and continue screens). The select, map, profile and VS screens stay out (C29); `stage_strips` passes.
+- `extensions/widescreen.c` `widescreen_edge_cells`: GAME OVER's band also at GAME + 0 = 3, + 2 = 0 (the end of an ending); new answer 16 (side cells mirrored, `sprite_drawers.c` → `sprite_grid.c` mode 4) for the QSound screen (GAME + 0 / + 2 = 1 / 7, kind 122) and the attract word screens (GAME + 0 = 2, kind 51 types 0 - 2, kind 54 type 3).
+- `object/sprite_grid.c` mode 4, mirroring: side cells alternate mirrored / as they are until the 48-pixel margin is covered (three 16-pixel cells on the QSound screen; two 32-pixel cells as before).
+- Checked: parity for attract_mode and arcade_match; WIDE NATIVE off / on fighters identical for attract_mode, arcade_match and super_finish; `stage_strips`; the strips after the KO, on the win and continue screens and in the demo, GAME OVER after the ending, the QSound and word screens by eye.
+
 ## 0.99.22
 ### For players
 - **WIDE NATIVE: the super finish's backdrops fill the screen unbroken.** The slanted lines, splash, burst and swirl are drawn slightly larger, centred, so their lines and rings carry on to the screen's sides with no seams or pulled pixels. The vertical lines' second kind now carries on the same way as the first.
