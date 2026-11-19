@@ -416,8 +416,8 @@ void ge_census_write(void) {
     rt_log("palette census: %d texture / palette pairs written to %s", census_n, ge_census_path);
 }
 
-/* ---------------------------------------------------------------- WIDE FORCED: full-width draws */
-/* In WIDE FORCED the 4:3 picture is x 48 - 432 of the 480-wide screen. Much of what the game draws
+/* ---------------------------------------------------------------- WIDE NATIVE: full-width draws */
+/* In WIDE NATIVE the 4:3 picture is x 48 - 432 of the 480-wide screen. Much of what the game draws
    across its whole picture (title and menu backdrops, the attract sequence's bars and bands, ROUND /
    FIGHT / KNOCK OUT banners, fades, menu title bars) is one sprite or quad spanning that, which leaves
    the margins black or showing what is behind. Such a draw gets a piece in each margin it stops short

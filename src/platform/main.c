@@ -46,7 +46,7 @@
  *   --save-dir DIR       keep saves and settings together in DIR, and the log and last_run.txt in the work
  *                        folder, as before 0.60.0 (tests start from an empty DIR)
  *   --hash-log FILE      write one line per frame: frame, hash of the program's memory, hash of the frame buffer,
- *                        hash of the four fighters (0x092E3EA0 - 0x092E5100: tests/parity.py's WIDE FORCED check)
+ *                        hash of the four fighters (0x092E3EA0 - 0x092E5100: tests/parity.py's WIDE NATIVE check)
  *                        (tests/parity.py compares two runs with it)
  *   --stick "F=LX,LY;.." scripted analogue stick by frame (tests)
  *   --assets DIR         load each archive that DIR/index.json gives an unpacked folder from it (default:
@@ -390,7 +390,7 @@ extern int rt_realtime;
 static void lazy_update(uint64_t f) { if (lazy_draw) ge_no_draw = !(dump_dir && (long)f + 3 >= dump_from && ((f + 1) % (uint64_t)dump_every == 0 || (f + 2) % (uint64_t)dump_every == 0 || (f + 3) % (uint64_t)dump_every == 0)); }
 void quitkey_request(void);                     /* quitkey.c */
 /* The extensions carried over from the static recomp (src/extensions/: hooks, EX. SETTING, saves in
- * a3mx.dat / .cfg, WIDE FORCED, local players in the network modes, F2, ...). --no-extensions turns
+ * a3mx.dat / .cfg, WIDE NATIVE, local players in the network modes, F2, ...). --no-extensions turns
  * them all off for a run, so the game plays as the PSP program alone: its own menus and saves (on the
  * emulated memory stick, <save dir>/ms0), one pad. A build configured with -DA3MX_EXTENSIONS=OFF
  * leaves them out altogether (extensions_off.c stands in for the names the platform uses). */

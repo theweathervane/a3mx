@@ -343,7 +343,7 @@ static void draw_picture(Cpu *c, gaddr layer) {
     c->r[29] += 0x30;
 }
 
-/* void draw_picture(layer *a0): wrapped so WIDE FORCED's stage strips (src/extensions/stagestrips.c) join it */
+/* void draw_picture(layer *a0): wrapped so WIDE NATIVE's stage strips (src/extensions/stagestrips.c) join it */
 SFA_FUNC_WRAPPED(08819498, stage_picture, stagestrips_picture) {
     gaddr layer = ARG(0);
     draw_picture(c, layer);

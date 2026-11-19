@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Measure WIDE FORCED's stage edges layer by layer, and write each stage's strip placeholders and
+"""Measure WIDE NATIVE's stage edges layer by layer, and write each stage's strip placeholders and
 widescreen.json (docs/STAGE_EXTENSIONS.md).
 
 A stage has up to 8 layers (0x092E8800, 0xA0 bytes each; layer 1 is the fighters' layer), each scrolling
 at its own rate, so the art of each one ends at its own place. At a camera limit, the 48 columns
-WIDE FORCED adds at that side show black wherever no layer has art. Each black pixel belongs to one
+WIDE NATIVE adds at that side show black wherever no layer has art. Each black pixel belongs to one
 layer's strip: the farthest layer with art in that screen row near the edge (the plane the gap
 continues), or, in a row where no layer has art near the edge, the farthest layer drawn at all. A gap
 is a pixel where a magenta probe drawn behind everything shows through, so black that something
 draws (a layer's own black art, the overlay's band under the gauges) is not one.
 
-For each selectable stage and side it runs a Free Battle in WIDE FORCED with both fighters pinned at
+For each selectable stage and side it runs a Free Battle in WIDE NATIVE with both fighters pinned at
 that wall (--poke), once on the ground (camera y 0) and once high (camera y 16), and dumps the frame
 with every layer, then each layer on its own (A3MX_STRIP_MEASURE, src/extensions/stagestrips.c). From
 the extension's log it takes the scroll each layer's drawer used at that limit (the layer's +18, or the
@@ -22,7 +22,7 @@ Writes, per stage folder under assets/extensions/stages/<nn>_<name>/:
   widescreen_left.png / widescreen_right.png               the fighters' layer (layer 1)
   widescreen_layer<n>_left.png / widescreen_layer<n>_right.png  other layers
   widescreen.json                                            "layer<n>_left" / "layer<n>_right": layer x
-Each placeholder is 64 x 288: the 48 columns WIDE FORCED adds, 8 more reaching under the layer's own art
+Each placeholder is 64 x 288: the 48 columns WIDE NATIVE adds, 8 more reaching under the layer's own art
 (OVERLAP) and 8 past the screen's edge (OUTER), so the strip and the art overlap a little instead of
 leaving a gap, even where a layer's scroll at the wall wavers by a few pixels; filled rows grow by VPAD. It is transparent except
 the rows that layer has to fill: every row where the layer's art runs into the edge (continued(): its strip
@@ -93,7 +93,7 @@ def run(exe, work, out, k, side, lifted):
     from PIL import Image
     d = os.path.join(out, '%02d%s%s' % (k, side, 'u' if lifted else 'g'))
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE FORCED\n')
+    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE NATIVE\n')
     inp, f = ms.script(k); p, e = f + 1500, f + 1900
     last = e + 30 + 10 * NLAYERS
     x = '3E8' if side == 'R' else '118'

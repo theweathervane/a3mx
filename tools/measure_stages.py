@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Measure every selectable stage: its number, the camera limits, and how far its art reaches in
-WIDE FORCED. Writes the table in docs/STAGES.md.
+WIDE NATIVE. Writes the table in docs/STAGES.md.
 
 For each of the 38 stages it starts a Free Battle on that stage (headless, scripted buttons), then:
   - reads the stage number and the main layer's camera limits from memory (--snap);
-  - runs again in WIDE FORCED with both fighters held at the left, then the right edge (--poke), so
+  - runs again in WIDE NATIVE with both fighters held at the left, then the right edge (--poke), so
     the camera sits at its limit, and counts the black columns at that edge of the screen: where the
     stage's art does not reach the wider view.
 
@@ -73,7 +73,7 @@ def black_margin(png, side, y0=60, y1=230):
 
 def run(exe, work, out, k, side):
     d = os.path.join(out, '%02d%s' % (k, side)); shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE FORCED\n')
+    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE NATIVE\n')
     inp, f = script(k); p, e = f + 1500, f + 1900
     x = '3E8' if side == 'R' else '118'            # 1000 / 280: pushed against that wall
     cmd = [exe, '--work', work, '--save-dir', d, '--log', os.path.join(d, 'log'), '--headless', '--fast',
@@ -98,7 +98,7 @@ def main():
     jobs = [(k, s) for k in range(1, 39) for s in 'LR']
     with concurrent.futures.ThreadPoolExecutor(a.j) as pool:
         res = dict(zip(jobs, pool.map(lambda j: run(a.exe, a.work, a.out, *j), jobs)))
-    print('| # | Menu name | Stage | Archive | Left limit | Right limit | Width | WIDE FORCED black, left (widest / narrowest) | right (widest / narrowest) |')
+    print('| # | Menu name | Stage | Archive | Left limit | Right limit | Width | WIDE NATIVE black, left (widest / narrowest) | right (widest / narrowest) |')
     print('|---|---|---|---|---|---|---|---|---|')
     for k in range(1, 39):
         L, R = res[(k, 'L')], res[(k, 'R')]

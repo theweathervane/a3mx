@@ -1,14 +1,14 @@
 /* The network task's menu rows (0x088EC074 - 0x088EC724, one per row 1 - 11, called through a table):
  * each draws its row's text, lit if it is the chosen row, and the chosen row's cursor bar.
  *
- * WIDE FORCED: the bar's x is -240 instead of -192, so it stays centred in the 16:9 picture, as Rickow's
+ * WIDE NATIVE: the bar's x is -240 instead of -192, so it stays centred in the 16:9 picture, as Rickow's
  * 16:9 patch (sfa3-PSP-widescreen, MIT) had it (docs/WIDESCREEN.md).
  *
  * network_match reaches eight of them; the rows with ids 0, 9 and 10 belong to menus no scenario opens.
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED (extensions/widescreen.c; extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE (extensions/widescreen.c; extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint32_t *W(gaddr a) { return guest_ptr(a); }

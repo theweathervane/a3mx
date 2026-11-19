@@ -10,7 +10,7 @@ it while decompiling, are in [LAYOUT.md](LAYOUT.md).
 | `us/index.json` | which folder holds which of the disc's archives: what the game reads | never |
 | `us/characters/00_ryu/fighter/` ... | each archive unpacked into one folder: a `manifest.json`, and each entry in a subfolder for its kind (`textures/`, `palettes/`, `text/`, `sound/`, `voices/`, `fighter_data/`, `data/`) | never |
 | `us/music/*.at3` | the 51 music tracks (ATRAC3+), as on the disc; WAV / OGG decoding to come | never |
-| `extensions/` | new art that isn't the game's, such as WIDE FORCED's stage edges ([docs/STAGE_EXTENSIONS.md](../docs/STAGE_EXTENSIONS.md)) | yes |
+| `extensions/` | new art that isn't the game's, such as WIDE NATIVE's stage edges ([docs/STAGE_EXTENSIONS.md](../docs/STAGE_EXTENSIONS.md)) | yes |
 
 The game loads every archive whose folder `index.json` names from that folder, raw files and PNGs
 included. Archives with no folder still come from the disc. `--no-assets` plays from the disc only.

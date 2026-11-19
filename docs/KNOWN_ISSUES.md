@@ -21,7 +21,7 @@ says what changed).
 | # | Status | Issue | Notes |
 |---|---|---|---|
 | M1 | parked | A second MODE MENU page was tried and dropped; menus may be rethought, console style, better as part of a decompilation. | If a runtime-drawn layer comes back: the GPU present shader outputs alpha 1, so blending a layer over the frame needs its own shader or a premultiplied path. |
-| M7 | known | WIDE FORCED: a black margin where a stage's art runs out (camera at a stage edge) and on the left of the menu screens. The original patch does the same. | widescreen.c. Stage by stage, in pixels: [STAGES.md](STAGES.md#widescreen); the planned fix (stage extensions): [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md); the full list of widescreen issues: [WIDESCREEN.md](WIDESCREEN.md). |
+| M7 | known | WIDE NATIVE: a black margin where a stage's art runs out (camera at a stage edge) and on the left of the menu screens. The original patch does the same. | widescreen.c. Stage by stage, in pixels: [STAGES.md](STAGES.md#widescreen); the planned fix (stage extensions): [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md); the full list of widescreen issues: [WIDESCREEN.md](WIDESCREEN.md). |
 
 ## Elsewhere
 

@@ -6,7 +6,7 @@
  * drawn in one colour (0x08A04B88[a1 / 3], with the alpha byte 0x08A04B98[a2]) through the 2D library's
  * quad list at 0x08AD9378 (corners at 0x08AD9388, colours at 0x08AD9398), blended unless a2 is 7.
  *
- * WIDE FORCED: a quad with an edge on or past the 4:3 picture's side (x 0 or 384 on the screen) gets
+ * WIDE NATIVE: a quad with an edge on or past the 4:3 picture's side (x 0 or 384 on the screen) gets
  * a rectangle in the colour beside it, from that edge out to the 16:9 screen's side, as tall as the
  * edge. The quad itself keeps its corners, so the shapes' slopes (the A, X and V of the wipes into the
  * fight) stay as on the 4:3 screen. (0.99.8 moved such corners 48 out instead, which widened them.)
@@ -15,7 +15,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -44,7 +44,7 @@ static int16_t to_screen(int32_t v, float scale, float offset) {
     return (int16_t)CVT_TRUNC(NULL, f);
 }
 
-/* WIDE FORCED: the quad's corners on or past one side (x <= 0, or >= 384): if they make an edge (two
+/* WIDE NATIVE: the quad's corners on or past one side (x <= 0, or >= 384): if they make an edge (two
    heights), a rectangle from the outermost of them to the screen's side (-48 / 432), using the same
    quad list (corners top left, top right, bottom right, bottom left) */
 static void wide_side(Cpu *c, const int16_t x[4], const int16_t y[4], int right, uint32_t flags, float z) {

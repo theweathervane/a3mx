@@ -227,7 +227,7 @@ To do, in rough order:
   - [ ] Left translated, as nothing reaches them: the rest of 0x088B5F48 - 0x088BB470 (the memory
         stick's other paths, the pause BUTTON CONFIG's up / down row 0x088B932C)
 - [ ] The stage's background drawers (`src/core/stage/`):
-  - [x] The tile drawers 0x0881AB28 (32-pixel tiles) and 0x0881B268 (16-pixel), with WIDE FORCED's
+  - [x] The tile drawers 0x0881AB28 (32-pixel tiles) and 0x0881B268 (16-pixel), with WIDE NATIVE's
         wider grid as native code; scenario `wide_fight` (0.49.0)
   - [x] The stage's objects (`src/core/stage/objects.c`): the maker 0x0884AE40 (a table of 16-byte
         records per stage) and the routines of every kind the 34 stages use, with their helpers;
@@ -281,7 +281,7 @@ decompiled.
       Needs: the save task.
   - [x] Silent when a save fails too: no "continue without auto-saving?" (0.24.0; the list of save
         messages is in [SAVES.md](SAVES.md#save-messages-kept-off-screen))
-- [x] WIDE FORCED as a real native setting (0.99.1): every function Rickow's 16:9 patch changed is native
+- [x] WIDE NATIVE as a real native setting (0.99.1): every function Rickow's 16:9 patch changed is native
       (0.99.0), and the patch is no longer downloaded or translated in. The WIDE scenarios play with it on
       and off and compare the fighters frame by frame (TESTS.md). Not reached by a scenario yet: 0x088D6D3C, three network menu rows, two of Cammy's CPU states.
 - [x] Pad icons on the MODE MENU: padicons.c, wrapped around the decompiled MODE MENU (0.24.0).
@@ -330,7 +330,7 @@ To do:
 ## Phase 6: Widescreen revision
 
 Details in [WIDESCREEN.md](WIDESCREEN.md), [STAGES.md](STAGES.md) and
-[STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md). Rule for every item: WIDE FORCED must never change move
+[STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md). Rule for every item: WIDE NATIVE must never change move
 timings or balance; parity with it on matches it off, frame for frame, in every fighter's state.
 
 - [x] Draw body parts past the invisible walls (Blanka's shoulder vanishing at the wall), keeping the walls
@@ -342,10 +342,10 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
   - [x] Size and placement measured for all 38 stages (`tools/measure_stage_extensions.py`); 76
         magenta placeholders (48 × 288, stage number and side in cyan) committed in
         `assets/extensions/stages/` (moved there, beside the stages' own folders, in 0.37.0)
-  - [x] Draw them, WIDE FORCED only, each behind its own layer: `stagestrips.c` around the decompiled
+  - [x] Draw them, WIDE NATIVE only, each behind its own layer: `stagestrips.c` around the decompiled
         tile drawers 0x0881AB28 / 0x0881B268, placed from each layer's scroll, so the camera didn't need
         decompiling first (0.50.0)
-  - [ ] A WIDE FORCED scenario with screenshots of the strips in place, plus the fighters'-state parity
+  - [ ] A WIDE NATIVE scenario with screenshots of the strips in place, plus the fighters'-state parity
         check below
   - [ ] Paint the 76 strips (any time, in parallel: a good job for a collaborator; magenta = still to do)
   - [x] One strip per layer, joined to each layer's own scroll, with placeholders measured per layer
@@ -355,7 +355,7 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
 - [ ] Art pack (experimental): each stage layer whole as its own PNG, not only screenshots at the walls
       (pan the camera with the layer drawn alone and stitch by its scroll; rebuild the layers wider than
       their tile map from the stage's layout data)
-- [ ] WIDE FORCED outside the fight (the maintainer's screenshots, 2026-11-18): MODE MENU and FREE BATTLE
+- [ ] WIDE NATIVE outside the fight (the maintainer's screenshots, 2026-11-18): MODE MENU and FREE BATTLE
       MODE menu backdrops in the left margin; the attract sequence's green band and bars; the wipe into
       the VS screen (margins covered, the stray "F" frame hidden); the VS screen's side bars in the
       Versus colour and moving with it, the name bars longer (Dramatic's two as well); the stage fade
@@ -370,7 +370,7 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
       win screens (0.99.13, 0.99.14); the rival dialogue, the select's
       bottom ticker, the super finish (0.99.15). Left: the attract
       sequence.
-- [x] WIDE FORCED on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
+- [x] WIDE NATIVE on compared against it off (0.99.1): `wide_fight`, `wide_walls` and `wide_left_wall`
       play twice, and the four fighters must be the same in every frame
 
 ## Phase 7: Support for Japanese and EU versions

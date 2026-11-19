@@ -202,15 +202,15 @@ static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
 void f_08821330(Cpu *c);   /* the camera an object is seen by */
 void f_088215C4(Cpu *c);   /* object_draw */
 #define LAST_CAMERA 0x08B01F28u   /* u32: the camera 0x08821424 asked for last */
-extern int rt_widescreen;           /* WIDE FORCED (extensions/widescreen.c; extensions_off.c: 0) */
-/* WIDE FORCED shows 48 pixels more on each side, so the two tests below take in 48 more on each side
+extern int rt_widescreen;           /* WIDE NATIVE (extensions/widescreen.c; extensions_off.c: 0) */
+/* WIDE NATIVE shows 48 pixels more on each side, so the two tests below take in 48 more on each side
    there: else an object whose art reaches into those pixels is not drawn until it is near the 4:3
    picture, and pops in (the foreground posts on Guy's and Dan's stages). Only what is drawn changes. */
 #define WIDE_MORE 48
 
 /* An object in use drawn while its x on the screen (64 to the left of it counted) is within 0 - 511:
    fixed to the screen with +14 = 0, else by its camera's x, and for +14 = 2 moved by the camera's
-   +28 × its depth (+38). Out of it, +1 = 0. WIDE FORCED: 112 to the left counted, within 0 - 607. */
+   +28 × its depth (+38). Out of it, +1 = 0. WIDE NATIVE: 112 to the left counted, within 0 - 607. */
 SFA_FUNC(08821424, object_draw_if_on_screen) {
     gaddr o = ARG(0), saved = c->r[16];
     if (*B(o) == 0) return;
@@ -240,7 +240,7 @@ SFA_FUNC(08821424, object_draw_if_on_screen) {
 /* ---- 0.76.0 ---- */
 
 /* (object, margin): 0x08821424 with a margin of its own: drawn while x on the screen plus the margin is
-   within 0 - (2 × margin + 0x17F). WIDE FORCED: the margin 48 more, which takes in 48 more each side. */
+   within 0 - (2 × margin + 0x17F). WIDE NATIVE: the margin 48 more, which takes in 48 more each side. */
 SFA_FUNC(088214E8, object_draw_if_on_screen_margin) {
     gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
     int16_t margin = (int16_t)(ARG(1) + (rt_widescreen ? WIDE_MORE : 0));

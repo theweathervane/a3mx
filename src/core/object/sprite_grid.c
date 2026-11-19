@@ -9,7 +9,7 @@
  *               other two, for their parts)
  *   0x08811BCC  32-pixel cells with their own palette and texel cell
  *
- * WIDE FORCED: a cell is skipped when it starts left of minus its width, which in the 16:9 picture is
+ * WIDE NATIVE: a cell is skipped when it starts left of minus its width, which in the 16:9 picture is
  * still inside the 48 pixels added on the left. That cut a fighter's back at the old 4:3 edge
  * (Blanka's shoulder against the wall). The 16:9 patch (Rickow, sfa3-PSP-widescreen, MIT) moved that
  * limit to -96 in 0x08811BCC only; here all four have it with rt_widescreen. The walls and everything
@@ -20,7 +20,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -39,7 +39,7 @@ void f_089E1950(Cpu *c);   /* draws textured vertices: a0, a1 count, a2 flags, a
 #define SCALE_Y    0x08E759ECu
 #define OFFSET_X   0x08E75A04u
 #define OFFSET_Y   0x08E75A0Cu
-#define WIDE_LEFT  (-96)         /* WIDE FORCED: the left limit, as the patch has it in 0x08811BCC */
+#define WIDE_LEFT  (-96)         /* WIDE NATIVE: the left limit, as the patch has it in 0x08811BCC */
 
 /* The draw state (0x08AD9320; a0) */
 enum {
@@ -83,7 +83,7 @@ static int32_t to_screen(int16_t v, float scale, float offset) {
     return CVT_TRUNC(NULL, f);
 }
 
-/* The left limit: minus the cell's width, or WIDE_LEFT in WIDE FORCED */
+/* The left limit: minus the cell's width, or WIDE_LEFT in WIDE NATIVE */
 static int32_t left_limit(int16_t width) { return rt_widescreen ? WIDE_LEFT : -(int32_t)width; }
 
 /* A row's first cell and the step along it; a sprite flipped across starts from its far end and
@@ -142,7 +142,7 @@ static void cell_quad(gaddr ds, gaddr v, int16_t x, int16_t y, int16_t w, int16_
     SET16(v + 16 * 0 + 8, v0); SET16(v + 16 * 2 + 8, v0); SET16(v + 16 * 1 + 8, v1); SET16(v + 16 * 3 + 8, v1);
 }
 
-/* WIDE FORCED: set by a sprite drawer (sprite_drawers.c) for a pass that draws a picture scaled by
+/* WIDE NATIVE: set by a sprite drawer (sprite_drawers.c) for a pass that draws a picture scaled by
    sprite_grid_scale about the point (sprite_grid_ax, sprite_grid_ay) on the screen, in the 16:9 margins
    only (each cell cut at the 4:3 picture's sides, its texels with it): the map screen's beam, a wedge
    from its point, carried on along its own edges past the end of its picture. Only the drawing changes. */
@@ -151,7 +151,7 @@ static int32_t round_to(float f) { return (int32_t)(f < 0.0f ? f - 0.5f : f + 0.
 
 /* the quad (corners top left, bottom left, top right, bottom right) drawn, or in the scaled pass its
    scaled copy's parts in the margins */
-/* WIDE FORCED: set by a sprite drawer for a picture drawn widened instead: the left half of its columns
+/* WIDE NATIVE: set by a sprite drawer for a picture drawn widened instead: the left half of its columns
    moved 48 left, the right half 48 right, and the 96 pixels between them filled with the middle cell's
    first texel column stretched (the profile screen's header and text box, whose middles are plain). A
    picture narrower than the 4:3 picture in the same drawing (the name plate) is moved whole with the
@@ -160,7 +160,7 @@ static int32_t round_to(float f) { return (int32_t)(f < 0.0f ? f - 0.5f : f + 0.
 int sprite_grid_half;
 #define PICTURE_W 384
 
-int sprite_grid_margins_only;   /* WIDE FORCED: a pass that draws only what goes into the margins */
+int sprite_grid_margins_only;   /* WIDE NATIVE: a pass that draws only what goes into the margins */
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
     if (sprite_grid_margins_only) return;
     if (sprite_grid_half) {
@@ -207,7 +207,7 @@ static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, u
     for (int i = 0; i < 4; i++) { SET16(v + 16 * i + 0, keep[i][0]); SET16(v + 16 * i + 2, keep[i][1]); SET16(v + 16 * i + 6, keep[i][2]); }
 }
 
-/* WIDE FORCED: set by a sprite drawer (sprite_drawers.c) around a picture that is a band across the 4:3
+/* WIDE NATIVE: set by a sprite drawer (sprite_drawers.c) around a picture that is a band across the 4:3
    picture (at least 384 wide, or for 3 starting at its left edge; others are left alone): 1 for
    FIGHT's translucent box and the GAME OVER band, 2 for the ROUND banner's band, 4 for the super finish's background (each row's
    end cells mirrored out, then as they are), 3 for the continue screen's bar (its right end

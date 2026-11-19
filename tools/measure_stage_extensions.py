@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Measure the stage extensions: for every selectable stage, which part of each 48 x 288 edge strip
-WIDE FORCED actually shows (the black the stage's art leaves at the camera limits), and optionally
+WIDE NATIVE actually shows (the black the stage's art leaves at the camera limits), and optionally
 (re)make the placeholder PNGs in assets/extensions/stages/<nn>_<name>/widescreen_<left|right>.png. Writes the table in docs/STAGE_EXTENSIONS.md.
 
 The strips themselves (one per layer) and their placeholders: tools/measure_stage_layers.py. This tool
@@ -8,9 +8,9 @@ measures only the black at each edge as a whole.
 
 A stage extension is a strip drawn behind the stage's art, joined to the fighters' layer at the camera
 limits: the left one covers layer x 208 - 255, the right one 1024 - 1071, and 288 rows (the 272 of the
-screen plus the 16 the camera rises when a fighter is in the air). Only WIDE FORCED shows it.
+screen plus the 16 the camera rises when a fighter is in the air). Only WIDE NATIVE shows it.
 
-For each stage and side it runs a Free Battle in WIDE FORCED with both fighters pinned at that wall
+For each stage and side it runs a Free Battle in WIDE NATIVE with both fighters pinned at that wall
 (--poke), twice: held on the ground (camera y 0) and held high
 (camera y at its top, 16). In each screenshot it counts the pure black columns at that edge, row by row,
 and maps them onto the strip. Where the fight's overlay (life bars, portraits, gauges)
@@ -38,7 +38,7 @@ PLACEHOLDER_DIR = os.path.join(ROOT, 'assets', 'extensions')     # + stages/<nn>
 def run(exe, work, out, k, side, lifted):
     d = os.path.join(out, '%02d%s%s' % (k, side, 'u' if lifted else 'g'))
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE FORCED\n')
+    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE NATIVE\n')
     inp, f = ms.script(k); p, e = f + 1500, f + 1900
     x = '3E8' if side == 'R' else '118'
     pokes = ['%d-%d:%08X=%s/2' % (p, e, a, x) for a in (ms.P1_X, ms.P2_X)]

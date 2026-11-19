@@ -1,7 +1,7 @@
-# Free Battle in WIDE FORCED, BLANKA against BLANKA (two boxes right of RYU, for each player in turn),
+# Free Battle in WIDE NATIVE, BLANKA against BLANKA (two boxes right of RYU, for each player in turn),
 # then player 1 walks back to the left wall and holds there, and walks right as far as he can. A
 # fighter's back at the wall is drawn into the margin the 16:9 picture adds
-# (src/core/object/sprite_grid.c: the drawers' left limit). `wide`: played with WIDE FORCED on and
+# (src/core/object/sprite_grid.c: the drawers' left limit). `wide`: played with WIDE NATIVE on and
 # off, the fighters must be the same in both (tests/parity.py).
 # The menus are free_battle's, with the two picks moved; the CPU plays player 2.
 frames 6000

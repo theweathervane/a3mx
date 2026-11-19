@@ -14,7 +14,7 @@
  *     written when SCREEN SETTING closes if either changed.
  *   - The other rows are the game's: each frame the game runs with its own row number in +7.
  *   - DEFAULT also sets VSYNC back to ON, FRAME TIMING to AUTO and FILTER to OFF.
- * The whole screen is drawn here (WIDE FORCED as the size's name while it is on: widescreen.c).
+ * The whole screen is drawn here (WIDE NATIVE as the size's name while it is on: widescreen.c).
  *   - A row whose setting has no effect at the moment is drawn disabled, label and value, in text
  *     colour 9: light grey with no gradient. Font 1's colours are not tints: each is its own set of
  *     glyphs drawn into the font's texture (0x08812520 offsets the glyph by colour * 144), so a light
@@ -41,7 +41,7 @@ void f_0880A6CC(Cpu *c);                    /* text: a0 string, a1 font, a2 x, a
 void f_0887C4CC(Cpu *c);                    /* sound effect: a0 0, a1 id, a2 0xC0 */
 void f_088B7D08(Cpu *c);                    /* a value, left / right: a0 pad slot, a1 value, a2 last value */
 void settings_save(void);
-int widescreen_value(void);                 /* widescreen.c: 0 NORMAL, 1 WIDE, 2 WIDE FORCED */
+int widescreen_value(void);                 /* widescreen.c: 0 NORMAL, 1 WIDE, 2 WIDE NATIVE */
 extern int rt_vsync, rt_frame_timing;
 
 #define OPT        0x08E75912u              /* option context: +2 submenu state, +7 row */
@@ -85,7 +85,7 @@ static int disabled(int pos) {
    edge. 12: a row of font 1. */
 #define ROWS_MID   0x76
 static int row_y(int r) { return ROWS_MID - ((rows() - 1) * 0x18 + 12) / 2 + 0x18 * r; }
-static uint32_t wf_name;                    /* "WIDE FORCED" in guest memory */
+static uint32_t wf_name;                    /* "WIDE NATIVE" in guest memory */
 static int vsync_saved = -1, timing_saved, filter_saved;   /* VSYNC, FRAME TIMING and FILTER as last written to a3mx.cfg (-1: not seen yet) */
 static int filter(void) { return rt_filter >= 0 && rt_filter < SHADER_FILTER_COUNT ? rt_filter : 0; }
 
@@ -186,12 +186,12 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
 
 /* widescreen.c: the green bar's width, the same on every row: from its left end (x 0x60) past the end
    of the longest value any row can show, from x 0xDC in 8-pixel letters, with 10 to spare (222 for
-   WIDE FORCED, the longest today). New values are counted here, so they never run past the bar. */
+   WIDE NATIVE, the longest today). New values are counted here, so they never run past the bar. */
 #define BAR_X     0x60
 #define VALUE_X   0xDC
 #define LETTER_W  8
 int screensetting_bar_width(void) {
-    static const char *const ours_v[] = { "WIDE FORCED", "AUTO", "SMOOTH", "ORIGINAL" };
+    static const char *const ours_v[] = { "WIDE NATIVE", "AUTO", "SMOOTH", "ORIGINAL" };
     size_t longest = 0;
     for (size_t k = 0; k < sizeof ours_v / sizeof *ours_v; k++) if (strlen(ours_v[k]) > longest) longest = strlen(ours_v[k]);
     for (int k = 0; k < SHADER_FILTER_COUNT; k++) if (strlen(SHADER_FILTERS[k].name) > longest) longest = strlen(SHADER_FILTERS[k].name);
@@ -207,7 +207,7 @@ int screensetting_bar_width(void) {
 
 int screensetting_text(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
-    if (!wf_name) { wf_name = rt_alloc(16, 1, 4, "wide forced"); if (wf_name) strcpy((char *)HOST(wf_name), "WIDE FORCED"); }
+    if (!wf_name) { wf_name = rt_alloc(16, 1, 4, "wide native"); if (wf_name) strcpy((char *)HOST(wf_name), "WIDE NATIVE"); }
     int r = (int8_t)RB(OPT + 7);
     static const uint32_t names[R_ROWS] = { S_SIZE, S_WALL, 0, 0, 0, S_DEFAULT, S_EXIT };   /* by id; 0: ours */
     /* our words, 16 bytes each: VSYNC, FRAME TIMING, FILTER, then the values ORIGINAL, SMOOTH, AUTO, then every filter's name */

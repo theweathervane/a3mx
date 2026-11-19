@@ -1,4 +1,4 @@
-/* WIDE FORCED: twins for the stage objects that change props at a line.
+/* WIDE NATIVE: twins for the stage objects that change props at a line.
  *
  * To save sprites, some stage objects play two props ("swap at the line", stage/objects.c swap_kind:
  * kinds 4, 6, 11, 29, 31, 33, 39, 52, 58, 82, 84): while the fighters' layer is left of the object's
@@ -7,14 +7,14 @@
  * picture's right edge when it changes). The 16:9 picture shows 48 pixels more on each side, so the
  * change happens in view: the prop appears from nowhere.
  *
- * Here, in WIDE FORCED, each such object gets a twin that always shows the look the object isn't
+ * Here, in WIDE NATIVE, each such object gets a twin that always shows the look the object isn't
  * showing, so both props are there while they are in view. A twin is a copy of the object in memory of
  * its own (never in an object list, so the game never runs it): when the object swaps, the twin takes
  * the other look, as the object does (its animation from that look's start); otherwise its animation
  * steps when the object's would; and it is queued for drawing after the object. It goes when the
  * object is set up again or ends.
  *
- * This only adds drawing, in WIDE FORCED: the objects, the fight and NORMAL are untouched. It runs
+ * This only adds drawing, in WIDE NATIVE: the objects, the fight and NORMAL are untouched. It runs
  * around the decompiled kinds (SFA_FUNC_WRAPPED), so the parity tests' reference run does the same.
  */
 #include "rt.h"
@@ -63,7 +63,7 @@ static void call1(Cpu *c, void (*f)(Cpu *), uint32_t a0) {
 int widescreen_twins(Cpu *c, uint32_t o, int after) {
     if (o < POOL || o >= POOL + POOL_N * OBJ_SIZE || (o - POOL) % OBJ_SIZE) return 0;
     int i = (int)((o - POOL) / OBJ_SIZE);
-    if (!twins) {                           /* once, whether or not WIDE FORCED is on */
+    if (!twins) {                           /* once, whether or not WIDE NATIVE is on */
         twins = rt_alloc(POOL_N * OBJ_SIZE, 1, 64, "widescreen twins");
         memset(twin_look, -1, sizeof twin_look);
         if (!twins) { rt_warn("widescreen twins: no memory, the swapping stage objects have none"); return 0; }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Dump reference pictures for painting the stage extensions (docs/STAGE_EXTENSIONS.md): what each stage
-looks like at its walls in WIDE FORCED, whole and layer by layer, so an artist can continue each layer's
+looks like at its walls in WIDE NATIVE, whole and layer by layer, so an artist can continue each layer's
 art into its strip.
 
 For every stage, both walls, on the ground and high in the air (the camera 16 px up), it writes:

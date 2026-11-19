@@ -223,7 +223,7 @@ static void line_kind(Cpu *c, gaddr table) {
     c->r[29] += 0x20;
 }
 
-/* ---- "swap at the line" (step at +7). In WIDE FORCED each of these kinds has a twin showing the
+/* ---- "swap at the line" (step at +7). In WIDE NATIVE each of these kinds has a twin showing the
    other look (extensions/widescreen_twins.c), since the change can happen in the 16:9 picture ---- */
 /* ---- "swap at the line" (step at +7): two looks kept in a block at +96, the record's own (look 0)
    and a fixed second one (look 1); while the fighters' layer is past x +132 the object takes look 1,

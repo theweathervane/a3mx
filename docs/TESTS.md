@@ -29,9 +29,9 @@ the frame. Extensions run in both, so they are compared too.
 A scenario also records which decompiled functions it ran (`--decomp-report`), which is how
 `tools/progress.py` knows a function is verified.
 
-A scenario with a `wide` line is a **WIDE FORCED check** instead: it plays twice with the decompiled
-code, SCREEN SIZE as the game sets it and WIDE FORCED, and the four fighters (0x092E3EA0 - 0x092E5100,
-the fourth hash in `--hash-log`) must be the same in every frame. WIDE FORCED only shows more of the
+A scenario with a `wide` line is a **WIDE NATIVE check** instead: it plays twice with the decompiled
+code, SCREEN SIZE as the game sets it and WIDE NATIVE, and the four fighters (0x092E3EA0 - 0x092E5100,
+the fourth hash in `--hash-log`) must be the same in every frame. WIDE NATIVE only shows more of the
 screen; it must never change the fight. What it draws is checked by eye.
 
 ## Tests that need no disc
@@ -50,7 +50,7 @@ screen; it must never change the fight. What it draws is checked by eye.
 | `asset_pac` | archives rebuilt from `assets/` are byte-identical to the disc's | unedited assets must change nothing | 1 to 2 min |
 | `pac_roundtrip` | every `.pac` unpacked and packed again is identical | the archive format is understood completely | 1 min |
 | `assets_in_game` | the game run from `assets/` matches the run from the disc, frame for frame | loading from folders must not change the game | 5 to 10 min |
-| `stage_strips` | with WIDE FORCED and Stage Extensions on, the stage's edge is not black | the strips once silently stopped drawing after a merge | 4 min |
+| `stage_strips` | with WIDE NATIVE and Stage Extensions on, the stage's edge is not black | the strips once silently stopped drawing after a merge | 4 min |
 
 `asset_pac`, `assets_in_game` and `stage_strips` need `assets/us` extracted (`python tools/extract_assets.py`).
 
@@ -86,9 +86,9 @@ touches nothing the hashes cover.
 | `screen_setting` | SCREEN SETTING's rows, VSYNC and FRAME TIMING included | our rows behave as the game's do | 3 min |
 | `save_load` | SAVE, LOAD and DELETE | the silent save path | 4 min |
 | `pause_config`, `pause_config_original`, `pause_config_players` | the pause menu's BUTTON CONFIG, with and without extensions, for players 2 and 3 | per-player button config | 5 min each |
-| `wide_fight` | Arcade's first fight, WIDE FORCED off and on (`wide`) | widescreen changes nothing about the fight | 7 min |
-| `wide_walls` | Free Battle, WIDE FORCED off and on (`wide`), Blanka against Blanka, player 1 at the left wall then walking right | a fighter at the wall plays the same while drawn into the left margin (the cell drawers' left limit; the drawing by eye) | 7 min |
-| `wide_left_wall` | Free Battle on Ryu's stage, WIDE FORCED off and on (`wide`), the camera at its left limit | the fight is the same with the tile drawers' extra left columns wrapping round within their row (layer 0 starts at map column 1 there; the drawing by eye) | 6 min |
+| `wide_fight` | Arcade's first fight, WIDE NATIVE off and on (`wide`) | widescreen changes nothing about the fight | 7 min |
+| `wide_walls` | Free Battle, WIDE NATIVE off and on (`wide`), Blanka against Blanka, player 1 at the left wall then walking right | a fighter at the wall plays the same while drawn into the left margin (the cell drawers' left limit; the drawing by eye) | 7 min |
+| `wide_left_wall` | Free Battle on Ryu's stage, WIDE NATIVE off and on (`wide`), the camera at its left limit | the fight is the same with the tile drawers' extra left columns wrapping round within their row (layer 0 starts at map column 1 there; the drawing by eye) | 6 min |
 | `network_match` | NETWORK > VS MODE against the virtual peer: the menus, IP OPTION, the select and a whole match | the network screens' rows, panels and message boxes | 8 min |
 | `disc_faults` | boot with a disc whose reads fail or stall | the loader's retry paths | 4 min |
 | `no_extensions` | the game with every feature off | the PSP program alone still runs, and matches | 2 min |

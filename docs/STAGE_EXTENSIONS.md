@@ -1,22 +1,22 @@
 # Stage extensions
 
-**Status:** drawn in WIDE FORCED since 0.50.0 (`src/extensions/stagestrips.c`), one strip per layer
+**Status:** drawn in WIDE NATIVE since 0.50.0 (`src/extensions/stagestrips.c`), one strip per layer
 and side. Since 0.90.0 every layer whose art stops short of a wall has a strip there (227 placeholders across
 the 38 stages, waiting to be painted), each continuing its own layer and reaching 8 columns under that
 layer's art and 8 past the screen's edge, so no gap shows at any camera position; BISON's two picture layers have them too.
 See [How the game draws them](#how-the-game-draws-them).
 
-WIDE FORCED shows 48 more pixels on each side of the screen than the stage's art was made for. At the
+WIDE NATIVE shows 48 more pixels on each side of the screen than the stage's art was made for. At the
 camera limits that leaves a black strip of up to 48 px at the edge ([STAGES.md](STAGES.md#widescreen)).
 A **stage extension** is new art for that strip: one image per layer and side, joined to that layer's
 edge, drawn just behind that layer.
 
-- **Only in WIDE FORCED.** NORMAL and WIDE draw exactly what they draw today.
+- **Only in WIDE NATIVE.** NORMAL and WIDE draw exactly what they draw today.
 - **Drawn behind its layer.** Where a layer's own art reaches the edge, the art stays on top; nearer
   layers stay in front of farther layers' strips.
 - **Picture only.** The camera limits (256 / 640) and the walls stay as they are. Pulling the limits in
   would make every stage narrower and move the corners, which changes how fights play. Parity runs with
-  WIDE FORCED on must still match it off, frame for frame (the rule in [WIDESCREEN.md](WIDESCREEN.md)).
+  WIDE NATIVE on must still match it off, frame for frame (the rule in [WIDESCREEN.md](WIDESCREEN.md)).
 - **Not from the disc.** These images are new work, not the game's, so they are committed to the repo
   in `assets/extensions/`. The rest of `assets/` comes from your own disc and is never committed.
 
@@ -47,7 +47,7 @@ layer's entry in it, layer 1's strips go at 208 and 1024 and other layers draw n
 
 **Seeing them:** turn on **Stage Extensions** on the launcher's Extensions tab (or run the game with
 `--features default,stage_extensions`; it needs Widescreen), set SCREEN SETTING > SCREEN SIZE to
-WIDE FORCED, and fight. Off (the default), no strip is loaded. Before 0.60.0 this was **Custom
+WIDE NATIVE, and fight. Off (the default), no strip is loaded. Before 0.60.0 this was **Custom
 Assets** (`--custom-assets`, still accepted).
 
 **Strips asked for by hand** (the maintainer, 2026-11-06; `EXTRAS` in the tool, so a re-measure
@@ -61,7 +61,7 @@ keeps them). The probe only finds black, so these two needed saying:
 **Every image is 48 × 288 pixels**, RGBA: alpha below 128 is transparent (the layers behind show
 through), and colour is rounded to 15 bits.
 
-- **Width 48 - 64:** the extra width WIDE FORCED shows on each side (480 instead of 384) is 48; a strip
+- **Width 48 - 64:** the extra width WIDE NATIVE shows on each side (480 instead of 384) is 48; a strip
   can be up to 64 wide, the extra columns reaching under its layer's own art (inwards: the left strip's
   right-hand side, the right strip's left-hand side) or past the screen's edge. The placeholders are
   64: 8 columns under the art, the 48, and 8 past the edge, so neither rounding at the join nor a
@@ -119,7 +119,7 @@ the camera across the layer and stitches the frames by the layer's scroll, plus 
 stage's layout data, the layers wider than their tile map (the game keeps only the tiles it shows).
 
 
-1. Take a WIDE FORCED screenshot at the wall you're painting: walk both fighters into that corner.
+1. Take a WIDE NATIVE screenshot at the wall you're painting: walk both fighters into that corner.
 2. Paint over the coloured area so it continues that layer's art outwards from its edge. You can paint
    more of the strip than the coloured area (another layer's art covers it where it's in front), and
    leave transparent what that layer would leave empty (sky behind a fence, for one).
@@ -197,7 +197,7 @@ rest stop at the 4:3 edge. Each can have a **piece** at each side: new art pinne
 - **Pinned:** drawn right after the object (the sprite drawer 0x0880C308, `stagestrips_object`), from
   the object's own position worked out as the sprite drawer does (its x / y, anchor, scroll share and
   shake), so it moves, scrolls and shakes with it; at the object's depth and queued after it, so it is
-  in front of the fighters as the object is. Only in WIDE FORCED with Stage Extensions on.
+  in front of the fighters as the object is. Only in WIDE NATIVE with Stage Extensions on.
 - **Placeholders:** `python tools/measure_stage_objects.py` finds each object's outline (a frame with
   and without it, at the left wall, the middle and the right wall) and writes a 72-wide yellow piece
   at each side: 64 units out and 8 under the object's art, 2 units taller than the object at top and
@@ -213,11 +213,11 @@ rest stop at the 4:3 edge. Each can have a **piece** at each side: new art pinne
 `src/extensions/stagestrips.c`, an extension (so `--no-extensions` and a build without the extensions
 draw no strips):
 
-1. **Load:** the first time a stage is drawn in WIDE FORCED, its strips and `widescreen.json` from
+1. **Load:** the first time a stage is drawn in WIDE NATIVE, its strips and `widescreen.json` from
    `assets/extensions/<the stage archive's folder in index.json>/` (`stages/0c_dan` for `st0c`; the
    four numbers you can't pick use the stage they load), up to 8 strips a stage. A missing or
    unreadable file is skipped (the log says why).
-2. **Draw:** while WIDE FORCED is on and a fight is running (the fight's per-frame step 0x08823674 has
+2. **Draw:** while WIDE NATIVE is on and a fight is running (the fight's per-frame step 0x08823674 has
    run in the last two frames), each time one of the stage tile drawers (0x0881AB28 with the layer,
    0x0881B268 with a record whose kind names the layer) or picture drawers (0x08819498 / 0x0881C0C8,
    BISON's mountains and sky, with the layer; since 0.90.0) is about to draw a layer, that layer's strips,

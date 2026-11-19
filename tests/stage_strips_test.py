@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""WIDE FORCED's stage extension strips are drawn (src/extensions/stagestrips.c, docs/STAGE_EXTENSIONS.md).
+"""WIDE NATIVE's stage extension strips are drawn (src/extensions/stagestrips.c, docs/STAGE_EXTENSIONS.md).
 
-A Free Battle on CHARLIE's stage (st03) in WIDE FORCED with both fighters pinned at the left wall, with
+A Free Battle on CHARLIE's stage (st03) in WIDE NATIVE with both fighters pinned at the left wall, with
 assets/ and --custom-assets (the parity tests run with --no-assets, so they can't see the strips).
 Checks that:
   - the strips are loaded ("stage strips: stage 0x03: N strips" in the log);
@@ -29,7 +29,7 @@ EVERY = 8                                     # frames between the dumps (the ru
 
 def run(a, d, custom):
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE FORCED\n')
+    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE NATIVE\n')
     inp, f = ms.script(CHARLIE)
     p, e = f + 1500, f + 1900
     cmd = [a.exe, '--work', a.work, '--assets', a.assets, '--save-dir', d, '--log', os.path.join(d, 'log'),

@@ -1,6 +1,6 @@
-# Widescreen (WIDE FORCED)
+# Widescreen (WIDE NATIVE)
 
-WIDE FORCED is the project's own 16:9 mode, switched at run time in game (SCREEN SETTING > SCREEN
+WIDE NATIVE is the project's own 16:9 mode, switched at run time in game (SCREEN SETTING > SCREEN
 SIZE): 16:9 with the 4:3 play area. It started as the SFA3MAX 16:9 patch by Rickow
 ([acknowledgments](../ACKNOWLEDGMENTS.md)), which was made for PPSSPP: it patches immediates and jumps
 into code caves. Until 0.99.1 the build downloaded it and translated it in as an overlay. Every
@@ -10,7 +10,7 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
 ## Where it lives
 
 - `src/extensions/widescreen.c`: the SCREEN SIZE setting and switching (`rt_widescreen`);
-  `src/extensions/screensetting.c` draws SCREEN SETTING (WIDE FORCED as the size's name).
+  `src/extensions/screensetting.c` draws SCREEN SETTING (WIDE NATIVE as the size's name).
 - What the patch changed, now native (the patch's own words: [PSP_PROGRAM_MAP.md](PSP_PROGRAM_MAP.md)
   "Widescreen patch"):
   - the background tile drawers 0x0881AB28, 0x0881B268 (0.49.0) and 0x0881B7C8 (0.99.0, the endings)
@@ -66,7 +66,7 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
   - the wipes' flat shapes (`src/core/object/shapes.c`, 0.99.8, redone in 0.99.11): a quad with an
     edge on or past the 4:3 picture's side gets a rectangle in its colour out to the screen's side; the
     quad keeps its corners, so the A, X and V into the fight keep their 4:3 slopes;
-- Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
+- Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE NATIVE off and on, and the
   four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).
 
@@ -90,13 +90,13 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
   extend to the right correctly.
 - **Stage art runs out at the camera limits:** on many stages: a black strip of up to 48 pixels at the
   edge. Measured stage by stage in [STAGES.md](STAGES.md#widescreen). This can be filled by stage
-  extensions, but new art must be drawn behind the stage in WIDE FORCED only: [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md).
+  extensions, but new art must be drawn behind the stage in WIDE NATIVE only: [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md).
 
 ## What to ensure
 
-**WIDE FORCED must not change the timing of any move**, or anything else that affects the game balance. It
+**WIDE NATIVE must not change the timing of any move**, or anything else that affects the game balance. It
 changes what is drawn, never how the game plays: the WIDE scenarios check that every fighter's state
-matches WIDE FORCED off, frame for frame (`wide` in a scenario, `tests/parity.py`), and a revision must
+matches WIDE NATIVE off, frame for frame (`wide` in a scenario, `tests/parity.py`), and a revision must
 keep that.
 
 ## Observations from other projects
@@ -134,11 +134,11 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
   stages): one place while the fighters' layer is left of a line, another past it, the change timed
   just off the 4:3 screen. In 16:9 it happens in view (Dan's crow appears on the sign the moment the
   camera moves off its starting place, x 448, which is the line). `extensions/widescreen_twins.c` gives
-  each, in WIDE FORCED, a twin showing the other look, so both are there while in view. It runs around
+  each, in WIDE NATIVE, a twin showing the other look, so both are there while in view. It runs around
   the decompiled kinds (`SFA_FUNC_WRAPPED`); NORMAL is unchanged byte for byte.
 - **The MODE MENU's left side** is not a tile layer: its background is the menu's own objects (panels
   and bands that drift and wrap round within the 4:3 width, `object/drift.c`), so nothing is placed in
-  the left margin. Widening their layout in WIDE FORCED, or pillarboxing the menu, is still to do.
+  the left margin. Widening their layout in WIDE NATIVE, or pillarboxing the menu, is still to do.
 - **Only widen in fights**, and in modes allowed one by one. That would fix the MODE MENU logo and the
   pre-battle loading in one go: pillarbox those screens instead of widening them.
 - **Blanka's shoulder (fixed).** Body parts at the invisible wall were cut at the old 4:3 edge: the

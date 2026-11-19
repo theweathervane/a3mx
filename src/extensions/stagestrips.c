@@ -1,4 +1,4 @@
-/* WIDE FORCED's stage extensions: new art for the 48 columns at each side of the screen that the
+/* WIDE NATIVE's stage extensions: new art for the 48 columns at each side of the screen that the
  * stage's own art leaves black at the camera limits (docs/STAGE_EXTENSIONS.md).
  *
  * A stage has up to 8 layers (0x092E8800, 0xA0 bytes each; layer 1 is the fighters' layer), each
@@ -24,7 +24,7 @@
  * below 128 is transparent.
  * A missing or unreadable file is skipped (the log says why).
  *
- * Drawn only with --custom-assets (the launcher's Custom Assets, off by default), while WIDE FORCED is
+ * Drawn only with --custom-assets (the launcher's Custom Assets, off by default), while WIDE NATIVE is
  * on and a fight is running (the fight's per-frame step 0x08823674, src/core/task/fight.c, wraps a
  * timestamp, and the battle task is at its fight screen: GAME + 2 = 2, + 4 = 3), around both tile drawers (0x0881AB28, 0x0881B268,
  * src/core/stage/tiles.c: SFA_FUNC_WRAPPED) and the two picture drawers (0x08819498, 0x0881C0C8,
@@ -32,7 +32,7 @@
  * padicons.c: our 16-bit texture on page STRIP_PAGE only while drawing.
  *
  * The strips change only what is drawn (and the extension's own memory): the game's state is the same
- * with or without them, so the fighters' parity with WIDE FORCED on and off is untouched.
+ * with or without them, so the fighters' parity with WIDE NATIVE on and off is untouched.
  *
  * Measuring (tools/measure_stage_layers.py): A3MX_STRIP_MEASURE="F0-F1:MASK,..." turns the strips off
  * for the run and, in frames F0 - F1, draws only the stage layers in MASK (bit n = layer n); bit 8
@@ -74,12 +74,12 @@ void f_089E1618(Cpu *c);   /* queues a quad list: a0 its descriptor, a1 vertex c
 #define TEX_STATE       0x08B23334u   /* the selected texture list (8 bytes) and its first entry (12) */
 #define PAL_SELECTED    0x08ACCD80u   /* u8: the palette 0x089E0EA4 last selected */
 
-#define STRIP_W         48            /* the columns WIDE FORCED adds at each side */
+#define STRIP_W         48            /* the columns WIDE NATIVE adds at each side */
 #define STRIP_W_MAX     64            /* a strip can be wider, reaching under its layer's own art (an overlap, so no gap shows) */
 #define STRIP_H         288
 #define FIGHTERS_LEFT_X 208           /* layer 1's strips without widescreen.json */
 #define FIGHTERS_RIGHT_X 1024
-/* The screen in the 2D library's units (WIDE FORCED: 480 across from -48, and 224 rows from 8, stretched
+/* The screen in the 2D library's units (WIDE NATIVE: 480 across from -48, and 224 rows from 8, stretched
    to the screen's 272) */
 #define CLIP_X0         -48
 #define CLIP_X1         432

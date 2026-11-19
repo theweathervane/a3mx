@@ -104,7 +104,7 @@ It uses the same paths as the extracted tree, so a stage's new art sits at the s
 as the stage: `extensions/stages/0c_dan/` beside `us/stages/0c_dan/`. It isn't per region: the same
 art serves every disc.
 
-- `extensions/stages/<nn>_<name>/widescreen_left.png`, `widescreen_right.png`: WIDE FORCED's stage
+- `extensions/stages/<nn>_<name>/widescreen_left.png`, `widescreen_right.png`: WIDE NATIVE's stage
   extensions, 48 × 288, magenta placeholders until painted ([docs/STAGE_EXTENSIONS.md](../docs/STAGE_EXTENSIONS.md)).
 - To come (roadmap phase 5): the extensions' own screens (EX. SETTING, PLAYER CONFIG, JOIN / WAIT, pad
   icons) under `extensions/screens/`.

@@ -6,7 +6,7 @@
  * 0x08E75A18 + 68; it and the pictures it goes on into (+10 nonzero) are drawn at x 0, y 0xE0, depth
  * index 2, colour white, not flipped.
  *
- * WIDE FORCED: each row's end cells are carried on into the margins, mirrored, then as they are
+ * WIDE NATIVE: each row's end cells are carried on into the margins, mirrored, then as they are
  * (sprite_grid.c, mode 4) for the speed lines (5) and the vertical lines (3); the slanted lines (1, 2) repeat
  * their side cells a cell out and two, moved 16 up or down a cell along the lines' slope, so they go
  * straight on; for the splash (6), the burst
@@ -15,7 +15,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;          /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_wide_edges, sprite_grid_wide_strip, sprite_grid_wide_dy, sprite_grid_margins_only; /* sprite_grid.c */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }

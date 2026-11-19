@@ -322,7 +322,7 @@ def main():
     print('  %d files' % image.extract(os.path.join(work, 'iso')))
     elf = os.path.join(work, 'boot.elf')
     open(elf, 'wb').write(boot_bytes)
-    # before 0.99.1: Rickow's 16:9 patch, downloaded and kept as an overlay (WIDE FORCED is native now)
+    # before 0.99.1: Rickow's 16:9 patch, downloaded and kept as an overlay (WIDE NATIVE is native now)
     for old in ('boot.widescreen.json', 'boot.widescreen.elf'):
         if os.path.exists(os.path.join(work, old)): os.remove(os.path.join(work, old))
     shutil.rmtree(os.path.join(work, 'sfa3-PSP-widescreen'), ignore_errors=True)

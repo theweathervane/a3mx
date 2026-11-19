@@ -66,7 +66,7 @@ typed interfaces here instead.
 
 The static recomp's extensions, unchanged: EX. SETTING, PLAYER CONFIG and L2 / R2, join-in and JOIN /
 WAIT on select screens, network modes on one PC (virtual players), pad icons, silent saves and
-IMPORT / EXPORT, WIDE FORCED, F2 back to the MODE MENU. Each hooks game functions listed in
+IMPORT / EXPORT, WIDE NATIVE, F2 back to the MODE MENU. Each hooks game functions listed in
 `tools/data/hooks.txt`: the original is translated as `orig_f_XXXXXXXX`, the extension's replacement is
 `hook_f_XXXXXXXX`, and the generated `f_XXXXXXXX` runs the hook, or the original when the extensions are
 off (`--no-extensions`, or a build with `-DA3MX_EXTENSIONS=OFF`, which leaves `src/extensions/` out and

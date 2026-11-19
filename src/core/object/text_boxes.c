@@ -8,7 +8,7 @@
  * character is an 8 by 16 glyph from texture rows 0x50 on (32 to a row), drawn as one quad of four
  * vertices through 0x089E1950. A new line's 0 is not counted.
  *
- * WIDE FORCED: in a fight's dialogue the lines move with the portrait they belong to, the one in their
+ * WIDE NATIVE: in a fight's dialogue the lines move with the portrait they belong to, the one in their
  * half of the screen, which the sprite drawer moves out to the 16:9 edge (widescreen_text_shift in
  * extensions/widescreen.c). Only the drawing changes.
  *
@@ -16,7 +16,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 int widescreen_text_shift(gaddr rec);
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }

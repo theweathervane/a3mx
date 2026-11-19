@@ -8,10 +8,10 @@ archive from the disc: --no-assets):
 and compares, frame by frame, a hash of the program's memory (code, data, bss) and of the frame
 buffer. The first frame that differs fails the test, with how to look into it.
 
-A scenario with a `wide` line checks WIDE FORCED instead: it is played twice by the decompiled code,
+A scenario with a `wide` line checks WIDE NATIVE instead: it is played twice by the decompiled code,
   narrow   SCREEN SIZE as the game sets it
-  wide     WIDE FORCED (a3mx.cfg's screen_size)
-and the four fighters (0x092E3EA0 - 0x092E5100) must be the same in every frame: WIDE FORCED only
+  wide     WIDE NATIVE (a3mx.cfg's screen_size)
+and the four fighters (0x092E3EA0 - 0x092E5100) must be the same in every frame: WIDE NATIVE only
 shows more of the screen, it must never change the fight. (Its drawing is checked by eye.)
 
 Usage: parity.py --exe build/a3mx --work work --scenario tests/scenarios/NAME.txt [--out DIR]
@@ -23,10 +23,17 @@ A scenario file:
     stick 1300=128,0;1310=128,128   (optional: analogue stick by frame, LX,LY 0-255)
     args --p2 cpu                (optional extra arguments for both runs)
     config [screen setting]      (optional: lines of the runs' a3mx.cfg, in order, written to
-    config screen_size=WIDE FORCED    both save folders before they start)
-    wide                         (optional: the WIDE FORCED check above)
+    config screen_size=WIDE NATIVE    both save folders before they start)
+    wide                         (optional: the WIDE NATIVE check above)
 """
 import argparse, os, shutil, subprocess, sys, time
+
+
+def screen_lines(sc, wide):
+    """SCREEN SIZE for a run: WIDE NATIVE for `wide`, else NORMAL (a new save is WIDE NATIVE since
+    0.99.21), unless the scenario's own config sets it"""
+    if any(l.replace(' ', '').lower().startswith('screen_size=') for l in sc['config']): return []
+    return ['[screen setting]', 'screen_size=' + ('WIDE NATIVE' if wide else 'NORMAL')]
 
 
 def read_scenario(path):
@@ -48,7 +55,7 @@ def read_scenario(path):
 def start(exe, work, sc, out, mode, extra):
     d = os.path.join(out, mode)
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    config = sc['config'] + (['[screen setting]', 'screen_size=WIDE FORCED'] if mode == 'wide' else [])
+    config = sc['config'] + screen_lines(sc, mode == 'wide')
     if config:
         with open(os.path.join(d, 'a3mx.cfg'), 'w', encoding='utf-8') as f: f.write('\n'.join(config) + '\n')
     cmd = [exe, '--work', work, '--save-dir', d, '--log', os.path.join(d, 'run.log'),
@@ -80,12 +87,12 @@ def wide_check(a, sc, name, out, t0):
         print('narrow run stopped early: %d of %d frames' % (len(nar), sc['frames'])); return 1
     for n, w in zip(nar, wid):
         if n[3] != w[3]:
-            print('WIDE FORCED FAIL in %s at frame %d: the fighters differ from the narrow run.' % (name, n[0]))
+            print('WIDE NATIVE FAIL in %s at frame %d: the fighters differ from the narrow run.' % (name, n[0]))
             print('  Compare the two with --watch 092E3EA0-092E5100 --watch-from N (a watch build) on both runs.')
             return 1
     if len(nar) != len(wid):
-        print('WIDE FORCED FAIL in %s: %d frames against %d' % (name, len(wid), len(nar))); return 1
-    print('WIDE FORCED OK: %s, the fighters identical in all %d frames (%.0fs)' % (name, len(nar), time.time() - t0))
+        print('WIDE NATIVE FAIL in %s: %d frames against %d' % (name, len(wid), len(nar))); return 1
+    print('WIDE NATIVE OK: %s, the fighters identical in all %d frames (%.0fs)' % (name, len(nar), time.time() - t0))
     return 0
 
 def main():

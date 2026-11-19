@@ -1,6 +1,6 @@
-/* The screen's setup in the text pass (object/frame.c), the parts WIDE FORCED changes.
+/* The screen's setup in the text pass (object/frame.c), the parts WIDE NATIVE changes.
  *
- * WIDE FORCED: after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT), chosen by rt_widescreen
+ * WIDE NATIVE: after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT), chosen by rt_widescreen
  * (docs/WIDESCREEN.md).
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
@@ -8,7 +8,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED (extensions/widescreen.c; extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE (extensions/widescreen.c; extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -25,7 +25,7 @@ static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); retur
 #define TEXTURES    0x08E75A18u   /* u32[]: texture page descriptors */
 #define GAME        0x08E75910u   /* +189: s8, 1 = no wallpaper bars on this screen */
 #define OPTIONS     0x08A058A0u   /* +0x1FE: SCREEN SETTING > WALLPAPER (0 NONE, 1 - 10) */
-#define SCREEN_W    384.0f        /* WIDE FORCED: 480 */
+#define SCREEN_W    384.0f        /* WIDE NATIVE: 480 */
 #define SCREEN_W_WIDE 480.0f
 
 static int16_t scaled(float scale, float n) { float f = scale; f = f * n; return (int16_t)CVT_TRUNC(NULL, f); }
@@ -71,7 +71,7 @@ static void quad(gaddr v, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16
 }
 
 /* The extra text layer (0x092E22E0, cleared here): its picture over the whole screen, 384 texels wide
-   (WIDE FORCED: 480), 224 high, to the right edge the sprites are drawn to. */
+   (WIDE NATIVE: 480), 224 high, to the right edge the sprites are drawn to. */
 static void text_layer(Cpu *c, gaddr frame) {
     *W(TEXT_EXTRA) = 0;
     CALL4(f_089E14D8, 0xFF, *W(TEXT_EXTRA + 4), 0x40000000u, 0);
@@ -87,7 +87,7 @@ static void text_layer(Cpu *c, gaddr frame) {
 
 /* The wallpaper (SCREEN SETTING > WALLPAPER) in the bars either side of the 4:3 picture: x -48 - 0 and
    384 - 432, y 8 - 232. With NONE, or on screens without the bars (GAME + 189 = 1), 0x0880A930.
-   WIDE FORCED: nothing (the picture reaches the sides). */
+   WIDE NATIVE: nothing (the picture reaches the sides). */
 static void pillarbox(Cpu *c, gaddr frame) {
     uint8_t wallpaper = *B(OPTIONS + 0x1FE);
     if (wallpaper == 0) { CALL1(f_0880A930, 0); return; }

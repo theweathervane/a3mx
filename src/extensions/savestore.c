@@ -238,7 +238,7 @@ int store_export_dir(const char *dir) {
         uint8_t hash[16]; int len = 0;
         static uint8_t img[SYS_SIZE > WTR_SIZE ? SYS_SIZE : WTR_SIZE];
         memcpy(img, sv->img, sv->size);
-        extern int rt_widescreen;                        /* widescreen.c: WIDE FORCED is WIDE to the PSP */
+        extern int rt_widescreen;                        /* widescreen.c: WIDE NATIVE is WIDE to the PSP */
         if (i == 0 && rt_widescreen) img[sys_pieces[0].off + 0x58] = img[sys_pieces[0].off + 0x62] = 1;
         uint8_t *enc = psp_encrypt(CRYPT_MODE, game_key, img, (int)sv->size, &len, hash);
         if (!enc) { rt_warn("store: could not encrypt %s", sv->file); continue; }

@@ -9,7 +9,7 @@ SCENARIO is a file in tests/scenarios (a name like super_finish is enough). Its 
 config lines are used as the parity tests use them; the game runs at its own speed in a window, and
 closes after the scenario's frames (or --frames).
 
-  --wide          WIDE FORCED on (as a `wide` scenario's second run)
+  --wide          WIDE NATIVE on (as a `wide` scenario's second run)
   --super-kind N  the super finish's backdrop forced to kind N (BATTLE + 43, 0x092E1253) while it is
                   shown: 1 / 2 slanted lines, 3 vertical lines, 5 speed lines, 6 splash, 7 burst
                   (0, 9 and 10 are the same picture), 8 swirl, in frames --super-from - --super-to
@@ -18,7 +18,7 @@ closes after the scenario's frames (or --frames).
   --skip-to F     race through the scenario up to frame F, then play at the game's speed (with
                   --super-kind it skips to 3700, just before the super is thrown, by default)
 
-Example, every super finish backdrop in WIDE FORCED, one after another:
+Example, every super finish backdrop in WIDE NATIVE, one after another:
   for k in 1 2 3 5 6 7 8; do python tools/watch_scenario.py super_finish --wide --super-kind $k; done
 """
 import argparse, os, subprocess, sys, tempfile
@@ -26,6 +26,13 @@ import argparse, os, subprocess, sys, tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tests'))
 import parity  # noqa: E402
+
+
+def screen_lines(sc, wide):
+    """SCREEN SIZE for a run: WIDE NATIVE for `wide`, else NORMAL (a new save is WIDE NATIVE since
+    0.99.21), unless the scenario's own config sets it"""
+    if any(l.replace(' ', '').lower().startswith('screen_size=') for l in sc['config']): return []
+    return ['[screen setting]', 'screen_size=' + ('WIDE NATIVE' if wide else 'NORMAL')]
 
 
 def main():
@@ -50,7 +57,7 @@ def main():
     sc = parity.read_scenario(path)
 
     save = tempfile.mkdtemp(prefix='a3mx_watch_')
-    config = sc['config'] + (['[screen setting]', 'screen_size=WIDE FORCED'] if a.wide else [])
+    config = sc['config'] + screen_lines(sc, a.wide)
     if config:
         with open(os.path.join(save, 'a3mx.cfg'), 'w', encoding='utf-8') as f: f.write('\n'.join(config) + '\n')
 

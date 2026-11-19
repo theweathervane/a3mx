@@ -13,7 +13,7 @@
  *   0x0881B7C8  32-pixel tiles like 0x0881AB28, from a map 24 tiles wide whose horizontal scroll wraps
  *               every 768 pixels (only 0x0881A2C8 calls it: the endings, arcade_ending_full).
  *
- * WIDE FORCED (rt_widescreen), after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT): the 32-pixel
+ * WIDE NATIVE (rt_widescreen), after Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT): the 32-pixel
  * drawers start two tiles further left and draw 17 columns, 0x0881B268 three tiles and 31.
  *
  * One change to the patch (0.97.0): it starts a row further left by moving the map pointer back, so when
@@ -28,7 +28,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
 void f_089E0EA4(Cpu *c);   /* selects a palette (a0) */
 void f_0880A3C4(Cpu *c);   /* a draw depth from the depth table: a0 the table's row, a1 its column */
@@ -89,10 +89,10 @@ enum {
 /* What differs between the two drawers' loops */
 typedef struct {
     int size;            /* tile size in texels */
-    int cols, wide_cols; /* columns, and with WIDE FORCED */
-    int wide_tiles;      /* tiles further left with WIDE FORCED */
+    int cols, wide_cols; /* columns, and with WIDE NATIVE */
+    int wide_tiles;      /* tiles further left with WIDE NATIVE */
     int b268;            /* 0x0881B268: its rows, wrap and strips; else 0x0881AB28's */
-    int wraps_left;      /* WIDE FORCED: the extra tiles wrap round within the row */
+    int wraps_left;      /* WIDE NATIVE: the extra tiles wrap round within the row */
 } Grid;
 
 static const Grid GRID_AB28 = { 32, 13, 17, 2, 0, 1 };
@@ -153,7 +153,7 @@ static void next_strip(gaddr st, gaddr *strip) {
     *strip += 4;
 }
 
-/* WIDE FORCED: whether a row's extra tiles on the left wrap round within the row (the grid starts at a
+/* WIDE NATIVE: whether a row's extra tiles on the left wrap round within the row (the grid starts at a
    map column less than the extra tiles, and the map wraps back by its own width) */
 static int wide_wraps_left(gaddr st, const Grid *g) {
     int32_t col0 = S16(st + GRID_MAP_COL), kind = S16(st + GRID_KIND);
@@ -177,7 +177,7 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
         int32_t top = S16(st + GRID_BOTTOM);
         *W(st + GRID_TILE) = *W(st + GRID_LINE);
         int wrapped = 0;
-        if (rt_widescreen) {                                     /* WIDE FORCED: start further left */
+        if (rt_widescreen) {                                     /* WIDE NATIVE: start further left */
             SET16(st + GRID_X, S16(st + GRID_X0) - g->wide_tiles * g->size);
             *W(st + GRID_TILE) -= (uint32_t)(g->wide_tiles * 4);
             wrapped = wide_wraps_left(st, g);                    /* round within the row: + its width */

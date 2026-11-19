@@ -61,7 +61,7 @@ static void switch_ge_mode(Cpu *c, gaddr sp, uint32_t on) {
 void f_0880C308(Cpu *c);   /* this function: the linked sprites go through it, so --reference-only applies */
 void f_0880E6E8(Cpu *c);   /* sprite_anchor */
 
-/* WIDE FORCED: some screens' side pieces move out to the 16:9 screen's edges, with the sprites linked
+/* WIDE NATIVE: some screens' side pieces move out to the 16:9 screen's edges, with the sprites linked
    to them (only where they are drawn: game memory keeps the 4:3 places). widescreen_edge_shift (in
    extensions/widescreen.c) says by how much for a sprite, widescreen_edge_copy whether it is drawn again
    moved (up to twice); a linked sprite takes its parent's. */
@@ -119,7 +119,7 @@ static void draw_sprite(Cpu *c, gaddr sp) {
     if (*W(sp + SP_NEXT) != 0) CALL1(f_0880C308, *W(sp + SP_NEXT));
 }
 
-/* void draw_sprite(sprite *a0): wrapped so WIDE FORCED's stage extensions (stagestrips.c) can add art to a
+/* void draw_sprite(sprite *a0): wrapped so WIDE NATIVE's stage extensions (stagestrips.c) can add art to a
    foreground stage object right after it */
 SFA_FUNC_WRAPPED(0880C308, game_draw_sprite, stagestrips_object) { c->r[29] -= 0x20; draw_sprite_wide(c, ARG(0)); c->r[29] += 0x20; }
 SFA_FUNC(0880E6E8, game_sprite_anchor) { sprite_anchor(ARG(0), ARG(1)); }

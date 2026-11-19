@@ -45,7 +45,7 @@ static const char *const v_time[] = { "30", "60", "99", "INFINITE", NULL };
 static const char *const v_rounds[] = { "1", "3", "5", NULL };
 static const char *const v_gauge[] = { "0", "MAX", NULL };
 static const char *const v_side[] = { "1P", "2P", NULL };
-static const char *const v_size[] = { "NORMAL", "WIDE", "WIDE FORCED", NULL };
+static const char *const v_size[] = { "NORMAL", "WIDE", "WIDE NATIVE", NULL };
 static const char *const v_wall[] = { "NONE", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", NULL };
 static const char *const v_speed[] = { "NORMAL", "FREE1", "FREE2", "TURBO1", "TURBO2", "TURBO3", "TURBO4", "TURBO5", "TURBO6", "TURBO7", NULL };
 static const char *const v_command[] = { "ARCADE", "NORMAL", "LONG", NULL };
@@ -80,7 +80,7 @@ static int count(const char *const *names) { int n = 0; while (names[n]) n++; re
 
 /* ---------------------------------------------------------------- the settings in the options block */
 enum { K_ENUM, K_STARS, K_NUM, K_SPEED, K_HEX16, K_HEX32, K_SIZE };
-extern int rt_widescreen;                    /* widescreen.c: WIDE FORCED */
+extern int rt_widescreen;                    /* widescreen.c: WIDE NATIVE */
 typedef struct { const char *section, *key; int off, mirror, kind; const char *const *names; int max; const char *note; } Field;
 static const Field fields[] = {
     { "game option", "difficulty", 0x3C, -1, K_STARS, NULL, 8, "stars, 1 - 8" },
@@ -93,7 +93,7 @@ static const Field fields[] = {
     { "game option", "player_side", 0x1FF, -1, K_ENUM, v_side, 0, "1P or 2P" },
     { "game option", "bgm_volume", 0x1FC, -1, K_NUM, NULL, 15, "0 - 15" },
     { "game option", "se_volume", 0x1FD, -1, K_NUM, NULL, 15, "0 - 15" },
-    { "screen setting", "screen_size", 0x58, 0x62, K_SIZE, v_size, 0, "NORMAL, WIDE or WIDE FORCED (16:9, 4:3 play area)" },
+    { "screen setting", "screen_size", 0x58, 0x62, K_SIZE, v_size, 0, "NORMAL, WIDE or WIDE NATIVE (16:9, 4:3 play area)" },
     { "screen setting", "wallpaper", 0x1FE, -1, K_ENUM, v_wall, 0, "NONE or 01 - 10" },
     { "progress", "unlocks", 0x52, -1, K_HEX16, NULL, 0, "modes cleared (hex); all held on" },
     { "progress", "ism_pluses", 0x200, -1, K_HEX32, NULL, 0, "ISM-Pluses earned, a bit each (hex); all held on" },
@@ -134,6 +134,7 @@ static int field_parse(const Field *f, const char *s) {
     case K_STARS: { long x = strtol(s, &end, 10); return end != s && x >= 1 && x <= f->max ? (int)x - 1 : -1; }
     case K_NUM: { long x = strtol(s, &end, 10); return end != s && x >= 0 && x <= f->max ? (int)x : -1; }
     case K_HEX16: case K_HEX32: { unsigned long x = strtoul(s, &end, 16); return end != s ? (int)x : -1; }
+    case K_SIZE: return squash_eq(s, "WIDE FORCED") ? 2 : lookup(s, f->names, count(f->names));   /* WIDE NATIVE's name before 0.99.21 */
     default: return lookup(s, f->names, count(f->names));
     }
 }
@@ -253,6 +254,12 @@ void settings_load(void) {
             if (!done) rt_warn("settings: [%s] %s not known", section, key);
         }
         fclose(f);
+    } else {
+        /* a new save (no a3mx.cfg yet): WIDE NATIVE is the default screen size (since 0.99.21) */
+        for (size_t i = 0; i < N_FIELDS; i++) if (fields[i].kind == K_SIZE) {
+            uint8_t *o = store_options();
+            if (o) field_set(o, &fields[i], 2); else { pend.field_v[i] = 2; pending = 1; }
+        }
     }
     rt_log("settings: 1P %s, 2P %s, 3P %s, couch co-op %d", v_human[!!rt_join_in[0]], v_human[!!rt_join_in[1]], v_human[!!rt_join_in[2]], rt_couch_coop);
 }

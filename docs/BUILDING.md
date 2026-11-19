@@ -376,7 +376,7 @@ Either way:
 | Hooked functions (`hooks.txt`) | the hook (`hook_f_ADDR`) | the translated original |
 | Wrapped functions (`SFA_FUNC_WRAPPED`) | the function with its extension around it | the function alone |
 | Saves | `a3mx.dat` / `a3mx.cfg`, auto-save on, everything unlocked, save messages silent | the game's own, on the emulated memory stick (`<save dir>/ms0/PSP/SAVEDATA/`), with its own messages and questions; nothing unlocked |
-| OPTION MODE | EX. SETTING, PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE FORCED, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
+| OPTION MODE | EX. SETTING, PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE NATIVE, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
 | Pads | up to four; join-in, JOIN / WAIT, pad icons | player 1's pad only, as on a PSP; no L2 / R2 |
 | Network modes | played on one PC with virtual players | as a PSP's ad-hoc wireless: only other instances linked with `--net-hub` / `--net-join` answer |
 | F2, or SELECT + START on player 1's pad | back to the MODE MENU | nothing |

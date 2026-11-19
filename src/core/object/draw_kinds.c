@@ -8,7 +8,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -83,11 +83,11 @@ static const uint8_t CORNER_OF_VERTEX[4] = { 0, 3, 1, 2 };
 
 /* Kind 0: a plain rectangle, colour per corner. Vertices at frame + 16, 12 bytes each: x, y, depth,
    colour (+8). */
-void widescreen_plain_adjust(gaddr ob, int *left, int *right);   /* WIDE FORCED: extensions/widescreen.c */
+void widescreen_plain_adjust(gaddr ob, int *left, int *right);   /* WIDE NATIVE: extensions/widescreen.c */
 static void draw_plain(Cpu *c, gaddr ob, gaddr frame) {
     int16_t X0, X1, Y0, Y1;
     rect_on_screen(ob, &X0, &X1, &Y0, &Y1);
-    if (rt_widescreen) {   /* WIDE FORCED: some are drawn wider or moved (widescreen.c); only the drawing */
+    if (rt_widescreen) {   /* WIDE NATIVE: some are drawn wider or moved (widescreen.c); only the drawing */
         int l, r;
         widescreen_plain_adjust(ob, &l, &r);
         X0 = (int16_t)(X0 + l); X1 = (int16_t)(X1 + r);
@@ -164,7 +164,7 @@ static void set_part(gaddr tmp, gaddr ob, gaddr part, int32_t dx) {
     *H(tmp + OB_UV2 + 2) = *H(image + 14);
 }
 
-/* WIDE FORCED: a kind-2 object whose parts repeat across (the same image again one width on: the
+/* WIDE NATIVE: a kind-2 object whose parts repeat across (the same image again one width on: the
    menus' tiled ALPHA-logo backdrop, 256 x 256 tiles from x 0 to 768) but stop short of the 16:9
    picture's sides (x -48 or 432 on the screen) gets more copies of its end columns until they
    reach them. The objects that already reach (the menus' scrolling bands) are left alone. */

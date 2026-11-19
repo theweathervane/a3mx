@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.99.21
+### For players
+- **WIDE FORCED is now called WIDE NATIVE,** in SCREEN SETTING, the settings file and the docs.
+- **A new save starts in WIDE NATIVE.** With no `a3mx.cfg` yet, SCREEN SIZE is WIDE NATIVE; an existing save keeps what it has, and `screen_size=WIDE FORCED` in an older `a3mx.cfg` still reads as WIDE NATIVE.
+
+### Technical
+- Renamed everywhere but past CHANGELOG entries (code comments, `screensetting.c`'s value name, same length so the green bar is unchanged; `settings.c`, `widescreen.c`'s log, the features list, the launcher, tests, tools, docs).
+- `extensions/settings.c`: no `a3mx.cfg` at load sets SCREEN SIZE to WIDE NATIVE (pending until the options block exists); `screen_size` also accepts `WIDE FORCED`.
+- `tests/parity.py`, `tools/watch_scenario.py`: `screen_lines()` writes `screen_size=NORMAL` for narrow runs (WIDE NATIVE for `wide`) unless the scenario sets it, so the scenarios still start as before.
+- Checked: a run with no save starts WIDE NATIVE and writes it; an old `WIDE FORCED` cfg loads as WIDE NATIVE; screen_setting and save_load parity.
+
 ## 0.99.20
 ### For players
 - **Testers: the super finish test is quicker to watch.** `python tools/watch_scenario.py super_finish --wide --super-kind N` now plays a two-player Free Battle and reaches the super in a few seconds.

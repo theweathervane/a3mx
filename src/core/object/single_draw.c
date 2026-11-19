@@ -8,13 +8,13 @@
  *     list at 0x08E75AD8 + 28 (12 bytes a picture), flipped by the object's +11
  *   kind 0xA: the fading shape 0x0880DA78 (still translated), flipped the same way
  *
- * WIDE FORCED: a word waiting at the 4:3 picture's right edge (x 384 or more) to slide in showed in the
+ * WIDE NATIVE: a word waiting at the 4:3 picture's right edge (x 384 or more) to slide in showed in the
  * right margin (a stray "F" of FIGHTER over the VS screen); such a picture is not drawn until it moves
  * in. Only the drawing changes.
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }

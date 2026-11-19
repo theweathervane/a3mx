@@ -6,7 +6,7 @@ their art reaches in widescreen.
 
 Width = right limit - left limit + 384 (the PSP game's 384-pixel-wide view).
 
-| # | Menu name | Stage | Archive | Left limit | Right limit | Width | WIDE FORCED black, left (widest / narrowest) | right (widest / narrowest) |
+| # | Menu name | Stage | Archive | Left limit | Right limit | Width | WIDE NATIVE black, left (widest / narrowest) | right (widest / narrowest) |
 |---|---|---|---|---|---|---|---|---|
 | 1 | RYU 1 | 0x00 | st00.pac | 256 | 640 | 768 | 38 / 14 | 39 / 4 |
 | 2 | RYU 2 | 0x17 | st17.pac | 256 | 640 | 768 | 42 / 41 | 25 / 9 |
@@ -110,11 +110,11 @@ table, `--json` for tools). For example RYU 1:
    kind  2 (0x0884B2AC) type  0  x   -16 y   80  layer 1 camera 0  ...
 ```
 
-The objects are not tile layers, so WIDE FORCED's stage extensions (one strip per layer,
+The objects are not tile layers, so WIDE NATIVE's stage extensions (one strip per layer,
 [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md)) can't cover them: where an object's art reaches the 4:3 edge
 it is cut there (RYU 1's straw on the left, Guile's trees, Blanka's palm, Mika's ropes, Adon's leaves,
 Charlie's plane, Sagat's lily pads, Karin 1's boat...). Widening them is future work, now that their
-code is native: per-object art, or more objects at the edges, in WIDE FORCED only.
+code is native: per-object art, or more objects at the edges, in WIDE NATIVE only.
 
 ### What is drawn in front of the fighters
 
@@ -138,11 +138,11 @@ after the fighters:
 | 0x23 HAWK | #2: kind 78 type 3, x 736 y 16; #4: kind 78 type 6, x 144 y 16 (camera 2) |
 
 Every other stage object is behind the fighters (sprite layers 1 - 3, or depth 12 and less). Like all
-objects these are cut at the 4:3 edge in WIDE FORCED; the layer strips don't reach them, so since 0.92.0 each has its own placeholder pieces pinned to it ([STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md#foreground-objects-0920)).
+objects these are cut at the 4:3 edge in WIDE NATIVE; the layer strips don't reach them, so since 0.92.0 each has its own placeholder pieces pinned to it ([STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md#foreground-objects-0920)).
 
 ## Widescreen
 
-WIDE FORCED shows 480 pixels instead of 384, 48 more on each side: at the limits the view spans 208 -
+WIDE NATIVE shows 480 pixels instead of 384, 48 more on each side: at the limits the view spans 208 -
 1072 instead of 256 - 1024. Where a stage's art stops short of that, the edge is black (KNOWN_ISSUES
 M7). The last two columns are that black strip at each edge with the camera at its limit, in pixels
 (0 - 48): the widest (the layer whose art is shortest) and the narrowest (often 0 where the floor or a
@@ -155,9 +155,9 @@ foreground layer covers the edge).
 
 **Decided: extend the art and keep the limits.** The limits also set where the walls are: fighters
 stay 24 px inside the 4:3 view, between 280 and 1000. Pulling the limits in would make the stage
-narrower and move the corners, which changes how fights play and breaks the WIDE FORCED parity rule.
+narrower and move the corners, which changes how fights play and breaks the WIDE NATIVE parity rule.
 Instead, every stage gets a **stage extension**, a strip per side for each layer (48 × 288; the placeholders are 64 wide since 0.90.0, reaching 8 columns under the layer's own art and 8 past the screen's edge). The game will draw it
-behind the stage's art, only in WIDE FORCED, so NORMAL and WIDE are untouched. Magenta placeholders
+behind the stage's art, only in WIDE NATIVE, so NORMAL and WIDE are untouched. Magenta placeholders
 are committed in `assets/extensions/stages/<number>_<name>/`, ready to be painted. The size, placement, painting
 notes and a per-stage table of what each strip shows are in
 [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md).

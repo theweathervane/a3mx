@@ -7,7 +7,7 @@ extend it: its art stops at the 4:3 edge. A piece is new art pinned to the objec
 stagestrips.c, stagestrips_object): this tool finds each object's outline on screen and writes a piece
 at each side of it, 64 units out and 8 under the object's own art (the same overlap as the strips).
 
-For each stage that has them it runs a Free Battle in WIDE FORCED with the fighters at the left wall,
+For each stage that has them it runs a Free Battle in WIDE NATIVE with the fighters at the left wall,
 in the middle and at the right wall, once as is and once per object (kind.type) with that object hidden
 (A3MX_OBJ_MEASURE), and compares the two frames: the pixels that differ are the object's. The extension's
 log gives the object's position, the screen's scale and offset, so the outline is turned into the 2D
@@ -48,7 +48,7 @@ def run(exe, out, k, pos, hide):
     from PIL import Image
     d = os.path.join(out, '%02d%s_%s' % (k, pos, hide.replace('.', '_').replace('-', 'm')))
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE FORCED\n')
+    open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE NATIVE\n')
     inp, f = ms.script(k); p, e = f + 1500, f + 1900
     pokes = []
     for a in (ms.P1_X, ms.P2_X): pokes += ['--poke', '%d-%d:%08X=%s/2' % (p, e, a, POSITIONS[pos])]

@@ -1,13 +1,13 @@
-/* WIDE FORCED: 16:9 with a 4:3 play area, as a setting.
+/* WIDE NATIVE: 16:9 with a 4:3 play area, as a setting.
  *
  * Rickow's SFA3MAX 16:9 patch (sfa3-PSP-widescreen, MIT) showed what to change; until 0.99.1 it was
  * downloaded and translated in as an overlay. Every function it changed is now native and reads
  * rt_widescreen itself (docs/WIDESCREEN.md lists them).
  *
- * WIDE FORCED draws for the game's NORMAL screen size (4:3, un-stretched), so OPTION MODE > SCREEN
- * SETTING > SCREEN SIZE gets a third value, WIDE FORCED: the game's own value (0x08A058A0 + 0x58, and
+ * WIDE NATIVE draws for the game's NORMAL screen size (4:3, un-stretched), so OPTION MODE > SCREEN
+ * SETTING > SCREEN SIZE gets a third value, WIDE NATIVE: the game's own value (0x08A058A0 + 0x58, and
  * + 0x62) is NORMAL and rt_widescreen is set. Choosing NORMAL or WIDE, or anything setting the game's
- * value to WIDE (DEFAULT, a LOAD, an IMPORT), turns it off. Kept in a3mx.cfg as screen_size=WIDE FORCED;
+ * value to WIDE (DEFAULT, a LOAD, an IMPORT), turns it off. Kept in a3mx.cfg as screen_size=WIDE NATIVE;
  * the PSP save (EXPORT) says WIDE.
  *
  * SCREEN SETTING: 0x088B700C changes SCREEN SIZE (0x088B7D08: a0 pad, a1 value, a2 last value; for
@@ -24,18 +24,18 @@ int rt_widescreen;
 void f_088B7D08(Cpu *c);
 
 int widescreen_value(void) { return rt_widescreen ? 2 : RH(SIZE) ? 1 : 0; }
-void widescreen_set(int v) {                   /* 0 NORMAL, 1 WIDE, 2 WIDE FORCED */
+void widescreen_set(int v) {                   /* 0 NORMAL, 1 WIDE, 2 WIDE NATIVE */
     rt_widescreen = v == 2;
     WH(SIZE, v == 1); WH(SIZE2, v == 1);
 }
 /* once a frame: the game's value turning from NORMAL to WIDE (DEFAULT, a load, an IMPORT) ends WIDE
- * FORCED (at boot the game's default is WIDE until the system data is in: that is not a change) */
+ * NATIVE (at boot the game's default is WIDE until the system data is in: that is not a change) */
 void widescreen_frame(void) {
     static int last = -1, was = -1;
     int now = RH(SIZE) != 0;
     if (rt_widescreen && was == 0 && now) rt_widescreen = 0;
     was = now;
-    if (rt_widescreen != last) { rt_log("widescreen: %s", rt_widescreen ? "WIDE FORCED on" : "off"); last = rt_widescreen; }
+    if (rt_widescreen != last) { rt_log("widescreen: %s", rt_widescreen ? "WIDE NATIVE on" : "off"); last = rt_widescreen; }
 }
 
 /* SCREEN SIZE, left / right */
@@ -53,11 +53,11 @@ int widescreen_screen_size(Cpu *c, uint32_t a0, int after) {
     return 1;
 }
 
-/* the screen, with WIDE FORCED as the value's name while it is on, is drawn by screensetting.c */
+/* the screen, with WIDE NATIVE as the value's name while it is on, is drawn by screensetting.c */
 
 /* SCREEN SETTING's green bar (an object, kind 0xC type 0xA, 168 wide; the width is only set when it is
  * made) is as wide as the longest value any row can show, on every row (screensetting.c works it out:
- * 222 for WIDE FORCED today), so no value runs past it */
+ * 222 for WIDE NATIVE today), so no value runs past it */
 #define OBJS     0x092E2B88u
 #define OBJ_SZ   0x94u
 #define BAR_W    168
@@ -75,7 +75,7 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
 }
 
 /* ---------------------------------------------------------------- side pieces to the screen's edges */
-/* WIDE FORCED: some screens' side pieces move out by the margin, away from the middle, so they sit at
+/* WIDE NATIVE: some screens' side pieces move out by the margin, away from the middle, so they sit at
    the 16:9 screen's edges as they sat at the 4:3 one's. The sprite drawer (core/object/sprite.c)
    asks for each sprite tree it draws; only the drawing moves, game memory keeps the 4:3 places.
    - the character select screen (GAME + 2 = 1): the select tasks (object kind 16) of types 2 - 4,
@@ -101,7 +101,7 @@ static int away_from_middle(uint32_t sp, int units) {
     uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
     return (float)(int16_t)RH(sp + 18) * scale < 192.f ? -units : units;
 }
-/* WIDE FORCED: the end of a round won (fight step 3): WIN and PERFECT fly in from the right and stop
+/* WIDE NATIVE: the end of a round won (fight step 3): WIN and PERFECT fly in from the right and stop
    at x 112, the results panel (COMPLETE ... SCORE) flies in from the left and stops at x 240. They are
    moved by an amount that follows their place, so they enter from the 16:9 screen's sides and stop at
    its edges: for WIN / PERFECT -48 at x 112 or left of it, 0 at the middle (192), +48 at x 384 or
@@ -167,7 +167,7 @@ int widescreen_edge_copy(uint32_t sp, int n) {
     return 0;
 }
 
-/* WIDE FORCED: sprites whose pictures are bands across the 4:3 picture, continued into the margins
+/* WIDE NATIVE: sprites whose pictures are bands across the 4:3 picture, continued into the margins
    (core/object/sprite_drawers.c, sprite_grid.c). The answer says which pieces (1 the solid ones, 2 the
    half-alpha after-images) and how (4: the left margin mirrors the glow before the right end; 8: the
    left margin only). In the fight (GAME + 2 = 2, step 3), drawer 11: the ROUND n banner (kind 0 type 0),

@@ -1,7 +1,7 @@
-# Free Battle on RYU 1's stage (menu 1) in WIDE FORCED, player 1 walking back to the left wall and
+# Free Battle on RYU 1's stage (menu 1) in WIDE NATIVE, player 1 walking back to the left wall and
 # holding there: the camera at its left limit, where layer 0 starts at map column 0. The tile drawers'
 # extra columns on the left wrap round within their row there (src/core/stage/tiles.c). `wide`: played
-# with WIDE FORCED on and off, the fighters must be the same in both (tests/parity.py). The menus are
+# with WIDE NATIVE on and off, the fighters must be the same in both (tests/parity.py). The menus are
 # stage_objects_01_ryu_1's.
 frames 5400
 wide

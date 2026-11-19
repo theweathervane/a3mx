@@ -16,7 +16,7 @@
  *
  * All of them copy the sprite's +170 / +171 to the draw state's +86 / +87 first.
  *
- * WIDE FORCED (extensions/widescreen.c says for which sprites): bands whose cells carry on into the
+ * WIDE NATIVE (extensions/widescreen.c says for which sprites): bands whose cells carry on into the
  * margins (widescreen_edge_cells: the ROUND band, FIGHT's translucent box, the continue bar, the GAME
  * OVER band; sprite_grid.c); rows of one piece that get one more piece at an end that has reached the
  * 4:3 edge (widescreen_edge_row 1: FIGHT FIGHT, KNOCK OUT); the continue count's numbers carried on to
@@ -32,7 +32,7 @@ static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
 static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
 static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 
-extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
+extern int rt_widescreen;          /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_wide_edges; /* sprite_grid.c */
 extern int32_t sprite_grid_left_row;
 int widescreen_edge_cells(gaddr sp);   /* which pieces: */
@@ -84,7 +84,7 @@ static gaddr last_piece(gaddr e) {
     return e;
 }
 
-/* WIDE FORCED: the map screen's beam (widescreen_beam) is a wedge from its picture's place, cut where
+/* WIDE NATIVE: the map screen's beam (widescreen_beam) is a wedge from its picture's place, cut where
    its picture ends: copies scaled about that place are drawn behind it first, the largest first, so its
    edges carry on out to the screen's sides (sprite_grid.c) */
 static void wide_beam(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
@@ -112,7 +112,7 @@ static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
 }
 
-/* WIDE FORCED: a row of the same piece at even steps (the FIGHT FIGHT ... rows) gets one more piece at
+/* WIDE NATIVE: a row of the same piece at even steps (the FIGHT FIGHT ... rows) gets one more piece at
    an end that has reached the 4:3 picture's edge, in the margin beyond it: the row then reaches the
    16:9 sides, and while it slides in nothing is added ahead of it */
 static void wide_row_end(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, gaddr last, int right) {
@@ -126,7 +126,7 @@ static void wide_row_end(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, ga
     draw_picture(c, ds, sp, list + (*H(first + 4) & 0x7FFF) * 12u, list, 0);
 }
 
-/* WIDE FORCED: the continue screen's count (widescreen_edge_row 2): a row of two-digit numbers, one every
+/* WIDE NATIVE: the continue screen's count (widescreen_edge_row 2): a row of two-digit numbers, one every
    16 pixels, each two pieces at the same place (the second digit, then the first with its point: pictures
    582 + d and 572 + d), counting up to the right. The numbers before the first are drawn on to the left
    until the left margin is covered (down to 0.0). */
@@ -156,7 +156,7 @@ static void draw_one_84(Cpu *c, gaddr ds, gaddr sp) {
     uint32_t frame = *H(sp + SP_FRAME_84);
     if (frame & 0x8000) return;
     gaddr list = sprite_list(sp);
-    sprite_grid_half = rt_widescreen && widescreen_widen(sp);   /* WIDE FORCED: widened (sprite_grid.c) */
+    sprite_grid_half = rt_widescreen && widescreen_widen(sp);   /* WIDE NATIVE: widened (sprite_grid.c) */
     draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
     sprite_grid_half = 0;
 }

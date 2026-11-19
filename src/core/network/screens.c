@@ -3,7 +3,7 @@
  * two states of Cammy's CPU routine that pass the screen's width to 0x0895FF6C (0x0895FD00, 0x0895FDB0;
  * docs/PSP_PROGRAM_MAP.md). No scenario reaches 0x088D6D3C or the two states yet.
  *
- * WIDE FORCED: each panel is 480 wide instead of 384 (and 0x0895FF6C gets 480), so it reaches the
+ * WIDE NATIVE: each panel is 480 wide instead of 384 (and 0x0895FF6C gets 480), so it reaches the
  * sides of the 16:9 picture, as Rickow's 16:9 patch (sfa3-PSP-widescreen, MIT) had it
  * (docs/WIDESCREEN.md).
  *
@@ -12,7 +12,7 @@
  */
 #include "../decomp.h"
 
-extern int rt_widescreen;   /* WIDE FORCED (extensions/widescreen.c; extensions_off.c: 0) */
+extern int rt_widescreen;   /* WIDE NATIVE (extensions/widescreen.c; extensions_off.c: 0) */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }

@@ -1,6 +1,6 @@
-# Arcade's first fight (Ryu against the CPU, on Dan's stage) as arcade_fight plays it, with WIDE FORCED
+# Arcade's first fight (Ryu against the CPU, on Dan's stage) as arcade_fight plays it, with WIDE NATIVE
 # on from the start and off (`wide`: the fighters must be the same in both, tests/parity.py). WIDE
-# FORCED's paths through the stage's tile drawers (src/core/stage/tiles.c: two and three tiles further
+# NATIVE's paths through the stage's tile drawers (src/core/stage/tiles.c: two and three tiles further
 # left, 17 and 31 columns).
 frames 6000
 wide

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an art pack for painting the Stage Extensions (WIDE FORCED), from your own disc.
+"""Build an art pack for painting the Stage Extensions (WIDE NATIVE), from your own disc.
 
 EXPERIMENTAL: the references are only screenshots at each wall (the 480 x 272 screen, whole and one layer at a time), not each layer whole as its own PNG. Still to do (docs/ROADMAP.md): each layer whole, by panning the camera
 with the layer drawn alone and stitching by its scroll, and rebuilding from the stage's layout data the
@@ -9,7 +9,7 @@ An artist needs the stage art to trace from and the placeholders to paint over. 
 folder (and a zip of it), one folder per stage:
 
   art-pack/<region>/README.txt
-  art-pack/<region>/<nn>_<name>/reference/   the stage at each wall in WIDE FORCED, on the ground and in the
+  art-pack/<region>/<nn>_<name>/reference/   the stage at each wall in WIDE NATIVE, on the ground and in the
                                              air: the whole screen and each layer alone (transparent where it
                                              draws nothing); from tools/dump_stage_references.py
   art-pack/<region>/<nn>_<name>/paint/       the placeholders to paint (copies of assets/extensions/stages/
@@ -49,7 +49,7 @@ def need_pillow():
 README = """A3MX art pack ({region})
 =====================
 
-Made by tools/art_pack.py from your own disc. For painting the Stage Extensions: the art WIDE FORCED shows
+Made by tools/art_pack.py from your own disc. For painting the Stage Extensions: the art WIDE NATIVE shows
 at the sides of each stage, where the original 4:3 art runs out. Not for publishing: the references are the
 game's art.
 
@@ -69,7 +69,7 @@ Each stage folder has:
               tools run again.
 
 When painted, copy paint/ back into assets/extensions/stages/<same folder>/ and turn on Stage Extensions
-(launcher: Extensions) with WIDE FORCED. docs/STAGE_EXTENSIONS.md has the details.
+(launcher: Extensions) with WIDE NATIVE. docs/STAGE_EXTENSIONS.md has the details.
 """
 
 

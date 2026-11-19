@@ -116,7 +116,7 @@ static void boot_load_done(void) {
 void widescreen_frame(void);               /* widescreen.c */
 void sysdata_frame(void) {              /* once a frame, while any feature is on: each part by its own (ext_features.h) */
     extern int rt_widescreen;
-    if (FEATURE(WIDESCREEN)) widescreen_frame(); else rt_widescreen = 0;   /* (a saved WIDE FORCED is not used) */
+    if (FEATURE(WIDESCREEN)) widescreen_frame(); else rt_widescreen = 0;   /* (a saved WIDE NATIVE is not used) */
     if (FEATURE(MENUS)) exsetting_frame();
     if (FEATURE(SAVES)) { boot_load_done(); hide_load_save(); }
     /* from a moment after the system data is in. Unlocks without Silent saves: the game may have no
