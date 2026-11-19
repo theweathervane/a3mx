@@ -56,7 +56,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     the GAME OVER band and the continue countdown's bar (left only); the sides are strips of one texel
     column, the ROUND band's left side its glow mirrored, and the continue count gets its earlier numbers;
   - the profile screen before the map (0.99.13): its header and text box drawn widened (each half
-    moved 48 out, the plain middle stretched), its side columns at the edges, kept between the two;
+    moved 48 out, the plain middle stretched), its name plate's box and the box behind the text (plain
+    rectangles) moved and widened with them (0.99.14), its side columns at the edges;
     the win screen after a fight: its side columns at the edges, the band under the quote wider;
   - the map screen (0.99.12): the ladder moves to the edge away from the middle, and the beam is drawn
     again scaled about its point behind itself, in the margins only, so it carries on along its edges;

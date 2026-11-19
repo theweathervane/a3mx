@@ -153,37 +153,25 @@ static int32_t round_to(float f) { return (int32_t)(f < 0.0f ? f - 0.5f : f + 0.
    scaled copy's parts in the margins */
 /* WIDE FORCED: set by a sprite drawer for a picture drawn widened instead: the left half of its columns
    moved 48 left, the right half 48 right, and the 96 pixels between them filled with the middle cell's
-   first texel column stretched (the profile screen's header and text box, whose middles are plain).
+   first texel column stretched (the profile screen's header and text box, whose middles are plain). A
+   picture narrower than the 4:3 picture in the same drawing (the name plate) is moved whole with the
+   half its middle is in.
    Only the drawing changes. */
 int sprite_grid_half;
-
-/* WIDE FORCED: set by a sprite drawer for a picture cut to the screen rows from sprite_grid_clip_top to
-   sprite_grid_clip_bottom (0: not cut): the profile screen's side columns, kept between its header and
-   its text box, which in WIDE FORCED reach out over them. Only the drawing changes. */
-int sprite_grid_clip_top, sprite_grid_clip_bottom;
+#define PICTURE_W 384
 
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
-    if (sprite_grid_clip_bottom) {   /* corners top left, bottom left, top right, bottom right */
-        int32_t top = sprite_grid_clip_top, bottom = sprite_grid_clip_bottom;
-        int32_t y0 = S16(v + 2), y1 = S16(v + 16 + 2);
-        if (y1 <= top || y0 >= bottom) return;
-        if (y0 < top || y1 > bottom) {
-            int16_t v0 = S16(v + 8), v1 = S16(v + 16 + 8);
-            int32_t a = y0 < top ? top : y0, b = y1 > bottom ? bottom : y1;
-            int32_t va = v0 + (v1 - v0) * (a - y0) / (y1 - y0), vb = v0 + (v1 - v0) * (b - y0) / (y1 - y0);
-            SET16(v + 2, a); SET16(v + 32 + 2, a); SET16(v + 8, va); SET16(v + 32 + 8, va);
-            SET16(v + 16 + 2, b); SET16(v + 48 + 2, b); SET16(v + 16 + 8, vb); SET16(v + 48 + 8, vb);
-            CALL5(f_089E1950, v, 4, flags, blend, effect);
-            SET16(v + 2, y0); SET16(v + 32 + 2, y0); SET16(v + 8, v0); SET16(v + 32 + 8, v0);
-            SET16(v + 16 + 2, y1); SET16(v + 48 + 2, y1); SET16(v + 16 + 8, v1); SET16(v + 48 + 8, v1);
-            return;
-        }
-    }
     if (sprite_grid_half) {
         int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), split = cols / 2;
         int16_t keep[4][2];
         for (int i = 0; i < 4; i++) { keep[i][0] = S16(v + 16 * i); keep[i][1] = S16(v + 16 * i + 6); }
-        if (col == split) {   /* the gap: the cell's first texel column (as shown) from x - 48 to x + 48 */
+        int32_t w = keep[2][0] - keep[0][0];
+        if (w < 0) w = -w;
+        if (cols * w < PICTURE_W) {   /* a narrower picture (the name plate): moved whole with its side */
+            int32_t mid = S16(ds + DS_ROW_X) + cols * w / 2;
+            split = mid < PICTURE_W / 2 ? cols : 0;
+        }
+        if (col == split && split > 0 && split < cols) {   /* the gap: the cell's first texel column (as shown) from x - 48 to x + 48 */
             int32_t x0 = keep[0][0] < keep[2][0] ? keep[0][0] : keep[2][0];
             int32_t u = keep[0][0] <= keep[2][0] ? keep[0][1] : keep[2][1];
             u += keep[0][0] <= keep[2][0] ? (keep[2][1] > keep[0][1] ? 1 : -1) : (keep[0][1] > keep[2][1] ? 1 : -1);

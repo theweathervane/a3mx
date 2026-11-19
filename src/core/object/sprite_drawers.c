@@ -22,7 +22,7 @@
  * 4:3 edge (widescreen_edge_row 1: FIGHT FIGHT, KNOCK OUT); the continue count's numbers carried on to
  * the left (widescreen_edge_row 2); the map screen's beam drawn again scaled behind itself, in the
  * margins (widescreen_beam); the profile screen's header and text box drawn widened, their halves moved
- * out (widescreen_widen), its side columns kept between the two (widescreen_clip).
+ * out (widescreen_widen).
  */
 #include "../decomp.h"
 
@@ -40,8 +40,6 @@ enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2, EDGES_MIRROR_LEFT = 4, EDGES_LEFT
 int widescreen_edge_row(gaddr sp);
 int widescreen_beam(gaddr sp);
 int widescreen_widen(gaddr sp);
-void widescreen_clip(gaddr sp, int *top, int *bottom);
-extern int sprite_grid_clip_top, sprite_grid_clip_bottom;   /* sprite_grid.c */
 extern int sprite_grid_half;   /* sprite_grid.c */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
@@ -167,13 +165,7 @@ static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table);
 static void draw_pieces(Cpu *c, gaddr ds, gaddr sp) {
     draw_pieces_from(c, ds, sp, *W(PIECE_TABLES + *W(sp + SP_DRAWER) * 4u - 4u));
 }
-static void draw_pieces_at(Cpu *c, gaddr ds, gaddr sp, gaddr table);
 static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
-    if (rt_widescreen) widescreen_clip(sp, &sprite_grid_clip_top, &sprite_grid_clip_bottom);   /* WIDE FORCED (sprite_grid.c) */
-    draw_pieces_at(c, ds, sp, table);
-    sprite_grid_clip_top = sprite_grid_clip_bottom = 0;
-}
-static void draw_pieces_at(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     gaddr list = sprite_list(sp);
     uint32_t frame = sprite_frame(sp);
     if (frame & 0x8000) return;

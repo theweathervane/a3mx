@@ -39,8 +39,7 @@ int widescreen_edge_cells(uint32_t sp) { (void)sp; return 0; }        /* object/
 int widescreen_edge_row(uint32_t sp) { (void)sp; return 0; }
 int widescreen_beam(uint32_t sp) { (void)sp; return 0; }
 int widescreen_widen(uint32_t sp) { (void)sp; return 0; }
-int widescreen_plain_widen(uint32_t ob) { (void)ob; return 0; }
-void widescreen_clip(uint32_t sp, int *top, int *bottom) { (void)sp; *top = *bottom = 0; }
+void widescreen_plain_adjust(uint32_t ob, int *left, int *right) { (void)ob; *left = *right = 0; }
 #else
 typedef int extensions_off_unused;       /* the extensions are built: nothing here */
 #endif

@@ -169,18 +169,16 @@ int widescreen_widen(uint32_t sp) {
     return RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 113 && RB(sp + 3) <= 1;
 }
 
-/* ... and the profile screen's side columns (kind 113 types 3 and 4) kept to the rows 40 - 214 on the
-   screen, between its header and its text box: they showed over them once those reached out. */
-void widescreen_clip(uint32_t sp, int *top, int *bottom) {
-    *top = *bottom = 0;
-    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 113 && (RB(sp + 3) == 3 || RB(sp + 3) == 4)) {
-        *top = 40; *bottom = 214;
-    }
-}
-
-/* ... and plain rectangles of the third object list (core/object/draw_kinds.c, kind 0) widened by this
-   much each side: the win screen's pink band under the quote (type 1), so it reaches the side columns
-   once they move out. */
-int widescreen_plain_widen(uint32_t ob) {
-    return RB(GAME + 2) == 2 && RH(GAME + 4) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 ? 48 : 0;
+/* ... and plain rectangles of the third object list (core/object/draw_kinds.c, kind 0) whose left and
+   right edges move by this much: the win screen's pink band under the quote (type 1, 48 out each side,
+   to the side columns once they move out); on the profile screen (step 1) the name plate's box (type 0,
+   48 left with the header) and the box behind the text (type 1, 48 out each side with the text box). */
+void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
+    *left = *right = 0;
+    if (RB(GAME + 2) != 2 || (RB(ob + 88) & 0x3F) != 0) return;
+    uint32_t type = RB(ob + 92), step = RH(GAME + 4);
+    int16_t w = (int16_t)RH(ob + 14);   /* the map screen (also step 1) has a full-width bar: by size */
+    if (step == 4 && type == 1) { *left = -48; *right = 48; }
+    if (step == 1 && type == 1 && w == 304) { *left = -48; *right = 48; }
+    if (step == 1 && type == 0 && w == 112) { *left = *right = -48; }
 }

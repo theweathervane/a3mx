@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.99.14
+### For players
+- **WIDE FORCED: the profile screen's name plate box moves out with the header,** instead of a dark blue box being left behind where it was.
+- **WIDE FORCED: the box behind the profile text reaches the ends of the text box.**
+- **WIDE FORCED: the profile screen's side columns are layered as in WIDE:** the right one is no longer cut short at the top.
+
+### Technical
+- `object/draw_kinds.c` / `extensions/widescreen.c`: `widescreen_plain_widen` became `widescreen_plain_adjust` (left and right moves for a plain rectangle of the third object list): on the profile screen the name plate's box (type 0, 112 wide) moves 48 left and the translucent box behind the text (type 1, 304 wide) widens 48 each side; picked by size, as the map screen (the same step) has a full-width bar of type 0.
+- `object/sprite_grid.c`: in the widened drawing, a picture narrower than the 4:3 picture moves whole with the half its middle is in; the side columns' row clip (0.99.13) dropped, now that the columns sit at the edges clear of the plate and the box.
+- Checked: arcade_fight and arcade_match parity, wide_fight (fighters identical); the profile and map screens by eye.
+
 ## 0.99.13
 ### For players
 - **WIDE FORCED: the continue screen's countdown bar no longer flickers at the left side.**
