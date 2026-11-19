@@ -84,6 +84,7 @@ static const uint8_t CORNER_OF_VERTEX[4] = { 0, 3, 1, 2 };
 /* Kind 0: a plain rectangle, colour per corner. Vertices at frame + 16, 12 bytes each: x, y, depth,
    colour (+8). */
 void widescreen_plain_adjust(gaddr ob, int *left, int *right);   /* WIDE NATIVE: extensions/widescreen.c */
+int widescreen_plain_halves(gaddr ob);                             /* WIDE NATIVE: extensions/widescreen.c */
 static void draw_plain(Cpu *c, gaddr ob, gaddr frame) {
     int16_t X0, X1, Y0, Y1;
     rect_on_screen(ob, &X0, &X1, &Y0, &Y1);
@@ -92,16 +93,24 @@ static void draw_plain(Cpu *c, gaddr ob, gaddr frame) {
         widescreen_plain_adjust(ob, &l, &r);
         X0 = (int16_t)(X0 + l); X1 = (int16_t)(X1 + r);
     }
-    gaddr v = frame + 16;
-    const int16_t xy[4][2] = { { X0, Y0 }, { X0, Y1 }, { X1, Y0 }, { X1, Y1 } };
-    uint16_t z = *H(DEPTHS + *W(DRAW_STATE + 44) * 2u);
-    for (int i = 0; i < 4; i++) {
-        *H(v + i * 12 + 0) = (uint16_t)xy[i][0];
-        *H(v + i * 12 + 2) = (uint16_t)xy[i][1];
-        *H(v + i * 12 + 4) = z;
-        *W(v + i * 12 + 8) = corner_colour(ob, CORNER_OF_VERTEX[i]);
+    /* WIDE NATIVE: a rectangle across the whole 4:3 picture is carried on to the screen's sides by the
+       renderer (platform/ge_soft.c, wide_margins_rect); one that must stop where it is drawn (the profile
+       screen's text box, widescreen_plain_halves) goes in two halves, neither across the picture */
+    int halves = rt_widescreen && widescreen_plain_halves(ob);
+    int16_t mid = (int16_t)(X0 + (X1 - X0) / 2);
+    for (int part = 0; part < (halves ? 2 : 1); part++) {
+        int16_t L = halves && part ? mid : X0, R = halves && !part ? mid : X1;
+        gaddr v = frame + 16;
+        const int16_t xy[4][2] = { { L, Y0 }, { L, Y1 }, { R, Y0 }, { R, Y1 } };
+        uint16_t z = *H(DEPTHS + *W(DRAW_STATE + 44) * 2u);
+        for (int i = 0; i < 4; i++) {
+            *H(v + i * 12 + 0) = (uint16_t)xy[i][0];
+            *H(v + i * 12 + 2) = (uint16_t)xy[i][1];
+            *H(v + i * 12 + 4) = z;
+            *W(v + i * 12 + 8) = corner_colour(ob, CORNER_OF_VERTEX[i]);
+        }
+        CALL3(f_089E10D8, v, 4, *B(ob + OB_ALPHA) != 0xFF);
     }
-    CALL3(f_089E10D8, v, 4, *B(ob + OB_ALPHA) != 0xFF);
 }
 
 /* ---- kind 1: a textured rectangle ---- */

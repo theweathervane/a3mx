@@ -283,6 +283,15 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
     if (step == 1 && type == 0 && w == 112) { *left = *right = -48; }
 }
 
+/* ... and of those, the ones drawn in two halves so the renderer does not carry them on to the screen's
+   sides (it does for any rectangle across the whole 4:3 picture): the profile screen's box behind the
+   text (step 1, type 1, 304 wide), which, widened, spans the picture exactly; carried on, it filled the
+   frame's socket left of the box (screen x 0 - 48) navy */
+int widescreen_plain_halves(uint32_t ob) {
+    return RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1
+        && (int16_t)RH(ob + 14) == 304;
+}
+
 /* ... and the dialogue's lines (core/object/text_boxes.c): moved with the portrait (kind 14 type 6, in
    the 32-pool) in their half of the screen, top or bottom (screen y = 0xF0 - the sprite's y). */
 int widescreen_text_shift(uint32_t rec) {

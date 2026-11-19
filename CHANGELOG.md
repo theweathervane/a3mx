@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.28
+### For players
+- **WIDE NATIVE, character profile:** the red square 0.99.27 added left of the text box is gone (it stayed put while the frame slid in and out). The dark blue that filled the frame's corner left of the text box is gone too, so the box now starts at the frame's red curve with the background showing beside it.
+
+### Technical
+- Removes 0.99.27's red patch (`fill_profile_socket` in `object/sprite_drawers.c`): it was drawn at a fixed screen position, not with the sliding frame.
+- The navy in the socket was not the frame's texture: the box behind the text (kind 0 plain rectangle, type 1, 304 wide), widened 48 each side, spans the whole 4:3 picture, so the renderer's margin fill (`platform/ge_soft.c` `wide_margins_rect`) carried it on to x 0. `object/draw_kinds.c` now draws it in two halves when `widescreen_plain_halves` (`extensions/widescreen.c`; stand-in in `platform/extensions_off.c`) says so; neither half spans the picture, so neither is carried on.
+- Checked: wide_fight (WIDE NATIVE off / on, fighters identical in all 6000 frames); the profile screen by eye in slide-in, steady and slide-out frames, and no seam where the halves meet.
+
 ## 0.99.27
 ### For players
 - **WIDE NATIVE, character profile:** the left column is back to its full length; instead the text box no longer touches it, with the frame's red between them.
