@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.19
+### For players
+- **`--fast-until N`:** runs the game as fast as it can up to frame N, then at its own speed, to watch a late part of a scripted run without waiting.
+
+### Technical
+- `platform/main.c`: `--fast-until N` (as `--fast`, then the wall clock from frame N on; the pacing resyncs as on any switch).
+- `tools/watch_scenario.py` (since ad1b601): `--skip-to F` passes it; with `--super-kind` it skips to 80 frames before the forced backdrop (4300 in `super_finish`, where the CPU's health is already 1), so each backdrop is on screen after a few seconds.
+- `docs/TESTS.md`: "Watching a scenario".
+
 ## 0.99.18
 ### For players
 - **WIDE FORCED: the super finish's slanted lines carry on in the same direction into the sides,** instead of turning back on themselves.

@@ -114,5 +114,6 @@ run: configure a second one (`cmake --preset headless -B build-h2`).
 `python tools/watch_scenario.py SCENARIO [--wide] [--renderer opengl]` plays a scenario's inputs in a
 window at the game's own speed, to look at what it draws (nothing is compared). `--super-kind N`
 forces the super finish's backdrop in `super_finish` (1 / 2 slanted lines, 3 vertical lines, 5 speed
-lines, 6 splash, 7 burst, 8 swirl), which a normal fight shows only one of. `--assets` loads assets/
-(the stage strips).
+lines, 6 splash, 7 burst, 8 swirl), which a normal fight shows only one of, and skips at full speed to
+just before it (`--skip-to F` to choose the frame, `--skip-to 0` to watch it all; the game's
+`--fast-until`). `--assets` loads assets/ (the stage strips).

@@ -4,6 +4,7 @@
  *   --work DIR   folder written by tools/prepare.py (default: work)
  *   --frames N   quit after N frames (for tests)
  *   --fast       do not wait for the wall clock
+ *   --fast-until N  run as --fast up to frame N, then at the game's own speed (to watch a late part)
  *   --trace      log every OS call
  *   --headless   no window or sound (tests)
  *   --fullscreen / --windowed   open full screen (the default) or in a window (F11 switches)
@@ -384,6 +385,8 @@ int rt_display_held_fast(void) {             /* kernel.c: held, and not paced: r
     if (!rt_display_held()) { hold_paced = 0; return 0; }
     return !hold_paced;
 }
+static long fast_until;   /* --fast-until: 0 = not */
+extern int rt_realtime;
 static void lazy_update(uint64_t f) { if (lazy_draw) ge_no_draw = !(dump_dir && (long)f + 3 >= dump_from && ((f + 1) % (uint64_t)dump_every == 0 || (f + 2) % (uint64_t)dump_every == 0 || (f + 3) % (uint64_t)dump_every == 0)); }
 void quitkey_request(void);                     /* quitkey.c */
 /* The extensions carried over from the static recomp (src/extensions/: hooks, EX. SETTING, saves in
@@ -515,6 +518,7 @@ void rt_display_vblank(void) {
     }
     if (hash_log) hash_frame(f);
     lazy_update(f);
+    if (fast_until && (long)f >= fast_until) { rt_realtime = 1; fast_until = 0; }
 }
 void rt_ge_census(void);
 void rt_net_report(void);
@@ -593,6 +597,7 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[i], "--work") && i + 1 < argc) work = argv[++i];
         else if (!strcmp(argv[i], "--frames") && i + 1 < argc) rt_max_frames = atol(argv[++i]);
         else if (!strcmp(argv[i], "--fast")) rt_realtime = 0;
+        else if (!strcmp(argv[i], "--fast-until") && i + 1 < argc) { fast_until = atol(argv[++i]); rt_realtime = 0; }
         else if (!strcmp(argv[i], "--trace")) rt_trace = 1;
         else if (!strcmp(argv[i], "--log-level") && i + 1 < argc) {
             rt_log_level = parse_log_level(argv[++i]);

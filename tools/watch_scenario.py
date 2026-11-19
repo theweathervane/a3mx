@@ -15,6 +15,8 @@ closes after the scenario's frames (or --frames).
                   (0, 9 and 10 are the same picture), 8 swirl, in frames --super-from - --super-to
                   (4380 - 4520, super_finish's finish). Use with super_finish.
   --assets        load assets/ (the stage strips); the parity tests run without them
+  --skip-to F     race through the scenario up to frame F, then play at the game's speed (with
+                  --super-kind it skips to 4300, a moment before the super lands, by default)
 
 Example, every super finish backdrop in WIDE FORCED, one after another:
   for k in 1 2 3 5 6 7 8; do python tools/watch_scenario.py super_finish --wide --super-kind $k; done
@@ -37,6 +39,8 @@ def main():
     ap.add_argument('--super-to', type=int, default=4520)
     ap.add_argument('--renderer')
     ap.add_argument('--frames', type=int)
+    ap.add_argument('--skip-to', type=int, help='run at full speed up to this frame, then at the game\'s speed '
+                    '(with --super-kind: 4300, just before the super lands; 0 to watch it all)')
     ap.add_argument('--assets', action='store_true')
     a = ap.parse_args()
 
@@ -53,6 +57,8 @@ def main():
     cmd = [a.exe, '--work', a.work, '--save-dir', save, '--frames', str(a.frames or sc['frames']),
            '--features', 'default,-shaders'] + sc['args']
     if not a.assets: cmd.append('--no-assets')
+    skip = a.skip_to if a.skip_to is not None else (a.super_from - 80 if a.super_kind is not None else 0)
+    if skip: cmd += ['--fast-until', str(skip)]
     if a.renderer: cmd += ['--renderer', a.renderer]
     if a.super_kind is not None:
         cmd += ['--poke', '%d-%d:092E1253=%X/1' % (a.super_from, a.super_to, a.super_kind)]
