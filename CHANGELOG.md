@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.20
+### For players
+- **Testers: the super finish test is quicker to watch.** `python tools/watch_scenario.py super_finish --wide --super-kind N` now plays a two-player Free Battle and reaches the super in a few seconds.
+
+### Technical
+- `super_finish` redone in Free Battle with 2P PRIORITY PLAYER: pad 2 joins on the select screen and confirms its rows, so both fighters are players and stand still; player 2's health set to 1 once the fight starts, then player 1's Shinku Hadoken. The finish is at frames 3855 - 3970 (was 4395 - 4515), and the CPU can no longer parry it.
+- `tools/watch_scenario.py`: `--super-kind` forces frames 3830 - 3990 and skips to 3700 by default.
+- Checked: super_finish parity and WIDE FORCED off / on (fighters identical); all seven backdrops by eye.
+
 ## 0.99.19
 ### For players
 - **`--fast-until N`:** runs the game as fast as it can up to frame N, then at its own speed, to watch a late part of a scripted run without waiting.

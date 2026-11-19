@@ -13,10 +13,10 @@ closes after the scenario's frames (or --frames).
   --super-kind N  the super finish's backdrop forced to kind N (BATTLE + 43, 0x092E1253) while it is
                   shown: 1 / 2 slanted lines, 3 vertical lines, 5 speed lines, 6 splash, 7 burst
                   (0, 9 and 10 are the same picture), 8 swirl, in frames --super-from - --super-to
-                  (4380 - 4520, super_finish's finish). Use with super_finish.
+                  (3830 - 3990, super_finish's finish). Use with super_finish.
   --assets        load assets/ (the stage strips); the parity tests run without them
   --skip-to F     race through the scenario up to frame F, then play at the game's speed (with
-                  --super-kind it skips to 4300, a moment before the super lands, by default)
+                  --super-kind it skips to 3700, just before the super is thrown, by default)
 
 Example, every super finish backdrop in WIDE FORCED, one after another:
   for k in 1 2 3 5 6 7 8; do python tools/watch_scenario.py super_finish --wide --super-kind $k; done
@@ -35,12 +35,12 @@ def main():
     ap.add_argument('--work', default=os.path.join(ROOT, 'work'))
     ap.add_argument('--wide', action='store_true')
     ap.add_argument('--super-kind', type=int)
-    ap.add_argument('--super-from', type=int, default=4380, help='frames to force it in (super_finish: 4380 - 4520)')
-    ap.add_argument('--super-to', type=int, default=4520)
+    ap.add_argument('--super-from', type=int, default=3830, help='frames to force it in (super_finish: 3830 - 3990)')
+    ap.add_argument('--super-to', type=int, default=3990)
     ap.add_argument('--renderer')
     ap.add_argument('--frames', type=int)
     ap.add_argument('--skip-to', type=int, help='run at full speed up to this frame, then at the game\'s speed '
-                    '(with --super-kind: 4300, just before the super lands; 0 to watch it all)')
+                    '(with --super-kind: 3700, just before the super; 0 to watch it all)')
     ap.add_argument('--assets', action='store_true')
     a = ap.parse_args()
 
@@ -57,7 +57,7 @@ def main():
     cmd = [a.exe, '--work', a.work, '--save-dir', save, '--frames', str(a.frames or sc['frames']),
            '--features', 'default,-shaders'] + sc['args']
     if not a.assets: cmd.append('--no-assets')
-    skip = a.skip_to if a.skip_to is not None else (a.super_from - 80 if a.super_kind is not None else 0)
+    skip = a.skip_to if a.skip_to is not None else (a.super_from - 130 if a.super_kind is not None else 0)
     if skip: cmd += ['--fast-until', str(skip)]
     if a.renderer: cmd += ['--renderer', a.renderer]
     if a.super_kind is not None:

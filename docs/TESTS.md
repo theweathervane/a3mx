@@ -74,7 +74,7 @@ touches nothing the hashes cover.
 | `arcade_ending` | the final fight, the ending, the save error questions | endings and the save path's failures | 8 min |
 | `arcade_ending_full` | the final fight won and Ryu's ending played, not skipped | the ending task and its tile layers (0x0881B7C8) | 8 min |
 | `arcade_rival_dialogue` | the first fight met as the rival fight: the two portraits and their lines before it | the dialogue's text boxes (0x0880C1AC / 0x088108D8) | 7 min |
-| `super_finish` | a KO by Ryu's Shinku Hadoken | the super finish's backdrop (0x0880C208) | 4 min |
+| `super_finish` | Free Battle, both fighters players: a KO by Ryu's Shinku Hadoken | the super finish's backdrop (0x0880C208) | 3 min |
 | `arcade_join_select` | Arcade with 2P PRIORITY PLAYER: pad 2 joins with Start on the select screen, picks Ken and jumps in the fight | a pad that PRIORITY gave a fighter keeps it when it joins (issue #17) | 6 min |
 | `free_battle_join_in` | Free Battle with 2P PRIORITY PLAYER and pad 2 idle | PRIORITY leaves a box that can be joined with Start to the computer (issue #17) | 5 min |
 | `boot_to_menu` | the `boot_to_menu` feature: straight to the MODE MENU after the load, then into Arcade's select | the boot path skipping the title and PRESS START | 1 min |
