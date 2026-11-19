@@ -143,6 +143,12 @@ static int find_piece(int panel, int *x) {
 
 int widescreen_edge_shift(uint32_t sp) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
+    /* the attract mode's score ranking (GAME + 0 = 4): its two RANKING columns (kind 35 types 3, 4) */
+    if (RH(GAME) == 4 && kind == 35 && (type == 3 || type == 4)) return away_from_middle(sp, margin_units());
+    /* the attract mode's red speed-line screens (GAME + 0 = 2): the STREET FIGHTER ALPHA 3 strip (kind 48
+       type 3, one picture 480 wide that sways from x -15 to -5) starts at the 16:9 screen's left side,
+       and is drawn again after itself (widescreen_edge_copy) */
+    if (RH(GAME) == 2 && kind == 48 && type == 3) return px_to_units(-48);
     if (RB(GAME + 2) == 1) {                               /* the character select screen */
         if (kind == 16 && type >= 2 && type <= 4) return away_from_middle(sp, margin_units());
         if (kind == 16 && type == 6) return away_from_middle(sp, margin_units());   /* the chosen MODE / ISM panel, the name */
@@ -162,8 +168,20 @@ int widescreen_edge_shift(uint32_t sp) {
     if (RH(GAME + 4) == 1 && kind == 113 && (type == 3 || type == 4)) return away_from_middle(sp, margin_units());   /* the profile screen's side columns */
     return 0;
 }
+/* the columns of the picture a sprite shows now (its frame in its picture list) */
+static int picture_cols(uint32_t sp) {
+    uint32_t frame = RH(RW(sp + 28) + 4);
+    if (frame & 0x8000) return 0;
+    uint32_t list = RW(0x08E75AD8u + RH(sp + 86) * 4u);
+    return RB(list + frame * 12u + 4u);
+}
 int widescreen_edge_copy(uint32_t sp, int n) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
+    if (n == 0 && RH(GAME) == 2 && kind == 48 && type == 3) return px_to_units(-48 + 480);
+    /* the attract mode's band of fighters' faces behind a word (kind 54 type 3, a picture 384 wide; the
+       earth band is 512 and needs nothing): drawn again one band to the left and one to the right, so the
+       margins show half a face from the band's other end, not a copy of the face beside them */
+    if (RH(GAME) == 2 && kind == 54 && type == 3 && picture_cols(sp) == 24) return px_to_units(n ? 384 : -384);
     if (n == 0 && RB(GAME + 2) == 2 && RH(GAME + 4) <= 2 && kind == 14 && type == 2) return away_from_middle(sp, margin_units());
     /* the select screen's name ticker at the top (kind 16 type 5, y 232): a strip that scrolls and jumps
        back by 320 when it has gone that far, too short for the 16:9 sides: copies one period each way */
@@ -186,10 +204,14 @@ int widescreen_edge_cells(uint32_t sp) {
     /* textured pictures across the 4:3 picture: its side cells mirrored out, then as they are (16).
        The QSound screen (GAME + 0 / + 2 = 1 / 7; kind 122) and the attract mode's word screens (TRIUMPH
        OR DIE, BORN TO FIGHT ...: GAME + 0 = 2, kind 51 types 0 - 2, the words and the top word's noisy
-       banner; kind 54 type 3, the band that lights up behind the middle or bottom word). Their words don't reach the 4:3 sides,
+       banner). The band that lights up behind a word (kind 54 type 3) is the earth, already 512 wide,
+       or the fighters' faces, drawn again a band to each side (widescreen_edge_copy). Their words don't reach the 4:3 sides,
        so only the banners and the QSound screen's plain background go on. */
     if (RH(GAME) == 1 && RB(GAME + 2) == 7 && RB(sp + 2) == 122) return 1 | 16;
-    if (RH(GAME) == 2 && ((RB(sp + 2) == 51 && RB(sp + 3) <= 2) || (RB(sp + 2) == 54 && RB(sp + 3) == 3))) return 1 | 16;
+    /* the attract mode's speed-line screens behind the fighters' close-ups: the green (kind 127 type 6)
+       and the red (kind 54 type 5) */
+    if (RH(GAME) == 2 && ((RB(sp + 2) == 127 && RB(sp + 3) == 6) || (RB(sp + 2) == 54 && RB(sp + 3) == 5))) return 1 | 16;
+    if (RH(GAME) == 2 && RB(sp + 2) == 51 && RB(sp + 3) <= 2) return 1 | 16;
     int game_over = RB(GAME + 2) == 4 || (RH(GAME) == 3 && RB(GAME + 2) == 0);   /* after the continue; after an ending */
     if (game_over && RB(sp + 2) == 13 && RB(sp + 3) >= 4 && RB(sp + 3) <= 6) return 1;   /* GAME OVER's band */
     if (RB(GAME + 2) == 3 && RB(sp + 2) == 13 && RB(sp + 3) == 2) return 1 | 8;                    /* the continue bar */
@@ -201,8 +223,11 @@ int widescreen_edge_cells(uint32_t sp) {
 /* ... and rows of pieces continued one piece into the margins (sprite_drawers.c), in the fight: the two
    rows of FIGHT FIGHT ... that slide in with the FIGHT banner (kind 1 type 4, drawer 1) and the
    scrolling KNOCK OUT row (kind 0 type 3, drawer 1), which stopped at the 4:3 picture's right edge (1).
-   And 2: the continue screen's count (kind 13 type 3, drawer 1), its numbers carried on to the left. */
+   And 2: the continue screen's count (kind 13 type 3, drawer 1), its numbers carried on to the left.
+   The attract mode's red speed-line screens: the rows of a fighter's name (kind 48 type 4, drawer 1, a
+   name every 96) (1). */
 int widescreen_edge_row(uint32_t sp) {
+    if (RH(GAME) == 2 && RB(sp + 2) == 48 && RB(sp + 3) == 4 && RW(sp + 148) == 1) return 1;   /* the attract's name rows */
     if (RB(GAME + 2) == 3 && RB(sp + 2) == 13 && RB(sp + 3) == 3 && RW(sp + 148) == 1) return 2;   /* the continue count */
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RW(sp + 148) != 1) return 0;
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);

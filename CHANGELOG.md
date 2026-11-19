@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.99.24
+### For players
+- **WIDE NATIVE, attract mode:**
+  - The score ranking's RANKING columns sit at the screen's edges.
+  - The green and red speed-line backgrounds behind the fighters' close-ups fill the screen.
+  - On the red ones, the STREET FIGHTER ALPHA 3 strip starts at the screen's edge and repeats, and the rows of the fighter's name leave no gap.
+  - The earth band behind TRIUMPH / OR / DIE shows its own sky and horizon again (0.99.23 had mirrored it into a V).
+  - The faces band behind GO FOR BROKE / FACE TO FACE shows half of another fighter's portrait at each side instead of a mirror image.
+
+### Technical
+- `extensions/widescreen.c`: `widescreen_edge_shift` for the ranking (GAME + 0 = 4, kind 35 types 3 / 4) and the red screens' strip (kind 48 type 3, -48 px); `widescreen_edge_copy` for that strip (again at +432 px, its picture being 480 wide) and the faces band (kind 54 type 3 with a 24-column picture, at ±384 px; new `picture_cols`); `widescreen_edge_cells` 16 for the green (kind 127 type 6) and red (kind 54 type 5) backgrounds, no longer for kind 54 type 3; `widescreen_edge_row` 1 for the name rows (kind 48 type 4, drawer 1).
+- `object/sprite_grid.c` mode 4: a side the picture already covers to the screen's edge is left alone (the earth band, x -64 - 448).
+- Checked: attract_mode parity; WIDE NATIVE off / on fighters identical for attract_mode and super_finish; each screen by eye.
+
 ## 0.99.23
 ### For players
 - **Stage Extensions stay on after the KO:** the stage's edges are still drawn at the end of a round, on the win screen and on the continue screen, and in the attract mode's demo fights.

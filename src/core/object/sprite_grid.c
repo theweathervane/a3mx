@@ -267,6 +267,9 @@ static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, in
                           carried on seamlessly (the backdrop is two pictures side by side) */
         int32_t step = cx <= 0 && cx + w > 0 ? -w : cx < PICTURE_W && cx + w >= PICTURE_W ? w : 0;
         if (!step) return;
+        /* a side the picture already covers out to the screen's edge is left as it is (the attract
+           mode's earth band is 512 wide) */
+        if (step < 0 ? row_x <= -MARGIN_W : row_x + cols * w >= PICTURE_W + MARGIN_W) return;
         if (sprite_grid_wide_strip == 1) {   /* a texel column at the edge stretched: the edge's colour on */
             int32_t u = texel_at(ds, last, texels, w, step < 0 ? 2 : w - 3);   /* two in: the very edge samples its neighbour */
             if (step < 0) edge_quad(c, ds, v, -MARGIN_W, cx, y, h, last, texels, u, u, flags, blend, effect);

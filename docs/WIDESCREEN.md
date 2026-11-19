@@ -71,6 +71,12 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     top word's, and the band that lights up behind the middle or bottom word) carry on, their side cells
     mirrored out (`widescreen_edge_cells` 16, `sprite_grid.c` mode 4, as many cells as the margin
     needs); GAME OVER at the end of an ending (with TRY AGAIN) has its band carried on like the other;
+  - more of the attract mode (0.99.24): the score ranking's RANKING columns at the screen's sides; the
+    green and red speed-line screens behind the close-ups carried on (mirrored); on the red ones the
+    STREET FIGHTER ALPHA 3 strip starts at the left side and is drawn again after itself, and the rows
+    of a fighter's name get one more name at an end; the faces band behind a word is drawn again a band
+    to each side (half a face from its other end in each margin); the earth band, already 512 wide, is
+    left as drawn (0.99.23's mirroring had bent its horizon);
   - the endings (0.99.22): a scene of the ending's 24-tile map standing still on one of its halves has
     its own columns mirrored out at its sides instead of the other scene's (`src/core/stage/tiles.c`),
     and the black sides that narrow a scene to a panel reach the screen's sides;
