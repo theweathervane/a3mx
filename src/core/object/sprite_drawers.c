@@ -41,8 +41,7 @@ int widescreen_edge_row(gaddr sp);
 int widescreen_beam(gaddr sp);
 int widescreen_widen(gaddr sp);
 extern int sprite_grid_half;   /* sprite_grid.c */
-extern int32_t sprite_grid_clip_bottom;   /* sprite_grid.c */
-#define PROFILE_COLUMN_END 183    /* WIDE NATIVE: the profile screen's text box frame's top, in the 2D library's rows */
+#define PROFILE_BOX_TOP 183       /* WIDE NATIVE: the profile screen's text box frame's top, in the 2D library's rows */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
@@ -172,14 +171,14 @@ static void wide_count_left(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first,
     }
 }
 
-/* drawer 3: like drawer 0, the picture number from the sprite's +84; the effects copied first */
 /* WIDE NATIVE: the profile screen's text box frame (kind 113 type 1, widened) has a dark socket at its
-   top left where the left column's end sat; the column now stops at the frame's top (PROFILE_COLUMN_END),
-   so the socket (x -48 - -1, rows 184 - 200 of the 2D library) is painted the frame's red */
+   top left that joins the box to the left column; with the column at the 16:9 edge the socket's end
+   shows between them (x -16 - -1, rows 183 - 200 of the 2D library), so that part is painted the frame's red
+   and the box stands clear of the column */
 #define DEPTHS     0x08AE03B8u   /* u16[]: depth by index */
 void f_089E10D8(Cpu *c);         /* draws untextured vertices: a0, a1 count, a2 blend */
 static void fill_profile_socket(Cpu *c, gaddr ds, gaddr v) {
-    static const int16_t xy[4][2] = { { -48, PROFILE_COLUMN_END }, { -48, 201 }, { 0, PROFILE_COLUMN_END }, { 0, 201 } };
+    static const int16_t xy[4][2] = { { -16, PROFILE_BOX_TOP }, { -16, 201 }, { 0, PROFILE_BOX_TOP }, { 0, 201 } };
     uint16_t z = *H(DEPTHS + *W(ds + 44) * 2u);
     for (int i = 0; i < 4; i++) {
         *H(v + i * 12 + 0) = (uint16_t)xy[i][0]; *H(v + i * 12 + 2) = (uint16_t)xy[i][1];
@@ -188,6 +187,7 @@ static void fill_profile_socket(Cpu *c, gaddr ds, gaddr v) {
     CALL3(f_089E10D8, v, 4, 0);
 }
 
+/* drawer 3: like drawer 0, the picture number from the sprite's +84; the effects copied first */
 static void draw_one_84(Cpu *c, gaddr ds, gaddr sp) {
     copy_effects(ds, sp);
     uint32_t frame = *H(sp + SP_FRAME_84);
@@ -212,7 +212,6 @@ static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     copy_effects(ds, sp);
     int row = rt_widescreen ? widescreen_edge_row(sp) : 0;
     if (row == 1) wide_row_end(c, ds, sp, list, first, last, 1);
-    if (row == 4) sprite_grid_clip_bottom = PROFILE_COLUMN_END;   /* WIDE NATIVE: the profile screen's left column */
     for (; e >= first; e -= 6) {
         uint32_t p = *H(e + 4);
         if (p & PIECE_SKIP) continue;
@@ -223,7 +222,6 @@ static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     if (row == 1) wide_row_end(c, ds, sp, list, first, last, 0);
     if (row == 2) wide_count_left(c, ds, sp, list, first, last);
     if (row == 3) wide_row_wrap(c, ds, sp, list, first, last);
-    sprite_grid_clip_bottom = 0;
 }
 
 static void draw_ghosted(Cpu *c, gaddr ds, gaddr sp) {

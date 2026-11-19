@@ -164,27 +164,8 @@ int sprite_grid_half;
 #define PICTURE_W 384
 
 int sprite_grid_margins_only;   /* WIDE NATIVE: a pass that draws only what goes into the margins */
-/* WIDE NATIVE: set by a sprite drawer for a picture cut off below this screen y (the 2D library's rows):
-   the profile screen's left column, which on the 16:9 screen would run down beside the text box's frame */
-int32_t sprite_grid_clip_bottom;
-static int clip_cell_bottom(gaddr v) {
-    int32_t lim = sprite_grid_clip_bottom;
-    int32_t y0 = S16(v + 2), y1 = S16(v + 16 + 2);           /* top-left, bottom-left */
-    int flipped = y1 < y0;
-    int32_t top = flipped ? y1 : y0, bottom = flipped ? y0 : y1;
-    if (top >= lim) return 0;
-    if (bottom <= lim) return 1;
-    int32_t vt = S16(v + 8), vb = S16(v + 16 + 8);           /* the texels at y0 / y1 */
-    int32_t vlim = vt + (vb - vt) * (lim - y0) / (y1 - y0);
-    for (int i = 0; i < 4; i++) {
-        if (S16(v + 16 * i + 2) == bottom) { SET16(v + 16 * i + 2, lim); SET16(v + 16 * i + 8, vlim); }
-    }
-    return 1;
-}
-
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
     if (sprite_grid_margins_only) return;
-    if (sprite_grid_clip_bottom && !clip_cell_bottom(v)) return;
     if (sprite_grid_half) {
         int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), split = cols / 2;
         int16_t keep[4][2];

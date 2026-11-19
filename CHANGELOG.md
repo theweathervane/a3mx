@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.27
+### For players
+- **WIDE NATIVE, character profile:** the left column is back to its full length; instead the text box no longer touches it, with the frame's red between them.
+
+### Technical
+- Reverts 0.99.26's column cut (`sprite_grid_clip_bottom` and `widescreen_edge_row` 4 removed). `object/sprite_drawers.c` paints only the socket's end between the column and the box (x -16 - 0, rows 183 - 201) red after the widened frame (kind 113 type 1).
+- Checked: wide_fight parity and WIDE NATIVE off / on (fighters identical); the profile screen by eye.
+
 ## 0.99.26
 ### For players
 - **WIDE NATIVE, character profile:** the left column no longer runs down beside the text box; the box sits inside the frame, with the frame's red at its left as on the right.
