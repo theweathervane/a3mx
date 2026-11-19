@@ -97,6 +97,12 @@ static int margin_units(void) {
     uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
     return scale > 0.f ? (int)(48.f / scale + 0.5f) : 0;
 }
+/* the dialogue before a rival or final fight: its portraits stand 16 in from the 4:3 picture's sides, so
+   they go 48 + 16 out to stand at the 16:9 screen's sides (their lines with them) */
+static int dialogue_units(void) {
+    uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
+    return scale > 0.f ? (int)(64.f / scale + 0.5f) : 0;
+}
 static int away_from_middle(uint32_t sp, int units) {
     uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
     return (float)(int16_t)RH(sp + 18) * scale < 192.f ? -units : units;
@@ -148,7 +154,7 @@ int widescreen_edge_shift(uint32_t sp) {
     if (round_win() && win_piece(kind, type)) return px_to_units(win_shift_px(units_x(sp)));
     if (round_win() && panel_piece(kind, type)) return px_to_units(panel_shift_px(units_x(sp)));
     /* the portraits of the dialogue before a rival or final fight (step 3, kind 14 type 6) */
-    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 3 && kind == 14 && type == 6) return away_from_middle(sp, margin_units());
+    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 3 && kind == 14 && type == 6) return away_from_middle(sp, dialogue_units());
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
     if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
     if (kind == 19 && type == 7) return away_from_middle(sp, margin_units());   /* P1 left, P2 right */
@@ -215,6 +221,14 @@ int widescreen_widen(uint32_t sp) {
    48 left with the header) and the box behind the text (type 1, 48 out each side with the text box). */
 void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
     *left = *right = 0;
+    /* the endings (screen 1): the black sides that narrow a scene to a panel (type 1, 96 wide, at x 0
+       and 288, or past) go on to the 16:9 screen's sides, so the scene's tiles past them stay hidden */
+    if (RB(GAME + 2) == 1 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 && (int16_t)RH(ob + 14) == 96) {
+        int16_t x = (int16_t)RH(ob + 6);
+        if (x <= 0) *left = -48;
+        if (x + 96 >= 384) *right = 48;
+        return;
+    }
     if (RB(GAME + 2) != 2 || (RB(ob + 88) & 0x3F) != 0) return;
     uint32_t type = RB(ob + 92), step = RH(GAME + 4);
     int16_t w = (int16_t)RH(ob + 14);   /* the map screen (also step 1) has a full-width bar: by size */
@@ -234,7 +248,7 @@ int widescreen_text_shift(uint32_t rec) {
     int top = (int16_t)RH(rec + 30) < 112;
     for (uint32_t o = 0x09512770u; o < 0x09512770u + 32u * 0xC0u; o += 0xC0u) {
         if (!RB(o) || !RB(o + 1) || RB(o + 2) != 14 || RB(o + 3) != 6) continue;
-        if ((0xF0 - (int16_t)RH(o + 22) < 112) == top) return away_from_middle(o, margin_units());
+        if ((0xF0 - (int16_t)RH(o + 22) < 112) == top) return away_from_middle(o, dialogue_units());
     }
     return 0;
 }

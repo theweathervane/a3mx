@@ -54,13 +54,22 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     for the sprites `widescreen_edge_cells` / `widescreen_edge_row` name.
     Since 0.99.11 FIGHT's translucent box (its after-image) carries on the same way, and since 0.99.12
     the GAME OVER band and the continue countdown's bar (left only); the sides are strips of one texel
-    column, the ROUND band's left side its glow mirrored, and the continue count gets its earlier numbers;
+    column, the ROUND band's left side the dimmer step of its glow after the D (0.99.22: bright, dimmer,
+    line, as on the right), and the continue count gets its earlier numbers;
   - the profile screen before the map (0.99.13): its header and text box drawn widened (each half
     moved 48 out, the plain middle stretched), its name plate's box and the box behind the text (plain
     rectangles) moved and widened with them (0.99.14), its side columns at the edges;
     the win screen after a fight: its side columns at the edges, the band under the quote wider;
-  - the dialogue before a rival or final fight (0.99.15): the portraits at the edges, each line moved
-    with its speaker's portrait; the super finish's backdrop carried on, its side cells mirrored out;
+  - the dialogue before a rival or final fight (0.99.15): the portraits at the edges (flush since
+    0.99.22: they stand 16 in on the 4:3 screen, so they move 64), each line moved with its speaker's
+    portrait;
+  - the super finish's backdrop (`src/core/object/super_backdrop.c`, 0.99.22): the vertical lines
+    (kinds 3, 4) and the speed lines (5) mirror their side cells out; every other kind (slanted lines,
+    splash, burst, swirl) is drawn whole 1.25 times over-sized about the screen's middle, so its lines
+    and rings fill the 16:9 screen unbroken (28 rows are lost above and below);
+  - the endings (0.99.22): a scene of the ending's 24-tile map standing still on one of its halves has
+    its own columns mirrored out at its sides instead of the other scene's (`src/core/stage/tiles.c`),
+    and the black sides that narrow a scene to a panel reach the screen's sides;
   - the map screen (0.99.12): the ladder moves to the edge away from the middle, and the beam is drawn
     again scaled about its point behind itself, in the margins only, so it carries on along its edges;
   - the wipes' flat shapes (`src/core/object/shapes.c`, 0.99.8, redone in 0.99.11): a quad with an

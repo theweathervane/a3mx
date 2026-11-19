@@ -147,6 +147,9 @@ static void cell_quad(gaddr ds, gaddr v, int16_t x, int16_t y, int16_t w, int16_
    only (each cell cut at the 4:3 picture's sides, its texels with it): the map screen's beam, a wedge
    from its point, carried on along its own edges past the end of its picture. Only the drawing changes. */
 float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;
+/* WIDE NATIVE: with sprite_grid_scale, the whole scaled cell is drawn instead of only its parts in the
+   margins (the super finish's backdrops: the 4:3 picture over-sized to the 16:9 screen) */
+int sprite_grid_scale_all;
 static int32_t round_to(float f) { return (int32_t)(f < 0.0f ? f - 0.5f : f + 0.5f); }
 
 /* the quad (corners top left, bottom left, top right, bottom right) drawn, or in the scaled pass its
@@ -195,6 +198,11 @@ static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, u
         SET16(v + 16 * i + 0, round_to(sprite_grid_ax + ((float)keep[i][0] - sprite_grid_ax) * sprite_grid_scale));
         SET16(v + 16 * i + 2, round_to(sprite_grid_ay + ((float)keep[i][1] - sprite_grid_ay) * sprite_grid_scale));
     }
+    if (sprite_grid_scale_all) {
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+        for (int i = 0; i < 4; i++) { SET16(v + 16 * i + 0, keep[i][0]); SET16(v + 16 * i + 2, keep[i][1]); }
+        return;
+    }
     int32_t x0 = S16(v + 0), x1 = S16(v + 32), u0 = keep[0][2], u1 = keep[2][2];
     for (int side = 0; side < 2 && x1 > x0; side++) {
         int32_t a = side ? (x0 > 384 ? x0 : 384) : x0, b = side ? x1 : (x1 < 0 ? x1 : 0);
@@ -215,9 +223,10 @@ static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, u
    the bar's first cells blink empty, and the margin stays steady). Each row's last cell carries
    on to the right margin (to x 432) as one strip of a single texel column from its far part (so a
    letter's edge in the cell is not repeated), and with 1 the same strip goes from the left margin
-   (x -48) to the row's start. With 2 the left margin instead gets the band's glow after the D (picture
-   x 284 - 304, up to the hole for the 1's bar) mirrored next to the row's start, so the glow tapers away on the left
-   as it does on the right (the band's own left end has the R in it), and the plain strip beyond it.
+   (x -48) to the row's start. With 2 the left margin instead gets the dimmer step of the band's glow
+   after the D (picture x 300 - 304, before the hole for the 1's bar, drawn 16 wide as that step is)
+   next to the row's start, then the plain strip: the band's own left end before the R is the glow's
+   brighter step, so the glow fades bright, dimmer, line to the left as it does after the D on the right.
    Only for a sprite drawn the right way round. Only the drawing changes. */
 int sprite_grid_wide_edges;
 int sprite_grid_wide_strip;   /* mode 4: 0 the side cells mirrored, then as they are; 1 the edge's colour stretched; 2 the side cells repeated along a slope */
@@ -225,8 +234,9 @@ int sprite_grid_wide_dy;      /* mode 4, 2: the lines' rise in screen pixels ove
 int32_t sprite_grid_left_row;   /* mode 3: the row whose strip is drawn (the drawer resets it for each picture) */
 #define PICTURE_W 384
 #define MARGIN_W  48
-#define TAPER_FROM 284           /* ROUND (mode 2): the glow after the D, from the row's start */
-#define TAPER_TO   304
+#define TAPER_FROM 300           /* ROUND (mode 2): the glow's dimmer step after the D (the D ends at 284; */
+#define TAPER_TO   304           /* past 304 the band has the hole for the 1's bar) */
+#define TAPER_W    16            /* drawn this wide: the step is 16 wide after the D */
 
 /* A quad from x0 to x1 on the screen, the cell's texels from u0 (at x0) to u1 (at x1) across */
 static void edge_quad(Cpu *c, gaddr ds, gaddr v, int32_t x0, int32_t x1, int16_t y, int16_t h, uint8_t last,
@@ -292,13 +302,14 @@ static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, in
     if (col == cols - 1) {
         int32_t u = texel_at(ds, last, texels, w, w * 3 / 4);   /* one texel column, three quarters in */
         edge_quad(c, ds, v, cx + w, PICTURE_W + MARGIN_W, y, h, last, texels, u, u, flags, blend, effect);
-        int32_t end = mode == 2 ? row_x - (TAPER_TO - TAPER_FROM) : row_x;
+        int32_t end = mode == 2 ? row_x - TAPER_W : row_x;
         edge_quad(c, ds, v, -MARGIN_W, end, y, h, last, texels, u, u, flags, blend, effect);
     }
     if (mode == 2) {   /* the part of the glow in this cell, mirrored about the row's start */
         int32_t xc = cx - row_x, a = xc > TAPER_FROM ? xc : TAPER_FROM, b = xc + w < TAPER_TO ? xc + w : TAPER_TO;
         if (a < b)
-            edge_quad(c, ds, v, row_x - (b - TAPER_FROM), row_x - (a - TAPER_FROM), y, h, last, texels,
+            edge_quad(c, ds, v, row_x - (b - TAPER_FROM) * TAPER_W / (TAPER_TO - TAPER_FROM),
+                      row_x - (a - TAPER_FROM) * TAPER_W / (TAPER_TO - TAPER_FROM), y, h, last, texels,
                       texel_at(ds, last, texels, w, b - xc), texel_at(ds, last, texels, w, a - xc), flags, blend, effect);
     }
 }

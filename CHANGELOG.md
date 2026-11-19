@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.99.22
+### For players
+- **WIDE NATIVE: the super finish's backdrops fill the screen unbroken.** The slanted lines, splash, burst and swirl are drawn slightly larger, centred, so their lines and rings carry on to the screen's sides with no seams or pulled pixels. The vertical lines' second kind now carries on the same way as the first.
+- **WIDE NATIVE: the endings' speed-line and vertical-line backgrounds carry on into the sides** instead of showing a strip of the other background, and a scene narrowed to a panel keeps black sides out to the screen's edges.
+- **WIDE NATIVE: the ROUND banner's glow fades away on the left** as it does after the D on the right.
+- **WIDE NATIVE: the portraits in the dialogue before a rival fight sit right at the screen's edges.**
+
+### Technical
+- `object/super_backdrop.c` (0x0880C208): kinds 3 - 5 use `sprite_grid.c` mode 4 (mirrored side cells; kind 4 was taking the edge's colour); the rest are drawn with `sprite_grid_scale` 1.25 about (192, 112) and the new `sprite_grid_scale_all` (the whole scaled cell, not only its margin parts). 32-pixel cells become 40 on whole pixels. Mode 4's strips 1 and 2 are now unused by it.
+- `object/sprite_grid.c` mode 2 (ROUND): the left margin gets picture x 300 - 304 (the glow's dimmer step; past 304 is the hole for the 1's bar) drawn 16 wide, then the strip.
+- `stage/tiles.c` 0x0881B7C8: with the scroll on 0 or 384 and standing still (or just cut to), the extra columns mirror the 12 columns on screen (`scene_mirror`, `scene_flip` toggling a tile's flip). A scrolling scene still wraps.
+- `extensions/widescreen.c`: `dialogue_units()` (64 instead of 48) for the dialogue's portraits and lines; `widescreen_plain_adjust`: on screen 1 (the endings) a plain rectangle of type 1, 96 wide, at the 4:3 side is widened to the 16:9 side.
+- Checked: parity for super_finish, arcade_rival_dialogue, arcade_ending_full; WIDE NATIVE off / on fighters identical for all three; every backdrop kind, ROUND, the dialogue and the ending scenes by eye.
+
 ## 0.99.21
 ### For players
 - **WIDE FORCED is now called WIDE NATIVE,** in SCREEN SETTING, the settings file and the docs.

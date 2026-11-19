@@ -101,6 +101,16 @@ static const Grid GRID_B7C8 = { 32, 13, 17, 2, 0, 1 };
 
 static int columns(const Grid *g) { return rt_widescreen ? g->wide_cols : g->cols; }
 
+/* WIDE NATIVE, 0x0881B7C8: the endings' map holds two scenes side by side, 12 tiles each (the speed
+   lines and the vertical lines, say), and a scene that stands still is shown whole at a scroll of 0 or
+   384. The columns past its sides would then come from the other scene, so instead the scene's own
+   columns are mirrored out at its sides (column -1 is column 0 flipped across, -2 column 1, 12 column
+   11 ...), as the super finish's backdrop carries on its lines. A scene that scrolls wraps round the
+   map as it does on the 4:3 screen. Only the drawing changes. */
+static int scene_mirror;          /* set by 0x0881B7C8 for the grid it draws */
+static uint32_t scene_flip;       /* the tile's word's flip across, toggled for a mirrored column */
+#define SCENE_W 12
+
 /* One tile: its palette, the quad's corners (flipped as the map word says) and texels, then the draw. */
 static void draw_tile(Cpu *c, gaddr st, const Grid *g) {
     SET16(st + GRID_WORD, *W(*W(st + GRID_TILE)));
@@ -109,7 +119,7 @@ static void draw_tile(Cpu *c, gaddr st, const Grid *g) {
     SET16(st + GRID_LEFT, x + S16(st + GRID_OFS_X));
     SET16(st + GRID_RIGHT, x + S16(st + GRID_STEP_X) + S16(st + GRID_OFS_X));
 
-    uint32_t flip = *W(*W(st + GRID_TILE)) & 0x30000000u;
+    uint32_t flip = (*W(*W(st + GRID_TILE)) ^ scene_flip) & 0x30000000u;
     int32_t l = S16(st + GRID_LEFT), r = S16(st + GRID_RIGHT);
     int32_t t = S16(st + GRID_TOP), b = S16(st + GRID_BOTTOM);
     if (flip & 0x10000000u) { int32_t s = l; l = r; r = s; }
@@ -195,7 +205,14 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
         gaddr strip = st;
         int32_t col = 0;
         do {
-            if (col == S16(st + GRID_COL_WRAP)) {
+            if (scene_mirror) {   /* the scene's own column, mirrored past its sides */
+                int32_t r = col - g->wide_tiles;
+                scene_flip = 0;
+                if (r < 0) { r = -1 - r; scene_flip = 0x10000000u; }
+                else if (r >= SCENE_W) { r = 2 * SCENE_W - 1 - r; scene_flip = 0x10000000u; }
+                int32_t col0 = S16(st + GRID_MAP_COL), mc = (col0 + r) % (2 * SCENE_W);
+                *W(st + GRID_TILE) = *W(st + GRID_LINE) + (uint32_t)((mc - col0) * 4);
+            } else if (col == S16(st + GRID_COL_WRAP)) {
                 if (g->b268 && S16(st + GRID_KIND) == 0x90) next_strip(st, &strip);
                 else *W(st + GRID_TILE) -= (uint32_t)(S16(st + GRID_COL_BACK) << 2);
             }
@@ -206,6 +223,7 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
             *W(st + GRID_COL) = (uint32_t)col;
             *W(st + GRID_TILE) = tile + 4;
         } while (col < columns(g));
+        scene_flip = 0;
 
         row++;
         *W(st + GRID_ROW) = (uint32_t)row;
@@ -434,7 +452,14 @@ static void draw_layer_32_wide_map(Cpu *c, gaddr layer, gaddr map) {
     SET16(st + GRID_BOTTOM, S16(st + GRID_Y0) + S16(st + GRID_OFS_Y));
     *W(st + GRID_MAP) = map;
 
+    /* WIDE NATIVE: a scene standing still on a half of the map (scroll 0 or 384, not moving on from
+       a scroll near it the frame before) is mirrored at its sides */
+    static int32_t last_h = -10000;
+    int32_t raw_h = (int16_t)*H(layer + 18), dh = raw_h - last_h;
+    scene_mirror = rt_widescreen && h % (SCENE_W * 32) == 0 && (dh == 0 || dh > 64 || dh < -64);
+    last_h = raw_h;
     draw_grid(c, st, &GRID_B7C8);
+    scene_mirror = 0;
     c->r[29] += 0xB0;
 }
 

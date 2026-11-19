@@ -6,17 +6,16 @@
  * 0x08E75A18 + 68; it and the pictures it goes on into (+10 nonzero) are drawn at x 0, y 0xE0, depth
  * index 2, colour white, not flipped.
  *
- * WIDE NATIVE: each row's end cells are carried on into the margins, mirrored, then as they are
- * (sprite_grid.c, mode 4) for the speed lines (5) and the vertical lines (3); the slanted lines (1, 2) repeat
- * their side cells a cell out and two, moved 16 up or down a cell along the lines' slope, so they go
- * straight on; for the splash (6), the burst
- * (kinds 0, 7, 9, 10) and the swirl (8) a texel column at the edge is stretched out, its colour carried
- * on (the screen's flash still shows through the colour). Only the drawing changes.
+ * WIDE NATIVE: the vertical lines (3, 4) and the speed lines (5) carry each row's end cells on into the
+ * margins, mirrored, then as they are (sprite_grid.c, mode 4); every other kind (the slanted lines 1, 2,
+ * the splash 6, the burst 0, 7, 9, 10, the swirl 8) is drawn whole, 1.25 times over-sized about the
+ * screen's middle, so its pattern fills the 16:9 screen unbroken. Only the drawing changes.
  */
 #include "../decomp.h"
 
 extern int rt_widescreen;          /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
-extern int sprite_grid_wide_edges, sprite_grid_wide_strip, sprite_grid_wide_dy, sprite_grid_margins_only; /* sprite_grid.c */
+extern int sprite_grid_wide_edges, sprite_grid_wide_strip, sprite_grid_scale_all;   /* sprite_grid.c */
+extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -58,17 +57,20 @@ static void draw_backdrop(Cpu *c) {
     *W(ds + DS_COLOUR) = 0xFFFFFFFFu;
     *B(ds + DS_BLEND) = 0;
     *W(ds + DS_DEPTH) = 2;
-    sprite_grid_wide_edges = rt_widescreen ? 4 : 0;
-    /* how the sides go on (sprite_grid.c): the slanted lines (kinds 1, 2) repeat their side cells along
-       the slope; the splash (6), the burst (pictures 39: kinds 0, 7, 9, 10) and the
-       swirl (8) take their edge's colour; the vertical and speed lines (3, 5) mirror */
-    sprite_grid_wide_strip = kind == 1 || kind == 2 ? 2 : kind == 3 || kind == 5 ? 0 : 1;
-    sprite_grid_wide_dy = kind == 1 ? -16 : 16;   /* kind 1's lines rise to the right, kind 2's fall: 16 a cell */
-    if (rt_widescreen && sprite_grid_wide_strip == 2) {   /* the slanted lines: the edge's colour under them */
-        sprite_grid_wide_strip = 1; sprite_grid_margins_only = 1;
+    if (rt_widescreen && kind != 3 && kind != 4 && kind != 5) {
+        /* the slanted lines (1, 2), the splash (6), the burst (0, 7, 9, 10) and the swirl (8): the whole
+           picture over-sized 1.25 times about the 4:3 screen's middle (192, 112), so its 384 fill the 480
+           and its lines and rings go on unbroken; 28 rows are lost above and below. 32-pixel cells
+           become 40, on whole pixels (x' = 1.25 x - 48, y' = 1.25 y - 28) */
+        sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = 112.0f; sprite_grid_scale_all = 1;
         draw_pictures(c, ds, pic, list);
-        sprite_grid_wide_strip = 2; sprite_grid_margins_only = 0;
+        sprite_grid_scale = 0.0f; sprite_grid_scale_all = 0;
+        return;
     }
+    /* the vertical lines (3, 4: the same picture, 4 the other way) and the speed lines (5): each row's
+       end cells carried on into the margins, mirrored, then as they are (sprite_grid.c, mode 4) */
+    sprite_grid_wide_edges = rt_widescreen ? 4 : 0;
+    sprite_grid_wide_strip = 0;
     draw_pictures(c, ds, pic, list);
     sprite_grid_wide_edges = sprite_grid_wide_strip = 0;
 }
