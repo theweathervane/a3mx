@@ -218,6 +218,7 @@ static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, u
    as it does on the right (the band's own left end has the R in it), and the plain strip beyond it.
    Only for a sprite drawn the right way round. Only the drawing changes. */
 int sprite_grid_wide_edges;
+int sprite_grid_wide_strip;   /* mode 4: the edge's colour stretched instead of the cells mirrored */
 int32_t sprite_grid_left_row;   /* mode 3: the row whose strip is drawn (the drawer resets it for each picture) */
 #define PICTURE_W 384
 #define MARGIN_W  48
@@ -253,6 +254,12 @@ static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, in
                           carried on seamlessly (the backdrop is two pictures side by side) */
         int32_t step = cx <= 0 && cx + w > 0 ? -w : cx < PICTURE_W && cx + w >= PICTURE_W ? w : 0;
         if (!step) return;
+        if (sprite_grid_wide_strip) {   /* the outermost texel column stretched: the edge's colour on */
+            int32_t u = texel_at(ds, last, texels, w, step < 0 ? 2 : w - 3);   /* two in: the very edge samples its neighbour */
+            if (step < 0) edge_quad(c, ds, v, -MARGIN_W, cx, y, h, last, texels, u, u, flags, blend, effect);
+            else edge_quad(c, ds, v, cx + w, PICTURE_W + MARGIN_W, y, h, last, texels, u, u, flags, blend, effect);
+            return;
+        }
         uint8_t mirrored = (uint8_t)(last ^ (1u << CELL_FLIP_X));
         cell_quad(ds, v, (int16_t)(cx + step), y, w, h, mirrored, S16(ds + DS_U), S16(ds + DS_V), texels);
         CALL5(f_089E1950, v, 4, flags, blend, effect);

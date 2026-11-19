@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.17
+### For players
+- **WIDE FORCED: the super finish's burst and swirl backdrops carry their colour out to the screen's sides,** instead of repeating a piece of the pattern there. The speed lines, zig-zags, vertical lines and splash keep their pattern carried on, mirrored.
+
+### Technical
+- `object/super_backdrop.c` / `sprite_grid.c`: for kinds 0, 7, 9, 10 (picture 39, the burst) and 8 (51, the swirl) mode 4 stretches the edge cell's texel column two in from the edge (`sprite_grid_wide_strip`) instead of mirroring the cell.
+- Checked: super_finish parity and WIDE FORCED off / on (fighters identical); every backdrop kind by eye (BATTLE + 43 poked to 1, 2, 3, 5, 6, 7, 8 in a test run).
+
 ## 0.99.16
 ### For players
 - **WIDE FORCED: WIN, PERFECT and the results panel fly across the whole screen and stop at its edges.** WIN and PERFECT (with WIN's band) come in from the right side and stop at the left edge; the COMPLETE / MAX COMBO / VITAL / TIME VITAL / SCORE panel comes in from the left and stops at the right edge, its bars reaching it.

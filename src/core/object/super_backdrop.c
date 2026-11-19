@@ -7,12 +7,14 @@
  * index 2, colour white, not flipped.
  *
  * WIDE FORCED: each row's end cells are carried on into the margins, mirrored, then as they are
- * (sprite_grid.c, mode 4). Only the drawing changes.
+ * (sprite_grid.c, mode 4): the speed lines (kinds 1, 2, 5), the vertical lines (3), the splash (6).
+ * For the burst from the middle (kinds 0, 7, 9, 10) and the swirl (8) the edge's outermost texel
+ * column is stretched out instead, its colour carried on. Only the drawing changes.
  */
 #include "../decomp.h"
 
 extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
-extern int sprite_grid_wide_edges; /* sprite_grid.c */
+extern int sprite_grid_wide_edges, sprite_grid_wide_strip; /* sprite_grid.c */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -44,6 +46,9 @@ static void draw_backdrop(Cpu *c) {
     *B(ds + DS_BLEND) = 0;
     *W(ds + DS_DEPTH) = 2;
     sprite_grid_wide_edges = rt_widescreen ? 4 : 0;
+    /* the burst from the middle (pictures 39: kinds 0, 7, 9, 10) and the swirl (51: kind 8) are not
+       patterns to carry on: their edge's colour is stretched instead */
+    sprite_grid_wide_strip = kind == 0 || kind == 7 || kind == 8 || kind == 9 || kind == 10;
     for (;;) {
         int more = (int16_t)*H(pic + 10) != 0;
         c->r[4] = ds; c->r[5] = pic; c->r[6] = list;
@@ -51,7 +56,7 @@ static void draw_backdrop(Cpu *c) {
         if (!more) break;
         pic += 12;
     }
-    sprite_grid_wide_edges = 0;
+    sprite_grid_wide_edges = sprite_grid_wide_strip = 0;
 }
 
 SFA_FUNC(0880C208, super_finish_backdrop) { c->r[29] -= 0x20; draw_backdrop(c); c->r[29] += 0x20; }
