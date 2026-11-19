@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.26
+### For players
+- **WIDE NATIVE, character profile:** the left column no longer runs down beside the text box; the box sits inside the frame, with the frame's red at its left as on the right.
+
+### Technical
+- `object/sprite_grid.c`: `sprite_grid_clip_bottom` cuts cells (and their texels) below a 2D-library row; `object/sprite_drawers.c` sets it to 183 for the profile screen's left column (kind 113 type 3, drawer 6; `widescreen_edge_row` 4) and paints the frame's socket (x -48 - 0, rows 183 - 201) red after the widened frame (kind 113 type 1).
+- Checked: wide_fight parity and WIDE NATIVE off / on (fighters identical); the profile screen by eye.
+
 ## 0.99.25
 ### For players
 - **WIDE NATIVE, attract mode:** the scrolling name rows (CHUN-LI, CHARLIE, DHALSIM ...) run to the screen's edges, and the fighters' outlines slide in from the edges instead of being cut at the old 4:3 sides. The name banners above and below the blue close-ups (DEE JAY, EAGLE ...) no longer leave a gap at the left. The flames before M. Bison's entrance fill the screen.

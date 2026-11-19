@@ -233,6 +233,9 @@ int widescreen_edge_cells(uint32_t sp) {
    rows over black, the four coloured panels behind them (kind 126 type 5, drawer 6, 96 apart) carried
    on round (the names and outlines are holes in a black layer, core/object/mask_layer.c). */
 int widescreen_edge_row(uint32_t sp) {
+    /* the profile screen (step 1): its left column (kind 113 type 3, drawer 6) at the 16:9 edge would run
+       down beside the text box's frame: cut off at the frame's top, as the right column ends (4) */
+    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 113 && RB(sp + 3) == 3) return 4;
     if (RH(GAME) == 2 && RB(sp + 2) == 48 && RB(sp + 3) == 4 && RW(sp + 148) == 1) return 1;   /* the attract's name rows */
     if (RH(GAME) == 2 && RB(sp + 2) == 50 && RB(sp + 3) == 7 && RW(sp + 148) == 1) return 1;   /* the attract's name banners */
     if (RH(GAME) == 2 && RB(sp + 2) == 126 && RB(sp + 3) == 5 && RW(sp + 148) == 6) return 3;  /* the panels behind the name rows */

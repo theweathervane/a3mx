@@ -71,6 +71,9 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     top word's, and the band that lights up behind the middle or bottom word) carry on, their side cells
     mirrored out (`widescreen_edge_cells` 16, `sprite_grid.c` mode 4, as many cells as the margin
     needs); GAME OVER at the end of an ending (with TRY AGAIN) has its band carried on like the other;
+  - the profile screen's text box (0.99.26): the left column stops at the box frame's top, as the right
+    one does, and the frame's dark socket it sat in is painted the frame's red, so the box sits inside
+    the frame on both sides;
   - more of the attract mode (0.99.24): the score ranking's RANKING columns at the screen's sides; the
     green and red speed-line screens behind the close-ups carried on (mirrored); on the red ones the
     STREET FIGHTER ALPHA 3 strip starts at the left side and is drawn again after itself, and the rows
