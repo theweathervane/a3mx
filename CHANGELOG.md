@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.30
+### For players
+- **WIDE NATIVE, attract mode:** on the black screens with the scrolling names (CHUN-LI, CHARLIE, DHALSIM, ZANGIEF) and the fighters' shadows, the names and shadows now reach the left edge of the screen. Before, the left strip was black or showed broken lines.
+
+### Technical
+- `object/screen.c` (the extra text layer, the mask layer's picture): in WIDE NATIVE its main quad is drawn to x 432 (texels 0 - 431) in two halves. Across the whole 4:3 picture, the renderer's margin fill (`platform/ge_soft.c` `wide_margins_rect`) stretched its first texel column over the left margin, covering the margin's own quad (texels 464 - 511, 0.99.25) but for lines where that column was a hole; it also ran past the screen's right edge.
+- Checked: parity (memory hashes, renderer lazy) attract_mode, arcade_fight; wide_fight WIDE NATIVE off / on; by eye: the name-row screens 1640 - 1710 and 1850 - 1940, and the mask layer in memory against the screen.
+
 ## 0.99.29
 ### For players
 - **WIDE NATIVE, attract mode:** the QSound screen's background stays at full width while it fades in and out. Akuma's screens fill the screen: the blue swirl behind his back and the burst behind the red kanji are drawn larger, as the super finish's swirl and burst are. The scene that goes from Ryu under the clouds up to M. Bison is back to black sides (filling them showed the wrong parts of the picture); the flames before M. Bison still fill the screen.

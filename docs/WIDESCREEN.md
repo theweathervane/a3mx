@@ -82,7 +82,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     left as drawn (0.99.23's mirroring had bent its horizon);
   - the attract mode's name rows over black (0.99.25): the names and fighters' outlines are holes in a
     black layer (`object/mask_layer.c`, decompiled for this): holes are cut out to x -64 - 447, the
-    left margin's at the ends of the layer's rows, which the text layer draws there; the coloured panels
+    left margin's at the ends of the layer's rows, which the text layer draws there (0.99.30: its main
+    part in two halves, so the renderer's margin fill no longer covers them); the coloured panels
     behind carry on round (`widescreen_edge_row` 3); the blue screens' name banners get one more name;
     the flames before M. Bison (a title backdrop of kind 5 at scroll 0, standing on a whole band of its
     map) carry on round their 12 tiles; the scene that scrolls from Ryu under the clouds up to M. Bison
