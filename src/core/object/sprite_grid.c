@@ -160,7 +160,9 @@ static int32_t round_to(float f) { return (int32_t)(f < 0.0f ? f - 0.5f : f + 0.
 int sprite_grid_half;
 #define PICTURE_W 384
 
+int sprite_grid_margins_only;   /* WIDE FORCED: a pass that draws only what goes into the margins */
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
+    if (sprite_grid_margins_only) return;
     if (sprite_grid_half) {
         int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), split = cols / 2;
         int16_t keep[4][2];
@@ -218,7 +220,8 @@ static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, u
    as it does on the right (the band's own left end has the R in it), and the plain strip beyond it.
    Only for a sprite drawn the right way round. Only the drawing changes. */
 int sprite_grid_wide_edges;
-int sprite_grid_wide_strip;   /* mode 4: the edge's colour stretched instead of the cells mirrored */
+int sprite_grid_wide_strip;   /* mode 4: 0 the side cells mirrored, then as they are; 1 the edge's colour stretched; 2 the side cells repeated along a slope */
+int sprite_grid_wide_dy;      /* mode 4, 2: the lines' rise in screen pixels over a cell to the right */
 int32_t sprite_grid_left_row;   /* mode 3: the row whose strip is drawn (the drawer resets it for each picture) */
 #define PICTURE_W 384
 #define MARGIN_W  48
@@ -254,10 +257,21 @@ static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, in
                           carried on seamlessly (the backdrop is two pictures side by side) */
         int32_t step = cx <= 0 && cx + w > 0 ? -w : cx < PICTURE_W && cx + w >= PICTURE_W ? w : 0;
         if (!step) return;
-        if (sprite_grid_wide_strip) {   /* the outermost texel column stretched: the edge's colour on */
+        if (sprite_grid_wide_strip == 1) {   /* a texel column at the edge stretched: the edge's colour on */
             int32_t u = texel_at(ds, last, texels, w, step < 0 ? 2 : w - 3);   /* two in: the very edge samples its neighbour */
             if (step < 0) edge_quad(c, ds, v, -MARGIN_W, cx, y, h, last, texels, u, u, flags, blend, effect);
             else edge_quad(c, ds, v, cx + w, PICTURE_W + MARGIN_W, y, h, last, texels, u, u, flags, blend, effect);
+            return;
+        }
+        if (sprite_grid_wide_strip == 2) {
+            /* diagonal lines (the backdrop's slanted speed lines): the side cell drawn again a cell out and
+               two, moved up or down by sprite_grid_wide_dy a cell so the lines go straight on (the band
+               that leaves open at the top or bottom is filled by a pass of 1 before, margins only) */
+            int32_t sh = sprite_grid_wide_dy * step / w;
+            for (int k = 1; k <= 2; k++) {
+                cell_quad(ds, v, (int16_t)(cx + k * step), (int16_t)(y + k * sh), w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
+                CALL5(f_089E1950, v, 4, flags, blend, effect);
+            }
             return;
         }
         uint8_t mirrored = (uint8_t)(last ^ (1u << CELL_FLIP_X));

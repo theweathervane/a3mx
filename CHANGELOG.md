@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.18
+### For players
+- **WIDE FORCED: the super finish's slanted lines carry on in the same direction into the sides,** instead of turning back on themselves.
+- **WIDE FORCED: the splash backdrop takes its background colour to the sides** like the burst and swirl, with no pattern carried on.
+
+### Technical
+- `object/sprite_grid.c` mode 4, `sprite_grid_wide_strip` 2: the side cell drawn again a cell out and two, moved 16 up or down a cell along the lines' slope (`sprite_grid_wide_dy`), over a margins-only pass of the edge's colour (`sprite_grid_margins_only`) for the band left open; `object/super_backdrop.c`: kinds 1 (rising, -16) and 2 (falling, +16) use it, kind 6 the edge's colour.
+- Checked: super_finish parity and WIDE FORCED off / on (fighters identical); all seven backdrops by eye.
+
 ## 0.99.17
 ### For players
 - **WIDE FORCED: the super finish's burst and swirl backdrops carry their colour out to the screen's sides,** instead of repeating a piece of the pattern there. The speed lines, zig-zags, vertical lines and splash keep their pattern carried on, mirrored.

@@ -7,14 +7,16 @@
  * index 2, colour white, not flipped.
  *
  * WIDE FORCED: each row's end cells are carried on into the margins, mirrored, then as they are
- * (sprite_grid.c, mode 4): the speed lines (kinds 1, 2, 5), the vertical lines (3), the splash (6).
- * For the burst from the middle (kinds 0, 7, 9, 10) and the swirl (8) the edge's outermost texel
- * column is stretched out instead, its colour carried on. Only the drawing changes.
+ * (sprite_grid.c, mode 4) for the speed lines (5) and the vertical lines (3); the slanted lines (1, 2) repeat
+ * their side cells a cell out and two, moved 16 up or down a cell along the lines' slope, so they go
+ * straight on; for the splash (6), the burst
+ * (kinds 0, 7, 9, 10) and the swirl (8) a texel column at the edge is stretched out, its colour carried
+ * on (the screen's flash still shows through the colour). Only the drawing changes.
  */
 #include "../decomp.h"
 
 extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
-extern int sprite_grid_wide_edges, sprite_grid_wide_strip; /* sprite_grid.c */
+extern int sprite_grid_wide_edges, sprite_grid_wide_strip, sprite_grid_wide_dy, sprite_grid_margins_only; /* sprite_grid.c */
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -29,6 +31,17 @@ void f_08811BCC(Cpu *c);   /* a picture's 32-pixel cells (a0 draw state, a1 pict
 #define TEXTURES    0x08E75A18u   /* +68: its page */
 #define BY_KIND     0x08A04B2Cu   /* u16[]: the picture by kind */
 enum { DS_X = 0, DS_Y = 2, DS_DEPTH = 44, DS_COLOUR = 48, DS_FLIP_X = 56, DS_FLIP_Y = 60, DS_BLEND = 85 };
+
+/* the picture and the ones it goes on into */
+static void draw_pictures(Cpu *c, gaddr ds, gaddr pic, gaddr list) {
+    for (;;) {
+        int more = (int16_t)*H(pic + 10) != 0;
+        c->r[4] = ds; c->r[5] = pic; c->r[6] = list;
+        f_08811BCC(c);
+        if (!more) break;
+        pic += 12;
+    }
+}
 
 static void draw_backdrop(Cpu *c) {
     if ((int8_t)*B(BATTLE + 36) == 0) return;
@@ -46,16 +59,17 @@ static void draw_backdrop(Cpu *c) {
     *B(ds + DS_BLEND) = 0;
     *W(ds + DS_DEPTH) = 2;
     sprite_grid_wide_edges = rt_widescreen ? 4 : 0;
-    /* the burst from the middle (pictures 39: kinds 0, 7, 9, 10) and the swirl (51: kind 8) are not
-       patterns to carry on: their edge's colour is stretched instead */
-    sprite_grid_wide_strip = kind == 0 || kind == 7 || kind == 8 || kind == 9 || kind == 10;
-    for (;;) {
-        int more = (int16_t)*H(pic + 10) != 0;
-        c->r[4] = ds; c->r[5] = pic; c->r[6] = list;
-        f_08811BCC(c);
-        if (!more) break;
-        pic += 12;
+    /* how the sides go on (sprite_grid.c): the slanted lines (kinds 1, 2) repeat their side cells along
+       the slope; the splash (6), the burst (pictures 39: kinds 0, 7, 9, 10) and the
+       swirl (8) take their edge's colour; the vertical and speed lines (3, 5) mirror */
+    sprite_grid_wide_strip = kind == 1 || kind == 2 ? 2 : kind == 3 || kind == 5 ? 0 : 1;
+    sprite_grid_wide_dy = kind == 1 ? -16 : 16;   /* kind 1's lines rise to the right, kind 2's fall: 16 a cell */
+    if (rt_widescreen && sprite_grid_wide_strip == 2) {   /* the slanted lines: the edge's colour under them */
+        sprite_grid_wide_strip = 1; sprite_grid_margins_only = 1;
+        draw_pictures(c, ds, pic, list);
+        sprite_grid_wide_strip = 2; sprite_grid_margins_only = 0;
     }
+    draw_pictures(c, ds, pic, list);
     sprite_grid_wide_edges = sprite_grid_wide_strip = 0;
 }
 
