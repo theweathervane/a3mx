@@ -101,6 +101,40 @@ static int away_from_middle(uint32_t sp, int units) {
     uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
     return (float)(int16_t)RH(sp + 18) * scale < 192.f ? -units : units;
 }
+/* WIDE FORCED: the end of a round won (fight step 3): WIN and PERFECT fly in from the right and stop
+   at x 112, the results panel (COMPLETE ... SCORE) flies in from the left and stops at x 240. They are
+   moved by an amount that follows their place, so they enter from the 16:9 screen's sides and stop at
+   its edges: for WIN / PERFECT -48 at x 112 or left of it, 0 at the middle (192), +48 at x 384 or
+   right of it; for the panel -48 at x -144 (just off the 16:9 side) or left of it, +48 at x 240 or
+   right of it. In the screen's pixels, through the scale. */
+static int lerp_shift(int x, int x0, int s0, int x1, int s1) {
+    if (x <= x0) return s0;
+    if (x >= x1) return s1;
+    return s0 + (s1 - s0) * (x - x0) / (x1 - x0);
+}
+static int win_shift_px(int x) { return x < 192 ? lerp_shift(x, 112, -48, 192, 0) : lerp_shift(x, 192, 0, 384, 48); }
+static int panel_shift_px(int x) { return lerp_shift(x, -144, -48, 240, 48); }
+static int px_to_units(int px) {
+    uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
+    return scale > 0.f ? (int)((float)px / scale + (px < 0 ? -0.5f : 0.5f)) : 0;
+}
+static int units_x(uint32_t sp) {
+    uint32_t w = RW(SCALE_X); float scale; memcpy(&scale, &w, 4);
+    return (int)((float)(int16_t)RH(sp + 18) * scale);
+}
+static int round_win(void) { return RB(GAME + 2) == 2 && RH(GAME + 4) == 3; }
+static int win_piece(uint32_t kind, uint32_t type) { return (kind == 0 && type == 2) || (kind == 1 && type == 12); }
+static int panel_piece(uint32_t kind, uint32_t type) { return kind == 1 && (type == 9 || type == 15); }
+/* the 8-pool's piece of that sort, shown, if any (its x through *x) */
+static int find_piece(int panel, int *x) {
+    for (uint32_t o = 0x09512170u; o < 0x09512170u + 8u * 0xC0u; o += 0xC0u) {
+        if (!RB(o) || !RB(o + 1)) continue;
+        uint32_t k = RB(o + 2), t = RB(o + 3);
+        if (panel ? panel_piece(k, t) : win_piece(k, t)) { *x = units_x(o); return 1; }
+    }
+    return 0;
+}
+
 int widescreen_edge_shift(uint32_t sp) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
     if (RB(GAME + 2) == 1) {                               /* the character select screen */
@@ -111,6 +145,8 @@ int widescreen_edge_shift(uint32_t sp) {
     /* the win screen after a fight (GAME + 4 = 4): its scrolling columns at the sides (kind 18 types 4, 6) */
     if (RB(GAME + 2) == 2 && RH(GAME + 4) == 4 && kind == 18 && (type == 4 || type == 6))
         return away_from_middle(sp, margin_units());
+    if (round_win() && win_piece(kind, type)) return px_to_units(win_shift_px(units_x(sp)));
+    if (round_win() && panel_piece(kind, type)) return px_to_units(panel_shift_px(units_x(sp)));
     /* the portraits of the dialogue before a rival or final fight (step 3, kind 14 type 6) */
     if (RB(GAME + 2) == 2 && RH(GAME + 4) == 3 && kind == 14 && type == 6) return away_from_middle(sp, margin_units());
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
@@ -183,6 +219,10 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
     uint32_t type = RB(ob + 92), step = RH(GAME + 4);
     int16_t w = (int16_t)RH(ob + 14);   /* the map screen (also step 1) has a full-width bar: by size */
     if (step == 4 && type == 1) { *left = -48; *right = 48; }
+    /* the end of a round won: WIN's band (type 1) moves with WIN, the panel's bars (types 2 - 6) with it */
+    int px;
+    if (step == 3 && type == 1 && find_piece(0, &px)) *left = *right = win_shift_px(px);
+    if (step == 3 && type >= 2 && type <= 6 && find_piece(1, &px)) *left = *right = panel_shift_px(px);
     if (step == 1 && type == 1 && w == 304) { *left = -48; *right = 48; }
     if (step == 1 && type == 0 && w == 112) { *left = *right = -48; }
 }

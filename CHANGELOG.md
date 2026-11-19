@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.16
+### For players
+- **WIDE FORCED: WIN, PERFECT and the results panel fly across the whole screen and stop at its edges.** WIN and PERFECT (with WIN's band) come in from the right side and stop at the left edge; the COMPLETE / MAX COMBO / VITAL / TIME VITAL / SCORE panel comes in from the left and stops at the right edge, its bars reaching it.
+
+### Technical
+- `extensions/widescreen.c`: at the end of a round won (fight step 3), WIN (kind 0 type 2) and PERFECT (kind 1 type 12) are moved by an amount that follows their place (-48 at their stop, x 112, 0 at the middle, +48 at x 384), the panel (kind 1 types 9, 15) likewise (-48 at x -144, +48 at its stop, x 240); WIN's band and the panel's bars (plain rectangles of the third list, types 1 and 2 - 6) move with them.
+- Checked: arcade_match parity; wide_fight and arcade_match with WIDE FORCED off and on (fighters identical); the round's end by eye.
+
 ## 0.99.15
 ### For players
 - **WIDE FORCED: the dialogue before a rival or final fight uses the whole screen.** Both portraits sit at the screen's edges, and each line moves with its speaker's portrait.
