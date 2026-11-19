@@ -38,6 +38,7 @@ int widescreen_edge_copy(uint32_t sp, int n) { (void)sp; (void)n; return 0; }
 int widescreen_edge_cells(uint32_t sp) { (void)sp; return 0; }        /* object/sprite_drawers.c */
 int widescreen_edge_row(uint32_t sp) { (void)sp; return 0; }
 int widescreen_beam(uint32_t sp) { (void)sp; return 0; }
+int widescreen_text_shift(uint32_t rec) { (void)rec; return 0; }
 int widescreen_widen(uint32_t sp) { (void)sp; return 0; }
 void widescreen_plain_adjust(uint32_t ob, int *left, int *right) { (void)ob; *left = *right = 0; }
 #else

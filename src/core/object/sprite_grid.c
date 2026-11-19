@@ -207,7 +207,8 @@ static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, u
 
 /* WIDE FORCED: set by a sprite drawer (sprite_drawers.c) around a picture that is a band across the 4:3
    picture (at least 384 wide, or for 3 starting at its left edge; others are left alone): 1 for
-   FIGHT's translucent box and the GAME OVER band, 2 for the ROUND banner's band, 3 for the continue screen's bar (its right end
+   FIGHT's translucent box and the GAME OVER band, 2 for the ROUND banner's band, 4 for the super finish's background (each row's
+   end cells mirrored out, then as they are), 3 for the continue screen's bar (its right end
    breaks up, so only the left margin, from a texel column a quarter into the row's first cell drawn:
    the bar's first cells blink empty, and the margin stays steady). Each row's last cell carries
    on to the right margin (to x 432) as one strip of a single texel column from its far part (so a
@@ -245,9 +246,20 @@ static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, in
     if (w <= 0 || S16(ds + DS_STEP_X) <= 0) return;
     int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), row_x = S16(ds + DS_ROW_X);
     int mode = sprite_grid_wide_edges;
-    /* only a band as wide as the picture; for mode 3 one that starts at its left edge (the continue bar's
-       frames are 23 or 24 cells) */
-    if (mode == 3 ? row_x > 0 : cols * w < PICTURE_W) return;
+    /* only a band as wide as the picture (not for mode 4); for mode 3 one that starts at its left edge
+       (the continue bar's frames are 23 or 24 cells) */
+    if (mode != 4 && (mode == 3 ? row_x > 0 : cols * w < PICTURE_W)) return;
+    if (mode == 4) {   /* cells at the 4:3 picture's sides mirrored out, then as they are: a pattern
+                          carried on seamlessly (the backdrop is two pictures side by side) */
+        int32_t step = cx <= 0 && cx + w > 0 ? -w : cx < PICTURE_W && cx + w >= PICTURE_W ? w : 0;
+        if (!step) return;
+        uint8_t mirrored = (uint8_t)(last ^ (1u << CELL_FLIP_X));
+        cell_quad(ds, v, (int16_t)(cx + step), y, w, h, mirrored, S16(ds + DS_U), S16(ds + DS_V), texels);
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+        cell_quad(ds, v, (int16_t)(cx + 2 * step), y, w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+        return;
+    }
     if (mode == 3) {   /* the left margin only, from the row's first cell drawn */
         if (y != sprite_grid_left_row) {
             sprite_grid_left_row = y;

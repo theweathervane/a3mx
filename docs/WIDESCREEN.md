@@ -59,6 +59,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     moved 48 out, the plain middle stretched), its name plate's box and the box behind the text (plain
     rectangles) moved and widened with them (0.99.14), its side columns at the edges;
     the win screen after a fight: its side columns at the edges, the band under the quote wider;
+  - the dialogue before a rival or final fight (0.99.15): the portraits at the edges, each line moved
+    with its speaker's portrait; the super finish's backdrop carried on, its side cells mirrored out;
   - the map screen (0.99.12): the ladder moves to the edge away from the middle, and the beam is drawn
     again scaled about its point behind itself, in the margins only, so it carries on along its edges;
   - the wipes' flat shapes (`src/core/object/shapes.c`, 0.99.8, redone in 0.99.11): a quad with an

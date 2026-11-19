@@ -111,6 +111,8 @@ int widescreen_edge_shift(uint32_t sp) {
     /* the win screen after a fight (GAME + 4 = 4): its scrolling columns at the sides (kind 18 types 4, 6) */
     if (RB(GAME + 2) == 2 && RH(GAME + 4) == 4 && kind == 18 && (type == 4 || type == 6))
         return away_from_middle(sp, margin_units());
+    /* the portraits of the dialogue before a rival or final fight (step 3, kind 14 type 6) */
+    if (RB(GAME + 2) == 2 && RH(GAME + 4) == 3 && kind == 14 && type == 6) return away_from_middle(sp, margin_units());
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
     if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
     if (kind == 19 && type == 7) return away_from_middle(sp, margin_units());   /* P1 left, P2 right */
@@ -124,6 +126,8 @@ int widescreen_edge_copy(uint32_t sp, int n) {
     /* the select screen's name ticker at the top (kind 16 type 5, y 232): a strip that scrolls and jumps
        back by 320 when it has gone that far, too short for the 16:9 sides: copies one period each way */
     if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) >= 200) return n ? -320 : 320;
+    /* the bottom one (STREET FIGHTER ALPHA3, y 24) scrolls the other way and jumps back by 480 */
+    if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) < 200) return n ? -480 : 480;
     return 0;
 }
 
@@ -181,4 +185,16 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
     if (step == 4 && type == 1) { *left = -48; *right = 48; }
     if (step == 1 && type == 1 && w == 304) { *left = -48; *right = 48; }
     if (step == 1 && type == 0 && w == 112) { *left = *right = -48; }
+}
+
+/* ... and the dialogue's lines (core/object/text_boxes.c): moved with the portrait (kind 14 type 6, in
+   the 32-pool) in their half of the screen, top or bottom (screen y = 0xF0 - the sprite's y). */
+int widescreen_text_shift(uint32_t rec) {
+    if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;
+    int top = (int16_t)RH(rec + 30) < 112;
+    for (uint32_t o = 0x09512770u; o < 0x09512770u + 32u * 0xC0u; o += 0xC0u) {
+        if (!RB(o) || !RB(o + 1) || RB(o + 2) != 14 || RB(o + 3) != 6) continue;
+        if ((0xF0 - (int16_t)RH(o + 22) < 112) == top) return away_from_middle(o, margin_units());
+    }
+    return 0;
 }

@@ -1,0 +1,6 @@
+# A KO by a super combo: arcade_match's first fight, player 2's health set to 1 at the round's start,
+# then Ryu's Shinku Hadoken (QCF QCF + punch, the gauge full): the super finish's green backdrop
+# (0x0880C208) and the KO after it.
+frames 4700
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=;2100=cross;2106=;2190=cross;2196=;2280=cross;2286=;2370=cross;2376=;2460=cross;2466=;2550=cross;2556=;2640=cross;2646=;2730=cross;2736=;2820=cross;2826=;2910=cross;2916=;3000=cross;3006=;3090=cross;3096=;3180=cross;3186=;3270=cross;3276=;3360=cross;3366=;3450=cross;3456=;3540=cross;3546=;3630=cross;3636=;3720=cross;3726=;3810=cross;3816=;3900=cross;3906=;3990=cross;3996=;4300=down;4305=down+right;4310=right;4315=down;4320=down+right;4325=right;4328=right+square;4336=;
+args --poke 4200-4205:092E43A8=1/2 --poke 5100-5105:092E43A8=1/2 --poke 6400-6405:092E3F10=1/2 --poke 7300-7305:092E3F10=1/2

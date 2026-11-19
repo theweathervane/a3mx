@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.99.15
+### For players
+- **WIDE FORCED: the dialogue before a rival or final fight uses the whole screen.** Both portraits sit at the screen's edges, and each line moves with its speaker's portrait.
+- **WIDE FORCED: the character select's bottom STREET FIGHTER ALPHA3 ticker no longer pops in** at the left side.
+- **WIDE FORCED: a KO by a super combo shows the green speed lines right across the screen.**
+
+### Technical
+- Decompiled: 0x0880C1AC / 0x088108D8, the text pass's three text boxes (the dialogue's lines; new `object/text_boxes.c`), and 0x0880C208, the super finish's backdrop (new `object/super_backdrop.c`).
+- `extensions/widescreen.c`: the dialogue portraits (kind 14 type 6, fight step 3) move away from the middle, `widescreen_text_shift` moves a text box with the portrait in its half; the select screen's bottom ticker (kind 16 type 5, y 24, scrolling left, period 480) is drawn again at ±480.
+- `object/sprite_grid.c`: mode 4, cells at the 4:3 picture's sides mirrored out then repeated (the backdrop is two 6 × 7 pictures of 32-pixel cells).
+- New scenarios `arcade_rival_dialogue` (the first fight's number held at 8 from before the map, so it is met as the rival fight) and `super_finish` (a KO by Ryu's Shinku Hadoken).
+- Checked: arcade_fight, arcade_match, arcade_rival_dialogue and super_finish parity (the three new functions ran); wide_fight and both new scenarios with WIDE FORCED off and on (fighters identical); each screen by eye.
+
 ## 0.99.14
 ### For players
 - **WIDE FORCED: the profile screen's name plate box moves out with the header,** instead of a dark blue box being left behind where it was.
