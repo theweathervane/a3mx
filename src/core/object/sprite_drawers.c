@@ -14,10 +14,12 @@
  *
  * All three copy the sprite's +170 / +171 to the draw state's +86 / +87 first.
  *
- * WIDE FORCED: for the sprites widescreen_edge_cells picks (extensions/widescreen.c: the ROUND banner's
- * band, FIGHT's translucent after-image box), the picture's right-end cells repeat out into both
- * margins (sprite_grid.c); for those widescreen_edge_row picks (the FIGHT FIGHT ... rows), a row of pieces
- * gets one more piece at an end that has reached the 4:3 edge.
+ * WIDE FORCED (extensions/widescreen.c says for which sprites): bands whose cells carry on into the
+ * margins (widescreen_edge_cells: the ROUND band, FIGHT's translucent box, the continue bar, the GAME
+ * OVER band; sprite_grid.c); rows of one piece that get one more piece at an end that has reached the
+ * 4:3 edge (widescreen_edge_row 1: FIGHT FIGHT, KNOCK OUT); the continue count's numbers carried on to
+ * the left (widescreen_edge_row 2); the map screen's beam drawn again scaled behind itself, in the
+ * margins (widescreen_beam).
  */
 #include "../decomp.h"
 
@@ -25,16 +27,23 @@ static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
 static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
 static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 
 extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_wide_edges; /* sprite_grid.c */
 int widescreen_edge_cells(gaddr sp);   /* which pieces: */
-enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2 };
+enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2, EDGES_MIRROR_LEFT = 4, EDGES_LEFT_ONLY = 8 };   /* and how */
 int widescreen_edge_row(gaddr sp);
+int widescreen_beam(gaddr sp);
+extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
 #define PICTURE_LISTS 0x08E75AD8u   /* u32[]: picture lists by the sprite's +86 */
 #define PIECE_TABLES  0x092E3E98u   /* u32[]: drawers 1 and 2's piece tables */
+#define SCALE_X       0x08E759E8u   /* floats: screen = position * scale + offset */
+#define SCALE_Y       0x08E759ECu
+#define OFFSET_X      0x08E75A04u
+#define OFFSET_Y      0x08E75A0Cu
 enum { SP_FRAME = 28, SP_LIST = 86, SP_DRAWER = 148, SP_PIECES = 156, SP_EFFECT = 170, SP_SCALED = 171 };
 enum { DS_X = 0, DS_Y = 2, DS_COLOUR = 48, DS_POS_X = 80, DS_POS_Y = 82, DS_BLEND = 85, DS_EFFECT = 86,
        DS_SCALED = 87 };
@@ -45,7 +54,8 @@ static gaddr sprite_list(gaddr sp) { return *W(PICTURE_LISTS + (uint32_t)*H(sp +
 
 /* a picture and the ones it goes on into */
 static void draw_picture(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list, int edges) {
-    sprite_grid_wide_edges = rt_widescreen && (widescreen_edge_cells(sp) & edges) != 0;
+    int wide = rt_widescreen ? widescreen_edge_cells(sp) : 0;
+    sprite_grid_wide_edges = !(wide & edges) ? 0 : (wide & EDGES_MIRROR_LEFT) ? 2 : (wide & EDGES_LEFT_ONLY) ? 3 : 1;
     for (;;) {
         int more = S16(pic + 10) != 0;
         c->r[4] = ds; c->r[5] = sp; c->r[6] = pic; c->r[7] = list; c->r[8] = 0;
@@ -67,11 +77,31 @@ static gaddr last_piece(gaddr e) {
     return e;
 }
 
+/* WIDE FORCED: the map screen's beam (widescreen_beam) is a wedge from its picture's place, cut where
+   its picture ends: copies scaled about that place are drawn behind it first, the largest first, so its
+   edges carry on out to the screen's sides (sprite_grid.c) */
+static void wide_beam(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
+    static const float scales[] = { 2.6f, 1.9f, 1.4f };
+    float sx = F(SCALE_X), sy = F(SCALE_Y);
+    float ax = (float)S16(ds + DS_X), ay = (float)S16(ds + DS_Y);
+    ax = ax * sx; ax = ax + F(OFFSET_X);
+    ay = ay * sy; ay = ay + F(OFFSET_Y);
+    sprite_grid_ax = ax; sprite_grid_ay = ay;
+    int16_t x = (int16_t)*H(ds + DS_X), y = (int16_t)*H(ds + DS_Y);
+    for (unsigned i = 0; i < sizeof scales / sizeof scales[0]; i++) {
+        sprite_grid_scale = scales[i];
+        draw_picture(c, ds, sp, pic, list, 0);
+        *H(ds + DS_X) = (uint16_t)x; *H(ds + DS_Y) = (uint16_t)y;
+    }
+    sprite_grid_scale = 0.0f;
+}
+
 static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     gaddr list = sprite_list(sp);
     uint32_t frame = sprite_frame(sp);
     if (frame & 0x8000) return;
     copy_effects(ds, sp);
+    if (rt_widescreen && widescreen_beam(sp)) wide_beam(c, ds, sp, list + frame * 12u, list);
     draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
 }
 
@@ -89,6 +119,30 @@ static void wide_row_end(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, ga
     draw_picture(c, ds, sp, list + (*H(first + 4) & 0x7FFF) * 12u, list, 0);
 }
 
+/* WIDE FORCED: the continue screen's count (widescreen_edge_row 2): a row of two-digit numbers, one every
+   16 pixels, each two pieces at the same place (the second digit, then the first with its point: pictures
+   582 + d and 572 + d), counting up to the right. The numbers before the first are drawn on to the left
+   until the left margin is covered (down to 0.0). */
+#define COUNT_FIRST 572
+#define COUNT_SECOND 582
+static void wide_count_left(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, gaddr last) {
+    if (last < first + 18) return;
+    int32_t hi = (int32_t)(*H(first + 4) & 0x3FFF) - COUNT_FIRST, lo = (int32_t)(*H(first + 6 + 4) & 0x3FFF) - COUNT_SECOND;
+    int32_t step = S16(first + 12) - S16(first);
+    if (hi < 0 || hi > 9 || lo < 0 || lo > 9 || S16(first + 6) != S16(first) || step <= 0) return;
+    int32_t value = hi * 10 + lo;
+    for (int32_t k = 1; value - k >= 0; k++) {
+        int32_t x = S16(ds + DS_POS_X) + S16(first) - k * step;
+        if (x + step <= -48) break;
+        *H(ds + DS_X) = (uint16_t)x;
+        *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(first + 2));
+        draw_picture(c, ds, sp, list + (uint32_t)(COUNT_SECOND + (value - k) % 10) * 12u, list, 0);
+        *H(ds + DS_X) = (uint16_t)x;
+        *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(first + 2));
+        draw_picture(c, ds, sp, list + (uint32_t)(COUNT_FIRST + (value - k) / 10) * 12u, list, 0);
+    }
+}
+
 static void draw_pieces(Cpu *c, gaddr ds, gaddr sp) {
     gaddr list = sprite_list(sp);
     uint32_t frame = sprite_frame(sp);
@@ -96,8 +150,8 @@ static void draw_pieces(Cpu *c, gaddr ds, gaddr sp) {
     gaddr first = *W(PIECE_TABLES + *W(sp + SP_DRAWER) * 4u - 4u) + frame * 6u;
     gaddr e = last_piece(first), last = e;
     copy_effects(ds, sp);
-    int row = rt_widescreen && widescreen_edge_row(sp);
-    if (row) wide_row_end(c, ds, sp, list, first, last, 1);
+    int row = rt_widescreen ? widescreen_edge_row(sp) : 0;
+    if (row == 1) wide_row_end(c, ds, sp, list, first, last, 1);
     for (; e >= first; e -= 6) {
         uint32_t p = *H(e + 4);
         if (p & PIECE_SKIP) continue;
@@ -105,7 +159,8 @@ static void draw_pieces(Cpu *c, gaddr ds, gaddr sp) {
         *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(e + 2));
         draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, EDGES_SOLID);
     }
-    if (row) wide_row_end(c, ds, sp, list, first, last, 0);
+    if (row == 1) wide_row_end(c, ds, sp, list, first, last, 0);
+    if (row == 2) wide_count_left(c, ds, sp, list, first, last);
 }
 
 static void draw_ghosted(Cpu *c, gaddr ds, gaddr sp) {

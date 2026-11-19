@@ -82,7 +82,8 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
      the portrait, the small character sprite and the MODE / SPEED boxes; type 6, the chosen MODE /
      ISM panel and the name under the portrait; and the ISM panel's parts (kind 33);
    - the map screen (NEXT STAGE, kind 19): the portrait at the top left, with the scrolling banner
-     text in the same sprite tree (type 7), as on the VS screen;
+     text in the same sprite tree (type 7), as on the VS screen; the ladder of stages with the next
+     opponent's name bar (types 4 - 6) on the other side;
    - the VS screen (kind 14): the portraits (type 0). Its name bars (type 2, at x 0 and 384) are
      drawn a second time moved out, so they reach the edges without leaving a gap in the middle.
    - the select screen's name ticker (kind 16 type 5, the top one): drawn one period further each way,
@@ -108,6 +109,7 @@ int widescreen_edge_shift(uint32_t sp) {
     if (RB(GAME + 2) != 2 || RH(GAME + 4) > 2) return 0;   /* the map (step 1) and VS (2) screens */
     if (kind == 14 && type == 0) return away_from_middle(sp, margin_units());
     if (kind == 19 && type == 7) return away_from_middle(sp, margin_units());   /* P1 left, P2 right */
+    if (kind == 19 && type >= 4 && type <= 6) return away_from_middle(sp, margin_units());   /* the ladder, opposite */
     return 0;
 }
 int widescreen_edge_copy(uint32_t sp, int n) {
@@ -120,21 +122,36 @@ int widescreen_edge_copy(uint32_t sp, int n) {
 }
 
 /* WIDE FORCED: sprites whose pictures are bands across the 4:3 picture, continued into the margins
-   (core/object/sprite_drawers.c, sprite_grid.c), in the fight (GAME + 2 = 2, step 3), drawer 11: which
-   pieces (1 the solid ones, 2 the half-alpha after-images). The ROUND n banner (kind 0 type 0): its dark
-   band (1). FIGHT (type 1): its translucent box (2), as it flies in and settles; the word itself is
-   edge to edge already. */
+   (core/object/sprite_drawers.c, sprite_grid.c). The answer says which pieces (1 the solid ones, 2 the
+   half-alpha after-images) and how (4: the left margin mirrors the glow before the right end; 8: the
+   left margin only). In the fight (GAME + 2 = 2, step 3), drawer 11: the ROUND n banner (kind 0 type 0),
+   its dark band (1 + 4); FIGHT (type 1), its translucent box (2), as it flies in and settles (the word
+   itself is edge to edge already). The continue screen (GAME + 2 = 3): its count's bar (kind 13 type 2,
+   1 + 8: its right end breaks up). The GAME OVER screen (GAME + 2 = 4): its band (kind 13 types 4 - 6;
+   pictures narrower than the screen, the words, are left alone by sprite_grid.c). */
 int widescreen_edge_cells(uint32_t sp) {
+    if (RB(GAME + 2) == 4 && RB(sp + 2) == 13 && RB(sp + 3) >= 4 && RB(sp + 3) <= 6) return 1;   /* GAME OVER's band */
+    if (RB(GAME + 2) == 3 && RB(sp + 2) == 13 && RB(sp + 3) == 2) return 1 | 8;                    /* the continue bar */
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RB(sp + 2) != 0 || RW(sp + 148) != 11) return 0;
     uint32_t type = RB(sp + 3);
-    return type == 0 ? 1 : type == 1 ? 2 : 0;
+    return type == 0 ? 1 | 4 : type == 1 ? 2 : 0;
 }
 
 /* ... and rows of pieces continued one piece into the margins (sprite_drawers.c), in the fight: the two
    rows of FIGHT FIGHT ... that slide in with the FIGHT banner (kind 1 type 4, drawer 1) and the
-   scrolling KNOCK OUT row (kind 0 type 3, drawer 1), which stopped at the 4:3 picture's right edge. */
+   scrolling KNOCK OUT row (kind 0 type 3, drawer 1), which stopped at the 4:3 picture's right edge (1).
+   And 2: the continue screen's count (kind 13 type 3, drawer 1), its numbers carried on to the left. */
 int widescreen_edge_row(uint32_t sp) {
+    if (RB(GAME + 2) == 3 && RB(sp + 2) == 13 && RB(sp + 3) == 3 && RW(sp + 148) == 1) return 2;   /* the continue count */
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RW(sp + 148) != 1) return 0;
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
     return (kind == 1 && type == 4) || (kind == 0 && type == 3);
+}
+
+/* ... and the map screen's beam (GAME + 2 = 2, step 1; kind 19 type 2, drawer 0, on anchor 3): a wedge
+   from the map's middle toward the next stage, cut where its picture ends; sprite_drawers.c draws scaled
+   copies behind it so it carries on to the screen's sides. */
+int widescreen_beam(uint32_t sp) {
+    return RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 19 && RB(sp + 3) == 2 &&
+           RW(sp + 148) == 0 && RB(sp + 14) == 3;
 }

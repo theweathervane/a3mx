@@ -52,7 +52,11 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     cells, `src/core/object/sprite_grid.c`), and the FIGHT FIGHT rows and the KNOCK OUT row get one
     more piece past an end that has reached the 4:3 edge (`src/core/object/sprite_drawers.c`), both
     for the sprites `widescreen_edge_cells` / `widescreen_edge_row` name.
-    Since 0.99.11 FIGHT's translucent box (its after-image) carries on the same way;
+    Since 0.99.11 FIGHT's translucent box (its after-image) carries on the same way, and since 0.99.12
+    the GAME OVER band and the continue countdown's bar (left only); the sides are strips of one texel
+    column, the ROUND band's left side its glow mirrored, and the continue count gets its earlier numbers;
+  - the map screen (0.99.12): the ladder moves to the edge away from the middle, and the beam is drawn
+    again scaled about its point behind itself, in the margins only, so it carries on along its edges;
   - the wipes' flat shapes (`src/core/object/shapes.c`, 0.99.8, redone in 0.99.11): a quad with an
     edge on or past the 4:3 picture's side gets a rectangle in its colour out to the screen's side; the
     quad keeps its corners, so the A, X and V into the fight keep their 4:3 slopes;

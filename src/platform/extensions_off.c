@@ -37,6 +37,7 @@ int widescreen_edge_shift(uint32_t sp) { (void)sp; return 0; }        /* object/
 int widescreen_edge_copy(uint32_t sp, int n) { (void)sp; (void)n; return 0; }
 int widescreen_edge_cells(uint32_t sp) { (void)sp; return 0; }        /* object/sprite_drawers.c */
 int widescreen_edge_row(uint32_t sp) { (void)sp; return 0; }
+int widescreen_beam(uint32_t sp) { (void)sp; return 0; }
 #else
 typedef int extensions_off_unused;       /* the extensions are built: nothing here */
 #endif

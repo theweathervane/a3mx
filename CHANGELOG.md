@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.99.12
+### For players
+- **WIDE FORCED: the ROUND banner's glow tapers away on the left** as it does on the right after the D, instead of stopping short.
+- **WIDE FORCED: FIGHT's translucent box has no notches in the sides.** The sides now repeat a clean part of the box instead of the edge of the T.
+- **WIDE FORCED: the NEXT STAGE ladder sits at the screen's edge,** with the next opponent's name: on the right when player 1 started the game, on the left for player 2.
+- **WIDE FORCED: the map's beam carries on to the screen's sides** along its own edges, instead of being cut off where its picture ends.
+- **WIDE FORCED: the GAME OVER band runs right across the screen,** with no white squares at the sides.
+- **WIDE FORCED: the continue screen's countdown bar reaches the left side,** with the numbers before it shown there too (down to 0.0).
+
+### Technical
+- `object/sprite_grid.c`: the band continuation reworked. The right side (and the left, for FIGHT's box and the GAME OVER band) is one strip of a single texel column from the row's last cell; the ROUND band's left side mirrors its glow after the D (picture x 284 - 304); the continue bar fills the left side only. Only pictures at least 384 wide are continued. A scaled pass (`sprite_grid_scale`) draws a picture's cells scaled about a point, cut to the margins.
+- `object/sprite_drawers.c`: the continue count (kind 13 type 3) gets the numbers before its first, from its digit pictures (572 + d, 582 + d); the map's beam (kind 19 type 2 on anchor 3) is drawn three times scaled (2.6, 1.9, 1.4) about its place behind itself, in the margins only.
+- `extensions/widescreen.c`: the map screen's ladder (kind 19 types 4 - 6) moves away from the middle like the portrait; GAME OVER (GAME + 2 = 4, kind 13 types 4 - 6) and the continue screen (GAME + 2 = 3) are picked; `widescreen_beam` added (stand-in in `extensions_off.c`).
+- Checked: arcade_fight and arcade_match parity; wide_fight and wide_walls (fighters identical); ROUND, FIGHT, the map with each player side, GAME OVER and the continue countdown by eye.
+
 ## 0.99.11
 ### For players
 - **WIDE FORCED: the A, X and V before the fight keep their shape.** The ISM letter that wipes in after the VS screen was stretched out to the screen's sides (too wide, the wrong angle); it is drawn as on the 4:3 screen now, with its colour filling the sides.
