@@ -120,11 +120,14 @@ int widescreen_edge_copy(uint32_t sp, int n) {
 }
 
 /* WIDE FORCED: sprites whose pictures are bands across the 4:3 picture, continued into the margins
-   (core/object/sprite_drawers.c, sprite_grid.c): in the fight (GAME + 2 = 2, step 3), the ROUND n
-   banner (kind 0 type 0, drawer 11): its dark band. FIGHT (type 1) is the word alone, edge to edge. */
+   (core/object/sprite_drawers.c, sprite_grid.c), in the fight (GAME + 2 = 2, step 3), drawer 11: which
+   pieces (1 the solid ones, 2 the half-alpha after-images). The ROUND n banner (kind 0 type 0): its dark
+   band (1). FIGHT (type 1): its translucent box (2), as it flies in and settles; the word itself is
+   edge to edge already. */
 int widescreen_edge_cells(uint32_t sp) {
-    if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;
-    return RB(sp + 2) == 0 && RB(sp + 3) == 0 && RW(sp + 148) == 11;
+    if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RB(sp + 2) != 0 || RW(sp + 148) != 11) return 0;
+    uint32_t type = RB(sp + 3);
+    return type == 0 ? 1 : type == 1 ? 2 : 0;
 }
 
 /* ... and rows of pieces continued one piece into the margins (sprite_drawers.c), in the fight: the two

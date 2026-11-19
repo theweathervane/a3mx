@@ -14,9 +14,9 @@
  *
  * All three copy the sprite's +170 / +171 to the draw state's +86 / +87 first.
  *
- * WIDE FORCED: for the sprites widescreen_edge_cells picks (extensions/widescreen.c: the ROUND banner),
- * the band's end cells repeat out into the margins (sprite_grid.c), its after-images (the half alpha
- * pieces) excepted; for those widescreen_edge_row picks (the FIGHT FIGHT ... rows), a row of pieces
+ * WIDE FORCED: for the sprites widescreen_edge_cells picks (extensions/widescreen.c: the ROUND banner's
+ * band, FIGHT's translucent after-image box), the picture's right-end cells repeat out into both
+ * margins (sprite_grid.c); for those widescreen_edge_row picks (the FIGHT FIGHT ... rows), a row of pieces
  * gets one more piece at an end that has reached the 4:3 edge.
  */
 #include "../decomp.h"
@@ -28,7 +28,8 @@ static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
 
 extern int rt_widescreen;          /* WIDE FORCED: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_wide_edges; /* sprite_grid.c */
-int widescreen_edge_cells(gaddr sp);
+int widescreen_edge_cells(gaddr sp);   /* which pieces: */
+enum { EDGES_SOLID = 1, EDGES_AFTER_IMAGE = 2 };
 int widescreen_edge_row(gaddr sp);
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
@@ -44,7 +45,7 @@ static gaddr sprite_list(gaddr sp) { return *W(PICTURE_LISTS + (uint32_t)*H(sp +
 
 /* a picture and the ones it goes on into */
 static void draw_picture(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list, int edges) {
-    sprite_grid_wide_edges = edges && rt_widescreen && widescreen_edge_cells(sp);
+    sprite_grid_wide_edges = rt_widescreen && (widescreen_edge_cells(sp) & edges) != 0;
     for (;;) {
         int more = S16(pic + 10) != 0;
         c->r[4] = ds; c->r[5] = sp; c->r[6] = pic; c->r[7] = list; c->r[8] = 0;
@@ -71,7 +72,7 @@ static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     uint32_t frame = sprite_frame(sp);
     if (frame & 0x8000) return;
     copy_effects(ds, sp);
-    draw_picture(c, ds, sp, list + frame * 12u, list, 1);
+    draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
 }
 
 /* WIDE FORCED: a row of the same piece at even steps (the FIGHT FIGHT ... rows) gets one more piece at
@@ -102,7 +103,7 @@ static void draw_pieces(Cpu *c, gaddr ds, gaddr sp) {
         if (p & PIECE_SKIP) continue;
         *H(ds + DS_X) = (uint16_t)(S16(ds + DS_POS_X) + S16(e));
         *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(e + 2));
-        draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, 1);
+        draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, EDGES_SOLID);
     }
     if (row) wide_row_end(c, ds, sp, list, first, last, 0);
 }
@@ -124,7 +125,7 @@ static void draw_ghosted(Cpu *c, gaddr ds, gaddr sp) {
         *H(ds + DS_Y) = *H(ds + DS_POS_Y);
         int ghost = S16(e) != 0;
         *W(ds + DS_COLOUR) = ghost ? half : colour;
-        draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, !ghost);
+        draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, ghost ? EDGES_AFTER_IMAGE : EDGES_SOLID);
     }
 }
 

@@ -6,8 +6,10 @@
  * drawn in one colour (0x08A04B88[a1 / 3], with the alpha byte 0x08A04B98[a2]) through the 2D library's
  * quad list at 0x08AD9378 (corners at 0x08AD9388, colours at 0x08AD9398), blended unless a2 is 7.
  *
- * WIDE FORCED: a corner on or past the 4:3 picture's edge (x 0 or 384 on the screen) goes 48 further
- * out, so a shape that reaches the edge covers the 16:9 margin too, as the wipe sweeps across.
+ * WIDE FORCED: a quad with an edge on or past the 4:3 picture's side (x 0 or 384 on the screen) gets
+ * a rectangle in the colour beside it, from that edge out to the 16:9 screen's side, as tall as the
+ * edge. The quad itself keeps its corners, so the shapes' slopes (the A, X and V of the wipes into the
+ * fight) stay as on the 4:3 screen. (0.99.8 moved such corners 48 out instead, which widened them.)
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA).
  */
@@ -42,11 +44,25 @@ static int16_t to_screen(int32_t v, float scale, float offset) {
     return (int16_t)CVT_TRUNC(NULL, f);
 }
 
-static int16_t wide_x(int16_t x) {
-    if (!rt_widescreen) return x;
-    if (x <= 0) return (int16_t)(x - 48);
-    if (x >= 384) return (int16_t)(x + 48);
-    return x;
+/* WIDE FORCED: the quad's corners on or past one side (x <= 0, or >= 384): if they make an edge (two
+   heights), a rectangle from the outermost of them to the screen's side (-48 / 432), using the same
+   quad list (corners top left, top right, bottom right, bottom left) */
+static void wide_side(Cpu *c, const int16_t x[4], const int16_t y[4], int right, uint32_t flags, float z) {
+    int n = 0; int16_t ex = 0, y0 = 0, y1 = 0;
+    for (int i = 0; i < 4; i++) {
+        if (right ? x[i] < 384 : x[i] > 0) continue;
+        if (!n++) { ex = x[i]; y0 = y1 = y[i]; continue; }
+        if (right ? x[i] > ex : x[i] < ex) ex = x[i];
+        if (y[i] < y0) y0 = y[i];
+        if (y[i] > y1) y1 = y[i];
+    }
+    if (n < 2 || y0 == y1 || (right ? ex >= 432 : ex <= -48)) return;
+    int16_t l = right ? ex : -48, r = right ? 432 : ex;
+    const int16_t rx[4] = { l, r, r, l }, ry[4] = { y0, y0, y1, y1 };
+    for (int i = 0; i < 4; i++) { *H(QUAD_XY + i * 4) = (uint16_t)rx[i]; *H(QUAD_XY + i * 4 + 2) = (uint16_t)ry[i]; }
+    memcpy(&c->f[12], &z, 4);
+    c->r[4] = QUAD; c->r[5] = 4; c->r[6] = flags;
+    f_089E1618(c);
 }
 
 static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
@@ -56,14 +72,19 @@ static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
     gaddr p = *W(SHAPES + shape * 4u);
     float sx = F(SCALE_X), ox = F(OFFSET_X), sy = F(SCALE_Y), oy = F(OFFSET_Y);
     while (*H(p) != 0xFFFF) {
+        int16_t qx[4], qy[4];
         for (int i = 0; i < 4; i++, p += 4) {
-            *H(QUAD_XY + i * 4) = (uint16_t)wide_x(to_screen(px + (int32_t)*H(p), sx, ox));
-            *H(QUAD_XY + i * 4 + 2) = (uint16_t)to_screen(py + (int32_t)*H(p + 2), sy, oy);
+            qx[i] = to_screen(px + (int32_t)*H(p), sx, ox);
+            qy[i] = to_screen(py + (int32_t)*H(p + 2), sy, oy);
+            *H(QUAD_XY + i * 4) = (uint16_t)qx[i];
+            *H(QUAD_XY + i * 4 + 2) = (uint16_t)qy[i];
         }
         float z = (float)(int32_t)*H(DEPTHS + *W(place + 44) * 2u);
+        uint32_t flags = alpha != NO_BLEND ? 0x60 : 0x20;
         memcpy(&c->f[12], &z, 4);
-        c->r[4] = QUAD; c->r[5] = 4; c->r[6] = alpha != NO_BLEND ? 0x60 : 0x20;
+        c->r[4] = QUAD; c->r[5] = 4; c->r[6] = flags;
         f_089E1618(c);
+        if (rt_widescreen) { wide_side(c, qx, qy, 0, flags, z); wide_side(c, qx, qy, 1, flags, z); }
     }
 }
 

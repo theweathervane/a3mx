@@ -52,6 +52,10 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     cells, `src/core/object/sprite_grid.c`), and the FIGHT FIGHT rows and the KNOCK OUT row get one
     more piece past an end that has reached the 4:3 edge (`src/core/object/sprite_drawers.c`), both
     for the sprites `widescreen_edge_cells` / `widescreen_edge_row` name.
+    Since 0.99.11 FIGHT's translucent box (its after-image) carries on the same way;
+  - the wipes' flat shapes (`src/core/object/shapes.c`, 0.99.8, redone in 0.99.11): a quad with an
+    edge on or past the 4:3 picture's side gets a rectangle in its colour out to the screen's side; the
+    quad keeps its corners, so the A, X and V into the fight keep their 4:3 slopes;
 - Testing: `wide_fight`, `wide_walls` and `wide_left_wall` play twice, WIDE FORCED off and on, and the
   four fighters must be the same in every frame ([TESTS.md](TESTS.md)). What is drawn is checked by eye.
 - The camera and its limits: [STAGES.md](STAGES.md).

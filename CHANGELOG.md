@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.99.11
+### For players
+- **WIDE FORCED: the A, X and V before the fight keep their shape.** The ISM letter that wipes in after the VS screen was stretched out to the screen's sides (too wide, the wrong angle); it is drawn as on the 4:3 screen now, with its colour filling the sides.
+- **WIDE FORCED: FIGHT's translucent box runs right across the screen** as it flies in and settles, instead of stopping at the old 4:3 edges.
+
+### Technical
+- `object/shapes.c` (0x0880E434): no longer moves corners at the 4:3 edge out by 48 (0.99.8), which changed the slopes; a quad whose edge lies on or past the 4:3 picture's side gets a rectangle in its colour from that edge to the screen's side, as tall as the edge.
+- `object/sprite_grid.c`: the band continuation repeats each row's last cell to the right and its first position's left, so a band that has moved off centre (FIGHT's after-image trails it) gets no overlapping copies. `widescreen_edge_cells` now says which pieces: the ROUND banner's solid ones, FIGHT's half-alpha after-image.
+- Checked: arcade_fight parity, wide_fight (fighters identical); the A by eye, and the X and V with their shapes swapped in for a test run; ROUND and FIGHT frame by frame.
+
 ## 0.99.10
 ### For players
 - **WIDE FORCED: EDIT MODE's green background and WORLD TOUR's blue background behind the map reach the screen's sides,** shaded like the rest instead of a flat dark strip (EDIT MODE) or nothing (WORLD TOUR).

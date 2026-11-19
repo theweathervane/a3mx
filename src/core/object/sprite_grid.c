@@ -143,22 +143,23 @@ static void cell_quad(gaddr ds, gaddr v, int16_t x, int16_t y, int16_t w, int16_
 }
 
 /* WIDE FORCED: set by a sprite drawer (sprite_drawers.c) around a picture that is a band across the 4:3
-   picture (the ROUND banner): the cell drawn across the 4:3 picture's right edge (x 384) is drawn
-   again a cell further out each time until the right margin (48 more) is covered, and the same way out
-   from the left edge (x 0). The right end is used for both sides: the band's left end has the first
-   letter in it. Only the drawing changes. */
+   picture (the ROUND banner, FIGHT's translucent box): each row's last cell is drawn again a cell
+   further out each time until the right margin (to x 432) is covered, and again out from the row's
+   first cell to the left margin (to x -48). The right end is used for both sides: the ROUND band's left
+   end has the first letter in it. Only for a sprite drawn the right way round. Only the drawing
+   changes. */
 int sprite_grid_wide_edges;
 #define PICTURE_W 384
 #define MARGIN_W  48
 
 static void wide_edge_cells(Cpu *c, gaddr ds, gaddr v, int16_t cx, int16_t y, int16_t w, int16_t h,
                             uint8_t last, int32_t texels, uint32_t flags, uint32_t blend, uint32_t effect) {
-    if (w <= 0 || cx >= PICTURE_W || cx + w < PICTURE_W) return;
+    if (w <= 0 || S16(ds + DS_STEP_X) <= 0 || *W(ds + DS_COLS_LEFT) != 1) return;
     for (int32_t x = cx + w; x < PICTURE_W + MARGIN_W; x += w) {
         cell_quad(ds, v, (int16_t)x, y, w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
         CALL5(f_089E1950, v, 4, flags, blend, effect);
     }
-    for (int32_t x = cx - PICTURE_W; x + w > -MARGIN_W; x -= w) {
+    for (int32_t x = S16(ds + DS_ROW_X) - w; x + w > -MARGIN_W; x -= w) {
         cell_quad(ds, v, (int16_t)x, y, w, h, last, S16(ds + DS_U), S16(ds + DS_V), texels);
         CALL5(f_089E1950, v, 4, flags, blend, effect);
     }
