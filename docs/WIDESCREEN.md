@@ -77,6 +77,11 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     of a fighter's name get one more name at an end; the faces band behind a word is drawn again a band
     to each side (half a face from its other end in each margin); the earth band, already 512 wide, is
     left as drawn (0.99.23's mirroring had bent its horizon);
+  - the attract mode's name rows over black (0.99.25): the names and fighters' outlines are holes in a
+    black layer (`object/mask_layer.c`, decompiled for this): holes are cut out to x -64 - 447, the
+    left margin's at the ends of the layer's rows, which the text layer draws there; the coloured panels
+    behind carry on round (`widescreen_edge_row` 3); the blue screens' name banners get one more name;
+    the flames before M. Bison (a title backdrop of kind 5 at scroll 0) carry on round their 12 tiles;
   - the endings (0.99.22): a scene of the ending's 24-tile map standing still on one of its halves has
     its own columns mirrored out at its sides instead of the other scene's (`src/core/stage/tiles.c`),
     and the black sides that narrow a scene to a panel reach the screen's sides;

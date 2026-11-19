@@ -107,7 +107,8 @@ static int columns(const Grid *g) { return rt_widescreen ? g->wide_cols : g->col
    columns are mirrored out at its sides (column -1 is column 0 flipped across, -2 column 1, 12 column
    11 ...), as the super finish's backdrop carries on its lines. A scene that scrolls wraps round the
    map as it does on the 4:3 screen. Only the drawing changes. */
-static int scene_mirror;          /* set by 0x0881B7C8 for the grid it draws */
+static int scene_mirror;          /* set by 0x0881B7C8 for the grid it draws (1); 0x0881AB28's kind 5 (2) */
+static int32_t scene_map_w = 24;  /* the map's width in tiles */
 static uint32_t scene_flip;       /* the tile's word's flip across, toggled for a mirrored column */
 #define SCENE_W 12
 
@@ -208,9 +209,10 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
             if (scene_mirror) {   /* the scene's own column, mirrored past its sides */
                 int32_t r = col - g->wide_tiles;
                 scene_flip = 0;
-                if (r < 0) { r = -1 - r; scene_flip = 0x10000000u; }
+                if (scene_mirror == 2) r = (r % SCENE_W + SCENE_W) % SCENE_W;   /* round within the 12 */
+                else if (r < 0) { r = -1 - r; scene_flip = 0x10000000u; }
                 else if (r >= SCENE_W) { r = 2 * SCENE_W - 1 - r; scene_flip = 0x10000000u; }
-                int32_t col0 = S16(st + GRID_MAP_COL), mc = (col0 + r) % (2 * SCENE_W);
+                int32_t col0 = S16(st + GRID_MAP_COL), mc = (col0 + r) % scene_map_w;
                 *W(st + GRID_TILE) = *W(st + GRID_LINE) + (uint32_t)((mc - col0) * 4);
             } else if (col == S16(st + GRID_COL_WRAP)) {
                 if (g->b268 && S16(st + GRID_KIND) == 0x90) next_strip(st, &strip);
@@ -341,7 +343,13 @@ static void draw_layer_32(Cpu *c, gaddr layer, gaddr map) {
     *W(st + GRID_LAYER) = layer;
     *W(st + GRID_MAP) = first;
 
+    /* WIDE NATIVE: kind 5 (the title and attract screens' backdrops, a map 16 tiles wide, one 12-tile
+       scene a band of rows, the 4 columns past it blank) standing at scroll 0: the columns past the
+       scene's sides are its own, round within its 12 (the flames before M. Bison repeat every 6 tiles) */
+    scene_mirror = rt_widescreen && kind == 5 && S16(st + GRID_MAP_COL) == 0 && S16(st + GRID_X0) == 0 ? 2 : 0;
+    scene_map_w = 16;
     draw_grid(c, st, &GRID_AB28);
+    scene_mirror = 0;
     c->r[29] += 0xB0;
 }
 
@@ -457,6 +465,7 @@ static void draw_layer_32_wide_map(Cpu *c, gaddr layer, gaddr map) {
     static int32_t last_h = -10000;
     int32_t raw_h = (int16_t)*H(layer + 18), dh = raw_h - last_h;
     scene_mirror = rt_widescreen && h % (SCENE_W * 32) == 0 && (dh == 0 || dh > 64 || dh < -64);
+    scene_map_w = 2 * SCENE_W;
     last_h = raw_h;
     draw_grid(c, st, &GRID_B7C8);
     scene_mirror = 0;

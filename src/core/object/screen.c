@@ -71,7 +71,8 @@ static void quad(gaddr v, int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16
 }
 
 /* The extra text layer (0x092E22E0, cleared here): its picture over the whole screen, 384 texels wide
-   (WIDE NATIVE: 480), 224 high, to the right edge the sprites are drawn to. */
+   (WIDE NATIVE: 480), 224 high, to the right edge the sprites are drawn to. WIDE NATIVE: the left margin
+   too, from the end of each row. */
 static void text_layer(Cpu *c, gaddr frame) {
     *W(TEXT_EXTRA) = 0;
     CALL4(f_089E14D8, 0xFF, *W(TEXT_EXTRA + 4), 0x40000000u, 0);
@@ -83,6 +84,12 @@ static void text_layer(Cpu *c, gaddr frame) {
     gaddr v = frame + 32;
     quad(v, x0, y0, x1, y1, *H(DEPTHS + 14), rt_widescreen ? 0x1E0 : 0x180, 0xE0);
     CALL5(f_089E1950, v, 4, 0xFF, 1, 0);
+    if (rt_widescreen) {   /* WIDE NATIVE: the left margin, from the rows' ends (texels 464 - 511, which
+                              object/mask_layer.c fills for x -48 - -1) */
+        quad(v, (int16_t)(x0 - 48), y0, x0, y1, *H(DEPTHS + 14), 0x200, 0xE0);
+        for (int i = 0; i < 4; i++) *H(v + i * 16 + 6) = (uint16_t)(*H(v + i * 16 + 6) == 0 ? 0x1D0 : 0x200);
+        CALL5(f_089E1950, v, 4, 0xFF, 1, 0);
+    }
 }
 
 /* The wallpaper (SCREEN SETTING > WALLPAPER) in the bars either side of the 4:3 picture: x -48 - 0 and

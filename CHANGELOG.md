@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.99.25
+### For players
+- **WIDE NATIVE, attract mode:** the scrolling name rows (CHUN-LI, CHARLIE, DHALSIM ...) run to the screen's edges, and the fighters' outlines slide in from the edges instead of being cut at the old 4:3 sides. The name banners above and below the blue close-ups (DEE JAY, EAGLE ...) no longer leave a gap at the left. The flames before M. Bison's entrance fill the screen.
+
+### Technical
+- Decompiled sprite drawer 14 (0x0880D468) and the mask layer's cell writer 0x08811FF4 (`object/mask_layer.c`): parity holds in attract_mode (both run there) and the other scenarios.
+- WIDE NATIVE: the cell writer takes cells from x -64 to 447 and puts texels left of the 4:3 picture at the end of their row (texels 464 - 511); `object/screen.c`'s text layer draws those in the left margin.
+- `object/sprite_drawers.c`: `widescreen_edge_row` 3, `wide_row_wrap` (the last piece's picture before the first, the first's after the last), for the coloured panels behind the name rows (kind 126 type 5, drawer 6); row 1 for the blue screens' name banners (kind 50 type 7).
+- `stage/tiles.c` 0x0881AB28: kind 5 (title and attract backdrops, a 16-tile map) at scroll 0 takes the columns past the 4:3 sides round within its 12 (`scene_mirror` 2). `widescreen_edge_copy`: the flame sprites at the ends (kind 52 types 2, 3) drawn again a screen's width over.
+- Checked: parity for attract_mode, arcade_match, arcade_ending_full; WIDE NATIVE off / on fighters identical for attract_mode and arcade_ending_full; the screens by eye.
+
 ## 0.99.24
 ### For players
 - **WIDE NATIVE, attract mode:**

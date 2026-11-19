@@ -178,6 +178,10 @@ static int picture_cols(uint32_t sp) {
 int widescreen_edge_copy(uint32_t sp, int n) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
     if (n == 0 && RH(GAME) == 2 && kind == 48 && type == 3) return px_to_units(-48 + 480);
+    /* the attract mode's flames before M. Bison (kind 52 types 0 - 3, drawer 7, four pieces across the
+       4:3 picture): the rightmost again a picture's width to the left, the leftmost to the right */
+    if (n == 0 && RH(GAME) == 2 && kind == 52 && type == 3) return px_to_units(-384);
+    if (n == 0 && RH(GAME) == 2 && kind == 52 && type == 2) return px_to_units(384);
     /* the attract mode's band of fighters' faces behind a word (kind 54 type 3, a picture 384 wide; the
        earth band is 512 and needs nothing): drawn again one band to the left and one to the right, so the
        margins show half a face from the band's other end, not a copy of the face beside them */
@@ -225,9 +229,13 @@ int widescreen_edge_cells(uint32_t sp) {
    scrolling KNOCK OUT row (kind 0 type 3, drawer 1), which stopped at the 4:3 picture's right edge (1).
    And 2: the continue screen's count (kind 13 type 3, drawer 1), its numbers carried on to the left.
    The attract mode's red speed-line screens: the rows of a fighter's name (kind 48 type 4, drawer 1, a
-   name every 96) (1). */
+   name every 96) (1); its blue screens' name banners (kind 50 type 7, drawer 1) (1); and 3: on its name
+   rows over black, the four coloured panels behind them (kind 126 type 5, drawer 6, 96 apart) carried
+   on round (the names and outlines are holes in a black layer, core/object/mask_layer.c). */
 int widescreen_edge_row(uint32_t sp) {
     if (RH(GAME) == 2 && RB(sp + 2) == 48 && RB(sp + 3) == 4 && RW(sp + 148) == 1) return 1;   /* the attract's name rows */
+    if (RH(GAME) == 2 && RB(sp + 2) == 50 && RB(sp + 3) == 7 && RW(sp + 148) == 1) return 1;   /* the attract's name banners */
+    if (RH(GAME) == 2 && RB(sp + 2) == 126 && RB(sp + 3) == 5 && RW(sp + 148) == 6) return 3;  /* the panels behind the name rows */
     if (RB(GAME + 2) == 3 && RB(sp + 2) == 13 && RB(sp + 3) == 3 && RW(sp + 148) == 1) return 2;   /* the continue count */
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RW(sp + 148) != 1) return 0;
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);

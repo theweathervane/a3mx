@@ -127,6 +127,25 @@ static void wide_row_end(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, ga
     draw_picture(c, ds, sp, list + (*H(first + 4) & 0x7FFF) * 12u, list, 0);
 }
 
+/* WIDE NATIVE: a row of pieces at even steps, each its own picture (the attract mode's coloured panels
+   behind the name rows, widescreen_edge_row 3): carried on round, the last piece's picture again before
+   the first and the first's after the last, where they reach into a margin */
+static void wide_row_wrap(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, gaddr last) {
+    if (last <= first) return;
+    int32_t step = (S16(last) - S16(first)) / (int32_t)((last - first) / 6);
+    if (step <= 0) return;
+    int32_t x0 = S16(ds + DS_POS_X) + S16(first), x1 = S16(ds + DS_POS_X) + S16(last) + step;
+    for (int side = 0; side < 2; side++) {
+        gaddr from = side ? first : last;
+        int32_t x = side ? x1 : x0 - step;
+        if (side ? x >= 432 : x + step <= -48) continue;
+        if (*H(from + 4) & PIECE_SKIP) continue;
+        *H(ds + DS_X) = (uint16_t)x;
+        *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(from + 2));
+        draw_picture(c, ds, sp, list + (*H(from + 4) & 0x7FFF) * 12u, list, 0);
+    }
+}
+
 /* WIDE NATIVE: the continue screen's count (widescreen_edge_row 2): a row of two-digit numbers, one every
    16 pixels, each two pieces at the same place (the second digit, then the first with its point: pictures
    582 + d and 572 + d), counting up to the right. The numbers before the first are drawn on to the left
@@ -184,6 +203,7 @@ static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     }
     if (row == 1) wide_row_end(c, ds, sp, list, first, last, 0);
     if (row == 2) wide_count_left(c, ds, sp, list, first, last);
+    if (row == 3) wide_row_wrap(c, ds, sp, list, first, last);
 }
 
 static void draw_ghosted(Cpu *c, gaddr ds, gaddr sp) {
