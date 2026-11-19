@@ -42,6 +42,8 @@ int widescreen_beam(gaddr sp);
 int widescreen_widen(gaddr sp);
 extern int sprite_grid_half;   /* sprite_grid.c */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
+extern int sprite_grid_scale_all;                                  /* sprite_grid.c */
+int widescreen_oversize(gaddr sp);                                 /* extensions/widescreen.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
 #define PICTURE_LISTS 0x08E75AD8u   /* u32[]: picture lists by the sprite's +86 */
@@ -110,6 +112,15 @@ static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     if (frame & 0x8000) return;
     copy_effects(ds, sp);
     if (rt_widescreen && widescreen_beam(sp)) wide_beam(c, ds, sp, list + frame * 12u, list);
+    if (rt_widescreen && widescreen_oversize(sp)) {
+        /* WIDE NATIVE: a backdrop across the whole 4:3 picture drawn whole, 1.25 times over-sized about
+           the 4:3 screen's middle (192, 112), as the super finish's swirl and burst are
+           (super_backdrop.c): its 384 fill the 480 and its rings and rays go on unbroken */
+        sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = 112.0f; sprite_grid_scale_all = 1;
+        draw_picture(c, ds, sp, list + frame * 12u, list, 0);
+        sprite_grid_scale = 0.0f; sprite_grid_scale_all = 0;
+        return;
+    }
     draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
 }
 

@@ -67,7 +67,7 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     (kinds 3, 4) and the speed lines (5) mirror their side cells out; every other kind (slanted lines,
     splash, burst, swirl) is drawn whole 1.25 times over-sized about the screen's middle, so its lines
     and rings fill the 16:9 screen unbroken (28 rows are lost above and below);
-  - the attract mode (0.99.23): the QSound screen's background, and the word screens' banners (the
+  - the attract mode (0.99.23): the QSound screen's background (0.99.29: also while it fades in and out), and the word screens' banners (the
     top word's, and the band that lights up behind the middle or bottom word) carry on, their side cells
     mirrored out (`widescreen_edge_cells` 16, `sprite_grid.c` mode 4, as many cells as the margin
     needs); GAME OVER at the end of an ending (with TRY AGAIN) has its band carried on like the other;
@@ -84,7 +84,12 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     black layer (`object/mask_layer.c`, decompiled for this): holes are cut out to x -64 - 447, the
     left margin's at the ends of the layer's rows, which the text layer draws there; the coloured panels
     behind carry on round (`widescreen_edge_row` 3); the blue screens' name banners get one more name;
-    the flames before M. Bison (a title backdrop of kind 5 at scroll 0) carry on round their 12 tiles;
+    the flames before M. Bison (a title backdrop of kind 5 at scroll 0, standing on a whole band of its
+    map) carry on round their 12 tiles; the scene that scrolls from Ryu under the clouds up to M. Bison
+    keeps its black sides (0.99.29: carried on, it showed the wrong parts of the map at the sides);
+  - the attract mode's Akuma screens (0.99.29): the blue swirl behind his back and the burst behind the
+    red kanji are drawn whole 1.25 times over-sized about the screen's middle, as the super finish's
+    swirl and burst are (`widescreen_oversize`);
   - the endings (0.99.22): a scene of the ending's 24-tile map standing still on one of its halves has
     its own columns mirrored out at its sides instead of the other scene's (`src/core/stage/tiles.c`),
     and the black sides that narrow a scene to a panel reach the screen's sides;

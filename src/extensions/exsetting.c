@@ -500,6 +500,14 @@ int exsetting_option_start(Cpu *c, uint32_t a0, int after) { if (after) { starti
 /* once a frame: tidy up when the option menu is gone */
 void exsetting_frame(void) {
     if (!mem || seen < 0) return;
+    /* Circle on the menu moves OPTION MODE on to its next state (+0 = 2: the fade out), so the menu's
+       frame (above) stops running while its buttons still fade out on screen: they keep our pictures,
+       the sixth button and the lay-out until they are gone, so the menu fades out as it looked (EXIT
+       takes its buttons away first, so it has nothing to keep) */
+    if (RB(OPT) == 2 && mode == M_MENU) {
+        int have_buttons = 0; for (int k = 0; k < OBJ_N; k++) if (button(k) >= 0) have_buttons = 1;
+        if (have_buttons) { seen = (long)rt_vblank_count(); return; }
+    }
     /* (not sub_from: a load or save runs frames of its own inside a submenu, without the menu) */
     if ((long)rt_vblank_count() - seen > 2) { clone_off(); page_off(); bar_off(); two_off(); icons_off(NULL); mode = M_MENU; seen = -1; }
 }

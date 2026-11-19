@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.99.29
+### For players
+- **WIDE NATIVE, attract mode:** the QSound screen's background stays at full width while it fades in and out. Akuma's screens fill the screen: the blue swirl behind his back and the burst behind the red kanji are drawn larger, as the super finish's swirl and burst are. The scene that goes from Ryu under the clouds up to M. Bison is back to black sides (filling them showed the wrong parts of the picture); the flames before M. Bison still fill the screen.
+- **OPTION MODE:** leaving with Circle no longer swaps the menu for the game's old five buttons as it fades out; it fades out as it looked.
+
+### Technical
+- `widescreen_edge_cells`: the QSound screen (kind 122) for GAME + 2 = 6 - 8 (fading in, shown, fading out), not just 7.
+- `stage/tiles.c`: kind 5's wrap (`scene_mirror` 2) only for a layer standing on a whole band (v scroll, +98, a multiple of 256, not scrolling: moved 0 or 64+ since the frame before). The flames step between bands (1792, 2048, 2304); the Ryu / M. Bison scene scrolls through them (315, 207, 137).
+- `object/sprite_drawers.c` drawer 0: a sprite `widescreen_oversize` names (attract, kind 54 types 6, 8, 9: Akuma's burst and swirl) is drawn whole 1.25 times over-sized about (192, 112), as `super_backdrop.c` does (stand-in in `platform/extensions_off.c`).
+- `extensions/exsetting.c`: Circle on the option menu moves OPTION MODE to state 2 (the fade out) and the menu's frame stops running, so `exsetting_frame` tore down our pictures, the sixth button and the lay-out while the buttons were still fading out. It now keeps them while OPT + 0 = 2 and the buttons are there.
+- Checked: parity (memory hashes, renderer lazy) attract_mode, option_tour, option_tour_original, save_load, screen_setting, arcade_fight; wide_fight WIDE NATIVE off / on; by eye: QSound fades, Akuma's screens (two attract cycles), the flames (three), the Ryu / M. Bison scene, the ALPHA tiles before the title, OPTION MODE's Circle fade.
+
 ## 0.99.28
 ### For players
 - **WIDE NATIVE, character profile:** the red square 0.99.27 added left of the text box is gone (it stayed put while the frame slid in and out). The dark blue that filled the frame's corner left of the text box is gone too, so the box now starts at the frame's red curve with the background showing beside it.

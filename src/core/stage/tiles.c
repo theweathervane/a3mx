@@ -344,9 +344,18 @@ static void draw_layer_32(Cpu *c, gaddr layer, gaddr map) {
     *W(st + GRID_MAP) = first;
 
     /* WIDE NATIVE: kind 5 (the title and attract screens' backdrops, a map 16 tiles wide, one 12-tile
-       scene a band of rows, the 4 columns past it blank) standing at scroll 0: the columns past the
-       scene's sides are its own, round within its 12 (the flames before M. Bison repeat every 6 tiles) */
-    scene_mirror = rt_widescreen && kind == 5 && S16(st + GRID_MAP_COL) == 0 && S16(st + GRID_X0) == 0 ? 2 : 0;
+       scene a band of rows, the 4 columns past it blank) standing at scroll 0 on a whole band (v scroll,
+       +98, a multiple of 256, and not scrolling: moved less than 64 since the frame before, but not 0:
+       the flames before M. Bison, which step from band to band): the columns past the scene's sides are
+       its own, round within its 12 (the flames repeat every 6 tiles). A scene that scrolls through the
+       bands (Ryu under the clouds, then M. Bison, in the attract mode) keeps its black sides, as the 4:3
+       game has. */
+    static int32_t last_v = 0x7FFF;
+    int32_t v = (int16_t)*H(layer + 98), dv = v - last_v;
+    int scrolling = dv != 0 && dv > -64 && dv < 64;
+    last_v = v;
+    scene_mirror = rt_widescreen && kind == 5 && S16(st + GRID_MAP_COL) == 0 && S16(st + GRID_X0) == 0
+                   && v % 256 == 0 && !scrolling ? 2 : 0;
     scene_map_w = 16;
     draw_grid(c, st, &GRID_AB28);
     scene_mirror = 0;

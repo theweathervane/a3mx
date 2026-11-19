@@ -206,12 +206,12 @@ int widescreen_edge_copy(uint32_t sp, int n) {
    pictures narrower than the screen, the words, are left alone by sprite_grid.c). */
 int widescreen_edge_cells(uint32_t sp) {
     /* textured pictures across the 4:3 picture: its side cells mirrored out, then as they are (16).
-       The QSound screen (GAME + 0 / + 2 = 1 / 7; kind 122) and the attract mode's word screens (TRIUMPH
+       The QSound screen (GAME + 0 / + 2 = 1 / 6 - 8: fading in, shown, fading out; kind 122) and the attract mode's word screens (TRIUMPH
        OR DIE, BORN TO FIGHT ...: GAME + 0 = 2, kind 51 types 0 - 2, the words and the top word's noisy
        banner). The band that lights up behind a word (kind 54 type 3) is the earth, already 512 wide,
        or the fighters' faces, drawn again a band to each side (widescreen_edge_copy). Their words don't reach the 4:3 sides,
        so only the banners and the QSound screen's plain background go on. */
-    if (RH(GAME) == 1 && RB(GAME + 2) == 7 && RB(sp + 2) == 122) return 1 | 16;
+    if (RH(GAME) == 1 && RB(GAME + 2) >= 6 && RB(GAME + 2) <= 8 && RB(sp + 2) == 122) return 1 | 16;   /* 6 / 8: fading in / out */
     /* the attract mode's speed-line screens behind the fighters' close-ups: the green (kind 127 type 6)
        and the red (kind 54 type 5) */
     if (RH(GAME) == 2 && ((RB(sp + 2) == 127 && RB(sp + 3) == 6) || (RB(sp + 2) == 54 && RB(sp + 3) == 5))) return 1 | 16;
@@ -222,6 +222,15 @@ int widescreen_edge_cells(uint32_t sp) {
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3 || RB(sp + 2) != 0 || RW(sp + 148) != 11) return 0;
     uint32_t type = RB(sp + 3);
     return type == 0 ? 1 | 4 : type == 1 ? 2 : 0;
+}
+
+/* ... and backdrops across the whole 4:3 picture drawn 1.25 times over-sized about its middle instead
+   (core/object/sprite_drawers.c, drawer 0), as the super finish's swirl and burst are: the attract mode's
+   Akuma screens (GAME + 0 = 2), the blue swirl behind his back (kind 54 types 8 and 9, 9 for the few
+   frames before the kanji) and the burst behind the red kanji (kind 54 type 6) */
+int widescreen_oversize(uint32_t sp) {
+    uint32_t type = RB(sp + 3);
+    return RH(GAME) == 2 && RB(sp + 2) == 54 && (type == 6 || type == 8 || type == 9);
 }
 
 /* ... and rows of pieces continued one piece into the margins (sprite_drawers.c), in the fight: the two
