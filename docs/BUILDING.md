@@ -312,7 +312,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `A3MX_WORK_DIR` | `work` | the folder `extract_assets.py` wrote |
 | `A3MX_ASSETS_DIR` | `assets/us` | the unpacked assets the `asset_pac` and `assets_in_game` tests use |
 | `A3MX_SDL` | ON | window, input and sound through SDL3 (downloaded once). OFF: headless only |
-| `A3MX_EGL` | OFF | headless OpenGL through EGL (Linux tests of the GPU renderer) |
+| `A3MX_EGL` | OFF | headless OpenGL through EGL: adds the GPU renderer's tests `gl_renderer_normal` / `gl_renderer_wide` (Linux; [TESTS.md](TESTS.md#the-gpu-renderer--da3mx_eglon-builds-linux)) |
 | `A3MX_WATCH` | OFF | memory watchpoints (`--watch LO-HI`); slower. The `watch` preset (`build-watch/`) turns it on |
 | `A3MX_TESTS` | ON | parity tests in `ctest` |
 | `A3MX_EXTENSIONS` | ON | the extensions from the static recomp (`src/extensions/`). OFF: the PSP program alone ([below](#without-the-extensions)) |
@@ -333,7 +333,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `--scale N` | GPU internal resolution, N × 480×272 (1–8). Default: enough to cover the monitor's height, at most 4 (1088 rows), and 1 on a software OpenGL (llvmpipe). The GPU's work grows with N²; the game's doesn't change |
 | `--filter NAME` | overrides SCREEN SETTING > FILTER for this run (`off`, `crt-curved`, `scan-light`, `xbrz`, ...; [DISPLAY.md](DISPLAY.md)). `--librashader FILE` / `--shaders DIR` use that library / shader folder |
 | `--frame-timing auto\|smooth\|original` | overrides SCREEN SETTING > FRAME TIMING for this run ([DISPLAY.md](DISPLAY.md)) |
-| `--perf-log FILE` | one CSV row per frame: its time split into game, render (and textures), present, idle, the GPU's own time and the wait for vsync (swap), and how long since the last frame reached the screen. Every run also logs a summary every 600 frames (INFO) and at the end, and writes it to `logs/last_run.txt` for the launcher's bug report |
+| `--perf-log FILE` | one CSV row per frame: its time split into game, render (and textures), present, idle, the GPU's own time and the wait for vsync (swap), how long since the last frame reached the screen, and (GPU renderer) the game's draws and the OpenGL draw calls they were batched into. Every run also logs a summary every 600 frames (INFO) and at the end, and writes it to `logs/last_run.txt` for the launcher's bug report |
 | `--p2` / `--p3 human\|cpu\|auto` | who controls fighters 2 and 3 (auto: a human if gamepad 2 / 3 is connected) |
 | `--pads 124` | treat those gamepads as plugged in (the pad icons; tests) |
 | `--fullscreen` / `--windowed` | open full screen (the default: the desktop's own resolution, no mode change) or in a window; F11 or Alt+Enter switch while playing |

@@ -26,6 +26,7 @@ enum { PERF_RENDER, PERF_TEXTURE, PERF_PRESENT, PERF_IDLE, PERF_SWAP, PERF_N };
 uint64_t perf_now_us(void);
 void perf_add(int what, uint64_t us);                /* time spent in one part of the frame */
 void perf_count_texture(int uploaded, uint32_t bytes_hashed);
+void perf_count_draws(int draws, int draw_calls);  /* GPU renderer: the game's draws, and the OpenGL draw calls issued for them */
 void perf_gpu_time(uint64_t ns);                    /* a finished frame's GPU time (arrives a few frames late) */
 void perf_frame(uint64_t frame);                    /* a vblank: closes the frame before it */
 void perf_shown(void);                              /* a frame has just reached the screen (after the swap) */

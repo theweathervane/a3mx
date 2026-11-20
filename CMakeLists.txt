@@ -256,5 +256,17 @@ if(A3MX_TESTS)
                        --out "${CMAKE_BINARY_DIR}/parity")
       set_tests_properties(parity_${name} PROPERTIES TIMEOUT 1500 LABELS parity)
     endforeach()
+    if(A3MX_EGL)
+      # the GPU renderer (ge_gl.c) against the software one, at scales 1 and 2, in both screen sizes:
+      # the game must be identical, the pictures close (tests/gl_test.py; needs OpenGL 3.3 through EGL,
+      # Mesa's llvmpipe is enough). Built only with -DA3MX_EGL=ON (Linux).
+      foreach(size normal wide)
+        add_test(NAME gl_renderer_${size}
+                 COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tests/gl_test.py"
+                         --exe $<TARGET_FILE:a3mx> --work "${A3MX_WORK_DIR}" --scenario "${CMAKE_SOURCE_DIR}/tests/scenarios/arcade_fight.txt"
+                         --size ${size} --out "${CMAKE_BINARY_DIR}/gl_test")
+        set_tests_properties(gl_renderer_${size} PROPERTIES TIMEOUT 1500 LABELS gl)
+      endforeach()
+    endif()
   endif()
 endif()

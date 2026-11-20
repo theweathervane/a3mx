@@ -28,11 +28,12 @@ uint64_t perf_now_us(void) {
 
 typedef struct {
     uint64_t frames, slow, busy, busy_max, part[PERF_N], game, gpu_ns, gpu_frames, uploads, hashed;
+    uint64_t draws, draw_calls;                /* GPU renderer: the game's draws, and the OpenGL draw calls they were batched into */
     uint64_t shown, hitches, gap_max;          /* frames that reached the screen; intervals over 1.5 frames; the longest */
     uint32_t hist[HIST_N + 1], gaps[HIST_N + 1];   /* busy times; intervals between frames on screen */
 } Sums;
 static Sums win, all;                  /* the last 600 frames, and the whole run */
-static uint64_t part[PERF_N], frame_start, frame_uploads, frame_hashed, frame_gpu_ns, frame_no;
+static uint64_t part[PERF_N], frame_start, frame_uploads, frame_hashed, frame_gpu_ns, frame_no, frame_draws, frame_draw_calls;
 static uint64_t last_shown, frame_gap;      /* when the last frame reached the screen; this frame's interval (0: none) */
 static int started;
 static FILE *csv;
@@ -54,6 +55,7 @@ int rt_display_held(void);
 
 void perf_add(int what, uint64_t us) { if (what >= 0 && what < PERF_N) part[what] += us; }
 void perf_count_texture(int uploaded, uint32_t bytes_hashed) { frame_uploads += (uint64_t)uploaded; frame_hashed += bytes_hashed; }
+void perf_count_draws(int draws, int draw_calls) { frame_draws += (uint64_t)draws; frame_draw_calls += (uint64_t)draw_calls; }
 void perf_gpu_time(uint64_t ns) { frame_gpu_ns = ns; }
 void perf_shown(void) {
     uint64_t now = perf_now_us();
@@ -69,7 +71,7 @@ void perf_set_renderer(const char *r, const char *g, int scale, const char *from
 void perf_open_csv(const char *path) {
     csv = fopen(path, "w");
     if (!csv) { rt_warn("cannot write %s", path); return; }
-    fprintf(csv, "frame,total_us,game_us,render_us,texture_us,present_us,idle_us,gpu_us,uploads,bytes_hashed,swap_us,shown_interval_us\n");
+    fprintf(csv, "frame,total_us,game_us,render_us,texture_us,present_us,idle_us,gpu_us,uploads,bytes_hashed,swap_us,shown_interval_us,draws,draw_calls\n");
 }
 
 static void sums_add(Sums *s, uint64_t busy, uint64_t game) {
@@ -80,6 +82,7 @@ static void sums_add(Sums *s, uint64_t busy, uint64_t game) {
     s->game += game;
     if (frame_gpu_ns) { s->gpu_ns += frame_gpu_ns; s->gpu_frames++; }
     s->uploads += frame_uploads; s->hashed += frame_hashed;
+    s->draws += frame_draws; s->draw_calls += frame_draw_calls;
     uint64_t b = busy / HIST_STEP; s->hist[b > HIST_N ? HIST_N : b]++;
     if (frame_gap) {
         s->shown++;
@@ -125,8 +128,11 @@ static void summary(const Sums *s, char *out, size_t n) {
     if (k > 0 && (size_t)k < n && s->gpu_frames)
         k += snprintf(out + k, n - (size_t)k, ", gpu %.2f ms", (double)s->gpu_ns / (double)s->gpu_frames / 1e6);
     if (k > 0 && (size_t)k < n)
-        snprintf(out + k, n - (size_t)k, ", %.1f texture uploads and %.0f KB hashed a frame", (double)s->uploads / (double)f,
-                 (double)s->hashed / (double)f / 1024.0);
+        k += snprintf(out + k, n - (size_t)k, ", %.1f texture uploads and %.0f KB hashed a frame", (double)s->uploads / (double)f,
+                      (double)s->hashed / (double)f / 1024.0);
+    if (k > 0 && (size_t)k < n && s->draws)
+        snprintf(out + k, n - (size_t)k, ", %.0f draws in %.0f draw calls a frame", (double)s->draws / (double)f,
+                 (double)s->draw_calls / (double)f);
 }
 
 void perf_frame(uint64_t f) {
@@ -137,11 +143,11 @@ void perf_frame(uint64_t f) {
         uint64_t idle = waits < total ? waits : total, busy = total - idle;   /* (idle here: sleeping and waiting for vsync) */
         uint64_t other = part[PERF_RENDER] + part[PERF_PRESENT];
         uint64_t game = busy > other ? busy - other : 0;
-        if (csv) fprintf(csv, "%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu\n", (unsigned long long)frame_no, (unsigned long long)total,
+        if (csv) fprintf(csv, "%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu\n", (unsigned long long)frame_no, (unsigned long long)total,
                          (unsigned long long)game, (unsigned long long)part[PERF_RENDER], (unsigned long long)part[PERF_TEXTURE],
                          (unsigned long long)part[PERF_PRESENT], (unsigned long long)part[PERF_IDLE], (unsigned long long)(frame_gpu_ns / 1000),
                          (unsigned long long)frame_uploads, (unsigned long long)frame_hashed, (unsigned long long)part[PERF_SWAP],
-                         (unsigned long long)frame_gap);
+                         (unsigned long long)frame_gap, (unsigned long long)frame_draws, (unsigned long long)frame_draw_calls);
         sums_add(&win, busy, game);
         sums_add(&all, busy, game);
         if (win.frames == 600) {
@@ -154,7 +160,7 @@ void perf_frame(uint64_t f) {
     if (started) io_at_last_frame = rt_io_read_bytes;    /* (after sums_add: a hitch sees this frame's reads) */
     started = 1; frame_start = now; frame_no = f;
     memset(part, 0, sizeof part);
-    frame_uploads = frame_hashed = frame_gpu_ns = frame_gap = 0;
+    frame_uploads = frame_hashed = frame_gpu_ns = frame_gap = frame_draws = frame_draw_calls = 0;
 }
 
 void perf_report(const char *work) {      /* (the folder last_run.txt goes to: the player's logs/, or work/ with --save-dir) */
@@ -175,6 +181,7 @@ void perf_report(const char *work) {      /* (the folder last_run.txt goes to: t
             avg_ms(all.busy, f), avg_ms(all.game, f), avg_ms(all.part[PERF_RENDER], f), avg_ms(all.part[PERF_TEXTURE], f),
             avg_ms(all.part[PERF_PRESENT], f), percentile_ms(&all, 0.99), (double)all.busy_max / 1000.0, (unsigned long long)all.slow);
     if (all.gpu_frames) fprintf(o, "gpu_ms=%.2f\n", (double)all.gpu_ns / (double)all.gpu_frames / 1e6);
+    if (all.draws) fprintf(o, "draws=%.0f\ndraw_calls=%.0f\n", (double)all.draws / (double)f, (double)all.draw_calls / (double)f);
     extern int rt_vsync;
     double hz = host_refresh_hz();
     const char *pacing_describe(void); const char *pacing_setting_name(void); int pacing_given(void); double pacing_audio_ratio(void);

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.101.0
+### For players
+- **GPU renderer:** the game's draws are now sent to the graphics card in batches. In a fight the PSP's ~750 draws a frame go out as about 100, so far less time goes on the driver's overhead for each one. The picture is unchanged.
+- The bug report's `last_run.txt` (and `--perf-log`) now say how many draws a frame the game made and how many the GPU renderer sent them in.
+
+### Technical
+- `platform/ge_gl.c`: a draw's triangles join the open batch while its render target, scissor, texture and sampling, shader settings, blending and colour mask (`DrawState`) match the batch's; otherwise the batch is drawn first (one `glDrawArrays`). The batch is also drawn before a texture upload or delete (`upload_rows`, `big_free`), presenting, `ge_gl_read`, `ge_gl_finish` and the frame's end. With one batch open, render-to-texture always sees every earlier draw. Per-draw uniform and state calls are gone with it.
+- `platform/perf.c`: `perf_count_draws`; CSV columns `draws`, `draw_calls`; `draws=` / `draw_calls=` in `last_run.txt`; the summary line adds "N draws in M draw calls a frame".
+- **The GPU renderer has a test (concern C15):** `tests/gl_test.py` runs a scenario with the software renderer and the GPU renderer at scales 1 and 2 (headless EGL, llvmpipe is enough) in NORMAL or WIDE NATIVE. Every frame's memory and fighters must match the software run's, and every 30th frame's picture must match it within a tolerance (4 x 4 averages, 32 a channel, at most 0.75% of squares; measured worst 0.05% at scale 1, 0.39% at scale 2). ctest `gl_renderer_normal` and `gl_renderer_wide` (label `gl`, `arcade_fight`, ~6 min each on 2 cores) exist only in a build with `-DA3MX_EGL=ON`.
+- Checked: `tools/compare_gl_frames.py` old against new, `arcade_fight` every 4th frame: all 1,500 identical, game state the same. `arcade_fight` in a fight (llvmpipe, scale 1): 758 draws in 104 calls a frame; the render part's CPU time 7.3 → 2.7 ms (llvmpipe's own drawing moves to the present, so its frame totals say nothing about a real GPU). `gl_renderer_normal`, `gl_renderer_wide` pass; `attract_mode` in WIDE NATIVE at scale 2 too (12,000 frames, worst 0.07%).
+- **WIDE NATIVE's margins through OpenGL** (`ge_soft.c` `wide_margins`, unchecked until now): the same as the software renderer's in `arcade_fight` (VS screen, wipe, ROUND band, fight) and the whole attract sequence. The ROUND band reaches the left edge with both.
+
 ## 0.100.3
 ### For players
 - **WIDE NATIVE, score ranking:** on the A-ISM (green) and V-ISM (blue) rankings the see-through box behind each fighter's face now moves with the face, as on the X-ISM ranking since 0.100.2.

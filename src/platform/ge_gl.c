@@ -195,6 +195,7 @@ typedef struct { uint64_t key; GLuint tex; int w, h; uint64_t last_used; } TexEn
 static TexEntry tcache[TEX_CACHE];
 static uint64_t frame_no;
 static void gpu_timer_begin(void), gpu_timer_end(void);   /* the frame's GPU timer (below) */
+static void flush_batch(void);                             /* draws the open batch (below) */
 static uint8_t decode_buf[1024 * 1024 * 4];
 static struct { int valid; uint32_t addr, bytes, fmt, clutfmt, size, mode; uint64_t clut_hash; TexEntry *e; } last_tex;
 
@@ -218,6 +219,7 @@ void ge_gl_list_start(void) { last_tex.valid = 0; list_no++; }
 void ge_gl_memory_written(void) { last_tex.valid = 0; list_no++; }
 
 static void big_free(BigTex *b) {
+    flush_batch();                      /* the open batch may still read it */
     if (b->te.tex) p_glDeleteTextures(1, &b->te.tex);
     big_shadow_total -= b->shadow ? b->bytes : 0;
     free(b->shadow); free(b->band_checked);
@@ -225,6 +227,7 @@ static void big_free(BigTex *b) {
 }
 
 static void upload_rows(TexEntry *e, int y0, int y1, int whole) {
+    flush_batch();                      /* the open batch must see the texture as it was */
     ge_decode_texture_rows(decode_buf, y0, y1);
     p_glBindTexture(GL_TEXTURE_2D, e->tex);
     p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
@@ -355,13 +358,42 @@ static GLenum blend_factor(int f, int src_side, uint32_t fixed, int *use_const, 
     }
 }
 
-static void apply_state(const uint32_t *R, int clear) {
-    if (clear || !(R[0x21] & 1)) p_glDisable(GL_BLEND);
+/* ---------------------------------------------------------------- drawing
+ *
+ * Draws are batched: each one's triangles are added to the batch while everything OpenGL needs for
+ * them (render target, scissor, texture and its sampling, the shader's settings, blending, colour
+ * mask) is the same as the batch's, and the batch is drawn with one call when that changes. Triangles
+ * in one call are drawn in order, so the picture is the same as drawing each one alone. A batch is
+ * also drawn before anything that would change what it reads or writes: a texture upload or delete,
+ * presenting, reading a frame back, and the frame's end. With only one batch open, a draw into a
+ * target always follows every earlier draw into any target, so render-to-texture sees them all. */
+typedef struct { float x, y, u, v; uint8_t c[4]; } GlVtx;
+#define VMAX (65536 * 3)
+static GlVtx vtmp[VMAX];                /* one draw's triangles, while it is set up */
+static GlVtx vbuf[VMAX];                /* the open batch */
+static int vbn;                         /* vertices in it */
+
+typedef struct {                        /* everything a batch shares (zeroed before filling, so memcmp works) */
+    Target *t;
+    int sx, sy, sw, sh;                 /* scissor, in render-target pixels */
+    int clear, tex_on;
+    GLuint tex; int linear, wrap_s, wrap_t; float tw, th;   /* wrap -1: a render target's (left as made) */
+    int texfunc, rgba, dbl; uint32_t env;
+    int atest, afunc, aref, amask;
+    int blend; uint32_t bm, fix_a, fix_b;
+    uint32_t cmask;                     /* R[0xD3] for a clear, R[0xE8] otherwise */
+} DrawState;
+static DrawState batch;
+static int batch_draws;                 /* the game's draws in the open batch */
+static int frame_draws, frame_calls;
+
+static void apply_state(const DrawState *d) {
+    if (d->clear || !d->blend) p_glDisable(GL_BLEND);
     else {
-        uint32_t bm = R[0xDF];
+        uint32_t bm = d->bm;
         int uc = 0; float cc[3] = { 0, 0, 0 };
-        GLenum sf = blend_factor((int)(bm & 15), 1, R[0xE0], &uc, cc);
-        GLenum df = blend_factor((int)((bm >> 4) & 15), 0, R[0xE1], &uc, cc);
+        GLenum sf = blend_factor((int)(bm & 15), 1, d->fix_a, &uc, cc);
+        GLenum df = blend_factor((int)((bm >> 4) & 15), 0, d->fix_b, &uc, cc);
         static const GLenum eqs[6] = { GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX, GL_FUNC_ADD };
         p_glEnable(GL_BLEND);
         uint32_t eq = (bm >> 8) & 15;
@@ -369,19 +401,57 @@ static void apply_state(const uint32_t *R, int clear) {
         p_glBlendFuncSeparate(sf, df, GL_ZERO, GL_ONE);          /* frame-buffer alpha is not blended */
         if (uc) p_glBlendColor(cc[0], cc[1], cc[2], 1.f);
     }
-    if (clear) {
-        uint32_t cm = R[0xD3];
+    if (d->clear) {
+        uint32_t cm = d->cmask;
         GLboolean c = (cm & 0x100) != 0, a = (cm & 0x200) != 0;
         p_glColorMask(c, c, c, a);
     } else {
-        uint32_t m = R[0xE8];
+        uint32_t m = d->cmask;
         p_glColorMask((m & 0xFF) != 0xFF, ((m >> 8) & 0xFF) != 0xFF, ((m >> 16) & 0xFF) != 0xFF, 0);
     }
 }
 
-/* ---------------------------------------------------------------- drawing */
-typedef struct { float x, y, u, v; uint8_t c[4]; } GlVtx;
-static GlVtx vbuf[65536 * 3];
+static void flush_batch(void) {
+    if (!vbn) return;
+    const DrawState *d = &batch;
+    p_glBindFramebuffer(GL_FRAMEBUFFER, d->t->fbo);
+    p_glViewport(0, 0, LW * S, LH * S);
+    p_glEnable(GL_SCISSOR_TEST);
+    p_glScissor(d->sx, d->sy, d->sw, d->sh);
+    p_glUseProgram(prog);
+    p_glUniform2f(U.fbsize, (float)LW, (float)LH);
+    p_glUniform1i(U.clear, d->clear);
+    p_glUniform1i(U.tex_on, d->tex_on);
+    if (d->tex_on) {
+        p_glActiveTexture(GL_TEXTURE0);
+        p_glBindTexture(GL_TEXTURE_2D, d->tex);
+        p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, d->linear ? GL_LINEAR : GL_NEAREST);
+        p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, d->linear ? GL_LINEAR : GL_NEAREST);
+        if (d->wrap_s >= 0) {
+            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, d->wrap_s ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, d->wrap_t ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        }
+        p_glUniform2f(U.texsize, d->tw, d->th);
+        p_glUniform1i(U.texfunc, d->texfunc);
+        p_glUniform1i(U.rgba, d->rgba);
+        p_glUniform1i(U.dbl, d->dbl);
+        uint32_t env = d->env;
+        p_glUniform4f(U.env, (float)(env & 255) / 255.f, (float)((env >> 8) & 255) / 255.f, (float)((env >> 16) & 255) / 255.f, 1.f);
+    }
+    p_glUniform1i(U.atest, d->atest);
+    if (d->atest) {
+        p_glUniform1i(U.afunc, d->afunc);
+        p_glUniform1f(U.aref, (float)d->aref);
+        p_glUniform1f(U.amask, (float)d->amask);
+    }
+    apply_state(d);
+    p_glBindVertexArray(vao);
+    p_glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    p_glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(vbn * sizeof(GlVtx)), vbuf, GL_STREAM_DRAW);
+    p_glDrawArrays(GL_TRIANGLES, 0, vbn);
+    frame_draws += batch_draws; frame_calls++;
+    vbn = 0; batch_draws = 0;
+}
 
 void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int sy1, int sx2, int sy2) {
     if (!ready) return;
@@ -393,7 +463,7 @@ void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int sy1, int
 
     /* triangles in guest pixels */
     int m = 0;
-#define PUT(src) do { const GeVtx *s_ = (src); GlVtx *d_ = &vbuf[m++]; d_->x = s_->x; d_->y = s_->y; d_->u = s_->u; d_->v = s_->v; \
+#define PUT(src) do { const GeVtx *s_ = (src); GlVtx *d_ = &vtmp[m++]; d_->x = s_->x; d_->y = s_->y; d_->u = s_->u; d_->v = s_->v; \
         d_->c[0] = s_->r; d_->c[1] = s_->g; d_->c[2] = s_->b; d_->c[3] = s_->a; } while (0)
     switch (type) {
     case 3: for (int i = 0; i + 2 < n; i += 3) { PUT(&v[i]); PUT(&v[i + 1]); PUT(&v[i + 2]); } break;
@@ -415,70 +485,56 @@ void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int sy1, int
     }
 #undef PUT
     if (!m) return;
-
-    p_glBindFramebuffer(GL_FRAMEBUFFER, t->fbo);
-    p_glViewport(0, 0, LW * S, LH * S);
-    p_glEnable(GL_SCISSOR_TEST);
     if (sx2 < sx1 || sy2 < sy1) return;
-    p_glScissor(sx1 * S, sy1 * S, (sx2 - sx1 + 1) * S, (sy2 - sy1 + 1) * S);
-    p_glUseProgram(prog);
-    p_glUniform2f(U.fbsize, (float)LW, (float)LH);
-    p_glUniform1i(U.clear, clear);
-    int tex_on = !clear && (R[0x1E] & 1);
-    p_glUniform1i(U.tex_on, tex_on);
-    if (tex_on) {
+
+    DrawState d;
+    memset(&d, 0, sizeof d);
+    d.t = t;
+    d.sx = sx1 * S; d.sy = sy1 * S; d.sw = (sx2 - sx1 + 1) * S; d.sh = (sy2 - sy1 + 1) * S;
+    d.clear = clear;
+    d.tex_on = !clear && (R[0x1E] & 1);
+    if (d.tex_on) {
         int ox = 0, oy = 0;
         Target *src = target_containing(ge_tex_addr(), &ox, &oy);
-        int linear = (R[0xC6] >> 8) & 1;
-        p_glActiveTexture(GL_TEXTURE0);
+        d.linear = (R[0xC6] >> 8) & 1;
         if (src && src != t) {
             /* render-to-texture: sample the upscaled target; texel (u,v) is target pixel (ox+u, oy+v) */
-            p_glBindTexture(GL_TEXTURE_2D, src->tex);
-            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-            for (int i = 0; i < m; i++) { vbuf[i].u += (float)ox; vbuf[i].v += (float)oy; }
-            p_glUniform2f(U.texsize, (float)LW, (float)LH);
+            d.tex = src->tex; d.wrap_s = d.wrap_t = -1;
+            for (int i = 0; i < m; i++) { vtmp[i].u += (float)ox; vtmp[i].v += (float)oy; }
+            d.tw = (float)LW; d.th = (float)LH;
         } else {
             /* the rows this draw reads: its v range, a texel either side for filtering; all of it when
                the coordinates wrap or the range is unusual */
-            float vmin = vbuf[0].v, vmax = vbuf[0].v;
-            for (int i = 1; i < m; i++) { if (vbuf[i].v < vmin) vmin = vbuf[i].v; if (vbuf[i].v > vmax) vmax = vbuf[i].v; }
+            float vmin = vtmp[0].v, vmax = vtmp[0].v;
+            for (int i = 1; i < m; i++) { if (vtmp[i].v < vmin) vmin = vtmp[i].v; if (vtmp[i].v > vmax) vmax = vtmp[i].v; }
             int th = ge_tex_h(), v0 = 0, v1 = th;
             if (vmin >= 0.f && vmax <= (float)th) { v0 = (int)vmin - 1; v1 = (int)vmax + 2; if (v0 < 0) v0 = 0; if (v1 > th) v1 = th; }
-            TexEntry *e = texture_from_memory(R, v0, v1);
+            TexEntry *e = texture_from_memory(R, v0, v1);   /* (flushes the open batch first if it uploads) */
             if (!e) return;
-            p_glBindTexture(GL_TEXTURE_2D, e->tex);
-            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, linear ? GL_LINEAR : GL_NEAREST);
-            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (R[0xC7] & 1) ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-            p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (R[0xC7] & 0x100) ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-            p_glUniform2f(U.texsize, (float)e->w, (float)e->h);
+            d.tex = e->tex;
+            d.wrap_s = (R[0xC7] & 1) != 0; d.wrap_t = (R[0xC7] & 0x100) != 0;
+            d.tw = (float)e->w; d.th = (float)e->h;
         }
         uint32_t tf = R[0xC9];
-        p_glUniform1i(U.texfunc, (int)(tf & 7));
-        p_glUniform1i(U.rgba, (int)((tf >> 8) & 1));
-        p_glUniform1i(U.dbl, (int)((tf >> 16) & 1));
-        uint32_t env = R[0xCA];
-        p_glUniform4f(U.env, (float)(env & 255) / 255.f, (float)((env >> 8) & 255) / 255.f, (float)((env >> 16) & 255) / 255.f, 1.f);
+        d.texfunc = (int)(tf & 7); d.rgba = (int)((tf >> 8) & 1); d.dbl = (int)((tf >> 16) & 1);
+        d.env = R[0xCA] & 0xFFFFFF;
     }
-    int at = !clear && (R[0x22] & 1);
-    p_glUniform1i(U.atest, at);
-    if (at) {
-        uint32_t a = R[0xDB];
-        p_glUniform1i(U.afunc, (int)(a & 7));
-        p_glUniform1f(U.aref, (float)((a >> 8) & 255));
-        p_glUniform1f(U.amask, (float)((a >> 16) & 255));
-    }
-    apply_state(R, clear);
+    d.atest = !clear && (R[0x22] & 1);
+    if (d.atest) { uint32_t a = R[0xDB]; d.afunc = (int)(a & 7); d.aref = (int)((a >> 8) & 255); d.amask = (int)((a >> 16) & 255); }
+    d.blend = !clear && (R[0x21] & 1);
+    if (d.blend) { d.bm = R[0xDF]; d.fix_a = R[0xE0] & 0xFFFFFF; d.fix_b = R[0xE1] & 0xFFFFFF; }
+    d.cmask = clear ? (R[0xD3] & 0x300) : (R[0xE8] & 0xFFFFFF);
+
     if (flat) {   /* flat shading: every corner gets the triangle's last vertex colour */
         for (int i = 0; i + 2 < m; i += 3) {
-            memcpy(vbuf[i].c, vbuf[i + 2].c, 4); memcpy(vbuf[i + 1].c, vbuf[i + 2].c, 4);
+            memcpy(vtmp[i].c, vtmp[i + 2].c, 4); memcpy(vtmp[i + 1].c, vtmp[i + 2].c, 4);
         }
     }
-    p_glBindVertexArray(vao);
-    p_glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    p_glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(m * sizeof(GlVtx)), vbuf, GL_STREAM_DRAW);
-    p_glDrawArrays(GL_TRIANGLES, 0, m);
+    if (vbn && (vbn + m > VMAX || memcmp(&d, &batch, sizeof d))) flush_batch();
+    if (!vbn) batch = d;
+    memcpy(&vbuf[vbn], vtmp, (size_t)m * sizeof(GlVtx));
+    vbn += m;
+    batch_draws++;
     cur_target = t;
     t->used = 1;
 }
@@ -521,6 +577,7 @@ static void draw_to_window(GLuint tex, float src_w, float src_h, float uv_w, flo
 
 int ge_gl_present(uint32_t fb_addr, int win_w, int win_h) {
     if (!ready) return 0;
+    flush_batch();
     Target *t = target_for(fb_addr, 0);
     if (!t || !t->used) return 0;
     p_glBindTexture(GL_TEXTURE_2D, t->tex);
@@ -546,6 +603,7 @@ int ge_gl_present(uint32_t fb_addr, int win_w, int win_h) {
 
 void ge_gl_present_rgba(const uint8_t *rgba, int w, int h, int win_w, int win_h) {
     if (!ready) return;
+    flush_batch();
     if (!upload_tex || upload_w != w || upload_h != h) {
         if (!upload_tex) p_glGenTextures(1, &upload_tex);
         p_glBindTexture(GL_TEXTURE_2D, upload_tex);
@@ -567,6 +625,7 @@ void ge_gl_present_rgba(const uint8_t *rgba, int w, int h, int win_w, int win_h)
 
 int ge_gl_read(uint32_t fb_addr, uint8_t *rgba, int *w, int *h) {
     if (!ready) return 0;
+    flush_batch();
     Target *t = target_for(fb_addr, 0);
     if (!t || !t->used) return 0;
     *w = 480 * S; *h = 272 * S;
@@ -616,6 +675,9 @@ static void gpu_timer_frame(void) {
 }
 
 void ge_gl_frame_end(void) {
+    flush_batch();
+    perf_count_draws(frame_draws, frame_calls);
+    frame_draws = frame_calls = 0;
     gpu_timer_frame();
     frame_no++;
     /* free textures unused for 10 seconds */
@@ -635,7 +697,7 @@ void ge_gl_frame_end(void) {
 #define AUTO_SCALE_MAX 4
 static const char *scale_reason = "auto";
 const char *ge_gl_scale_reason(void) { return scale_reason; }
-void ge_gl_finish(void) { if (ready && p_glFinish) p_glFinish(); }   /* host_sdl.c: FRAME TIMING SMOOTH */
+void ge_gl_finish(void) { if (ready) flush_batch(); if (ready && p_glFinish) p_glFinish(); }   /* host_sdl.c: FRAME TIMING SMOOTH */
 static int software_gl(const char *r) {
     return r && (strstr(r, "llvmpipe") || strstr(r, "softpipe") || strstr(r, "SwiftShader") || strstr(r, "GDI Generic") ||
                  strstr(r, "Microsoft Basic Render"));

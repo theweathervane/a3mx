@@ -98,10 +98,28 @@ The whole suite is about 2½ hours at `-j2` on that 2-core machine. Before a cha
 (`ctest -R "boot_to_select|arcade_fight" -j2`), then the lot. Don't rebuild a folder while its tests
 run: configure a second one (`cmake --preset headless -B build-h2`).
 
+## The GPU renderer (`-DA3MX_EGL=ON` builds, Linux)
+
+The parity tests draw with the software renderer. A build configured with `-DA3MX_EGL=ON` (headless
+OpenGL through EGL; Mesa's llvmpipe is enough, no graphics card needed) adds two tests of the GPU
+renderer (`ge_gl.c`), label `gl` (`ctest -L gl`):
+
+| Test | Checks | Why | Time |
+|---|---|---|---|
+| `gl_renderer_normal`, `gl_renderer_wide` | `arcade_fight` with the software renderer and the GPU renderer at scales 1 and 2, in NORMAL and in WIDE NATIVE | the renderer never changes the game (every frame's memory and fighters the same), and draws what the software renderer draws (every 30th frame, within a tolerance) | 6 min each |
+
+`tests/gl_test.py` compares the pictures after averaging 4 x 4 squares, a channel allowed to differ by
+32 and at most 0.75% of the squares over that: the renderers differ a little at triangle and text edges
+(worst measured 0.05% at scale 1, 0.39% at scale 2), and a single sprite left out is about 1.8%. A
+failure writes the worst frames as software | GPU | difference PNGs into `build-*/gl_test/`. Any
+scenario can be run the same way: `python tests/gl_test.py --exe build-egl/a3mx --work work --scenario
+tests/scenarios/attract_mode.txt --size wide --scales 2 --every 10`.
+
 ## What no test covers
 
-- **The GPU renderer.** ctest runs the software renderer. For a change to `ge_gl.c`, compare frames by
-  hand: `python tools/compare_gl_frames.py` with an `A3MX_EGL` build.
+- **The GPU renderer on a real GPU and on Windows.** `gl_renderer_*` (below) run it through Mesa's
+  llvmpipe on Linux. A change to `ge_gl.c` can also be compared old build against new, frame for frame:
+  `python tools/compare_gl_frames.py` with two `A3MX_EGL` builds.
 - **FILTER's shaders** (`shader_gl.c`): they need a GPU, librashader and the shader files.
 - **The launcher.** It takes its own screenshots (`--screenshot`), and `python tools/screenshots.py
   --check` fails when one is out of date, but nothing presses its buttons.

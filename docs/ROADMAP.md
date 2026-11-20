@@ -64,6 +64,8 @@ Done:
 - [x] Boot screens, screen fades, the title task and its attract mode (0.8.0)
 - [x] The PC renderer's cost: frame-time logging, large textures checked by the bands a draw reads,
       auto resolution at most 4x (0.35.0, #51; platform only, the game unchanged)
+- [x] The GPU renderer's draws batched (~750 a frame in a fight sent as ~100), and a ctest for it against
+      the software renderer in both screen sizes (`gl_renderer_*`, `-DA3MX_EGL=ON` builds) (0.101.0)
 
 To do:
 - [ ] printf family (0x089F370C, 0x089F40E0, 0x089F5820)
