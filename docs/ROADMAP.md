@@ -2,7 +2,7 @@
 
 **Where things stand:** the boot, title, MODE MENU, task scheduler, loader thread, the fight's
 loop, set-up, most of its screens and its per-frame steps, the end of every frame, the sprite and object
-drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
+drawing, the fight's HUD drawing, the character select screen's cursors, the Survival / Free Battle select (all that the scenarios reach),
 OPTION MODE's task, GAME OPTION, BUTTON CONFIG and the pause menu's BUTTON CONFIG, the stage's background tile drawers and its objects,
 the step dispatchers the tests run, the text queue, objects' queueing, drawing dispatch and animation, the camera's sideways steps and the layers that follow it, the fighters' trail and the small steps and
 questions about a fighter's state, its buttons, the network state, the 2D library's texture lists and
@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  13.00% decompiled
+Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  13.09% decompiled
 
-Functions                                [█░░░░░░░░░]  11.77%  1,751 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  13.00%  62,929 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  11.81%  1,758 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  13.09%  63,399 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  28.81%  58,758 / 203,929
+  game (modes, menus, fighters, battle)  [██░░░░░░░░]  29.04%  59,228 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   1.16%  2,983 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574

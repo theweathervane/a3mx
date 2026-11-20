@@ -48,6 +48,9 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     the drawing of the sprites `widescreen_edge_shift` names (`src/extensions/widescreen.c`) out by
     the margin: the select screen's portrait, small character and MODE / SPEED boxes; the VS screen's
     portraits (its name bars are drawn a second time moved out); the map screen's portrait;
+  - the fight's HUD (0.99.35) stays on the 4:3 picture: what its pictures and bars have past the 4:3
+    sides (the super / ISM bars' ends at the bottom, art longer than the 4:3 screen that its sides hid)
+    is cut off there (`src/core/object/hud.c`, decompiled for this);
   - the fight's banners (0.99.9): the ROUND banner's band carries on into both margins (its right-end
     cells, `src/core/object/sprite_grid.c`), and the FIGHT FIGHT rows and the KNOCK OUT row get one
     more piece past an end that has reached the 4:3 edge (`src/core/object/sprite_drawers.c`), both

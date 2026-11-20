@@ -13,7 +13,7 @@ frame for frame whatever you choose. They only change when you *see* each frame.
 Both apply as soon as you change them, and are saved when you leave SCREEN SETTING. On a display whose
 driver can't sync to the monitor at all, VSYNC is greyed out (the log says so); your saved setting is
 kept. Both work the same with the software renderer as with the GPU one. DEFAULT sets them back to ON
-and AUTO along with the game's own settings. For one run only, `--frame-timing auto`, `smooth` or
+and AUTO along with the game's own settings, and SCREEN SIZE to WIDE NATIVE. For one run only, `--frame-timing auto`, `smooth` or
 `original` on the command line overrides FRAME TIMING.
 
 **Which one you're getting** is shown at the right end of the MODE MENU's bar: **ORIGINAL** in a red

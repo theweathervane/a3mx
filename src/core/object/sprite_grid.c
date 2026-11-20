@@ -229,8 +229,31 @@ static void wedge_cell(Cpu *c, gaddr v, uint32_t flags, uint32_t blend, uint32_t
     }
     for (int i = 0; i < 4; i++) { SET16(v + 16 * i, keep[i][0]); SET16(v + 16 * i + 2, keep[i][1]); SET16(v + 16 * i + 8, keep[i][2]); SET16(v + 16 * i + 6, ukeep[i]); }
 }
+/* WIDE NATIVE: set by a drawer (the fight's HUD, hud.c) for cells cut to x lo - hi on the screen: the
+   part of a cell past them is not drawn (its texels across cut with it) */
+int sprite_grid_clip_x;
+float sprite_grid_clip_lo, sprite_grid_clip_hi;
+static int clip_cell_x(gaddr v) {
+    int32_t lo = (int32_t)sprite_grid_clip_lo, hi = (int32_t)sprite_grid_clip_hi;
+    int32_t xa = S16(v + 0), xb = S16(v + 32), ua = S16(v + 6), ub = S16(v + 38);   /* top-left, top-right */
+    int32_t l = xa < xb ? xa : xb, r = xa < xb ? xb : xa;
+    if (r <= lo || l >= hi) return 0;
+    if (l >= lo && r <= hi) return 1;
+    int32_t na = xa < lo ? lo : xa > hi ? hi : xa, nb = xb < lo ? lo : xb > hi ? hi : xb;
+    int32_t nua = ua + (ub - ua) * (na - xa) / (xb - xa), nub = ua + (ub - ua) * (nb - xa) / (xb - xa);
+    SET16(v + 0, na); SET16(v + 16, na); SET16(v + 32, nb); SET16(v + 48, nb);
+    SET16(v + 6, nua); SET16(v + 22, nua); SET16(v + 38, nub); SET16(v + 54, nub);
+    return 1;
+}
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
     if (sprite_grid_margins_only) return;
+    if (sprite_grid_clip_x) {
+        int16_t keep[4][2];
+        for (int i = 0; i < 4; i++) { keep[i][0] = S16(v + 16 * i); keep[i][1] = S16(v + 16 * i + 6); }
+        if (clip_cell_x(v)) CALL5(f_089E1950, v, 4, flags, blend, effect);
+        for (int i = 0; i < 4; i++) { SET16(v + 16 * i, keep[i][0]); SET16(v + 16 * i + 6, keep[i][1]); }
+        return;
+    }
     if (sprite_grid_bar_ends) { bar_cell(c, ds, v, cols, flags, blend, effect); return; }
     if (sprite_grid_wedge.on) { wedge_cell(c, v, flags, blend, effect); return; }
     if (sprite_grid_half) {

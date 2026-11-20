@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.99.35
+### For players
+- **WIDE NATIVE, fights:** the super / ISM bars at the bottom no longer stick out past the line of the health bars: their ends, longer than the 4:3 screen and hidden by its sides there, are cut off at the 4:3 sides, so the HUD lines up as on the 4:3 screen.
+- **OPTION MODE > SCREEN SETTING:** DEFAULT now sets SCREEN SIZE to WIDE NATIVE (as a new save starts).
+
+### Technical
+- Decompiled the fight's HUD: 0x0880DC08, 0x0880DC88, 0x0880DE2C, 0x0880DF98, 0x0880DFC8 (the parts 0x0880DB78 calls), 0x0880E038 (an element as a picture) and 0x08810B74 (an element as a shaded rectangle) into `object/hud.c`. Parity holds in arcade_fight (also with the software renderer, pictures included), arcade_rival_dialogue, attract_mode, option_tour, option_tour_original, screen_setting.
+- WIDE NATIVE: the HUD's pictures are cut at the 4:3 sides by a new x clip in `object/sprite_grid.c` (`sprite_grid_clip_x`, texels cut with them); its shaded rectangles in `hud.c`, their corner colours mixed at the cut.
+- `extensions/screensetting.c`: DEFAULT also calls `widescreen_set(2)`.
+- Checked: wide_fight WIDE NATIVE off / on; by eye: the fight HUD in WIDE NATIVE (frames 4200, 4500), SCREEN SETTING's DEFAULT from NORMAL.
+
 ## 0.99.34
 ### For players
 - **WIDE NATIVE, map screen:** where the beam to the next country runs off the side of the screen (England, Italy, Hong Kong, Thailand and others in those directions), only its moving noise carries on to the edge, at its own size. Before, the end of the beam was a blown-up copy that showed parts of the wings' picture enlarged.
