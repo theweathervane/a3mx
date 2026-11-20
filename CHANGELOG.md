@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.103.0
+### For players
+- **More of the game decompiled:** 41 more of its functions are now hand-written C, among them the CPU's script frame, a fighter's routine by human or CPU, steps through the screens' tables, and objects' places, bounces and counters. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps.c` (new): 41 functions of 11 - 24 instructions, all the ready ones (every callee decompiled) in the wider profile: the step tables 0x08A16DA8, 0x08A16F14, 0x08A24B5C, 0x08A36F24 / 6F40 (with the bottom text), 0x08A3AEF8 / AFC0 (or the object freed), 0x08AB76D8 / 76BC (then the object lists and the frame's end) and 0x08AB7A28; fighters' 0x088773E8, 0x0885EACC, 0x0887A2A4, 0x0887A0B8, 0x08876894, 0x08987118, 0x088BE788; and 26 objects' and records' steps. Tables in docs/PSP_PROGRAM_MAP.md.
+- Registers a callee could read are set as the original leaves them (the arguments, and a1 - a3 / t0 at calls through tables); s0 / s1 as the original sets them around calls; mult's lo / hi kept (0x088CEABC).
+- Checked: a coverage pass over every scenario (decomp report, renderer lazy) maps each of the 41 to the scenarios that run it (all reached; attract_mode, arcade_ending and mode_tour between them run all 41); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle, arcade_other_fighter and select_choices.
+
 ## 0.102.5
 ### Release summary
 - **More of the game is decompiled:** 13.1% of it is now hand-written C, up from 6.3% in v0.65.1 (1,758 of 14,881 functions), each one checked frame by frame against the original.
