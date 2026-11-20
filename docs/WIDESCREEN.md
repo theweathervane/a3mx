@@ -64,8 +64,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     rectangles) moved and widened with them (0.99.14), its side columns at the edges;
     the win screen after a fight: its side columns at the edges, the band under the quote wider;
   - the dialogue before a rival or final fight (0.99.15): the portraits at the edges (flush since
-    0.99.22: they stand 16 in on the 4:3 screen, so they move 64), each line moved with its speaker's
-    portrait;
+    0.99.22: they stand 16 in on the 4:3 screen, so they move 64), each line centred where WIDE shows it
+    (0.99.36; it had moved with its speaker's portrait);
   - the super finish's backdrop (`src/core/object/super_backdrop.c`, 0.99.22): the vertical lines
     (kinds 3, 4) and the speed lines (5) mirror their side cells out; every other kind (slanted lines,
     splash, burst, swirl) is drawn whole 1.25 times over-sized about the screen's middle, so its lines

@@ -8,9 +8,10 @@
  * character is an 8 by 16 glyph from texture rows 0x50 on (32 to a row), drawn as one quad of four
  * vertices through 0x089E1950. A new line's 0 is not counted.
  *
- * WIDE NATIVE: in a fight's dialogue the lines move with the portrait they belong to, the one in their
- * half of the screen, which the sprite drawer moves out to the 16:9 edge (widescreen_text_shift in
- * extensions/widescreen.c). Only the drawing changes.
+ * WIDE NATIVE: in a fight's dialogue (widescreen_text_shift in extensions/widescreen.c says when) each
+ * line is moved so that its middle is where WIDE shows it (1.25 times its place in the 4:3 picture):
+ * centred as in WIDE, between the portraits moved out to the 16:9 edges (0.99.36; before, the lines went
+ * 64 out with their portrait). Only the drawing changes.
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA).
  */
@@ -70,9 +71,27 @@ static void draw_glyph(Cpu *c, gaddr ds, gaddr rec, uint32_t ch, gaddr v) {
     *H(ds) = (uint16_t)(S16(ds) + 8);
 }
 
+/* WIDE NATIVE: a dialogue line (offset at `s`, its characters up to the next 0) moved so its middle is
+   where WIDE shows it: WIDE draws the 4:3 picture 1.25 times as wide, so a line whose middle is at x in
+   the 4:3 picture has it at 1.25 x on the 16:9 screen (the line's own 8-pixel glyphs stay 8 wide here) */
+#define WIDE_SCALE 1.25f
+#define PICTURE_LEFT 48.0f   /* the 4:3 picture's left side on the 16:9 screen */
+static int32_t line_shift(gaddr rec, gaddr s) {
+    int32_t n = 0;
+    while (*B(s + 1u + (uint32_t)n) != 0 && n < 255) n++;
+    float sx = F(SCALE_X), ox = F(OFFSET_X);
+    if (sx <= 0.0f) return 0;
+    float mid = (float)(S16(rec + TB_X) + (int8_t)*B(s) + n * 4);   /* the line's middle, in units */
+    float now = mid * sx; now = now + ox;                              /* on the screen */
+    float want = now - PICTURE_LEFT; want = want * WIDE_SCALE;         /* where WIDE has it */
+    float d = (want - now) / sx;
+    return (int32_t)(d < 0.0f ? d - 0.5f : d + 0.5f);
+}
+
 static void draw_box(Cpu *c, gaddr rec, gaddr frame) {
     gaddr ds = DRAW_STATE, s = *W(rec + TB_TEXT);
-    int32_t shift = rt_widescreen ? widescreen_text_shift(rec) : 0;
+    int dialogue = rt_widescreen && widescreen_text_shift(rec) != 0;
+    int32_t shift = dialogue ? line_shift(rec, s) : 0;
     *H(ds + 2) = *H(rec + TB_Y);
     *H(ds) = (uint16_t)(S16(rec + TB_X) + (int8_t)*B(s) + shift);
     *W(ds + 44) = *B(rec + TB_DEPTH);
@@ -82,6 +101,7 @@ static void draw_box(Cpu *c, gaddr rec, gaddr frame) {
         s++;
         if (ch == 0) {   /* a new line, its offset next */
             *H(ds + 2) = (uint16_t)(S16(ds + 2) + 16);
+            if (dialogue) shift = line_shift(rec, s);
             *H(ds) = (uint16_t)(S16(rec + TB_X) + (int8_t)*B(s) + shift);
             s++;
             continue;

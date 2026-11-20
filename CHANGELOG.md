@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.36
+### For players
+- **WIDE NATIVE, rival dialogue:** the lines before a rival or final fight are centred as in WIDE (each line's middle where WIDE shows it), instead of being pushed out toward their speaker's portrait.
+
+### Technical
+- `object/text_boxes.c` (already decompiled): in a fight's dialogue each line's shift is worked out from its own length: its middle at 1.25 times its place in the 4:3 picture, as WIDE draws it (`line_shift`); the 64-unit push toward the portrait (`widescreen_text_shift`) is now only the test for "a dialogue line".
+- Checked: parity (memory hashes, renderer lazy) arcade_rival_dialogue, attract_mode; wide_fight WIDE NATIVE off / on; by eye against WIDE, frames 3800 - 4250 of arcade_rival_dialogue, both halves of the screen.
+
 ## 0.99.35
 ### For players
 - **WIDE NATIVE, fights:** the super / ISM bars at the bottom no longer stick out past the line of the health bars: their ends, longer than the 4:3 screen and hidden by its sides there, are cut off at the 4:3 sides, so the HUD lines up as on the 4:3 screen.
