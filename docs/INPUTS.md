@@ -19,14 +19,15 @@ of the four players. The game reads it when it starts.
   controller plugged in that no player has chosen, with the buttons set here. A controller belongs to
   one player; choosing it for another takes it from the first. The first time, its buttons get the
   usual layout, which you can change.
-- Click a cell and press the key or button for it (Esc cancels). The orange **X** unsets it. A stick or trigger
+- **Configure** (under **Controller**) opens the player's buttons in a window you can resize (its size is
+  kept until the launcher closes). Click a cell and press the key or button for it (Esc cancels). The orange **X** unsets it. A stick or trigger
   can be a button too. The left stick always works as the d-pad as well. **Default keys** /
   **Default buttons** put the usual layout back.
 - **Current**, at the top of the tab, shows the four bubbles the MODE MENU would show now, with the
   controllers plugged in now (a faded one would not show).
 - **Pad icon**, under **Configuration**, shows the chosen player's numbered bubble, as on the MODE
   MENU's bar; a player set to None shows a greyed-out **0** instead.
-- **Test** shows the pad icon beside each button while it is held, by a key or by the controller.
+- **Test**, in the Configure window, shows the pad icon beside each button while it is held, by a key or by the controller.
   Nothing is sent to the game.
 
 **The default (0.100.0):** player 1 is Keyboard with the usual keys, players 2 to 4 None. Nothing

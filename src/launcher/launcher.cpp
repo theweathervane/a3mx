@@ -1,8 +1,8 @@
 /* a3mx-launcher: the one window over tools/build.py and the game (0.60.0: it also does what
  * create-launcher did, so there is no second program and no hand-off between two windows).
  *
- *   left         the project's picture, then the tabs; under them the grey bug (a new GitLab issue,
- *                filled in) and About. The colours follow the system's light or dark setting
+ *   top          the project's picture, then the tabs across, each a pixel picture over its name; the
+ *                version above them on the right. The colours follow the system's light or dark setting
  *   Paths        your ISO (empty: the one in imports/psp/), checked by its program's checksum: a flag
  *                for the US, Japanese or European disc, a red mark otherwise (only the US disc builds);
  *                the folders everything lives in (the checkout, work/, the build tools, your a3mx
@@ -10,14 +10,15 @@
  *   Dependencies what the build needs, each with a green tick when it is here (deps.cpp, from
  *                tools/data/pins.json). Anything missing is listed with where it comes from, its
  *                SHA-256 and where it goes, and is downloaded only after you agree
- *   Inputs       bring your own device: for each of four players, keyboard keys and a controller with
- *                its buttons, and Test (configs/inputs.cfg, read by the game when it starts)
+ *   Inputs       bring your own device: for each of four players, keyboard keys and a controller; its
+ *                buttons and Test in the Configure window (configs/inputs.cfg, read when the game starts)
  *   Extensions   every extension as a feature of its own (src/platform/ext_features.h): all off is the
  *                PSP game as it was. Widescreen and Stage Extensions are here
  *   Build/Run    preset, extract again, tests; full screen, log level, renderer, resolution, GPU, extra
  *                options; Run (build if needed, then play) or Build; Stop ends a build
+ *   About        the project's pages, the grey bug (a new issue, filled in), feature requests, licences
  *   bottom       the console, on every tab: build.py's and the game's output as it comes, whichever
- *                tab started it; also written to logs/launcher.log. Then the status and the version
+ *                tab started it; also written to logs/launcher.log. Then the status and the console's buttons
  *
  * From a source checkout (tools/build.py found above the launcher, or in the current folder) the
  * buttons run build.cmd / build.sh with the chosen options, so the launcher and the command line
@@ -36,7 +37,8 @@
  * Options (for tests and screenshots): --settings FILE (instead of launcher.ini), --user-dir DIR,
  * --autostart (press the button once), --screenshot FILE.bmp --frames N (save the window after N
  * frames and quit), --root DIR (the source checkout), --theme light|dark, --tab paths|dependencies|
- * controllers|extensions|run, --show options|about|report (open that window, for screenshots), --gpus (print
+ * inputs|extensions|run|about, --show options|about|report|configure (open that window or tab, for screenshots;
+ * configure with --tab inputs), --gpus (print
  * the graphics cards found, fastest first, and quit; A3MX_TEST_SYSFS / A3MX_TEST_PCI_IDS stand in for
  * /sys and pci.ids in tests).
  */
@@ -46,6 +48,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#include <cfloat>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -222,9 +226,9 @@ static const RendererChoice RENDERERS[] = {
 #endif
 };
 static const int N_RENDERERS = (int)(sizeof RENDERERS / sizeof RENDERERS[0]);
-enum { T_PATHS, T_DEPS, T_INPUTS, T_EXTENSIONS, T_RUN, T_COUNT };
-static const char *const TAB_NAMES[T_COUNT] = { "Paths", "Dependencies", "Inputs", "Extensions", "Build / Run" };
-static const char *const TAB_ARGS[T_COUNT] = { "paths", "dependencies", "inputs", "extensions", "run" };
+enum { T_PATHS, T_DEPS, T_INPUTS, T_EXTENSIONS, T_RUN, T_ABOUT, T_COUNT };   /* (icons.h draws their pictures in this order) */
+static const char *const TAB_NAMES[T_COUNT] = { "Paths", "Dependencies", "Inputs", "Extensions", "Build / Run", "About" };
+static const char *const TAB_ARGS[T_COUNT] = { "paths", "dependencies", "inputs", "extensions", "run", "about" };
 static const char *const SCALES[]     = { "Auto", "1x (480x272)", "2x (960x544)", "3x (1440x816)", "4x (1920x1088)",
                                           "5x (2400x1360)", "6x (2880x1632)", "7x (3360x1904)", "8x (3840x2176)" };
 enum { THEME_AUTO, THEME_LIGHT, THEME_DARK };   /* always the system's; --theme forces one for screenshots */
@@ -1405,39 +1409,45 @@ struct App {
         ImGui::EndPopup();
     }
 
-    void about_window() {
+    /* ================================================================ About: the project, reporting a problem, licences */
+    void about_tab() {
         const float em = ImGui::GetFontSize();
-        ImGuiViewport *vp = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(vp->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        /* a fixed width, and the height fitted to the contents (0): fitting both made the separators and the
-           right-aligned Close widen the window each frame, so it grew and shrank while open */
-        ImGui::SetNextWindowSize(ImVec2(std::min(em * 32, vp->WorkSize.x - em * 2), 0), ImGuiCond_Always);
-        if (!ImGui::BeginPopupModal("About", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings)) return;
+        ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
+        ImGui::Spacing();
         ImGui::TextUnformatted("A3MX");
         ImGui::TextDisabled("Launcher %s", A3MX_VERSION);
         ImGui::Spacing();
         ImGui::TextWrapped("A decompilation of the PSP game, built from your own disc. No game data is included.");
+        ImGui::SeparatorText("Report a problem");
+        {   /* the bug: a new issue, filled in */
+            const float bh = ImGui::GetFrameHeight();
+            bug_dark = dark;
+            if (icon_button("bug", bh, [](ImDrawList *dl, ImVec2 p, float sz, ImU32) {
+                    ImU32 body = bug_dark ? IM_COL32(205, 205, 210, 255) : IM_COL32(150, 150, 158, 255);
+                    ImU32 shade = bug_dark ? IM_COL32(140, 140, 148, 255) : IM_COL32(95, 95, 104, 255);
+                    draw_bug(dl, ImVec2(p.x + 2, p.y + 2), sz - 4, body, shade); })) open_report(false);
+            ImGui::SetItemTooltip("Report a problem: on GitLab, GitHub or Gitea (your choice), a new issue filled in with the\n"
+                                  "version, your system, these settings and the end of the console, and your logs in one .zip.");
+            ImGui::SameLine();
+            if (ImGui::Button("Report a bug")) open_report(false);
+            ImGui::SetItemTooltip("The same as the bug: a new issue with your version, system, settings and console filled in");
+            ImGui::SameLine(0, em);
+            ImGui::AlignTextToFramePadding();
+            if (link("Request a feature")) open_report(true);
+        }
+        if (link("Something else (a question, an idea, a problem building)")) open_url(issues_page(report_host()));
+        if (link("How to report a problem, and what to include")) open_url(repo_file_page(report_host(), "docs/REPORTING_ISSUES.md"));
         ImGui::SeparatorText("Project");
         if (link("The project's page (GitLab, its home)")) open_url(REPO_URL);
         ImGui::TextDisabled("Mirrors:");
         ImGui::SameLine(); if (link("GitHub")) open_url(ISSUE_HOSTS[HOST_GITHUB].repo);
         ImGui::SameLine(); if (link("Gitea")) open_url(ISSUE_HOSTS[HOST_GITEA].repo);
         ImGui::TextDisabled("Issues are handled on all three.");
-        if (link("Report a bug")) { open_report(false); ImGui::CloseCurrentPopup(); }
-        if (link("Request a feature")) { open_report(true); ImGui::CloseCurrentPopup(); }
-        if (link("Something else (a question, an idea, a problem building)")) open_url(issues_page(report_host()));
-        if (link("How to report a problem, and what to include")) open_url(repo_file_page(report_host(), "docs/REPORTING_ISSUES.md"));
         ImGui::SeparatorText("Licences");
-        ImGui::PushTextWrapPos(0);                                   /* wrap at the window's (fixed) edge */
         ImGui::TextDisabled("GPL-3.0-or-later. The launcher uses SDL3 (zlib) and Dear ImGui (MIT).");
         ImGui::TextDisabled("Your files: %s", user_root.c_str());
         ImGui::PopTextWrapPos();
-        ImGui::Spacing();
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - em * 5.5f);
-        if (ImGui::Button("Close", ImVec2(em * 5.5f, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
     }
-
 
     /* the orange of Run and of the buttons that download (pop with ImGui::PopStyleColor(4)) */
     static void orange_button_push() {
@@ -1548,60 +1558,68 @@ struct App {
         ImGui::EndPopup();
     }
 
-    /* ================================================================ the left side: picture, tabs, bug, About */
-    void sidebar(float h) {
+    /* ================================================================ the top: picture, tabs, version
+     * The project's picture on the left; the tabs across the rest, each a pixel picture over its name;
+     * the version above them against the right edge, room enough for a nightly's
+     * (v0.60.0-nightly.20261112+c97f96a). Returns the height used. */
+    float header() {
         const float em = ImGui::GetFontSize();
         ImGuiStyle &st = ImGui::GetStyle();
-        float w = ImGui::GetContentRegionAvail().x;
-        if (logo && logo_w > 0) {                          /* the project's picture, scaled to the side's width */
-            float lh = w * (float)logo_h / (float)logo_w;
-            ImGui::Image((ImTextureID)(intptr_t)logo, ImVec2(w, lh));
-        } else { ImGui::TextUnformatted("A3MX"); }
-        /* the version, under the picture, against its right edge. A nightly's is longer than the side is
-           wide (v0.60.0-nightly.20261112+c97f96a): then on two lines, the commit under the rest */
-        {
-            std::string v = A3MX_VERSION, rest;
-            size_t plus = v.find('+');
-            if (plus != std::string::npos && ImGui::CalcTextSize(v.c_str()).x > w - em * 0.3f) { rest = v.substr(plus); v.erase(plus); }
-            float x0 = ImGui::GetCursorPosX();
-            for (const std::string &line : { v, rest }) {
-                if (line.empty()) continue;
-                ImGui::SetCursorPosX(x0 + std::max(0.0f, w - ImGui::CalcTextSize(line.c_str()).x - em * 0.3f));
-                ImGui::TextDisabled("%s", line.c_str());
-                ImGui::SetItemTooltip("A3MX %s", A3MX_VERSION);
-            }
+        const float w = ImGui::GetContentRegionAvail().x;
+        const ImVec2 top = ImGui::GetCursorScreenPos();
+        const float line = ImGui::GetTextLineHeight();
+        const float isz = tab_icon_pixel(em * 1.7f) * 13.0f;           /* the pictures: whole pixels */
+        const float tab_h = em * 0.5f + isz + em * 0.35f + line + em * 0.55f;
+        const float hh = line + st.ItemSpacing.y + tab_h;               /* the version's line, then the tabs */
+        float name_w = 0;
+        for (int t = 0; t < T_COUNT; t++) name_w = std::max(name_w, ImGui::CalcTextSize(TAB_NAMES[t]).x);
+        const float tab_min = name_w + em * 1.6f;
+        /* the picture: as tall as the header, narrower if the tabs need the room */
+        float lw = logo && logo_h > 0 ? hh * (float)logo_w / (float)logo_h : ImGui::CalcTextSize("A3MX").x;
+        lw = std::min(lw, std::max(em * 6.0f, w - tab_min * T_COUNT - em));
+        if (logo && logo_w > 0) {
+            float lh = lw * (float)logo_h / (float)logo_w;
+            ImGui::SetCursorScreenPos(ImVec2(top.x, top.y + (hh - lh) * 0.5f));
+            ImGui::Image((ImTextureID)(intptr_t)logo, ImVec2(lw, lh));
+        } else {
+            ImGui::SetCursorScreenPos(ImVec2(top.x, top.y + (hh - line) * 0.5f));
+            ImGui::TextUnformatted("A3MX");
         }
-        /* the bug and About, under it */
-        const float bh = ImGui::GetFrameHeight();
-        bug_dark = dark;
-        if (icon_button("bug", bh, [](ImDrawList *dl, ImVec2 p, float s, ImU32) {
-                ImU32 body = bug_dark ? IM_COL32(205, 205, 210, 255) : IM_COL32(150, 150, 158, 255);
-                ImU32 shade = bug_dark ? IM_COL32(140, 140, 148, 255) : IM_COL32(95, 95, 104, 255);
-                draw_bug(dl, ImVec2(p.x + 2, p.y + 2), s - 4, body, shade); })) open_report(false);
-        ImGui::SetItemTooltip("Report a problem: on GitLab, GitHub or Gitea (your choice), a new issue filled in with the\n"
-                              "version, your system, these settings and the end of the console, and your logs in one .zip.");
-        ImGui::SameLine();
-        if (ImGui::Button("About", ImVec2(w - bh - st.ItemSpacing.x, bh))) ImGui::OpenPopup("About");
-        about_window();
-        report_window();
-        if (show_at_start == "about") { ImGui::OpenPopup("About"); show_at_start.clear(); }
-        ImGui::Dummy(ImVec2(0, em * 0.7f));                            /* a little air before the tabs */
-        const float row_h = em * 1.9f, bar_w = 3 * scale, text_x = em * 0.9f;
+        {   /* the version, top right */
+            const char *v = A3MX_VERSION;
+            ImGui::SetCursorScreenPos(ImVec2(top.x + w - ImGui::CalcTextSize(v).x - em * 0.3f, top.y));
+            ImGui::TextDisabled("%s", v);
+            ImGui::SetItemTooltip("A3MX %s", v);
+        }
+        /* the tabs */
+        const float x0 = top.x + lw + em, y0 = top.y + line + st.ItemSpacing.y;
+        const float tw = (top.x + w - x0) / (float)T_COUNT;
+        ImDrawList *dl = ImGui::GetWindowDrawList();
+        const ImU32 text = ImGui::GetColorU32(ImGuiCol_Text), dim = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        const ImU32 accent = ImGui::GetColorU32(ImGuiCol_CheckMark);
+        auto faint = [](ImU32 c) { ImVec4 v = ImGui::ColorConvertU32ToFloat4(c); v.w *= 0.45f; return ImGui::ColorConvertFloat4ToU32(v); };
         for (int t = 0; t < T_COUNT; t++) {
-            bool sel = set.tab == t;
-            ImVec2 p = ImGui::GetCursorScreenPos();
+            const bool sel = set.tab == t;
+            const ImVec2 p(std::floor(x0 + tw * (float)t), y0);
+            ImGui::SetCursorScreenPos(p);
             ImGui::PushID(t);
-            if (ImGui::Selectable("##tab", sel, 0, ImVec2(w, row_h))) { set.tab = t; settings_save(set, settings_path); }
+            if (ImGui::Selectable("##tab", sel, 0, ImVec2(tw - em * 0.25f, tab_h))) { set.tab = t; settings_save(set, settings_path); }
+            const bool hov = ImGui::IsItemHovered();
             ImGui::PopID();
-            ImDrawList *dl = ImGui::GetWindowDrawList();
-            if (sel) dl->AddRectFilled(p, ImVec2(p.x + bar_w, p.y + row_h), ImGui::GetColorU32(ImGuiCol_CheckMark));
-            /* the name, drawn here so it is clear of the bar and exactly in the middle of the row's height */
-            dl->AddText(ImVec2(p.x + text_x, p.y + (row_h - ImGui::GetTextLineHeight()) * 0.5f), ImGui::GetColorU32(ImGuiCol_Text), TAB_NAMES[t]);
+            const float cx = p.x + (tw - em * 0.25f) * 0.5f;
+            /* the picture, then the name under it; the chosen tab's in the radio buttons' orange */
+            const ImU32 body = sel ? accent : hov ? text : dim;              /* (the shade: the same, fainter) */
+            draw_tab_icon(dl, ImVec2(std::floor(cx - isz * 0.5f), p.y + em * 0.5f), isz, t, body, faint(body));
+            const ImVec2 ts = ImGui::CalcTextSize(TAB_NAMES[t]);
+            dl->AddText(ImVec2(std::floor(cx - ts.x * 0.5f), p.y + em * 0.5f + isz + em * 0.35f), text, TAB_NAMES[t]);
+            if (sel) dl->AddRectFilled(ImVec2(p.x + em * 0.6f, p.y + tab_h - 3 * scale), ImVec2(p.x + tw - em * 0.85f, p.y + tab_h), accent);
             /* a mark on the tab that wants the player's attention */
             bool mark = (t == T_DEPS && deps_checked && !root.empty() && (deps_any_missing(deps) || !consent_given()));
-            if (mark) dl->AddCircleFilled(ImVec2(p.x + w - em * 0.6f, p.y + row_h * 0.5f), em * 0.22f, ImGui::GetColorU32(colour(K_WARN)));
+            if (mark) dl->AddCircleFilled(ImVec2(cx + isz * 0.5f + em * 0.5f, p.y + em * 0.6f), em * 0.22f, ImGui::GetColorU32(colour(K_WARN)));
         }
-        (void)h;
+        ImGui::SetCursorScreenPos(top);
+        ImGui::Dummy(ImVec2(w, hh));
+        return hh;
     }
 
     void open_folder(const std::string &dir) {
@@ -2016,12 +2034,6 @@ struct App {
         ImGui::SetItemTooltip("Keyboard: the keys below (player 1's default).  Controller: the controller and buttons below.\n"
                               "Keyboard/Controller: both.  None: this player can't play (players 2 to 4's default).\n"
                               "Automatic: a controller no player names, in the order they're plugged in (player 1 also has the usual keys).");
-        ImGui::SameLine();
-        ImGui::BeginDisabled(p.type == CT_NONE);
-        if (ImGui::Button(ctl_test ? "Stop test" : "Test")) { ctl_test = !ctl_test; cap_player = -1; }
-        ImGui::EndDisabled();
-        ImGui::SetItemTooltip("Press this player's keys and controller buttons: each button below lights up, with the player's\n"
-                              "pad icon, while it is down. Nothing is sent to the game.");
 
         /* the player's controller (Controller, Keyboard/Controller): one of those plugged in (one that isn't any more keeps its name) */
         label("Controller", lw);
@@ -2059,10 +2071,49 @@ struct App {
         }
         ImGui::EndDisabled();
 
-        /* the buttons: a key and a controller button for each, where the type uses them */
+        /* the buttons: in their own window (Configure), with Test */
+        label("Buttons", lw);
+        ImGui::BeginDisabled(p.type == CT_NONE);
+        if (ImGui::Button("Configure", ImVec2(em * 8.0f, 0)) || show_at_start == "configure") {
+            if (show_at_start == "configure") show_at_start.clear();
+            cap_player = -1; ctl_test = false;
+            ImGui::OpenPopup("###configure");
+        }
+        ImGui::EndDisabled();
+        ImGui::SetItemTooltip(p.type == CT_NONE ? "None: this player has no buttons" :
+                              "This player's keys and controller buttons, and Test");
+        configure_window();
+        ImGui::EndDisabled();
+    }
+
+    /* Configure: a key and a controller button for each of the player's buttons, where the type uses
+     * them; the defaults; and Test. A window over the launcher that can be resized; its size is kept
+     * while the launcher is open but not saved (NoSavedSettings). */
+    void configure_window() {
+        const float em = ImGui::GetFontSize();
+        ImGuiViewport *vp = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(vp->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(std::min(em * 40.0f, vp->WorkSize.x - em * 2), std::min(em * 30.0f, vp->WorkSize.y - em * 2)), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(em * 28.0f, em * 14.0f), ImVec2(FLT_MAX, FLT_MAX));
+        char title[96];
+        snprintf(title, sizeof title, "Player %d: %s###configure", ctl_player + 1, CONTROL_TYPE_LABELS[ctl.p[ctl_player].type]);
+        bool open = true;
+        if (!ImGui::BeginPopupModal(title, &open, ImGuiWindowFlags_NoSavedSettings)) return;
+        ControlsPlayer &p = ctl.p[ctl_player];
+        const Pad *mine = player_pad(ctl_player);
+        if (ImGui::Button(ctl_test ? "Stop test" : "Test", ImVec2(em * 6.0f, 0))) { ctl_test = !ctl_test; cap_player = -1; }
+        ImGui::SetItemTooltip("Press this player's keys and controller buttons: each button below lights up, with the player's\n"
+                              "pad icon, while it is down. Nothing is sent to the game.");
+        ImGui::SameLine();
+        ImGui::AlignTextToFramePadding();
+        ImGui::PushTextWrapPos(0);
+        ImGui::TextDisabled("%s", ctl_test ? "Press the buttons: each lights up while it is down." :
+                                  "Click one, then press the key or button you want (Esc: keep it).");
+        ImGui::PopTextWrapPos();
+        const float footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
         const bool use_keys = controls_uses_keys(&p), use_pad = controls_uses_pad(&p);
         if (ImGui::BeginTable("map", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY,
-                              ImVec2(0, -ImGui::GetFrameHeightWithSpacing()))) {
+                              ImVec2(0, -footer))) {
             ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, em * 7.0f);
             ImGui::TableSetupColumn("Keyboard", ImGuiTableColumnFlags_WidthStretch);
@@ -2120,7 +2171,12 @@ struct App {
         ImGui::BeginDisabled(!use_pad || !p.pad_guid[0]);
         if (ImGui::Button("Default buttons")) { for (int b = 0; b < CB_COUNT; b++) snprintf(p.pad[b], sizeof p.pad[b], "%s", CONTROL_DEFAULT_PAD[b]); controls_changed(); }
         ImGui::EndDisabled();
-        ImGui::EndDisabled();
+        /* Close, in the bottom right corner (Esc too, unless a key is being waited for: then Esc cancels that) */
+        ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - em * 6.0f);
+        bool esc = cap_player < 0 && ImGui::IsKeyPressed(ImGuiKey_Escape);
+        if (ImGui::Button("Close", ImVec2(em * 6.0f, 0)) || esc) open = false;
+        if (!open) { ctl_test = false; cap_player = -1; ImGui::CloseCurrentPopup(); }
+        ImGui::EndPopup();
     }
 
     /* ================================================================ Extensions */
@@ -2406,17 +2462,15 @@ struct App {
         const float head = ImGui::GetFrameHeightWithSpacing();          /* the console's title row */
         float avail = ImGui::GetContentRegionAvail().y;
         float con_h = (float)set.console_h * scale;
-        float min_top = em * 16.0f, min_con = em * 4.0f;
+        float min_top = em * 21.0f, min_con = em * 4.0f;            /* (the header's tabs included) */
         if (con_h > avail - footer - head - min_top) con_h = avail - footer - head - min_top;
         if (con_h < min_con) con_h = min_con;
         float top_h = avail - footer - head - con_h - st.ItemSpacing.y * 2 - 6 * scale;
-        float side_w = em * 11.5f;
 
-        ImGui::BeginChild("side", ImVec2(side_w, top_h), ImGuiChildFlags_None, ImGuiWindowFlags_None);   /* scrolls if the window is short */
-        sidebar(top_h);
-        ImGui::EndChild();
-        ImGui::SameLine();
-        ImGui::BeginChild("page", ImVec2(0, top_h), ImGuiChildFlags_Borders);
+        float hh = header();                                          /* the picture, the tabs, the version */
+        if (show_at_start == "about") { set.tab = T_ABOUT; show_at_start.clear(); }
+        report_window();
+        ImGui::BeginChild("page", ImVec2(0, std::max(em * 6.0f, top_h - hh - st.ItemSpacing.y)), ImGuiChildFlags_Borders);
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
         ImGui::TextUnformatted(TAB_NAMES[set.tab]);
         ImGui::PopStyleColor();
@@ -2426,6 +2480,7 @@ struct App {
         case T_DEPS: deps_tab(busy); break;
         case T_INPUTS: inputs_tab(busy); break;
         case T_EXTENSIONS: extensions_tab(busy); break;
+        case T_ABOUT: about_tab(); break;
         default: run_tab(busy); break;
         }
         ImGui::EndChild();

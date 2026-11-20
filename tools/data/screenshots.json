@@ -2,7 +2,8 @@
   "_about": "The screenshots in the documentation. tools/screenshots.py takes them (each program saves its own with --screenshot) and records sources_sha256, a hash of the files each depends on; tools/screenshots.py --check fails when those files have changed since, when an image is missing, or when no document links to it. \"artwork\" lists the other images in docs/images/ (drawn, not taken), so --check knows them. Take one again whenever what it shows changes (CONTRIBUTING.md).",
   "artwork": [
     "docs/images/a3mx.png",
-    "docs/images/a3mx_square.png"
+    "docs/images/a3mx_square.png",
+    "docs/images/a3mx_sm.png"
   ],
   "screenshots": [
     {
@@ -148,6 +149,58 @@
         "src/platform/controls.h"
       ],
       "sources_sha256": "56c21ff376c785eb091f8160ae03c169591a43f073ce2670d66d30293721b403",
+      "size": [
+        2000,
+        1480
+      ]
+    },
+    {
+      "id": "launcher-inputs-configure",
+      "image": "docs/images/launcher-inputs-configure.png",
+      "shows": "the launcher's Inputs tab, Configure open",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark",
+          "--tab",
+          "inputs",
+          "--show",
+          "configure"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "",
+      "size": [
+        2000,
+        1480
+      ]
+    },
+    {
+      "id": "launcher-about",
+      "image": "docs/images/launcher-about.png",
+      "shows": "the launcher's About tab",
+      "take": {
+        "program": "launcher",
+        "args": [
+          "--theme",
+          "dark",
+          "--tab",
+          "about"
+        ]
+      },
+      "sources": [
+        "src/launcher",
+        "res/launcher_logo.png",
+        "src/platform/ext_features.h",
+        "src/platform/controls.h"
+      ],
+      "sources_sha256": "",
       "size": [
         2000,
         1480

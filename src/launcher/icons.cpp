@@ -1,5 +1,6 @@
 /* The launcher's small pictures (icons.h). */
 #include "icons.h"
+#include <cstring>
 #include <cmath>
 
 static const float PI = 3.14159265f;
@@ -119,4 +120,102 @@ void draw_copy(ImDrawList *dl, ImVec2 pos, float h, ImU32 col) {
         float y = f0.y + sh * i / 4.5f + 0.5f;
         dl->AddLine(ImVec2(f0.x + u, y), ImVec2(f1.x - u, y), col, 1.0f);
     }
+}
+
+/* The tabs' pictures, as pixels: X the body, o the shade, . nothing (the tab shows through). Each is
+ * at most 13 x 13 and drawn centred in its box with whole-pixel squares, so it stays crisp at any size. */
+static const char *const TAB_ICON_ROWS[TAB_ICON_COUNT][13] = {
+    {   /* Paths: a folder */
+        ".XXXX........",
+        "XooooX.......",
+        "XoooooXXXXXX.",
+        "XoooooooooooX",
+        "XXXXXXXXXXXXX",
+        "XoooooooooooX",
+        "XoooooooooooX",
+        "XoooooooooooX",
+        "XoooooooooooX",
+        "XoooooooooooX",
+        "XXXXXXXXXXXXX",
+    },
+    {   /* Dependencies: two chain links */
+        ".XXXXXX......",
+        "X......X.....",
+        "X......X.....",
+        "X.....oooooo.",
+        "X....o.X....o",
+        ".XXXXXX.....o",
+        ".....o......o",
+        ".....o......o",
+        "......oooooo.",
+    },
+    {   /* Inputs: a controller */
+        "..XXXXXXXXX..",
+        ".XXXXXXXXXXX.",
+        "XXXoXXXXXoXXX",
+        "XXoooXXXoXoXX",
+        "XXXoXXXXXoXXX",
+        "XXXXXXXXXXXXX",
+        "XXXX.....XXXX",
+        ".XX.......XX.",
+    },
+    {   /* Extensions: a tick */
+        "...........XX",
+        "..........XXX",
+        ".........XXX.",
+        "........XXX..",
+        "XX.....XXX...",
+        "XXX...XXX....",
+        ".XXX.XXX.....",
+        "..XXXXX......",
+        "...XXX.......",
+        "....X........",
+    },
+    {   /* Build / Run: a disc */
+        "....XXXXX....",
+        "..XXooXXXXX..",
+        ".XooXXXXXXXX.",
+        ".XoXXXXXXXXX.",
+        "XXXXXXXXXXXXX",
+        "XXXXXX.XXXXXX",
+        "XXXXX...XXXXX",
+        "XXXXXX.XXXXXX",
+        "XXXXXXXXXXXXX",
+        ".XXXXXXXXXXX.",
+        ".XXXXXXXXXXX.",
+        "..XXXXXXXXX..",
+        "....XXXXX....",
+    },
+    {   /* About: an i in a circle */
+        "....XXXXX....",
+        "..XXXXXXXXX..",
+        ".XXXXX.XXXXX.",
+        ".XXXXX.XXXXX.",
+        "XXXXXXXXXXXXX",
+        "XXXXX..XXXXXX",
+        "XXXXXX.XXXXXX",
+        "XXXXXX.XXXXXX",
+        "XXXXXX.XXXXXX",
+        ".XXXXX.XXXXX.",
+        ".XXXX...XXXX.",
+        "..XXXXXXXXX..",
+        "....XXXXX....",
+    },
+};
+
+float tab_icon_pixel(float h) { float px = std::floor(h / 13.0f + 0.25f); return px < 1 ? 1 : px; }
+
+void draw_tab_icon(ImDrawList *dl, ImVec2 pos, float h, int which, ImU32 body, ImU32 shade) {
+    if (which < 0 || which >= TAB_ICON_COUNT) return;
+    const char *const *rows = TAB_ICON_ROWS[which];
+    int n = 0, w = 0;
+    while (n < 13 && rows[n]) { int l = (int)std::strlen(rows[n]); if (l > w) w = l; n++; }
+    float px = tab_icon_pixel(h);
+    ImVec2 o(std::floor(pos.x + (h - px * w) / 2), std::floor(pos.y + (h - px * n) / 2));
+    for (int y = 0; y < n; y++)
+        for (int x = 0; rows[y][x]; x++) {
+            char c = rows[y][x];
+            if (c == '.') continue;
+            dl->AddRectFilled(ImVec2(o.x + x * px, o.y + y * px), ImVec2(o.x + (x + 1) * px, o.y + (y + 1) * px), c == 'o' ? shade : body);
+        }
 }

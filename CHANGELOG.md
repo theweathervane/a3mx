@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.102.0
+### For players
+- **Launcher, tabs across the top:** the tabs now run along the top beside the A3MX picture, each with a small pixel picture over its name (a folder for Paths, chain links for Dependencies, a controller for Inputs, a tick for Extensions, a disc for Build / Run, an i for About). The chosen tab's picture and underline are orange. The version is in the top right corner.
+- **About is a tab** (was a button and a window): the project's pages, the **bug** icon and **Report a bug**, **Request a feature** and the licences are all there.
+- **Inputs, Configure:** a player's keys and controller buttons, **Default keys** / **Default buttons** and **Test** are now in their own window, opened with **Configure** under **Controller**. It can be resized; its size is kept until the launcher closes, not saved.
+
+### Technical
+- `launcher.cpp`: `sidebar()` replaced by `header()` (picture, tabs as `Selectable`s with the picture and name drawn over them, version top right; the picture narrows when the tabs need the room); `T_ABOUT` / `--tab about`; `about_window()` became `about_tab()`, `report_window()` is called from `frame()`; `--show about` now opens the tab. `configure_window()`: a `BeginPopupModal` with `ImGuiWindowFlags_NoSavedSettings` and `ImGuiCond_FirstUseEver` size (kept for the session only); Esc closes it unless a key is being waited for; closing stops Test. `--show configure` (with `--tab inputs`) opens it for screenshots.
+- `icons.cpp`: `draw_tab_icon` (six 13-pixel pictures, whole-pixel squares), `tab_icon_pixel`.
+- Screenshots: `launcher-inputs-configure` and `launcher-about` added to `tools/data/screenshots.json` (linked from BUILDING.md); `docs/images/a3mx_sm.png` (README's) listed as artwork. The launcher's screenshots are to be retaken on Windows (`python tools/screenshots.py`): until then `--check` reports them out of date and the two new ones missing.
+- Docs: BUILDING.md (the launcher's parts, the About row), INPUTS.md (Configure), REPORTING_ISSUES.md (the bug is on the About tab).
+- Checked: the launcher built on Linux (clang, SDL3 3.4.16 without X11 / Wayland), every tab and the Configure window looked at in screenshots, light and dark. Not built or run on Windows here.
+
 ## 0.101.0
 ### For players
 - **GPU renderer:** the game's draws are now sent to the graphics card in batches. In a fight the PSP's ~750 draws a frame go out as about 100, so far less time goes on the driver's overhead for each one. The picture is unchanged.
