@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.102.3
+### For players
+- **Launcher, Inputs > Configure:** the table no longer jumps while you test. The pad icon used to be taller than a row, so a row grew while its button was held and everything under it moved; and the hint beside **Test** wrapped to a second line during a test, moving the whole table. Both now keep their size.
+- No more red "MESSAGE FROM DEAR IMGUI" box on the Circle row: the key **X** and the unset **X** beside it no longer clash.
+
+### Technical
+- `configure_window()`: the icon column is a fixed `Dummy` the height of a row, the icon painted into it with `AddImage` (whole multiples of its pixels, no taller than a row), never laid out; the Test hint is one line in both states. The unset button is `X##unset` and each binding button `<label>###bind`, so a key or button named like another control has its own ID (Dear ImGui's ID-conflict warning, `ConfigDebugHighlightIdConflicts`).
+- Checked: a scratch build faking held buttons on every other row; the table's rows identical to the idle picture, pixel for pixel. Built on Linux, no warnings.
+
 ## 0.102.2
 ### For players
 - **Launcher, Inputs > Configure:** two headings, **Test input** (with **Test**) and **Configuration** (the buttons). During a test the player's icon lights in a column of its own, the same place on every row, beside the button's name (now right-aligned); the key or controller button that is pressing it turns orange, its cell too.

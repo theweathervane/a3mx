@@ -2153,15 +2153,15 @@ struct App {
                                          "work this window: stop it with the mouse.");
         ImGui::SameLine();
         ImGui::AlignTextToFramePadding();
-        ImGui::PushTextWrapPos(0);
-        ImGui::TextDisabled("%s", ctl_test ? "Press the buttons: each lights up while it is down. Stop the test with the mouse."
+        /* one line either way (not wrapped), so starting or stopping the test never moves the table */
+        ImGui::TextDisabled("%s", ctl_test ? "Hold a key or button: its row lights up. Stop with the mouse."
                                            : "Shows which button each key or controller button presses.");
-        ImGui::PopTextWrapPos();
 
         /* ---- Configuration: the buttons */
         ImGui::SeparatorText("Configuration");
         const float footer = ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y;
-        const float icon_w = PADICON_SIZE * scale;
+        /* the icon: whole multiples of its pixels, never taller than a row, so a row never grows when it shows */
+        const float icon_w = (float)PADICON_SIZE * std::max(1.0f, std::floor(ImGui::GetFrameHeight() / (float)PADICON_SIZE));
         float col_x[2] = { 0, 0 }, col_w[2] = { 0, 0 };          /* where the Keyboard and Controller columns are, for the buttons under them */
         const ImVec4 o = ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
         if (ImGui::BeginTable("map", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY,
@@ -2177,11 +2177,15 @@ struct App {
                 const int down = ctl_test ? button_down(ctl_player, b) : 0;
                 /* the player's icon, always in the same place, while the button is held (as the game shows it) */
                 ImGui::TableNextColumn();
-                ImGui::AlignTextToFramePadding();
-                if (down) {
-                    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetFrameHeight() - icon_w) * 0.5f);
-                    bubble_image(ctl_player, icon_w, 1.0f);
-                } else ImGui::Dummy(ImVec2(icon_w, ImGui::GetFrameHeight()));
+                {   /* the same space on every row, held or not: the icon is painted into it, not laid out, so nothing moves */
+                    const ImVec2 at = ImGui::GetCursorScreenPos();
+                    const float fh = ImGui::GetFrameHeight();
+                    ImGui::Dummy(ImVec2(icon_w, fh));
+                    if (down && bubble[ctl_player]) {
+                        const ImVec2 a(std::floor(at.x), std::floor(at.y + (fh - icon_w) * 0.5f));
+                        ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)bubble[ctl_player], a, ImVec2(a.x + icon_w, a.y + icon_w));
+                    }
+                }
                 /* its name, against the right of its column */
                 ImGui::TableNextColumn();
                 ImGui::AlignTextToFramePadding();
@@ -2208,7 +2212,7 @@ struct App {
                         ImGui::PushStyleColor(ImGuiCol_Button, o); ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1)); pushed = 2;
                     } else if (waiting) { ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive)); pushed = 1; }
                     else if (!cur[0] || !used) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)); pushed = 1; }
-                    if (ImGui::Button(text.c_str(), ImVec2(ImGui::GetContentRegionAvail().x - em * 2.0f, 0))) { cap_player = ctl_player; cap_button = b; cap_column = col; }
+                    if (ImGui::Button((text + "###bind").c_str(), ImVec2(ImGui::GetContentRegionAvail().x - em * 2.0f, 0))) { cap_player = ctl_player; cap_button = b; cap_column = col; }
                     ImGui::PopStyleColor(pushed);
                     if (held) ImGui::PopStyleVar();
                     char tip[160];
@@ -2221,7 +2225,7 @@ struct App {
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(std::min(1.0f, o.x + 0.08f), std::min(1.0f, o.y + 0.10f), std::min(1.0f, o.z + 0.08f), 1));
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(o.x * 0.85f, o.y * 0.85f, o.z * 0.85f, 1));
                         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
-                        bool hit = ImGui::SmallButton("X");
+                        bool hit = ImGui::SmallButton("X##unset");   /* (its own ID: a key can be called X too) */
                         ImGui::PopStyleColor(4);
                         if (hit && cur[0]) { if (col == 0) p.key[b][0] = 0; else p.pad[b][0] = 0; controls_changed(); }
                     }
