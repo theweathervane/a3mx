@@ -45,6 +45,8 @@ int widescreen_plain_halves(uint32_t ob) { (void)ob; return 0; }
 int widescreen_oversize(uint32_t sp) { (void)sp; return 0; }
 int widescreen_column_copies(uint32_t sp, int dx[2]) { (void)sp; (void)dx; return 0; }
 int widescreen_bar_ends(uint32_t sp) { (void)sp; return 0; }
+int widescreen_piece_shift(uint32_t sp, int dx) { (void)sp; (void)dx; return 0; }
+int widescreen_linked_shift(uint32_t sp) { (void)sp; return 0; }
 #else
 typedef int extensions_off_unused;       /* the extensions are built: nothing here */
 #endif

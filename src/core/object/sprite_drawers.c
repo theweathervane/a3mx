@@ -46,6 +46,7 @@ extern int sprite_grid_scale_all;                                  /* sprite_gri
 int widescreen_oversize(gaddr sp);                                 /* extensions/widescreen.c */
 int widescreen_column_copies(gaddr sp, int dx[2]);                 /* extensions/widescreen.c */
 int widescreen_bar_ends(gaddr sp);                                 /* extensions/widescreen.c */
+int widescreen_piece_shift(gaddr sp, int dx);                      /* extensions/widescreen.c */
 extern int sprite_grid_bar_ends;                                   /* sprite_grid.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
@@ -269,7 +270,7 @@ static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     for (; e >= first; e -= 6) {
         uint32_t p = *H(e + 4);
         if (p & PIECE_SKIP) continue;
-        *H(ds + DS_X) = (uint16_t)(S16(ds + DS_POS_X) + S16(e));
+        *H(ds + DS_X) = (uint16_t)(S16(ds + DS_POS_X) + S16(e) + (rt_widescreen ? widescreen_piece_shift(sp, S16(e)) : 0));
         *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(e + 2));
         draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, EDGES_SOLID);
     }

@@ -141,10 +141,13 @@ static int find_piece(int panel, int *x) {
     return 0;
 }
 
+/* the score ranking's rows: how far their place, name, score and profile move (widescreen_piece_shift) */
+static const int RANK_SHIFT[4] = { -48, 0, 12, 48 };
 int widescreen_edge_shift(uint32_t sp) {
     uint32_t kind = RB(sp + 2), type = RB(sp + 3);
     /* the attract mode's score ranking (GAME + 0 = 4): its two RANKING columns (kind 35 types 3, 4) */
     if (RH(GAME) == 4 && kind == 35 && (type == 3 || type == 4)) return away_from_middle(sp, margin_units());
+    if (RH(GAME) == 4 && kind == 35 && type == 1) return px_to_units(RANK_SHIFT[3]);   /* a ranking row's profile's face (widescreen_piece_shift) */
     /* the attract mode's red speed-line screens (GAME + 0 = 2): the STREET FIGHTER ALPHA 3 strip (kind 48
        type 3, one picture 480 wide that sways from x -15 to -5) starts at the 16:9 screen's left side,
        and is drawn again after itself (widescreen_edge_copy) */
@@ -259,6 +262,33 @@ int widescreen_bar_ends(uint32_t sp) {
     return RH(GAME) == 4 && RB(sp + 2) == 35 && RB(sp + 3) == 9 ? 48 : 0;
 }
 
+/* ... and the rows of the score ranking (GAME + 0 = 4), whose bars are 48 longer at each end
+   (widescreen_bar_ends): what sits on a bar is spread out with it, in the screen's pixels. A row's text
+   is one sprite of pieces (kind 35 type 10, the first place's type 11; drawer 6), its black shadow the
+   same pieces in a linked sprite (kind 34 type 4); the pieces by their x in the row: the place ("1st",
+   "20th": x -152 to -120), the name (-104 to -72), the score (-8 to 56). The profile at the bar's right
+   end is a sprite of its own (kind 35 type 1, the face), a linked one (kind 34 type 5, the fighter's
+   name under it) and a translucent box behind them (a plain rectangle, widescreen_plain_adjust). The
+   place and the profile go the whole 48 to the bar's ends, so each stands as far from its end as on the
+   4:3 screen (10 and 7 pixels from the left end, the face 17 past the right); the name stays and the
+   score goes 12 right, so the gaps between them come out nearly even (first place 62 / 59 / 59, the
+   others 62 / 62 / 50; on the 4:3 screen 14 / 47 / 23 and 14 / 50 / 14). RANK_SHIFT (place, name, score,
+   profile), in pixels. */
+static int ranking_row(uint32_t sp) {
+    uint32_t kind = RB(sp + 2), type = RB(sp + 3);
+    return RH(GAME) == 4 && ((kind == 35 && (type == 10 || type == 11)) || (kind == 34 && type == 4));
+}
+int widescreen_piece_shift(uint32_t sp, int dx) {
+    if (!ranking_row(sp)) return 0;
+    return px_to_units(RANK_SHIFT[dx <= -112 ? 0 : dx < -40 ? 1 : 2]);
+}
+/* the profile's linked sprite (kind 34 type 5) moves with the face (kind 35 type 1, widescreen_edge_shift):
+   a linked sprite's own move, added to its parent's (core/object/sprite.c) */
+int widescreen_linked_shift(uint32_t sp) {
+    if (RH(GAME) == 4 && RB(sp + 2) == 34 && RB(sp + 3) == 5) return px_to_units(RANK_SHIFT[3]);
+    return 0;
+}
+
 /* ... and the ALPHA letter tiles before the title (GAME + 0 = 5; kind 125 type 9, drawer 1: ten columns of
    seven tiles, each column a sprite, ~41 pixels apart, sliding in from the right and closing up into a
    grid that narrows): once the leftmost is within two columns' spacing of the left side, the
@@ -318,6 +348,11 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
        further out (widescreen_edge_shift), as on the 4:3 screen: 48 out each side */
     if (RH(GAME) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 0 && (int16_t)RH(ob + 14) == 288) {
         *left = -48; *right = 48;
+        return;
+    }
+    /* ... and each row's translucent box behind the profile (type 1, 96 wide): moved with the face */
+    if (RH(GAME) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 && (int16_t)RH(ob + 14) == 96) {
+        *left = *right = RANK_SHIFT[3];
         return;
     }
     if (RB(GAME + 2) != 2 || (RB(ob + 88) & 0x3F) != 0) return;

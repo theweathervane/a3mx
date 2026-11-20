@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.100.2
+### For players
+- **WIDE NATIVE, score ranking (attract mode):** on each score bar the place ("1st", "20th") and the fighter's profile now sit at the bar's ends, as far from them as on the 4:3 screen; the score moves a little right so the gaps between place, name, score and profile come out nearly even.
+
+### Technical
+- `extensions/widescreen.c`: `RANK_SHIFT` { -48, 0, 12, 48 } px (place, name, score, profile). The text sprite (kind 35 type 10, first place 11; drawer 6) and its shadow (kind 34 type 4) move by piece, grouped by the piece's x (place <= -112, name < -40, score) through the new `widescreen_piece_shift` (`core/object/sprite_drawers.c` `draw_pieces_from`). The profile: the face (kind 35 type 1, `widescreen_edge_shift`), the name under it (kind 34 type 5, linked, the new `widescreen_linked_shift`, added to the parent's in `core/object/sprite.c`) and the translucent box behind (plain rectangle type 1, 96 wide, `widescreen_plain_adjust`). Stand-ins in `platform/extensions_off.c`.
+- Measured (screen px, 4:3 → WIDE NATIVE): bar end to place 10 → 10; place / name / score / profile gaps 14 / 47 / 23 → 62 / 59 / 59 (first place), 14 / 50 / 14 → 62 / 62 / 50 (other rows).
+- Checked: parity (memory hashes, renderer lazy) attract_mode; wide_fight WIDE NATIVE off / on; by eye: the ranking's list and first place, slide-in and slide-out (frames 4400 - 5600).
+
 ## 0.100.1
 ### For players
 - **Inputs:** the launcher's Inputs tab now saves to `configs/inputs.cfg` (was `controllers.cfg`). An old `controllers.cfg` is no longer read: set your players up again in the Inputs tab (a new setup starts with player 1 on the keyboard and players 2 to 4 on None). You can delete the old file.
