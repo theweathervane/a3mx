@@ -28,6 +28,7 @@ of the four players. The game reads it when it starts.
 - **Pad icon**, under **Configuration**, shows the chosen player's numbered bubble, as on the MODE
   MENU's bar; a player set to None shows a greyed-out **0** instead.
 - **Test**, in the Configure window, shows the pad icon beside each button while it is held, by a key or by the controller.
+  While it runs, keys don't work the window (the arrows, Enter, Esc are the player's): stop it with the mouse.
   Nothing is sent to the game.
 
 **The default (0.100.0):** player 1 is Keyboard with the usual keys, players 2 to 4 None. Nothing

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.102.1
+### For players
+- **Launcher, Inputs > Configure:** while **Test** runs, the keys are only the player's: the arrows, Enter, Space and Esc no longer move around, press buttons or close the window (stop the test with the mouse). The window now opens near the top and tall enough to show every button without scrolling.
+- **Launcher, a tidier top:** the version has moved from the top right to the **About** tab, so the picture and tabs sit closer together. Each page's grey title is gone; Dependencies, Inputs, Extensions and Build / Run each start with a heading instead, and Build / Run's **Game** section is now called **Run**.
+- **About:** "A3MX - Launcher" with the version under it; **Report a bug** and **Request a feature** are links, each on its own line (the bug icon is gone).
+- **Inputs:** the text under Current now says what the numbers are: the players the game will have, as the MODE MENU shows them, a controller counting only if it is still connected when the game starts.
+
+### Technical
+- `launcher.cpp`: while `ctl_test`, the event loop keeps key-down and text events from ImGui (key-ups still go, so no key stays held); Esc doesn't close Configure during a test. `configure_window()` sized from the rows (`CB_COUNT` + header, Test, the bottom buttons), placed `em * 0.75` from the top, clamped to the launcher's height. `header()` without the version line; the page's title and separator removed from `frame()`; `SeparatorText` at the top of `deps_tab`, `inputs_tab`, `extensions_tab`, `run_tab`. `draw_bug` and `bug_dark` removed (icons.cpp / .h).
+- Checked: the launcher built on Linux (no warnings); every tab and Configure looked at (light and dark). The screenshots are still to be retaken on Windows.
+
 ## 0.102.0
 ### For players
 - **Launcher, tabs across the top:** the tabs now run along the top beside the A3MX picture, each with a small pixel picture over its name (a folder for Paths, chain links for Dependencies, a controller for Inputs, a tick for Extensions, a disc for Build / Run, an i for About). The chosen tab's picture and underline are orange. The version is in the top right corner.

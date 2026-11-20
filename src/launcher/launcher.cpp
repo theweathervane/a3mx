@@ -16,7 +16,7 @@
  *                PSP game as it was. Widescreen and Stage Extensions are here
  *   Build/Run    preset, extract again, tests; full screen, log level, renderer, resolution, GPU, extra
  *                options; Run (build if needed, then play) or Build; Stop ends a build
- *   About        the project's pages, the grey bug (a new issue, filled in), feature requests, licences
+ *   About        the version, Report a bug (a new issue, filled in), Request a feature, the project's pages, licences
  *   bottom       the console, on every tab: build.py's and the game's output as it comes, whichever
  *                tab started it; also written to logs/launcher.log. Then the status and the console's buttons
  *
@@ -27,7 +27,7 @@
  *
  * Holds no game code. SDL3 for the window, file dialogs and controllers, Dear ImGui for the controls;
  * process.cpp starts and stops the child, disc_check.cpp identifies the ISO, deps.cpp reads the pinned
- * downloads, shortcut.cpp makes a shortcut, icons.cpp draws the flags and the bug, game_options.h
+ * downloads, shortcut.cpp makes a shortcut, icons.cpp draws the flags and the tabs' pictures, game_options.h
  * lists the game's options.
  *
  * Settings: launcher/launcher.ini in your a3mx folder (src/platform/userdir.h: %APPDATA%\a3mx and its
@@ -430,7 +430,6 @@ static void apply_theme(bool dark, float scale) {
 }
 
 /* ================================================================ the launcher */
-static bool bug_dark = true;        /* the theme, for the bug's colours (drawn from a plain function) */
 
 struct App {
     SDL_Window *window = NULL;
@@ -1411,30 +1410,17 @@ struct App {
 
     /* ================================================================ About: the project, reporting a problem, licences */
     void about_tab() {
-        const float em = ImGui::GetFontSize();
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
         ImGui::Spacing();
-        ImGui::TextUnformatted("A3MX");
-        ImGui::TextDisabled("Launcher %s", A3MX_VERSION);
+        ImGui::TextUnformatted("A3MX - Launcher");
+        ImGui::TextDisabled("%s", A3MX_VERSION);
         ImGui::Spacing();
         ImGui::TextWrapped("A decompilation of the PSP game, built from your own disc. No game data is included.");
         ImGui::SeparatorText("Report a problem");
-        {   /* the bug: a new issue, filled in */
-            const float bh = ImGui::GetFrameHeight();
-            bug_dark = dark;
-            if (icon_button("bug", bh, [](ImDrawList *dl, ImVec2 p, float sz, ImU32) {
-                    ImU32 body = bug_dark ? IM_COL32(205, 205, 210, 255) : IM_COL32(150, 150, 158, 255);
-                    ImU32 shade = bug_dark ? IM_COL32(140, 140, 148, 255) : IM_COL32(95, 95, 104, 255);
-                    draw_bug(dl, ImVec2(p.x + 2, p.y + 2), sz - 4, body, shade); })) open_report(false);
-            ImGui::SetItemTooltip("Report a problem: on GitLab, GitHub or Gitea (your choice), a new issue filled in with the\n"
-                                  "version, your system, these settings and the end of the console, and your logs in one .zip.");
-            ImGui::SameLine();
-            if (ImGui::Button("Report a bug")) open_report(false);
-            ImGui::SetItemTooltip("The same as the bug: a new issue with your version, system, settings and console filled in");
-            ImGui::SameLine(0, em);
-            ImGui::AlignTextToFramePadding();
-            if (link("Request a feature")) open_report(true);
-        }
+        if (link("Report a bug")) open_report(false);
+        ImGui::SetItemTooltip("A new issue on GitLab, GitHub or Gitea (your choice), filled in with the version, your system,\n"
+                              "these settings and the end of the console, and your logs in one .zip.");
+        if (link("Request a feature")) open_report(true);
         if (link("Something else (a question, an idea, a problem building)")) open_url(issues_page(report_host()));
         if (link("How to report a problem, and what to include")) open_url(repo_file_page(report_host(), "docs/REPORTING_ISSUES.md"));
         ImGui::SeparatorText("Project");
@@ -1558,19 +1544,17 @@ struct App {
         ImGui::EndPopup();
     }
 
-    /* ================================================================ the top: picture, tabs, version
-     * The project's picture on the left; the tabs across the rest, each a pixel picture over its name;
-     * the version above them against the right edge, room enough for a nightly's
-     * (v0.60.0-nightly.20261112+c97f96a). Returns the height used. */
+    /* ================================================================ the top: picture, tabs
+     * The project's picture on the left; the tabs across the rest, each a pixel picture over its name
+     * (the version is on the About tab). Returns the height used. */
     float header() {
         const float em = ImGui::GetFontSize();
-        ImGuiStyle &st = ImGui::GetStyle();
         const float w = ImGui::GetContentRegionAvail().x;
         const ImVec2 top = ImGui::GetCursorScreenPos();
         const float line = ImGui::GetTextLineHeight();
         const float isz = tab_icon_pixel(em * 1.7f) * 13.0f;           /* the pictures: whole pixels */
         const float tab_h = em * 0.5f + isz + em * 0.35f + line + em * 0.55f;
-        const float hh = line + st.ItemSpacing.y + tab_h;               /* the version's line, then the tabs */
+        const float hh = tab_h;
         float name_w = 0;
         for (int t = 0; t < T_COUNT; t++) name_w = std::max(name_w, ImGui::CalcTextSize(TAB_NAMES[t]).x);
         const float tab_min = name_w + em * 1.6f;
@@ -1585,14 +1569,8 @@ struct App {
             ImGui::SetCursorScreenPos(ImVec2(top.x, top.y + (hh - line) * 0.5f));
             ImGui::TextUnformatted("A3MX");
         }
-        {   /* the version, top right */
-            const char *v = A3MX_VERSION;
-            ImGui::SetCursorScreenPos(ImVec2(top.x + w - ImGui::CalcTextSize(v).x - em * 0.3f, top.y));
-            ImGui::TextDisabled("%s", v);
-            ImGui::SetItemTooltip("A3MX %s", v);
-        }
         /* the tabs */
-        const float x0 = top.x + lw + em, y0 = top.y + line + st.ItemSpacing.y;
+        const float x0 = top.x + lw + em, y0 = top.y;
         const float tw = (top.x + w - x0) / (float)T_COUNT;
         ImDrawList *dl = ImGui::GetWindowDrawList();
         const ImU32 text = ImGui::GetColorU32(ImGuiCol_Text), dim = ImGui::GetColorU32(ImGuiCol_TextDisabled);
@@ -1759,6 +1737,7 @@ struct App {
     void deps_tab(bool busy) {
         const float em = ImGui::GetFontSize();
         if (!deps_checked) check_deps(false);
+        ImGui::SeparatorText("Dependencies");
         ImGui::BeginDisabled(busy);
         if (ImGui::Button("Check build dependencies")) { check_deps(true); check_rust(); }
         bool need_ok = !root.empty() && deps_err.empty() && (deps_any_to_download(deps) || !consent_given());
@@ -1977,6 +1956,7 @@ struct App {
         const float em = ImGui::GetFontSize();
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
         const float lw = em * 7.0f;
+        ImGui::SeparatorText("Inputs");
         /* Current: which bubbles the MODE MENU would show now, with the controllers plugged in now */
         bool shown_now[CONTROLS_PLAYERS];
         menu_bubbles(shown_now);
@@ -1987,9 +1967,9 @@ struct App {
             ImGui::SetItemTooltip(shown_now[k] ? "Player %d's icon would show on the MODE MENU now" : "Player %d's icon would not show now", k + 1);
         }
         ImGui::Spacing();
-        ImGui::TextDisabled("Choose how each player plays. A new setup has player 1 on the keyboard and players 2 to 4 set to None: "
-                            "give each player the keyboard, a controller or both, so input mappers and overlays get only what you chose. "
-                            "Read when the game starts.");
+        ImGui::TextDisabled("The numbers are the players the game will have, as its MODE MENU shows them: a lit one has its keyboard "
+                            "or controller ready now, a faded one hasn't. A controller counts only if it is still connected when the game starts. "
+                            "Set each player up below: the keyboard, a controller, both, or None (players 2 to 4 to start with).");
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
         ImGui::SeparatorText("Configuration");
@@ -2092,8 +2072,17 @@ struct App {
     void configure_window() {
         const float em = ImGui::GetFontSize();
         ImGuiViewport *vp = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(vp->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        ImGui::SetNextWindowSize(ImVec2(std::min(em * 40.0f, vp->WorkSize.x - em * 2), std::min(em * 30.0f, vp->WorkSize.y - em * 2)), ImGuiCond_FirstUseEver);
+        /* tall enough for every button without scrolling (they are the ones the game is played with), from
+           near the top of the launcher; shorter only when the launcher itself is */
+        const ImGuiStyle &st = ImGui::GetStyle();
+        const float row = ImGui::GetFrameHeight() + st.CellPadding.y * 2;
+        const float need = ImGui::GetFrameHeight() + st.WindowPadding.y * 2                  /* the title bar, the edges */
+                         + ImGui::GetFrameHeightWithSpacing()                                  /* Test */
+                         + row * (float)(CB_COUNT + 1) + st.ItemSpacing.y * 2                  /* the table and its header */
+                         + ImGui::GetFrameHeightWithSpacing();                                 /* the buttons at the bottom */
+        const float top = em * 0.75f;
+        ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f, vp->WorkPos.y + top), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+        ImGui::SetNextWindowSize(ImVec2(std::min(em * 40.0f, vp->WorkSize.x - em * 2), std::min(need, vp->WorkSize.y - top * 2)), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(em * 28.0f, em * 14.0f), ImVec2(FLT_MAX, FLT_MAX));
         char title[96];
         snprintf(title, sizeof title, "Player %d: %s###configure", ctl_player + 1, CONTROL_TYPE_LABELS[ctl.p[ctl_player].type]);
@@ -2103,11 +2092,12 @@ struct App {
         const Pad *mine = player_pad(ctl_player);
         if (ImGui::Button(ctl_test ? "Stop test" : "Test", ImVec2(em * 6.0f, 0))) { ctl_test = !ctl_test; cap_player = -1; }
         ImGui::SetItemTooltip("Press this player's keys and controller buttons: each button below lights up, with the player's\n"
-                              "pad icon, while it is down. Nothing is sent to the game.");
+                              "pad icon, while it is down. Nothing is sent to the game, and the keys don't work the window\n"
+                              "while the test runs: stop it with the mouse.");
         ImGui::SameLine();
         ImGui::AlignTextToFramePadding();
         ImGui::PushTextWrapPos(0);
-        ImGui::TextDisabled("%s", ctl_test ? "Press the buttons: each lights up while it is down." :
+        ImGui::TextDisabled("%s", ctl_test ? "Press the buttons: each lights up while it is down. Stop the test with the mouse." :
                                   "Click one, then press the key or button you want (Esc: keep it).");
         ImGui::PopTextWrapPos();
         const float footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
@@ -2173,7 +2163,7 @@ struct App {
         ImGui::EndDisabled();
         /* Close, in the bottom right corner (Esc too, unless a key is being waited for: then Esc cancels that) */
         ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - em * 6.0f);
-        bool esc = cap_player < 0 && ImGui::IsKeyPressed(ImGuiKey_Escape);
+        bool esc = cap_player < 0 && !ctl_test && ImGui::IsKeyPressed(ImGuiKey_Escape);
         if (ImGui::Button("Close", ImVec2(em * 6.0f, 0)) || esc) open = false;
         if (!open) { ctl_test = false; cap_player = -1; ImGui::CloseCurrentPopup(); }
         ImGui::EndPopup();
@@ -2182,6 +2172,7 @@ struct App {
     /* ================================================================ Extensions */
     void extensions_tab(bool busy) {
         const float em = ImGui::GetFontSize();
+        ImGui::SeparatorText("Extensions");
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
         ImGui::TextDisabled("What this project adds to the PSP game, each on its own switch. With all of them off the game plays as the original does: "
                             "its own menus and saves, one player.");
@@ -2329,6 +2320,7 @@ struct App {
     void run_tab(bool busy) {
         const float em = ImGui::GetFontSize();
         const bool repo = !root.empty();
+        ImGui::SeparatorText("Build / Run");
         ImGui::Checkbox("Show advanced settings", &advanced);
         ImGui::SetItemTooltip("The presets for debugging and recording, the build's own choices and more game options.\n"
                               "Off (as at every start), Run builds Release and starts the game with the settings shown.");
@@ -2372,7 +2364,7 @@ struct App {
             ImGui::PopTextWrapPos();
 
             ImGui::TableNextColumn();
-            ImGui::SeparatorText("Game");
+            ImGui::SeparatorText("Run");
             ImGui::BeginDisabled(busy || (repo && !run_now()));
             ImGui::Checkbox("Full screen", &set.fullscreen);
             ImGui::SetItemTooltip("Checked (the default): --fullscreen. Unchecked: --windowed. F11 or Alt+Enter switch while playing.");
@@ -2471,10 +2463,6 @@ struct App {
         if (show_at_start == "about") { set.tab = T_ABOUT; show_at_start.clear(); }
         report_window();
         ImGui::BeginChild("page", ImVec2(0, std::max(em * 6.0f, top_h - hh - st.ItemSpacing.y)), ImGuiChildFlags_Borders);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-        ImGui::TextUnformatted(TAB_NAMES[set.tab]);
-        ImGui::PopStyleColor();
-        ImGui::Separator();
         switch (set.tab) {
         case T_PATHS: paths_tab(busy); break;
         case T_DEPS: deps_tab(busy); break;
@@ -2736,6 +2724,9 @@ int main(int argc, char **argv) {
             do {
                 if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED) { app.pads_refresh(); had_input = true; }
                 if (app.capture_event(e)) { had_input = true; continue; }     /* a key or button for the Inputs tab: not ImGui's */
+                /* Test: key presses are the player's, not the window's (arrows, Enter, Space, Esc would move
+                   between, press or close things). Releases still go through, so no key is left held. */
+                if (app.ctl_test && (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_TEXT_INPUT)) { had_input = true; continue; }
                 ImGui_ImplSDL3_ProcessEvent(&e);
                 switch (e.type) {           /* the person using the launcher, not the game covering it */
                 case SDL_EVENT_KEY_DOWN: case SDL_EVENT_KEY_UP: case SDL_EVENT_TEXT_INPUT: case SDL_EVENT_MOUSE_MOTION:

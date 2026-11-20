@@ -79,32 +79,6 @@ void draw_wait_mark(ImDrawList *dl, ImVec2 pos, float h, float t, ImU32 col) {
     }
 }
 
-void draw_bug(ImDrawList *dl, ImVec2 pos, float h, ImU32 body, ImU32 shade) {
-    static const char *const BUG[] = {
-        "..X.....X..",
-        "...X...X...",
-        "....XXX....",
-        "...XXXXX...",
-        "X.XXXoXXX.X",
-        ".XXXXoXXXX.",
-        "...XXoXX...",
-        "XXXXXoXXXXX",
-        "...XXoXX...",
-        ".XXXXoXXXX.",
-        "X..XXXXX..X",
-    };
-    float px = std::floor(h / 11.0f + 0.25f);
-    if (px < 1) px = 1;
-    ImVec2 o(std::floor(pos.x + (h - px * 11) / 2), std::floor(pos.y + (h - px * 11) / 2));
-    for (int y = 0; y < 11; y++)
-        for (int x = 0; x < 11; x++) {
-            char c = BUG[y][x];
-            if (c == '.') continue;
-            ImU32 col = c == 'o' ? shade : body;
-            dl->AddRectFilled(ImVec2(o.x + x * px, o.y + y * px), ImVec2(o.x + (x + 1) * px, o.y + (y + 1) * px), col);
-        }
-}
-
 void draw_copy(ImDrawList *dl, ImVec2 pos, float h, ImU32 col) {
     /* the back sheet up and left, the front one down and right, as copy icons are */
     float u = std::floor(h / 8.0f) > 1 ? std::floor(h / 8.0f) : 1;

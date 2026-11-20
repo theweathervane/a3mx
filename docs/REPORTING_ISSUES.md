@@ -23,7 +23,7 @@ it, updated from it.
 1. Set **Logging** (under Game) to **INFO**, or **DEBUG** if the problem is hard to pin down. The
    default, OFF, writes nothing, so the log would be empty. (The Report window has a button for this.)
 2. Make the problem happen again: press **Run** and do what you did before, then quit the game.
-3. On the **About** tab, click the **bug** icon or **Report a bug**.
+3. On the **About** tab, click **Report a bug**.
 4. Choose **GitLab**, **GitHub** or **Gitea**. The launcher remembers your choice.
 5. Click **Open the form on ...**. The launcher:
    - opens a new issue on that site in your browser, filled in with the version, your system, the
