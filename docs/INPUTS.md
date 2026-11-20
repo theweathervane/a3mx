@@ -40,7 +40,7 @@ controller are player 1, the next controllers players 2 to 4. Mixing works too: 
 keyboard, player 3 on a chosen controller, 2 and 4 Automatic, and the next controller plugged in is
 player 2, then player 4. Players may share a key if they want to: nothing stops it.
 
-The tab writes `configs/controllers.cfg` in your a3mx folder ([SAVES.md](SAVES.md)), one `type=` per
+The tab writes `configs/inputs.cfg` in your a3mx folder ([SAVES.md](SAVES.md)), one `type=` per
 player; with no file player 1 is Keyboard and the rest None, as above. A file you
 already have keeps what it says (a player 1 set to Automatic stays Automatic). A file from before the control types is read as
 Keyboard, Controller or Keyboard/Controller from what it sets. In the game a player counts as plugged

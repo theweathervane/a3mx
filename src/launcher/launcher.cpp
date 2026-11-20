@@ -11,7 +11,7 @@
  *                tools/data/pins.json). Anything missing is listed with where it comes from, its
  *                SHA-256 and where it goes, and is downloaded only after you agree
  *   Inputs       bring your own device: for each of four players, keyboard keys and a controller with
- *                its buttons, and Test (configs/controllers.cfg, read by the game when it starts)
+ *                its buttons, and Test (configs/inputs.cfg, read by the game when it starts)
  *   Extensions   every extension as a feature of its own (src/platform/ext_features.h): all off is the
  *                PSP game as it was. Widescreen and Stage Extensions are here
  *   Build/Run    preset, extract again, tests; full screen, log level, renderer, resolution, GPU, extra
@@ -72,7 +72,7 @@ extern "C" {
 #include "png_decode.h"               /* src/platform: the project's own PNG reader */
 }
 #include "userdir.h"                  /* src/platform: your a3mx folder */
-#include "controls.h"                 /* src/platform: configs/controllers.cfg */
+#include "controls.h"                 /* src/platform: configs/inputs.cfg */
 #include "padicon_art.h"              /* src/platform: the MODE MENU's player bubbles */
 #define FEATURES_TABLE_ONLY
 #include "ext_features.h"             /* src/platform: the extensions, one flag each */
@@ -462,7 +462,7 @@ struct App {
     std::string cargo_path;         /* Rust's cargo, if it is on this PC (find_cargo) */
     int msvc = -1;                  /* Windows: Microsoft's C++ build tools found (1), not found (0); elsewhere 1 */
     /* Controllers */
-    Controls ctl; bool ctl_file = false;      /* configs/controllers.cfg exists (else the game's automatic arrangement) */
+    Controls ctl; bool ctl_file = false;      /* configs/inputs.cfg exists (else the defaults: player 1 Keyboard, 2 - 4 None) */
     int ctl_player = 0;
     int cap_player = -1, cap_button = -1, cap_column = 0;   /* waiting for a key (column 0) or a controller button (1) */
     bool ctl_test = false;
@@ -538,7 +538,7 @@ struct App {
         return o && !o->empty() ? *o : join(user_root, sub);
     }
     std::string tools_dir() const { return set.tools_dir.empty() ? join(home_dir(), ".tools") : set.tools_dir; }
-    std::string controls_path() const { return join(user_dir("configs"), "controllers.cfg"); }
+    std::string controls_path() const { return join(user_dir("configs"), "inputs.cfg"); }
     /* --features: the ticked ones by name, "none" if none (then the game is the PSP program alone) */
     std::string features_arg() const {
         std::string l;
@@ -1061,7 +1061,7 @@ struct App {
         if (feature) return f;
         const char *os = SDL_GetPlatform();
         std::string how = std::string("Launcher: preset ") + PRESET_ARGS[set.preset] + ", features " + features_arg() +
-                          (set.fullscreen ? ", full screen" : ", windowed") + (ctl_file ? ", controllers.cfg" : ", controllers automatic") +
+                          (set.fullscreen ? ", full screen" : ", windowed") + (ctl_file ? ", inputs.cfg" : ", inputs default") +
                           ", logging " + LOG_ARGS[set.log_level] + ", renderer " + RENDERERS[set.renderer].arg + (set.renderer == 1 ? std::string() : set.scale ? ", resolution " + std::to_string(set.scale) + "x" : std::string(", resolution auto")) +
                           (gpus.size() < 2 ? std::string() : ", GPU " + (gpu_find(gpus, set.gpu) ? gpu_find(gpus, set.gpu)->name : std::string("automatic"))) +
                           (set.extra.empty() ? "" : ", options: " + set.extra);
@@ -1089,7 +1089,7 @@ struct App {
         add("launcher.log", console.all(), 4u << 20);                        /* this session's: the file is open for writing */
         add("launcher.log.1", read_text(join(logs, "launcher.log.1")), 2u << 20);   /* the session before */
         add("launcher.ini", read_text(settings_path), 64u << 10);
-        add("controllers.cfg", read_text(controls_path()), 64u << 10);
+        add("inputs.cfg", read_text(controls_path()), 64u << 10);
         std::string zip = zip_build(files), path = join(logs, "a3mx-report.zip");
         SDL_CreateDirectory(logs.c_str());
         if (zip.empty() || !SDL_SaveFile(path.c_str(), zip.data(), zip.size())) {
@@ -1148,7 +1148,7 @@ struct App {
             if (child.busy() && running == RUN_GAME) ImGui::TextColored(colour(K_WARN), "Quit the game first, so its log and last_run.txt are complete.");
             ImGui::Bullet(); ImGui::TextWrapped("The form, filled in: the version, your system, the disc's serial, these settings, the last run's frame times and the end of the console.");
             ImGui::Bullet(); ImGui::TextWrapped("a3mx-report.zip, made in your logs folder, which opens: drag it into the form. It holds a3mx.log, last_run.txt, launcher.log, "
-                                                "launcher.ini and controllers.cfg. A web address can't carry a file, so this one step is yours.");
+                                                "launcher.ini and inputs.cfg. A web address can't carry a file, so this one step is yours.");
             ImGui::Bullet(); ImGui::TextWrapped("Your home folder's path is written as ~ in both. Nothing is sent until you submit the form.");
         }
         ImGui::PopTextWrapPos();
@@ -1653,7 +1653,7 @@ struct App {
             ImGui::TableSetupColumn("browse", ImGuiTableColumnFlags_WidthFixed, em * 5.5f);
             ImGui::TableSetupColumn("open", ImGuiTableColumnFlags_WidthFixed, em * 3.8f);
             folder_row("Saves", F_SAVES, join(user_root, "saves"), "a3mx.dat, and import/ and export/ for PSP saves.", busy);
-            folder_row("Configs", F_CONFIGS, join(user_root, "configs"), "a3mx.cfg (every setting, by name: it can be edited by hand) and controllers.cfg.", busy);
+            folder_row("Configs", F_CONFIGS, join(user_root, "configs"), "a3mx.cfg (every setting, by name: it can be edited by hand) and inputs.cfg.", busy);
             folder_row("Logs", F_LOGS, join(user_root, "logs"), "a3mx.log and last_run.txt from the last run of the game, and launcher.log:\nthis console, with every build and download.", busy);
             if (!root.empty())
                 folder_row("Build tools", F_TOOLS, join(root, ".tools"),
@@ -1866,7 +1866,7 @@ struct App {
     /* Which bubbles the MODE MENU would show with the controllers plugged in now: as the game decides
        (host_sdl.c, host_pad_connected): a player with keys, or whose controller is plugged in, and then
        controllers no player names, in order, for the players waiting for one (automatic, or a controller
-       type with none chosen). Without controllers.cfg: ctl's defaults (controls_defaults). */
+       type with none chosen). Without inputs.cfg: ctl's defaults (controls_defaults). */
     void menu_bubbles(bool shown[CONTROLS_PLAYERS]) const {
         for (int k = 0; k < CONTROLS_PLAYERS; k++) shown[k] = false;
         std::vector<bool> claimed(pads.size(), false);     /* (no file: ctl holds the defaults, as the game uses) */
@@ -2598,7 +2598,7 @@ int main(int argc, char **argv) {
     if (old_settings) settings_save(app.set, app.settings_path);
     /* the console, kept: logs/launcher.log holds this session's (the last one's is launcher.log.1) */
     if (screenshot.empty()) app.open_log();
-    /* configs/controllers.cfg, if there is one; else what a first change would start from */
+    /* configs/inputs.cfg, if there is one; else what a first change would start from */
     app.ctl_file = controls_load(&app.ctl, app.controls_path().c_str()) != 0;
     if (!app.ctl_file) controls_defaults(&app.ctl);
 

@@ -1,7 +1,7 @@
 /* Bring your own device (0.60.0): which keyboard keys and which controller play each of the four
  * players, set outside the game (the launcher's Inputs tab) and read when the game starts.
  *
- *   configs/controllers.cfg in the player's folder (userdir.h):
+ *   configs/inputs.cfg in the player's folder (userdir.h):
  *
  *     [player1]
  *     type=auto                 the player's control type: auto, keyboard, controller, both, none

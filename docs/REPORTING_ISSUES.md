@@ -31,7 +31,7 @@ it, updated from it.
      the launcher's console (on GitHub, in the bug form's fields);
    - makes **`a3mx-report.zip`** in your logs folder, and opens the folder. The zip holds
      `a3mx.log`, `last_run.txt`, `launcher.log` (this session and the one before),
-     `launcher.ini` and `controllers.cfg`, each cut to its end if very long;
+     `launcher.ini` and `inputs.cfg`, each cut to its end if very long;
    - puts the report on the clipboard too, should the page open empty.
 6. **Drag `a3mx-report.zip` into the form.** This is the one step the launcher can't do for you: no
    site lets a web address carry a file, and only you can upload to your account.

@@ -8,7 +8,7 @@
  *   south = cross, east = circle, west = square, north = triangle, shoulders = L/R,
  *   d-pad or left stick = directions, start/back = start/select.
  *
- * That is the automatic arrangement, used when there is no configs/controllers.cfg. With one (written
+ * That is the automatic arrangement, used when there is no configs/inputs.cfg. With one (written
  * by the launcher's Inputs tab: controls.h) each player has the keys and the controller it names,
  * and nothing else: "bring your own device" (byod_*, below).
  */
@@ -41,7 +41,7 @@ int host_init(int headless, int want_gl) {
     headless_mode = headless;
     if (headless) return 1;
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO)) { SDL_Log("SDL_Init: %s", SDL_GetError()); return 0; }
-    byod_load();                               /* configs/controllers.cfg, if the launcher wrote one */
+    byod_load();                               /* configs/inputs.cfg, if the launcher wrote one */
     /* default window: the largest multiple of 480x272 that fits comfortably on the monitor */
     int dh = host_display_height(), mult = dh ? (dh * 3 / 4) / 272 : 2;
     if (mult < 1) mult = 1;
@@ -280,13 +280,13 @@ static void open_pad(SDL_JoystickID id) {
     SDL_CloseGamepad(g);
 }
 
-/* ---- bring your own device: configs/controllers.cfg (controls.h) ----
+/* ---- bring your own device: configs/inputs.cfg (controls.h) ----
  * Each player's keys are scancodes; its controller is found among the open ones by GUID (and which of
  * several the same), again whenever one is plugged in or out. A controller no player names does
  * nothing... unless it can be given to a player that isn't set at all (byod_assign). The left stick always counts as the d-pad for the player whose controller it is, as in the
  * automatic arrangement, and is passed on as the analogue stick. */
 extern char rt_config_dir[1024];              /* main.c: the player's configs/ ("" with --save-dir: no file is read) */
-static int byod;                              /* controllers.cfg was read */
+static int byod;                              /* inputs.cfg was read */
 static Controls ctl;
 static SDL_Scancode byod_key[CONTROLS_PLAYERS][CB_COUNT];
 static struct { int kind, code, dir; } byod_pad[CONTROLS_PLAYERS][CB_COUNT];   /* kind 1 a button, 2 an axis (dir +1 / -1) */
@@ -339,7 +339,7 @@ static void byod_assign(void) {               /* which open controller is each p
 static void byod_load(void) {
     char path[1200];
     if (!rt_config_dir[0]) return;
-    snprintf(path, sizeof path, "%s/controllers.cfg", rt_config_dir);
+    snprintf(path, sizeof path, "%s/inputs.cfg", rt_config_dir);
     if (!controls_load(&ctl, path)) {             /* none yet: player 1 the keyboard, the rest None */
         controls_defaults(&ctl);
         rt_log("controls: no %s: player 1 Keyboard (the usual keys), players 2 to 4 None", path);
@@ -456,7 +456,7 @@ void host_poll(uint32_t pads[4], uint8_t sticks[4][2]) {
         }
     }
     const bool *k = SDL_GetKeyboardState(NULL);
-    if (byod) {                               /* each player's own keys and controller (controllers.cfg) */
+    if (byod) {                               /* each player's own keys and controller (inputs.cfg) */
         for (int i = 0; i < 4; i++) { sticks[i][0] = sticks[i][1] = 128; pads[i] = byod_bits(i, k, sticks[i]); }
         return;
     }
@@ -482,7 +482,7 @@ void host_poll(uint32_t pads[4], uint8_t sticks[4][2]) {
 int host_quit_requested(void) { return quit_req; }
 int host_menu_requested(void) { int r = menu_req; menu_req = 0; return r; }   /* F2, once per press */
 /* Pad i is player i+1; player 1 also has the keyboard, so a single gamepad does not make player 2 human.
-   With controllers.cfg: the player's controller is plugged in, the player has keys of its own, or an
+   With inputs.cfg: the player's controller is plugged in, the player has keys of its own, or an
    unnamed controller was given to it (byod_assign). This is what the MODE MENU's bubbles show. */
 extern int rt_pads_replay;                 /* record.c: the pads plugged in, from a replay (-1: ask SDL) */
 int host_pad_connected(int i) {

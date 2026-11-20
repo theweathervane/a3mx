@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.100.1
+### For players
+- **Inputs:** the launcher's Inputs tab now saves to `configs/inputs.cfg` (was `controllers.cfg`). An old `controllers.cfg` is no longer read: set your players up again in the Inputs tab (a new setup starts with player 1 on the keyboard and players 2 to 4 on None). You can delete the old file.
+
+### Technical
+- `controllers.cfg` renamed `inputs.cfg` in the launcher (`controls_path`, the bug report's zip, the Paths tab text), the game (`host_sdl.c` `byod_load`), `platform/controls.h` and the docs (INPUTS.md, BUILDING.md, REPORTING_ISSUES.md). No fallback to the old name (no compatibility shims before 1.0). The launcher's summary line says "inputs default" when there is no file.
+- Checked: g++ syntax check of `launcher.cpp`; `host_sdl.c` not compiled here (a rename of a string only). Parity unaffected: the tests read no inputs file (`--save-dir`).
+
 ## 0.100.0
 The WIDE NATIVE presentation work of 0.99.x is finished. From here the minor version goes up until the decompilation is complete.
 

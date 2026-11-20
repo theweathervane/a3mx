@@ -95,7 +95,7 @@ is kept as `report_host` in `launcher.ini`), then **Open the form**. That opens 
 site with the version, your system, the disc's serial, the launcher's settings, the last run's
 renderer and frame times and the end of its console filled in (on GitHub, the fields of
 `.github/ISSUE_TEMPLATE/bug_report.yml` by id), makes `a3mx-report.zip` in the logs folder (the logs,
-`launcher.ini` and `controllers.cfg`, with the home folder's path written as `~`) and opens the
+`launcher.ini` and `inputs.cfg`, with the home folder's path written as `~`) and opens the
 folder, so the zip can be dragged into the form: no site takes a file from an address. Set
 **Logging** to INFO or DEBUG first, or the log stays empty (the window warns, and has a button for
 it). `--show report` opens the window for a screenshot. The addresses and the zip are in
