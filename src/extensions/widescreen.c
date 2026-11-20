@@ -300,7 +300,8 @@ int widescreen_widen(uint32_t sp) {
 /* ... and plain rectangles of the third object list (core/object/draw_kinds.c, kind 0) whose left and
    right edges move by this much: the win screen's pink band under the quote (type 1, 48 out each side,
    to the side columns once they move out); on the profile screen (step 1) the name plate's box (type 0,
-   48 left with the header) and the box behind the text (type 1, 48 out each side with the text box). */
+   48 left with the header) and the box behind the text (type 1, 48 out each side with the text box); on
+   the attract mode's score ranking, the box behind the first place's portrait (48 out each side). */
 void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
     *left = *right = 0;
     /* the endings (screen 1): the black sides that narrow a scene to a panel (type 1, 96 wide, at x 0
@@ -309,6 +310,13 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
         int16_t x = (int16_t)RH(ob + 6);
         if (x <= 0) *left = -48;
         if (x + 96 >= 384) *right = 48;
+        return;
+    }
+    /* the attract mode's score ranking (GAME + 0 = 4): the translucent box behind the first place's
+       portrait (type 0, 288 wide) reaches under the coloured panels at the RANKING columns, which stand 48
+       further out (widescreen_edge_shift), as on the 4:3 screen: 48 out each side */
+    if (RH(GAME) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 0 && (int16_t)RH(ob + 14) == 288) {
+        *left = -48; *right = 48;
         return;
     }
     if (RB(GAME + 2) != 2 || (RB(ob + 88) & 0x3F) != 0) return;

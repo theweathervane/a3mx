@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.99.33
+### For players
+- **WIDE NATIVE, attract mode:** on the score ranking's first place, the see-through box behind the portrait reaches under the coloured panels at the RANKING columns again, as on the 4:3 screen, instead of stopping short with a black gap at each side.
+
+### Technical
+- `widescreen_plain_adjust`: the score ranking (GAME + 0 = 4), the plain rectangle of type 0, 288 wide (translucent white, x 54 - 342): 48 out each side. The coloured panels are part of the RANKING column sprites (kind 35 types 3, 4), moved 48 out since 0.99.24, and covered the box's ends on the 4:3 screen.
+- Checked: parity (memory hashes, renderer lazy) attract_mode; wide_fight WIDE NATIVE off / on; by eye: the first place 5360 - 5680.
+
 ## 0.99.32
 ### For players
 - **WIDE NATIVE, attract mode:** on the score ranking, the score bars are longer at both ends (in their own end colours, the stepped gradient as drawn), so the ladder meets the RANKING columns at the screen's sides as it does on the 4:3 screen, for every ISM colour. The ALPHA letter tiles before the title have no black side columns once they have come in: the grid carries on round to both edges.

@@ -75,7 +75,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     curve instead of being carried on to the screen's left edge, so the frame's corner left of the box is
     see-through and the box stands clear of the left column;
   - more of the attract mode (0.99.24): the score ranking's RANKING columns at the screen's sides (0.99.32:
-    its score bars 48 longer at each end, in their end colours, so the ladder still meets them); the
+    its score bars 48 longer at each end, in their end colours, so the ladder still meets them; 0.99.33:
+    the box behind the first place's portrait 48 wider each side, under their coloured panels); the
     green and red speed-line screens behind the close-ups carried on (mirrored); on the red ones the
     STREET FIGHTER ALPHA 3 strip starts at the left side and is drawn again after itself, and the rows
     of a fighter's name get one more name at an end; the faces band behind a word is drawn again a band
