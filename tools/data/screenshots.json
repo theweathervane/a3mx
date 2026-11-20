@@ -23,7 +23,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "56c21ff376c785eb091f8160ae03c169591a43f073ce2670d66d30293721b403",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
@@ -46,7 +46,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "56c21ff376c785eb091f8160ae03c169591a43f073ce2670d66d30293721b403",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
@@ -71,7 +71,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "56c21ff376c785eb091f8160ae03c169591a43f073ce2670d66d30293721b403",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
@@ -98,7 +98,7 @@
         "tools/data/pins.json#downloads",
         "tools/data/pins.json#sources"
       ],
-      "sources_sha256": "3e43bc2d5351e9b80b894ba18c3777661c284220080e5a55f25b6ebc1bd51560",
+      "sources_sha256": "f69f5e4a0904256bf854c6e2ef34067a267a83106c9f0b00cfd28086e3507205",
       "size": [
         2000,
         1480
@@ -123,7 +123,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "56c21ff376c785eb091f8160ae03c169591a43f073ce2670d66d30293721b403",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
@@ -148,7 +148,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "56c21ff376c785eb091f8160ae03c169591a43f073ce2670d66d30293721b403",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
@@ -175,7 +175,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
@@ -200,7 +200,7 @@
         "src/platform/ext_features.h",
         "src/platform/controls.h"
       ],
-      "sources_sha256": "",
+      "sources_sha256": "d796cf32a9e3332c2960cd5400863f33178bc87df6dfcba07cc20731b889df00",
       "size": [
         2000,
         1480
