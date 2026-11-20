@@ -1,46 +1,47 @@
-# Controllers
+# Inputs
 
 ## Bring your own device (0.60.0)
 
-The launcher's **Controllers** tab sets, outside the game, which keys and which controller play each
+The launcher's **Inputs** tab sets, outside the game, which keys and which controller play each
 of the four players. The game reads it when it starts.
 
 - Pick a player (1 to 4) and its **Control Type**:
 
   | Control Type | The player plays with |
   |---|---|
-  | **Automatic** (players 2 to 4's default) | a controller no other player names, given out in the order they're plugged in (lowest waiting player first) with the usual layout; automatic player 1 also has the usual keys, unless another player has keys |
-  | **Keyboard** | only the keys set here |
+  | **Automatic** | a controller no other player names, given out in the order they're plugged in (lowest waiting player first) with the usual layout; automatic player 1 also has the usual keys, unless another player has keys |
+  | **Keyboard** (player 1's default) | only the keys set here |
   | **Controller** | only the controller chosen here, with the buttons set here; with **Any** chosen, the first controller no other player names |
-  | **Keyboard/Controller** (player 1's default) | both: the keys set here and the controller chosen here (or, with **Any**, the first one no other player names) |
-  | **None** | nothing: the player can't play |
+  | **Keyboard/Controller** | both: the keys set here and the controller chosen here (or, with **Any**, the first one no other player names) |
+  | **None** (players 2 to 4's default) | nothing: the player can't play |
 
 - **Controller:** choose one of the controllers plugged in, or **Any (the first free one)**: the first
   controller plugged in that no player has chosen, with the buttons set here. A controller belongs to
   one player; choosing it for another takes it from the first. The first time, its buttons get the
   usual layout, which you can change.
-- Click a cell and press the key or button for it (Esc cancels). **x** unsets it. A stick or trigger
+- Click a cell and press the key or button for it (Esc cancels). The orange **X** unsets it. A stick or trigger
   can be a button too. The left stick always works as the d-pad as well. **Default keys** /
   **Default buttons** put the usual layout back.
-- **Pad icon** shows the player's numbered bubble, as on the MODE MENU's bar; every type but None
-  shows it.
+- **Current**, at the top of the tab, shows the four bubbles the MODE MENU would show now, with the
+  controllers plugged in now (a faded one would not show).
+- **Pad icon**, under **Configuration**, shows the chosen player's numbered bubble, as on the MODE
+  MENU's bar; a player set to None shows a greyed-out **0** instead.
 - **Test** shows the pad icon beside each button while it is held, by a key or by the controller.
   Nothing is sent to the game.
 
-**The default (0.72.1):** player 1 is Keyboard/Controller with the usual keys and **Any**
-controller, players 2 to 4 Automatic. The keyboard and the first controller plugged in share player
-1's slot, the next controllers are players 2 to 4; with no controller plugged in player 1 has just
-the keys. Some gaming keyboards also show up as a controller (the launcher lists it under
-**Controller**): if one is plugged in first it is the first free controller, so choose your pad for
-player 1 instead of **Any**.
+**The default (0.100.0):** player 1 is Keyboard with the usual keys, players 2 to 4 None. Nothing
+is assumed about controllers: set up each player yourself (keyboard, controller or both), so input
+mappers and overlays (reWASD, Steam Input) get only what you chose. Changing a player to Controller or
+Keyboard/Controller gives it the usual buttons to start from. (From 0.72.1 to 0.99.x player 1 was
+Keyboard/Controller with **Any** controller and players 2 to 4 Automatic.)
 
 All four players Automatic is the arrangement the game always had: the keyboard and the first
 controller are player 1, the next controllers players 2 to 4. Mixing works too: player 1 on the
 keyboard, player 3 on a chosen controller, 2 and 4 Automatic, and the next controller plugged in is
-player 2, then player 4. Two players can't share a key.
+player 2, then player 4. Players may share a key if they want to: nothing stops it.
 
 The tab writes `configs/controllers.cfg` in your a3mx folder ([SAVES.md](SAVES.md)), one `type=` per
-player; with no file player 1 is Keyboard/Controller and the rest Automatic, as above. A file you
+player; with no file player 1 is Keyboard and the rest None, as above. A file you
 already have keeps what it says (a player 1 set to Automatic stays Automatic). A file from before the control types is read as
 Keyboard, Controller or Keyboard/Controller from what it sets. In the game a player counts as plugged
 in (its bubble, joining in as a human) while it can play: it has keys, or its controller is plugged

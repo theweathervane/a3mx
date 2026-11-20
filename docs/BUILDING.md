@@ -72,7 +72,7 @@ shortcut unless you ask. Nothing compiled is committed to the repository.
 | **Paths** | **Your ISO**, typed or picked with **Browse...** (empty: the US one in `imports/psp/`), with the disc's flag from its program's checksum; only the US disc builds. The folders for **Saves**, **Configs**, **Logs** and the **Build tools**: each can be typed or browsed for, **Open** shows it, and **Defaults** puts every path back. They're kept in `launcher.ini`; changing a folder doesn't move what was in the old one. **Create a Desktop shortcut** / **Start menu shortcut** make one only when pressed. ![Paths](images/launcher-paths.png) |
 | **Dependencies** | **Check build dependencies** lists what the build needs on this system (from `tools/data/pins.json`) with a green tick for each one that is here (on Linux, also pkg-config and the window and sound
 libraries, which come from your package manager). Anything missing is listed with its address, its SHA-256 and the folder it goes into, and nothing is downloaded until you press **I agree** (asked again only if the pinned list changes). Run or Build with something missing sends you here first. The FILTER setting's shaders are a separate button, only if you want them. ![Dependencies](images/launcher-dependencies.png) |
-| **Controllers** | Bring your own device: for each of four players a **Control Type** (Automatic, Keyboard, Controller, Keyboard/Controller, None), the keys and controller buttons, the pad icon, and **Test**, which shows the pad icon beside each button pressed ([CONTROLLERS.md](CONTROLLERS.md)). ![Controllers](images/launcher-controllers.png) |
+| **Inputs** | Bring your own device: **Current** (the MODE MENU's bubbles now), then under **Configuration** for each of four players the pad icon, a **Control Type** (Keyboard, Controller, Keyboard/Controller, None, Automatic; player 1 Keyboard and the rest None to start), the keys and controller buttons, and **Test**, which shows the pad icon beside each button pressed ([INPUTS.md](INPUTS.md)). ![Inputs](images/launcher-inputs.png) |
 | **Extensions** | Every extension on its own switch (`--features`, [below](#without-the-extensions)); all off is the PSP game as it was. Widescreen and Stage Extensions (Custom Assets before 0.60.0) are here. ![Extensions](images/launcher-extensions.png) |
 | **Build / Run** | the preset (Release / Debug), Extract the disc again (`--extract`), Run the tests (`--test`), Run after building; Full screen, Logging (`--log-level`), Renderer, Resolution (`--scale`), GPU, extra options. **Run** builds what changed and starts the game (F5); unchecked **Run after building**, it says **Build**. **Stop** ends a build or a download. |
 | **Console** | at the bottom on every tab: `build.py`'s and the game's output as it comes, whichever tab started it. Drag the bar above it to resize. Everything is also written to `logs/launcher.log` (the previous session's is `launcher.log.1`). **Log folder**, **Copy** and **Clear** are in the bottom right corner. |
@@ -104,7 +104,7 @@ it). `--show report` opens the window for a screenshot. The addresses and the zi
 ### Testing the launcher
 
 `a3mx-launcher --settings FILE` uses another settings file, `--user-dir DIR` another a3mx folder,
-`--theme light|dark` overrides the system's setting, `--tab paths|dependencies|controllers|extensions|run`
+`--theme light|dark` overrides the system's setting, `--tab paths|dependencies|inputs|extensions|run`
 opens on that tab, `--show options|about` opens that window, `--autostart` presses the button once, and
 `--screenshot OUT.bmp --frames N` saves the window after N frames and quits (stopping what it
 started). The screenshots here were made that way (without a screen on Linux: `SDL_VIDEODRIVER=offscreen`).
@@ -116,7 +116,7 @@ with what it shows and the source files it depends on, and is taken by the launc
 (`--screenshot`), so it can be taken again exactly: [launcher-dark.png](images/launcher-dark.png) and
 [launcher-light.png](images/launcher-light.png) (Build / Run, default settings), and one of each other
 tab ([paths](images/launcher-paths.png), [dependencies](images/launcher-dependencies.png),
-[controllers](images/launcher-controllers.png), [extensions](images/launcher-extensions.png)).
+[inputs](images/launcher-inputs.png), [extensions](images/launcher-extensions.png)).
 
 - `python tools/screenshots.py` takes every one, or `python tools/screenshots.py ID` one of them; it
   turns the launcher's BMPs into PNGs and records a hash of their sources.

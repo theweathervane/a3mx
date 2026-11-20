@@ -9,7 +9,7 @@
  *   d-pad or left stick = directions, start/back = start/select.
  *
  * That is the automatic arrangement, used when there is no configs/controllers.cfg. With one (written
- * by the launcher's Controllers tab: controls.h) each player has the keys and the controller it names,
+ * by the launcher's Inputs tab: controls.h) each player has the keys and the controller it names,
  * and nothing else: "bring your own device" (byod_*, below).
  */
 #ifdef A3MX_SDL
@@ -340,9 +340,9 @@ static void byod_load(void) {
     char path[1200];
     if (!rt_config_dir[0]) return;
     snprintf(path, sizeof path, "%s/controllers.cfg", rt_config_dir);
-    if (!controls_load(&ctl, path)) {             /* none yet: player 1 the keyboard and the first controller, the rest automatic */
+    if (!controls_load(&ctl, path)) {             /* none yet: player 1 the keyboard, the rest None */
         controls_defaults(&ctl);
-        rt_log("controls: no %s: player 1 Keyboard/Controller (the usual keys and the first controller), players 2 to 4 automatic (the next controllers)", path);
+        rt_log("controls: no %s: player 1 Keyboard (the usual keys), players 2 to 4 None", path);
     }
     byod = 1;
     for (int k = 0; k < CONTROLS_PLAYERS; k++) {

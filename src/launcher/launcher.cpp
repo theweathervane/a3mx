@@ -10,7 +10,7 @@
  *   Dependencies what the build needs, each with a green tick when it is here (deps.cpp, from
  *                tools/data/pins.json). Anything missing is listed with where it comes from, its
  *                SHA-256 and where it goes, and is downloaded only after you agree
- *   Controllers  bring your own device: for each of four players, keyboard keys and a controller with
+ *   Inputs       bring your own device: for each of four players, keyboard keys and a controller with
  *                its buttons, and Test (configs/controllers.cfg, read by the game when it starts)
  *   Extensions   every extension as a feature of its own (src/platform/ext_features.h): all off is the
  *                PSP game as it was. Widescreen and Stage Extensions are here
@@ -222,9 +222,9 @@ static const RendererChoice RENDERERS[] = {
 #endif
 };
 static const int N_RENDERERS = (int)(sizeof RENDERERS / sizeof RENDERERS[0]);
-enum { T_PATHS, T_DEPS, T_CONTROLLERS, T_EXTENSIONS, T_RUN, T_COUNT };
-static const char *const TAB_NAMES[T_COUNT] = { "Paths", "Dependencies", "Controllers", "Extensions", "Build / Run" };
-static const char *const TAB_ARGS[T_COUNT] = { "paths", "dependencies", "controllers", "extensions", "run" };
+enum { T_PATHS, T_DEPS, T_INPUTS, T_EXTENSIONS, T_RUN, T_COUNT };
+static const char *const TAB_NAMES[T_COUNT] = { "Paths", "Dependencies", "Inputs", "Extensions", "Build / Run" };
+static const char *const TAB_ARGS[T_COUNT] = { "paths", "dependencies", "inputs", "extensions", "run" };
 static const char *const SCALES[]     = { "Auto", "1x (480x272)", "2x (960x544)", "3x (1440x816)", "4x (1920x1088)",
                                           "5x (2400x1360)", "6x (2880x1632)", "7x (3360x1904)", "8x (3840x2176)" };
 enum { THEME_AUTO, THEME_LIGHT, THEME_DARK };   /* always the system's; --theme forces one for screenshots */
@@ -450,7 +450,7 @@ struct App {
     std::string user_root;          /* your a3mx folder (userdir.h): saves/, configs/, logs/, launcher/ */
     int user_kind = 0;              /* 1 the system's folder, 2 beside the game (the system's can't be written), 0 neither */
     SDL_Texture *logo = NULL; int logo_w = 0, logo_h = 0;
-    SDL_Texture *bubble[4] = {};    /* the MODE MENU's player bubbles, the game's own pixels (padicon_art.h) */
+    SDL_Texture *bubble[5] = {};    /* the MODE MENU's player bubbles, the game's own pixels (padicon_art.h), and the grey (0) for None */
     /* Dependencies */
     std::vector<Dep> deps; std::string deps_err; bool deps_checked = false;
     enum { RUN_GAME, RUN_TOOLS } running = RUN_GAME;   /* what the child is: a build / the game, or the tools download */
@@ -1837,7 +1837,7 @@ struct App {
         ImGui::PopTextWrapPos();
     }
 
-    /* ================================================================ Controllers (bring your own device) */
+    /* ================================================================ Inputs (bring your own device) */
     void pads_refresh() {                                 /* the controllers plugged in now, each with its GUID and which of its kind */
         for (Pad &p : pads) if (p.g) SDL_CloseGamepad(p.g);
         pads.clear();
@@ -1860,7 +1860,7 @@ struct App {
     void bubble_image(int k, float size, float alpha) {
         int n = (int)(size / PADICON_SIZE + 0.5f);
         size = (float)(PADICON_SIZE * (n < 1 ? 1 : n));
-        if (k < 0 || k > 3 || !bubble[k]) { ImGui::Dummy(ImVec2(size, size)); return; }
+        if (k < 0 || k > PADICON_NONE || !bubble[k]) { ImGui::Dummy(ImVec2(size, size)); return; }
         ImGui::ImageWithBg((ImTextureID)(intptr_t)bubble[k], ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, alpha));
     }
     /* Which bubbles the MODE MENU would show with the controllers plugged in now: as the game decides
@@ -1890,8 +1890,8 @@ struct App {
     }
     void controls_changed() {                             /* any change writes the file: from then on the game goes by it */
         SDL_CreateDirectory(user_dir("configs").c_str());
-        if (controls_save(&ctl, controls_path().c_str())) { if (!ctl_file) console.note("Controllers: saved to " + controls_path() + ". The game now goes by it.", K_NOTE); ctl_file = true; }
-        else console.note("Controllers: could not write " + controls_path(), K_ERROR);
+        if (controls_save(&ctl, controls_path().c_str())) { if (!ctl_file) console.note("Inputs: saved to " + controls_path() + ". The game now goes by it.", K_NOTE); ctl_file = true; }
+        else console.note("Inputs: could not write " + controls_path(), K_ERROR);
     }
     /* a key or a controller button arrived while a cell was waiting for one (main()'s event loop) */
     bool capture_event(const SDL_Event &e) {
@@ -1955,22 +1955,42 @@ struct App {
         if (!strncmp(s, "a:", 2)) return std::string(s + 2);
         return s;
     }
-    void controllers_tab(bool busy) {
+    void inputs_tab(bool busy) {
         const float em = ImGui::GetFontSize();
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
-        ImGui::TextDisabled("Choose how each player plays. Automatic (the default) is what the game always did: controllers go to the "
-                            "automatic players in the order they're plugged in, and player 1 also has the keyboard. Read when the game starts.");
+        const float lw = em * 7.0f;
+        /* Current: which bubbles the MODE MENU would show now, with the controllers plugged in now */
+        bool shown_now[CONTROLS_PLAYERS];
+        menu_bubbles(shown_now);
+        label("Current", lw);
+        for (int k = 0; k < CONTROLS_PLAYERS; k++) {
+            if (k) ImGui::SameLine(0, em * 0.35f);
+            bubble_image(k, PADICON_SIZE * 2 * scale, shown_now[k] ? 1.0f : 0.2f);
+            ImGui::SetItemTooltip(shown_now[k] ? "Player %d's icon would show on the MODE MENU now" : "Player %d's icon would not show now", k + 1);
+        }
+        ImGui::Spacing();
+        ImGui::TextDisabled("Choose how each player plays. A new setup has player 1 on the keyboard and players 2 to 4 set to None: "
+                            "give each player the keyboard, a controller or both, so input mappers and overlays get only what you chose. "
+                            "Read when the game starts.");
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
+        ImGui::SeparatorText("Configuration");
         ImGui::BeginDisabled(busy && game_running);
+        {   /* the pad icon: the bubble the MODE MENU shows for this player, or the grey (0) for None */
+            const bool none = ctl.p[ctl_player].type == CT_NONE;
+            label("Pad icon", lw);
+            bubble_image(none ? PADICON_NONE : ctl_player, PADICON_SIZE * scale, none ? 0.5f : 1.0f);
+            ImGui::SetItemTooltip(none ? "None: no icon on the MODE MENU, and this player can't play"
+                                       : "This player's icon on the MODE MENU (every type but None)");
+        }
+
         for (int k = 0; k < CONTROLS_PLAYERS; k++) {           /* which player is shown */
             if (k) ImGui::SameLine();
             char lbl[48]; snprintf(lbl, sizeof lbl, "Player %d", k + 1);
             if (ImGui::RadioButton(lbl, ctl_player == k)) { ctl_player = k; cap_player = -1; }
         }
-        ControlsPlayer &p = ctl.p[ctl_player];
+        ControlsPlayer &p = ctl.p[ctl_player];                 /* (a radio may have changed the player) */
         const Pad *mine = player_pad(ctl_player);
-        const float lw = em * 7.0f;
 
         /* the control type: what plays this player */
         static const int TYPE_ORDER[CT_COUNT] = { CT_KEYBOARD, CT_CONTROLLER, CT_BOTH, CT_NONE, CT_AUTO };   /* as listed */
@@ -1984,13 +2004,17 @@ struct App {
                     for (int b = 0; b < CB_COUNT; b++) if (p.key[b][0]) any = true;
                     if (controls_uses_keys(&p) && !any && ctl_player == 0)        /* player 1's first keys: the usual ones */
                         for (int b = 0; b < CB_COUNT; b++) snprintf(p.key[b], sizeof p.key[b], "%s", CONTROL_DEFAULT_KEYS[b]);
+                    bool any_pad = false;                                          /* a controller's first buttons: the usual layout */
+                    for (int b = 0; b < CB_COUNT; b++) if (p.pad[b][0]) any_pad = true;
+                    if (controls_uses_pad(&p) && !any_pad)
+                        for (int b = 0; b < CB_COUNT; b++) snprintf(p.pad[b], sizeof p.pad[b], "%s", CONTROL_DEFAULT_PAD[b]);
                     cap_player = -1;
                     controls_changed();
                 }
             ImGui::EndCombo();
         }
-        ImGui::SetItemTooltip("Keyboard: the keys below.  Controller: the controller and buttons below.\n"
-                              "Keyboard/Controller: both (player 1's default).  None: this player can't play.\n"
+        ImGui::SetItemTooltip("Keyboard: the keys below (player 1's default).  Controller: the controller and buttons below.\n"
+                              "Keyboard/Controller: both.  None: this player can't play (players 2 to 4's default).\n"
                               "Automatic: a controller no player names, in the order they're plugged in (player 1 also has the usual keys).");
         ImGui::SameLine();
         ImGui::BeginDisabled(p.type == CT_NONE);
@@ -2035,29 +2059,6 @@ struct App {
         }
         ImGui::EndDisabled();
 
-        /* the pad icon: the bubble the MODE MENU shows for this player (every type but None), and which it would show now */
-        label("Pad icon", lw);
-        bool shown_now[CONTROLS_PLAYERS];
-        menu_bubbles(shown_now);
-        if (p.type == CT_NONE) ImGui::Dummy(ImVec2(PADICON_SIZE * 2 * scale, PADICON_SIZE * 2 * scale));
-        else bubble_image(ctl_player, PADICON_SIZE * 2 * scale, 1.0f);
-        ImGui::SameLine();
-        ImGui::AlignTextToFramePadding();
-        switch (p.type) {
-        case CT_NONE: ImGui::TextDisabled("None: no icon, and this player can't play"); break;
-        case CT_AUTO: ImGui::TextDisabled(ctl_player == 0 && controls_auto_keys(&ctl, 0) ? "On the MODE MENU: always (it has the usual keys)"
-                                                                                          : "On the MODE MENU while a controller is given to it"); break;
-        case CT_CONTROLLER: ImGui::TextDisabled("On the MODE MENU while its controller is plugged in"); break;
-        default: ImGui::TextDisabled("On the MODE MENU: always (this player has keys)"); break;
-        }
-        ImGui::SameLine(0, em * 1.5f);
-        ImGui::TextDisabled("Now:");
-        for (int k = 0; k < CONTROLS_PLAYERS; k++) {
-            ImGui::SameLine(0, em * 0.25f);
-            bubble_image(k, PADICON_SIZE * scale, shown_now[k] ? 1.0f : 0.2f);
-            ImGui::SetItemTooltip(shown_now[k] ? "Player %d's icon would show on the MODE MENU now" : "Player %d's icon would not show now", k + 1);
-        }
-
         /* the buttons: a key and a controller button for each, where the type uses them */
         const bool use_keys = controls_uses_keys(&p), use_pad = controls_uses_pad(&p);
         if (ImGui::BeginTable("map", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY,
@@ -2094,7 +2095,16 @@ struct App {
                     if ((!cur[0] || !used) && !waiting) ImGui::PopStyleColor();
                     if (waiting) ImGui::PopStyleColor();
                     ImGui::SameLine();
-                    if (ImGui::SmallButton("x") && cur[0]) { if (col == 0) p.key[b][0] = 0; else p.pad[b][0] = 0; controls_changed(); }
+                    {   /* unset: a white X on the radio buttons' orange */
+                        const ImVec4 o = ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+                        ImGui::PushStyleColor(ImGuiCol_Button, o);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(std::min(1.0f, o.x + 0.08f), std::min(1.0f, o.y + 0.10f), std::min(1.0f, o.z + 0.08f), 1));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(o.x * 0.85f, o.y * 0.85f, o.z * 0.85f, 1));
+                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
+                        bool hit = ImGui::SmallButton("X");
+                        ImGui::PopStyleColor(4);
+                        if (hit && cur[0]) { if (col == 0) p.key[b][0] = 0; else p.pad[b][0] = 0; controls_changed(); }
+                    }
                     ImGui::SetItemTooltip("Unset");
                     ImGui::EndDisabled();
                     ImGui::PopID();
@@ -2105,7 +2115,7 @@ struct App {
         ImGui::BeginDisabled(!use_keys);
         if (ImGui::Button("Default keys")) { for (int b = 0; b < CB_COUNT; b++) snprintf(p.key[b], sizeof p.key[b], "%s", CONTROL_DEFAULT_KEYS[b]); controls_changed(); }
         ImGui::EndDisabled();
-        ImGui::SetItemTooltip("Arrows, Z X A S, Q W, E R, Enter, Backspace. Two players can't share a key: give the second their own.");
+        ImGui::SetItemTooltip("Arrows, Z X A S, Q W, E R, Enter, Backspace.");
         ImGui::SameLine();
         ImGui::BeginDisabled(!use_pad || !p.pad_guid[0]);
         if (ImGui::Button("Default buttons")) { for (int b = 0; b < CB_COUNT; b++) snprintf(p.pad[b], sizeof p.pad[b], "%s", CONTROL_DEFAULT_PAD[b]); controls_changed(); }
@@ -2414,7 +2424,7 @@ struct App {
         switch (set.tab) {
         case T_PATHS: paths_tab(busy); break;
         case T_DEPS: deps_tab(busy); break;
-        case T_CONTROLLERS: controllers_tab(busy); break;
+        case T_INPUTS: inputs_tab(busy); break;
         case T_EXTENSIONS: extensions_tab(busy); break;
         default: run_tab(busy); break;
         }
@@ -2630,7 +2640,7 @@ int main(int argc, char **argv) {
             png_free(&img);
         }
     }
-    for (int k = 0; k < 4; k++) {         /* the player bubbles, from the same pixels as the game's */
+    for (int k = 0; k <= PADICON_NONE; k++) {   /* the player bubbles, from the same pixels as the game's, and None's (0) */
         uint32_t px[PADICON_SIZE][PADICON_SIZE], rgba[PADICON_SIZE * PADICON_SIZE];
         padicon_bubble(k, px);
         for (int y = 0; y < PADICON_SIZE; y++) for (int x = 0; x < PADICON_SIZE; x++) {
@@ -2670,7 +2680,7 @@ int main(int argc, char **argv) {
             had_events = true;
             do {
                 if (e.type == SDL_EVENT_GAMEPAD_ADDED || e.type == SDL_EVENT_GAMEPAD_REMOVED) { app.pads_refresh(); had_input = true; }
-                if (app.capture_event(e)) { had_input = true; continue; }     /* a key or button for the Controllers tab: not ImGui's */
+                if (app.capture_event(e)) { had_input = true; continue; }     /* a key or button for the Inputs tab: not ImGui's */
                 ImGui_ImplSDL3_ProcessEvent(&e);
                 switch (e.type) {           /* the person using the launcher, not the game covering it */
                 case SDL_EVENT_KEY_DOWN: case SDL_EVENT_KEY_UP: case SDL_EVENT_TEXT_INPUT: case SDL_EVENT_MOUSE_MOTION:

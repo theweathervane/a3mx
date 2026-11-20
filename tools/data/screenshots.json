@@ -101,16 +101,16 @@
       ]
     },
     {
-      "id": "launcher-controllers",
-      "image": "docs/images/launcher-controllers.png",
-      "shows": "the launcher's Controllers tab, nothing set up yet",
+      "id": "launcher-inputs",
+      "image": "docs/images/launcher-inputs.png",
+      "shows": "the launcher's Inputs tab, nothing set up yet",
       "take": {
         "program": "launcher",
         "args": [
           "--theme",
           "dark",
           "--tab",
-          "controllers"
+          "inputs"
         ]
       },
       "sources": [
