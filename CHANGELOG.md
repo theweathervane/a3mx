@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.99.32
+### For players
+- **WIDE NATIVE, attract mode:** on the score ranking, the score bars are longer at both ends (in their own end colours, the stepped gradient as drawn), so the ladder meets the RANKING columns at the screen's sides as it does on the 4:3 screen, for every ISM colour. The ALPHA letter tiles before the title have no black side columns once they have come in: the grid carries on round to both edges.
+
+### Technical
+- `object/sprite_grid.c` `sprite_grid_bar_ends`: the first cell (left cap) moved left, the last (right cap) right, the gaps filled with the second cell's first texel column and the next-to-last cell's last, stretched. Set by drawer 3 (`object/sprite_drawers.c`) from `widescreen_bar_ends` (GAME + 0 = 4, kind 35 type 9: 48).
+- Drawer 1: `widescreen_column_copies` (GAME + 0 = 5, kind 125 type 9, ten columns of letter tiles): once the leftmost column is within two spacings of the left side, the last two columns are drawn again before the first and the first two after the last, at the spacing of the end they join. The first attract cycle's scattered tiles are unchanged (pixel-identical).
+- Stand-ins for both in `platform/extensions_off.c`.
+- Checked: parity (memory hashes, renderer lazy) attract_mode, arcade_fight; wide_fight WIDE NATIVE off / on; by eye: the ranking in X-, A- and V-ISM colours, the ALPHA tiles 11558 - 11576.
+
 ## 0.99.31
 ### For players
 - **WIDE NATIVE, attract mode:** the scene that goes from Ryu under the clouds up to M. Bison fills the screen: the clouds, the red behind M. Bison, M. Bison and the eagle above him are drawn larger (1.25 times, as Akuma's screens are), instead of the black sides 0.99.29 put back. Ryu stays his own size.

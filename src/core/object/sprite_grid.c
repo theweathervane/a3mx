@@ -164,8 +164,33 @@ int sprite_grid_half;
 #define PICTURE_W 384
 
 int sprite_grid_margins_only;   /* WIDE NATIVE: a pass that draws only what goes into the margins */
+/* WIDE NATIVE: set by a sprite drawer for a bar with a cap at each end (the attract mode's score ranking):
+   the first cell (its left cap) moved this many pixels left, the last (its right cap) as many right, and
+   the gaps filled with the second cell's first texel column and the next-to-last cell's last, stretched
+   (the bar's plain colour at each end), so the bar is longer by twice this and its middle, the stepped
+   gradient, is as drawn. Only for a picture drawn the right way round. */
+int sprite_grid_bar_ends;
+static void bar_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
+    int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), d = sprite_grid_bar_ends;
+    int16_t keep[4][2];
+    for (int i = 0; i < 4; i++) { keep[i][0] = S16(v + 16 * i); keep[i][1] = S16(v + 16 * i + 6); }
+    int32_t x0 = keep[0][0], x1 = keep[2][0], u0 = keep[0][1], u1 = keep[2][1];
+    if (x1 <= x0 || u1 <= u0 || cols < 4) { CALL5(f_089E1950, v, 4, flags, blend, effect); return; }
+    if (col == 1 || col == cols - 2) {                     /* the gap: one texel column stretched */
+        int32_t u = col == 1 ? u0 : u1 - 1, a = col == 1 ? x0 - d : x1, b = col == 1 ? x0 : x1 + d;
+        SET16(v + 0, a); SET16(v + 16, a); SET16(v + 32, b); SET16(v + 48, b);
+        for (int i = 0; i < 4; i++) SET16(v + 16 * i + 6, i < 2 ? u : u + 1);
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+        for (int i = 0; i < 4; i++) { SET16(v + 16 * i, keep[i][0]); SET16(v + 16 * i + 6, keep[i][1]); }
+    }
+    int32_t shift = col == 0 ? -d : col == cols - 1 ? d : 0;
+    for (int i = 0; i < 4; i++) SET16(v + 16 * i, keep[i][0] + shift);
+    CALL5(f_089E1950, v, 4, flags, blend, effect);
+    for (int i = 0; i < 4; i++) SET16(v + 16 * i, keep[i][0]);
+}
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
     if (sprite_grid_margins_only) return;
+    if (sprite_grid_bar_ends) { bar_cell(c, ds, v, cols, flags, blend, effect); return; }
     if (sprite_grid_half) {
         int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), split = cols / 2;
         int16_t keep[4][2];

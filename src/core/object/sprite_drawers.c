@@ -44,6 +44,9 @@ extern int sprite_grid_half;   /* sprite_grid.c */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
 extern int sprite_grid_scale_all;                                  /* sprite_grid.c */
 int widescreen_oversize(gaddr sp);                                 /* extensions/widescreen.c */
+int widescreen_column_copies(gaddr sp, int dx[2]);                 /* extensions/widescreen.c */
+int widescreen_bar_ends(gaddr sp);                                 /* extensions/widescreen.c */
+extern int sprite_grid_bar_ends;                                   /* sprite_grid.c */
 void f_0880E150(Cpu *c);   /* a sprite's picture drawn as a grid of cells (a0 draw state, a1 sprite, a2 picture, a3 list, t0 flag) */
 
 #define PICTURE_LISTS 0x08E75AD8u   /* u32[]: picture lists by the sprite's +86 */
@@ -188,8 +191,24 @@ static void draw_one_84(Cpu *c, gaddr ds, gaddr sp) {
     if (frame & 0x8000) return;
     gaddr list = sprite_list(sp);
     sprite_grid_half = rt_widescreen && widescreen_widen(sp);   /* WIDE NATIVE: widened (sprite_grid.c) */
+    sprite_grid_bar_ends = rt_widescreen ? widescreen_bar_ends(sp) : 0;   /* WIDE NATIVE: a longer bar (sprite_grid.c) */
     draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);
     sprite_grid_half = 0;
+    sprite_grid_bar_ends = 0;
+}
+
+/* WIDE NATIVE: a column of pieces (the ALPHA tiles before the title, widescreen_column_copies) drawn
+   again moved by dx, unless that is well off the screen */
+static void wide_column_copy(Cpu *c, gaddr ds, gaddr sp, gaddr list, gaddr first, gaddr last, int32_t dx) {
+    int32_t x = S16(ds + DS_POS_X) + S16(first) + dx;
+    if (x < -160 || x >= 520) return;                     /* well off the screen (this screen's x is not the 4:3 picture's) */
+    for (gaddr e = last; e >= first; e -= 6) {
+        uint32_t p = *H(e + 4);
+        if (p & PIECE_SKIP) continue;
+        *H(ds + DS_X) = (uint16_t)(S16(ds + DS_POS_X) + S16(e) + dx);
+        *H(ds + DS_Y) = (uint16_t)(S16(ds + DS_POS_Y) + S16(e + 2));
+        draw_picture(c, ds, sp, list + (p & 0x7FFF) * 12u, list, 0);
+    }
 }
 
 static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table);
@@ -215,6 +234,8 @@ static void draw_pieces_from(Cpu *c, gaddr ds, gaddr sp, gaddr table) {
     if (row == 1) wide_row_end(c, ds, sp, list, first, last, 0);
     if (row == 2) wide_count_left(c, ds, sp, list, first, last);
     if (row == 3) wide_row_wrap(c, ds, sp, list, first, last);
+    int dx[2], copies = rt_widescreen ? widescreen_column_copies(sp, dx) : 0;
+    for (int k = 0; k < copies; k++) wide_column_copy(c, ds, sp, list, first, last, dx[k]);
 }
 
 static void draw_ghosted(Cpu *c, gaddr ds, gaddr sp) {

@@ -74,7 +74,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
   - the profile screen's text box (0.99.28): the dark blue box behind the text stops at the frame's red
     curve instead of being carried on to the screen's left edge, so the frame's corner left of the box is
     see-through and the box stands clear of the left column;
-  - more of the attract mode (0.99.24): the score ranking's RANKING columns at the screen's sides; the
+  - more of the attract mode (0.99.24): the score ranking's RANKING columns at the screen's sides (0.99.32:
+    its score bars 48 longer at each end, in their end colours, so the ladder still meets them); the
     green and red speed-line screens behind the close-ups carried on (mirrored); on the red ones the
     STREET FIGHTER ALPHA 3 strip starts at the left side and is drawn again after itself, and the rows
     of a fighter's name get one more name at an end; the faces band behind a word is drawn again a band
@@ -90,6 +91,8 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     is not carried on (0.99.29: it showed the wrong parts of the map at the sides) but its backdrop,
     M. Bison's layer and the eagle are drawn 1.25 times over-sized about the screen's middle (0.99.31),
     so the clouds and M. Bison fill the screen; Ryu, in front, stays as drawn;
+  - the ALPHA letter tiles before the title (0.99.32): once in, the grid's last two columns are drawn
+    again before its first and its first two after its last, so it reaches both sides;
   - the attract mode's Akuma screens (0.99.29): the blue swirl behind his back and the burst behind the
     red kanji are drawn whole 1.25 times over-sized about the screen's middle, as the super finish's
     swirl and burst are (`widescreen_oversize`);

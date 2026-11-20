@@ -251,6 +251,37 @@ int widescreen_edge_row(uint32_t sp) {
     return (kind == 1 && type == 4) || (kind == 0 && type == 3);
 }
 
+/* ... and bars drawn longer at both ends (core/object/sprite_drawers.c drawer 3, sprite_grid.c): the
+   attract mode's score ranking (GAME + 0 = 4), its score bars (kind 35 type 9), 48 pixels more at each end
+   in their plain colours, as its RANKING columns stand 48 further out (widescreen_edge_shift), so the
+   ladder meets them as on the 4:3 screen (the answer: the pixels at each end, 0 none) */
+int widescreen_bar_ends(uint32_t sp) {
+    return RH(GAME) == 4 && RB(sp + 2) == 35 && RB(sp + 3) == 9 ? 48 : 0;
+}
+
+/* ... and the ALPHA letter tiles before the title (GAME + 0 = 5; kind 125 type 9, drawer 1: ten columns of
+   seven tiles, each column a sprite, ~41 pixels apart, sliding in from the right and closing up into a
+   grid that narrows): once the leftmost is within two columns' spacing of the left side, the
+   grid carries on round: the last two columns are drawn again before the first, the first two after the
+   last, at the spacing of the end they join, so the 16:9 screen has no black side columns. The answer:
+   how many copies of this column (0 - 2) and their moves in pixels (dx). */
+int widescreen_column_copies(uint32_t sp, int dx[2]) {
+    if (RH(GAME) != 5 || RB(sp + 2) != 125 || RB(sp + 3) != 9) return 0;
+    int xs[32], n = 0, me = units_x(sp);
+    for (uint32_t o = 0x09512770u; o < 0x09512770u + 32u * 0xC0u && n < 32; o += 0xC0u)
+        if (RB(o) && RB(o + 1) && RB(o + 2) == 125 && RB(o + 3) == 9) xs[n++] = units_x(o);
+    if (n < 4) return 0;
+    for (int i = 1; i < n; i++) for (int j = i; j > 0 && xs[j] < xs[j - 1]; j--) { int t = xs[j]; xs[j] = xs[j - 1]; xs[j - 1] = t; }
+    int step_l = xs[1] - xs[0], step_r = xs[n - 1] - xs[n - 2];
+    if (step_l <= 0 || step_r <= 0 || xs[0] > 2 * step_l) return 0;   /* still sliding in */
+    int k = 0;
+    if (me == xs[n - 1]) dx[k++] = xs[0] - step_l - me;           /* before the first */
+    if (me == xs[n - 2]) dx[k++] = xs[0] - 2 * step_l - me;
+    if (me == xs[0]) dx[k++] = xs[n - 1] + step_r - me;           /* after the last */
+    if (me == xs[1]) dx[k++] = xs[n - 1] + 2 * step_r - me;
+    return k > 2 ? 2 : k;
+}
+
 /* ... and the map screen's beam (GAME + 2 = 2, step 1; kind 19 type 2, drawer 0, on anchor 3): a wedge
    from the map's middle toward the next stage, cut where its picture ends; sprite_drawers.c draws scaled
    copies behind it so it carries on to the screen's sides. */
