@@ -67,7 +67,7 @@ It is mirrored to **GitHub** ([github.com/theweathervane/a3mx](https://github.co
 **Gitea** ([gitea.com/theweathervane/a3mx](https://gitea.com/theweathervane/a3mx)), kept up to date from GitLab.
 
 You can open an issue on whichever of the three you have an account on: they are all read and handled.
-The easiest way is the launcher's **bug** button, which lets you choose the site, fills the report in and
+The easiest way is **Report a bug** on the launcher's **About** tab, which lets you choose the site, fills the report in and
 gathers your logs into one file to attach. See [docs/REPORTING_ISSUES.md](docs/REPORTING_ISSUES.md).
 
 ## Documentation

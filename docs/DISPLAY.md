@@ -6,6 +6,7 @@ frame for frame whatever you choose. They only change when you *see* each frame.
 
 | Setting | Values | Default | In `configs/a3mx.cfg` (`[screen setting]`) |
 |---|---|---|---|
+| SCREEN SIZE | NORMAL, WIDE, WIDE NATIVE ([WIDESCREEN.md](WIDESCREEN.md)) | WIDE NATIVE | `screen_size=WIDE NATIVE` |
 | VSYNC | ON, OFF | ON | `vsync=ON` |
 | FRAME TIMING | AUTO, SMOOTH, ORIGINAL | AUTO | `frame_timing=AUTO` |
 | FILTER | OFF and eleven shaders ([below](#filter)) | OFF | `filter=OFF` |

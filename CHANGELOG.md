@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.102.5
+### Release summary
+- **More of the game is decompiled:** 13.1% of it is now hand-written C, up from 6.3% in v0.65.1 (1,758 of 14,881 functions), each one checked frame by frame against the original.
+- **WIDE NATIVE widescreen is built in and on by default:** the game's own 16:9 mode, now part of the decompiled code (no patch downloaded). Menus, select and VS screens, fights and their HUD, the attract mode and endings fill the wide screen, and the fights play exactly as in 4:3. Stage Extensions and an art pack for painting the stages' edges are there to try (experimental).
+- **A new launcher layout:** tabs across the top with small pictures, an About tab, and an Inputs tab where each of four players gets the keyboard, a controller or both (player 1 on the keyboard to start, so input mappers only get what you choose). **Configure** sets every key and button, and **Test** lights up each button as you press it.
+- **Smoother on the GPU:** the renderer sends its draws in batches, about seven times fewer calls a frame in a fight.
+- **Reporting a problem** from the launcher fills in an issue on GitLab, GitHub or Gitea, with your logs gathered in one zip.
+- **Smaller additions:** SELECT + START goes back to the MODE MENU; EX. SETTING's PRIORITY rows say PLAYER or COM; a simpler Build / Run tab.
+
+### For players
+- **Docs:** the README points to **Report a bug** on the launcher's About tab; DISPLAY.md lists SCREEN SIZE (default WIDE NATIVE); WIDESCREEN.md says WIDE NATIVE is the default.
+
+### Technical
+- `tools/release_notes.py`: a release's own section can have a `### Release summary`; then the release notes are that summary and a link to CHANGELOG.md, instead of every version's bullets since the last release (this release gathers 88 versions since v0.65.1). Without one, unchanged.
+- Release check: the full test suite (77 tests) passed on the maintainer's PC on 0.101.0 (2026-11-20); 0.102.x changed only the launcher and docs. The launcher screenshots retaken on Windows (5b6e494); `tools/screenshots.py --check` passes.
+
 ## 0.102.4
 ### For players
 - **Launcher, Inputs > Configure:** **Close** now sits below a line with space above it, away from the **Default All** / **Unset All** buttons, so Unset All isn't pressed by mistake.

@@ -5,7 +5,8 @@ SIZE): 16:9 with the 4:3 play area. It started as the SFA3MAX 16:9 patch by Rick
 ([acknowledgments](../ACKNOWLEDGMENTS.md)), which was made for PPSSPP: it patches immediates and jumps
 into code caves. Until 0.99.1 the build downloaded it and translated it in as an overlay. Every
 function it changed is now decompiled and reads `rt_widescreen` itself, and the patch is no longer
-downloaded. This page collects what works, what doesn't, and the rules for refining it.
+downloaded. It is the default on a new save (0.99.35) and with SCREEN SETTING > DEFAULT. This page collects what
+works, what doesn't, and the rules for refining it.
 
 ## Where it lives
 

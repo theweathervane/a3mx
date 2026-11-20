@@ -3,6 +3,10 @@
 then what's new for players, then the technical details, from every CHANGELOG.md section since the
 previous release.
 
+A release's own section can start with a `### Release summary` part (a few bullets in players' words): then the
+notes are that summary and a link to CHANGELOG.md, not every version's bullets, for a release that gathers many
+versions. Without one, the notes are built as below.
+
 Each section has a `### For players` part (plain bullets: what a player notices) and a `### Technical`
 part (a section with neither, a flat list of bullets as the changelog has been written since 0.55.0, is all
 "for players"). The notes list every version's For players bullets together, newest first, under "What's new",
@@ -82,6 +86,15 @@ def sections(changelog):
     return out
 
 
+def summary(text):
+    """the `### Release summary` part of a section's text, or '' """
+    m = re.search(r'^### Release summary[ \t]*\n', text, re.M)
+    if not m: return ''
+    rest = text[m.end():]
+    n = re.search(r'^### ', rest, re.M)
+    return (rest[:n.start()] if n else rest).strip()
+
+
 def split(text):
     """(for_players, technical) of one section's text"""
     m_p = re.search(r'^### For players[ \t]*\n', text, re.M)
@@ -157,7 +170,13 @@ def main():
     chosen = [(n, t) for n, t in secs if key(n) and key(n) <= key(v) and (not since or key(n) > key(since))]
     chosen.sort(key=lambda x: key(x[0]), reverse=True)
     title = "What's new in v%s" % v if len(chosen) == 1 else "What's new since v%s" % since if since else "What's new"
-    body = body_for(chosen, title)
+    short = summary(dict(secs)[v])
+    if short:      # the release's own summary, and where the rest is
+        url, ref = project_url(), 'v' + v
+        link = ('%s/blob/%s/CHANGELOG.md' if on_github() else '%s/-/blob/%s/CHANGELOG.md') % (url, ref)
+        body = '## %s\n\n%s\n\nEvery change, version by version (%d versions): [CHANGELOG.md](%s).\n' % (title, short, len(chosen), link)
+    else:
+        body = body_for(chosen, title)
     sys.stdout.write(header(project_url(), v, 'v' + v) + body)
 
 
