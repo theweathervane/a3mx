@@ -283,8 +283,9 @@ int widescreen_column_copies(uint32_t sp, int dx[2]) {
 }
 
 /* ... and the map screen's beam (GAME + 2 = 2, step 1; kind 19 type 2, drawer 0, on anchor 3): a wedge
-   from the map's middle toward the next stage, cut where its picture ends; sprite_drawers.c draws scaled
-   copies behind it so it carries on to the screen's sides. */
+   from the map's middle toward the next stage, cut where its picture ends; sprite_drawers.c carries its
+   noise on past that, 1:1, to the screen's side (0.99.34; before, scaled copies, which blew up the lit
+   wings in the pictures toward England, Italy, Hong Kong and Thailand). */
 int widescreen_beam(uint32_t sp) {
     return RB(GAME + 2) == 2 && RH(GAME + 4) == 1 && RB(sp + 2) == 19 && RB(sp + 3) == 2 &&
            RW(sp + 148) == 0 && RB(sp + 14) == 3;

@@ -90,23 +90,65 @@ static gaddr last_piece(gaddr e) {
     return e;
 }
 
-/* WIDE NATIVE: the map screen's beam (widescreen_beam) is a wedge from its picture's place, cut where
-   its picture ends: copies scaled about that place are drawn behind it first, the largest first, so its
-   edges carry on out to the screen's sides (sprite_grid.c) */
+/* WIDE NATIVE: the map screen's beam (widescreen_beam) is a wedge from its picture's place (the map's
+   point), cut where its picture ends: 16 or 32 pixels into the margin. Its far end is noise (the part near
+   the point has the map's wings in it, lit); the margin past the picture's end gets that noise carried on
+   as it is, not scaled: cells of the picture's far-end column (the inner ones, not the two rows nearest
+   the wing side's straight edge) drawn again one column further out and one row further on the side it
+   widens to, each cut to the wedge (sprite_grid.c). The wedges' slanted edge drops 0.513 screen pixels a
+   pixel (0.4225 of the 2D library's rows, 224 to the 272-pixel screen): pictures 44 and 50 (right, left)
+   lie between it and the level of the point, 46 and 52 (down-right, up-left) beyond it. */
+struct SpriteGridWedge { int on, dir, vside, sector; float ax, ay, k; };
+extern struct SpriteGridWedge sprite_grid_wedge;   /* sprite_grid.c */
+#define BEAM_SLOPE 0.4225f
+enum { PIC_CELLS = 0, PIC_COLS = 4, PIC_ROWS = 5, PIC_ORIGIN_X = 6, PIC_ORIGIN_Y = 8, PIC_MORE = 10, DS_FLIP_X_ = 56, DS_FLIP_Y_ = 60 };
 static void wide_beam(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
-    static const float scales[] = { 2.6f, 1.9f, 1.4f };
+    int32_t cols = *B(pic + PIC_COLS), rows = *B(pic + PIC_ROWS), ox = S16(pic + PIC_ORIGIN_X), oy = S16(pic + PIC_ORIGIN_Y);
+    if (cols < 2 || rows < 3 || cols > 32 || rows > 32) return;
+    int left = ox == cols * 16, up = oy == rows * 16;          /* the picture's far end, as drawn unflipped */
+    if (!left && ox != 0) return;
+    int fx = *W(ds + DS_FLIP_X_) != 0, fy = *W(ds + DS_FLIP_Y_) != 0;
+    int dir = (left ? -1 : 1) * (fx ? -1 : 1), vside = (up ? -1 : 1) * (fy ? -1 : 1);
+    int32_t x = S16(ds + DS_X), y = S16(ds + DS_Y);
+    int32_t end = x + dir * cols * 16, room = dir < 0 ? end - (-48) : 432 - end;
+    if (room <= 0 || (dir < 0 ? end >= 0 : end <= 384)) return;   /* only a picture already past the 4:3 side */
+    int32_t extra = (room + 15) / 16;
+    /* the far-end column's cells (unflipped column 0 for a picture to the left, the last otherwise) */
+    gaddr cell = list + *W(pic + PIC_CELLS), far[32]; int nfar = 0;
+    int sector = cols >= 2 * rows ? 0 : 1;                      /* 44 / 50 (14 x 6): at least twice as wide as tall */
+    for (int32_t r = 0; r < rows; r++)
+        for (int32_t q = 0; q < cols; q++) {
+            if (*B(cell) == 0xFF) { cell += 1; continue; }
+            int at_end = left ? q == 0 : q == cols - 1;
+            int near_wing = sector == 0 && (up ? r >= rows - 2 : r < 2);
+            if (at_end && !near_wing && !(*B(cell + 2) & 0x20) && nfar < 32) far[nfar++] = cell;
+            cell += 3;
+        }
+    if (nfar == 0) return;
+    /* the cells past the end: `extra` columns, rows + 1 (one more on the side it widens to), on the stack */
+    int32_t ncols = extra, nrows = rows + 1;
+    uint32_t need = 12u + (uint32_t)(ncols * nrows * 3) + 3u;
+    c->r[29] -= (need + 15u) & ~15u;
+    gaddr mine = c->r[29], cells = mine + 12u;
+    for (int32_t r = 0; r < nrows; r++)
+        for (int32_t q = 0; q < ncols; q++) {
+            gaddr from = far[(r + q) % nfar], to = cells + (uint32_t)((r * ncols + q) * 3);
+            *B(to) = *B(from); *B(to + 1) = *B(from + 1); *B(to + 2) = *B(from + 2);
+        }
+    *W(mine) = cells - list;
+    *B(mine + PIC_COLS) = (uint8_t)ncols; *B(mine + PIC_ROWS) = (uint8_t)nrows;
+    *H(mine + PIC_ORIGIN_X) = (uint16_t)(left ? ox + ncols * 16 : ox - cols * 16);
+    *H(mine + PIC_ORIGIN_Y) = (uint16_t)(up ? oy + 16 : oy);
+    *H(mine + PIC_MORE) = 0;
     float sx = F(SCALE_X), sy = F(SCALE_Y);
-    float ax = (float)S16(ds + DS_X), ay = (float)S16(ds + DS_Y);
+    float ax = (float)x, ay = (float)y;
     ax = ax * sx; ax = ax + F(OFFSET_X);
     ay = ay * sy; ay = ay + F(OFFSET_Y);
-    sprite_grid_ax = ax; sprite_grid_ay = ay;
-    int16_t x = (int16_t)*H(ds + DS_X), y = (int16_t)*H(ds + DS_Y);
-    for (unsigned i = 0; i < sizeof scales / sizeof scales[0]; i++) {
-        sprite_grid_scale = scales[i];
-        draw_picture(c, ds, sp, pic, list, 0);
-        *H(ds + DS_X) = (uint16_t)x; *H(ds + DS_Y) = (uint16_t)y;
-    }
-    sprite_grid_scale = 0.0f;
+    sprite_grid_wedge = (struct SpriteGridWedge){ 1, dir, vside, sector, ax, ay, BEAM_SLOPE * sy / sx };
+    draw_picture(c, ds, sp, mine, list, 0);
+    sprite_grid_wedge.on = 0;
+    *H(ds + DS_X) = (uint16_t)x; *H(ds + DS_Y) = (uint16_t)y;
+    c->r[29] += (need + 15u) & ~15u;
 }
 
 static void draw_one(Cpu *c, gaddr ds, gaddr sp) {

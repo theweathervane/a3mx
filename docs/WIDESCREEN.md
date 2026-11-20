@@ -100,8 +100,10 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
   - the endings (0.99.22): a scene of the ending's 24-tile map standing still on one of its halves has
     its own columns mirrored out at its sides instead of the other scene's (`src/core/stage/tiles.c`),
     and the black sides that narrow a scene to a panel reach the screen's sides;
-  - the map screen (0.99.12): the ladder moves to the edge away from the middle, and the beam is drawn
-    again scaled about its point behind itself, in the margins only, so it carries on along its edges;
+  - the map screen (0.99.12): the ladder moves to the edge away from the middle; the beam, where its
+    picture ends in a margin (toward England, Italy, Hong Kong, Thailand and the like), has its noise
+    carried on to the screen's side as it is, not scaled, cut to the beam's edges (0.99.34; it was drawn
+    again scaled about its point, which blew up the lit wings in it);
   - the wipes' flat shapes (`src/core/object/shapes.c`, 0.99.8, redone in 0.99.11): a quad with an
     edge on or past the 4:3 picture's side gets a rectangle in its colour out to the screen's side; the
     quad keeps its corners, so the A, X and V into the fight keep their 4:3 slopes;

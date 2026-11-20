@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.34
+### For players
+- **WIDE NATIVE, map screen:** where the beam to the next country runs off the side of the screen (England, Italy, Hong Kong, Thailand and others in those directions), only its moving noise carries on to the edge, at its own size. Before, the end of the beam was a blown-up copy that showed parts of the wings' picture enlarged.
+
+### Technical
+- `object/sprite_drawers.c` `wide_beam`: no scaled copies. For a beam picture (kind 19 type 2, anchor 3; pictures 44, 46, 50, 52 and their flips) whose far end is already past the 4:3 side (16 - 32 px into a margin), the rest of the margin gets a picture made on the stack: cells of the far-end column (inner ones, attribute bit 0x20 clear, not the two rows nearest the wing side), one column further out and one row more on the side it widens to.
+- `object/sprite_grid.c` `sprite_grid_wedge`: those cells drawn in 2-px slices cut to the wedge (the level of the point and the slanted edge, 0.513 screen px a px, measured on the pictures; 44 / 50 between them, 46 / 52 beyond the slanted one), texels 1:1.
+- Checked: parity (memory hashes, renderer lazy) wide_fight (WIDE NATIVE off / on), arcade_fight, attract_mode; by eye: pictures 42 - 52 forced at the map's point (a test-only override, not kept), both sides.
+
 ## 0.99.33
 ### For players
 - **WIDE NATIVE, attract mode:** on the score ranking's first place, the see-through box behind the portrait reaches under the coloured panels at the RANKING columns again, as on the 4:3 screen, instead of stopping short with a black gap at each side.

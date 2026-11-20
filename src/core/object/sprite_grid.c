@@ -19,6 +19,7 @@
  * differently from the PSP.
  */
 #include "../decomp.h"
+struct SpriteGridWedge { int on, dir, vside, sector; float ax, ay, k; };
 
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
@@ -188,9 +189,50 @@ static void bar_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, ui
     CALL5(f_089E1950, v, 4, flags, blend, effect);
     for (int i = 0; i < 4; i++) SET16(v + 16 * i, keep[i][0]);
 }
+/* WIDE NATIVE: set by a sprite drawer for cells cut to a wedge from (ax, ay) (the map screen's beam,
+   carried on past its picture, sprite_drawers.c): kept where, measured from the point along `dir` (+1
+   right, -1 left) as X and toward `vside` (+1 down, -1 up) as Y, Y is between 0 and k X (sector 0) or
+   beyond k X (sector 1). Each cell is drawn in 2-pixel slices, top and bottom cut to the wedge, its texels
+   as they are (1:1). */
+struct SpriteGridWedge sprite_grid_wedge;
+static void wedge_cell(Cpu *c, gaddr v, uint32_t flags, uint32_t blend, uint32_t effect) {
+    const struct SpriteGridWedge *w = &sprite_grid_wedge;
+    int16_t keep[4][3];
+    for (int i = 0; i < 4; i++) { keep[i][0] = S16(v + 16 * i); keep[i][1] = S16(v + 16 * i + 2); keep[i][2] = S16(v + 16 * i + 8); }
+    int16_t ukeep[4]; for (int i = 0; i < 4; i++) ukeep[i] = S16(v + 16 * i + 6);
+    float xl = keep[0][0], xr = keep[2][0], yt = keep[0][1], yb = keep[1][1];
+    float ul = ukeep[0], ur = ukeep[2], vt = keep[0][2], vb = keep[1][2];
+    if (xr < xl) { float t = xl; xl = xr; xr = t; t = ul; ul = ur; ur = t; }
+    if (yb < yt) { float t = yt; yt = yb; yb = t; t = vt; vt = vb; vb = t; }
+    for (float x0 = xl; x0 < xr; x0 += 2.0f) {
+        float x1 = x0 + 2.0f < xr ? x0 + 2.0f : xr, xs[2] = { x0, x1 }, top[2], bot[2];
+        int any = 0;
+        for (int e = 0; e < 2; e++) {
+            float X = (xs[e] - w->ax) * (float)w->dir, lim = w->k * (X > 0 ? X : 0);
+            float a = w->sector ? lim : 0.0f, b = w->sector ? 1e9f : lim;   /* Y range */
+            float ya = w->vside > 0 ? w->ay + a : w->ay - b, yb2 = w->vside > 0 ? w->ay + b : w->ay - a;
+            top[e] = ya > yt ? ya : yt; bot[e] = yb2 < yb ? yb2 : yb;
+            if (X <= 0) { top[e] = bot[e] = yt; }
+            if (bot[e] > top[e]) any = 1; else bot[e] = top[e];
+        }
+        if (!any) continue;
+        for (int e = 0; e < 2; e++) {
+            float u = ul + (ur - ul) * (xs[e] - xl) / (xr - xl);
+            float vt2 = vt + (vb - vt) * (top[e] - yt) / (yb - yt), vb2 = vt + (vb - vt) * (bot[e] - yt) / (yb - yt);
+            int i0 = e ? 2 : 0, i1 = e ? 3 : 1;   /* top-left, bottom-left, top-right, bottom-right */
+            SET16(v + 16 * i0, (int32_t)(xs[e] + 0.5f)); SET16(v + 16 * i0 + 2, (int32_t)(top[e] + 0.5f));
+            SET16(v + 16 * i1, (int32_t)(xs[e] + 0.5f)); SET16(v + 16 * i1 + 2, (int32_t)(bot[e] + 0.5f));
+            SET16(v + 16 * i0 + 6, (int32_t)(u + 0.5f)); SET16(v + 16 * i1 + 6, (int32_t)(u + 0.5f));
+            SET16(v + 16 * i0 + 8, (int32_t)(vt2 + 0.5f)); SET16(v + 16 * i1 + 8, (int32_t)(vb2 + 0.5f));
+        }
+        CALL5(f_089E1950, v, 4, flags, blend, effect);
+    }
+    for (int i = 0; i < 4; i++) { SET16(v + 16 * i, keep[i][0]); SET16(v + 16 * i + 2, keep[i][1]); SET16(v + 16 * i + 8, keep[i][2]); SET16(v + 16 * i + 6, ukeep[i]); }
+}
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
     if (sprite_grid_margins_only) return;
     if (sprite_grid_bar_ends) { bar_cell(c, ds, v, cols, flags, blend, effect); return; }
+    if (sprite_grid_wedge.on) { wedge_cell(c, v, flags, blend, effect); return; }
     if (sprite_grid_half) {
         int32_t col = cols - (int32_t)*W(ds + DS_COLS_LEFT), split = cols / 2;
         int16_t keep[4][2];
