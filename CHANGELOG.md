@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.100.3
+### For players
+- **WIDE NATIVE, score ranking:** on the A-ISM (green) and V-ISM (blue) rankings the see-through box behind each fighter's face now moves with the face, as on the X-ISM ranking since 0.100.2.
+
+### Technical
+- `extensions/widescreen.c` `widescreen_plain_adjust`: the box behind a ranking row's profile is a plain rectangle 96 wide of type 1 (X-ISM), 2 (A-ISM) or 3 (V-ISM); 0.100.2 matched only type 1.
+- Checked: parity (memory hashes, renderer lazy) attract_mode; by eye: A-ISM list and first place (frames 11100, 11300), V-ISM (16800, 17000), 4:3 against WIDE NATIVE.
+
 ## 0.100.2
 ### For players
 - **WIDE NATIVE, score ranking (attract mode):** on each score bar the place ("1st", "20th") and the fighter's profile now sit at the bar's ends, as far from them as on the 4:3 screen; the score moves a little right so the gaps between place, name, score and profile come out nearly even.

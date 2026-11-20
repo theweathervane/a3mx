@@ -268,7 +268,7 @@ int widescreen_bar_ends(uint32_t sp) {
    same pieces in a linked sprite (kind 34 type 4); the pieces by their x in the row: the place ("1st",
    "20th": x -152 to -120), the name (-104 to -72), the score (-8 to 56). The profile at the bar's right
    end is a sprite of its own (kind 35 type 1, the face), a linked one (kind 34 type 5, the fighter's
-   name under it) and a translucent box behind them (a plain rectangle, widescreen_plain_adjust). The
+   name under it) and a translucent box behind them (a plain rectangle, types 1 - 3 by ISM, widescreen_plain_adjust). The
    place and the profile go the whole 48 to the bar's ends, so each stands as far from its end as on the
    4:3 screen (10 and 7 pixels from the left end, the face 17 past the right); the name stays and the
    score goes 12 right, so the gaps between them come out nearly even (first place 62 / 59 / 59, the
@@ -350,8 +350,9 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
         *left = -48; *right = 48;
         return;
     }
-    /* ... and each row's translucent box behind the profile (type 1, 96 wide): moved with the face */
-    if (RH(GAME) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 && (int16_t)RH(ob + 14) == 96) {
+    /* ... and each row's translucent box behind the profile (96 wide; type 1 on the X-ISM ranking, 2 on
+       the A-ISM, 3 on the V-ISM): moved with the face */
+    if (RH(GAME) == 4 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) >= 1 && RB(ob + 92) <= 3 && (int16_t)RH(ob + 14) == 96) {
         *left = *right = RANK_SHIFT[3];
         return;
     }
