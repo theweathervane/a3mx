@@ -21,13 +21,15 @@ of the four players. The game reads it when it starts.
   usual layout, which you can change.
 - **Configure** (under **Controller**) opens the player's buttons in a window you can resize (its size is
   kept until the launcher closes). Click a cell and press the key or button for it (Esc cancels). The orange **X** unsets it. A stick or trigger
-  can be a button too. The left stick always works as the d-pad as well. **Default keys** /
-  **Default buttons** put the usual layout back.
+  can be a button too. The left stick always works as the d-pad as well. Under each column,
+  **Default All** puts the usual layout back and **Unset All** clears it (keys under Keyboard, buttons
+  under Controller).
 - **Current**, at the top of the tab, shows the four bubbles the MODE MENU would show now, with the
   controllers plugged in now (a faded one would not show).
 - **Pad icon**, under **Configuration**, shows the chosen player's numbered bubble, as on the MODE
   MENU's bar; a player set to None shows a greyed-out **0** instead.
-- **Test**, in the Configure window, shows the pad icon beside each button while it is held, by a key or by the controller.
+- **Test**, under **Test input** in the Configure window, shows the pad icon in the first column of each button's row
+  while it is held, and colours the key or controller button that pressed it orange.
   While it runs, keys don't work the window (the arrows, Enter, Esc are the player's): stop it with the mouse.
   Nothing is sent to the game.
 

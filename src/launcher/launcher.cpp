@@ -228,6 +228,13 @@ static const RendererChoice RENDERERS[] = {
 static const int N_RENDERERS = (int)(sizeof RENDERERS / sizeof RENDERERS[0]);
 enum { T_PATHS, T_DEPS, T_INPUTS, T_EXTENSIONS, T_RUN, T_ABOUT, T_COUNT };   /* (icons.h draws their pictures in this order) */
 static const char *const TAB_NAMES[T_COUNT] = { "Paths", "Dependencies", "Inputs", "Extensions", "Build / Run", "About" };
+static const char *const TAB_TIPS[T_COUNT] = {
+    "Paths: your disc image, and the folders for saves, configs, logs and the build tools",
+    "Dependencies: what the build needs on this computer, and downloading what is missing",
+    "Inputs: the keyboard and controllers for each of four players",
+    "Extensions: what this project adds to the game, each on its own switch",
+    "Build / Run: build the game and play it, with its display and logging settings",
+    "About: the version, reporting a bug or asking for a feature, the project's pages" };
 static const char *const TAB_ARGS[T_COUNT] = { "paths", "dependencies", "inputs", "extensions", "run", "about" };
 static const char *const SCALES[]     = { "Auto", "1x (480x272)", "2x (960x544)", "3x (1440x816)", "4x (1920x1088)",
                                           "5x (2400x1360)", "6x (2880x1632)", "7x (3360x1904)", "8x (3840x2176)" };
@@ -494,6 +501,7 @@ struct App {
     std::string dialog_result, dialog_error, folder_result;
     bool dialog_done = false, folder_done = false;
     ImFont *mono = NULL;
+    ImFont *bold = NULL;            /* About's title; NULL if the system has no bold face (then drawn twice, a pixel apart) */
     float scale = 1;
     bool dark = true;
     int theme = THEME_AUTO;         /* the system's light / dark setting, followed as it changes */
@@ -1133,6 +1141,7 @@ struct App {
         for (int i = 0; i < HOST_COUNT; i++) {
             ImGui::PushID(i);
             if (ImGui::RadioButton(ISSUE_HOSTS[i].name, host == i)) { host = i; set.report_host = ISSUE_HOSTS[i].id; settings_save(set, settings_path); }
+            ImGui::SetItemTooltip("Report on %s", ISSUE_HOSTS[i].name);
             ImGui::SameLine();
             ImGui::TextDisabled("%s", ISSUE_HOSTS[i].role);
             ImGui::SameLine(em * 13);
@@ -1145,6 +1154,7 @@ struct App {
             if (set.log_level == 0) {
                 ImGui::TextColored(colour(K_WARN), "Logging is OFF, so the game's log (a3mx.log) is empty.");
                 if (ImGui::Button("Set Logging to INFO")) { set.log_level = 3; settings_save(set, settings_path); }
+                ImGui::SetItemTooltip("Sets Build / Run > Logging to INFO, so the game writes a log you can attach");
                 ImGui::SameLine();
                 ImGui::TextWrapped("then Run, make the problem happen again, and report.");
             }
@@ -1157,6 +1167,7 @@ struct App {
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
         if (link("How to report a problem, and what to include")) open_url(repo_file_page(host, "docs/REPORTING_ISSUES.md"));
+        ImGui::SetItemTooltip("Opens the guide to reporting problems (REPORTING_ISSUES.md) in your browser");
         ImGui::Spacing();
         std::string go = std::string("Open the form on ") + ISSUE_HOSTS[host].name;
         const float bw = ImGui::CalcTextSize(go.c_str()).x + ImGui::GetStyle().FramePadding.x * 2, cw = em * 5.5f;
@@ -1165,6 +1176,7 @@ struct App {
         ImGui::SetItemTooltip(feature ? "Opens a feature request in your browser." : "Opens a new issue in your browser, makes a3mx-report.zip and opens the logs folder.");
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(cw, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+        ImGui::SetItemTooltip("Closes this window without reporting anything");
         ImGui::EndPopup();
     }
     /* one value from logs/last_run.txt */
@@ -1328,6 +1340,7 @@ struct App {
         std::string hint = disc_from_imports ? "empty: " + base_name(disc_path) + " in imports/psp/" : repo ? "empty: the ISO in imports/psp/" : "not used: the game reads work/";
         if (ImGui::InputTextWithHint("##iso", hint.c_str(), iso_buf.data(), iso_buf.size())) { set.iso = iso_buf.data(); disc_polled = 0; }
         if (ImGui::IsItemDeactivatedAfterEdit()) settings_save(set, settings_path);
+        ImGui::SetItemTooltip("Your disc image's path. Empty: the one in imports/psp/. It is checked as you type: the flag shows whose disc it is");
         ImGui::SameLine();
 
         /* the flag, or the mark, as high as the field */
@@ -1344,6 +1357,7 @@ struct App {
         if (ImGui::IsItemHovered() && !r.message.empty()) ImGui::SetTooltip("%s", r.message.c_str());
         ImGui::SameLine();
         if (ImGui::Button("Browse...", ImVec2(-1, 0))) browse();
+        ImGui::SetItemTooltip("Choose your disc image (.iso) from a folder");
         ImGui::EndDisabled();
 
         /* the line underneath: the check, then what work/ holds */
@@ -1403,8 +1417,10 @@ struct App {
         table("For developers and tests", DEV_OPTIONS, (int)(sizeof DEV_OPTIONS / sizeof DEV_OPTIONS[0]));
         ImGui::EndChild();
         if (link("All of them, with details: docs/BUILDING.md")) open_url(std::string(REPO_URL) + "/-/blob/main/docs/BUILDING.md#command-line-the-game");
+        ImGui::SetItemTooltip("Opens the full list of the game's options in your browser");
         ImGui::SameLine(ImGui::GetWindowWidth() - em * 6.5f);
         if (ImGui::Button("Close", ImVec2(em * 5.5f, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+        ImGui::SetItemTooltip("Closes this list");
         ImGui::EndPopup();
     }
 
@@ -1412,22 +1428,32 @@ struct App {
     void about_tab() {
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
         ImGui::Spacing();
-        ImGui::TextUnformatted("A3MX - Launcher");
+        if (bold) { ImGui::PushFont(bold, 0.0f); ImGui::TextUnformatted("A3MX - Launcher"); ImGui::PopFont(); }
+        else {                                              /* no bold face: the text twice, a pixel apart */
+            ImVec2 at = ImGui::GetCursorScreenPos();
+            ImGui::TextUnformatted("A3MX - Launcher");
+            ImGui::GetWindowDrawList()->AddText(ImVec2(at.x + 1, at.y), ImGui::GetColorU32(ImGuiCol_Text), "A3MX - Launcher");
+        }
         ImGui::TextDisabled("%s", A3MX_VERSION);
-        ImGui::Spacing();
-        ImGui::TextWrapped("A decompilation of the PSP game, built from your own disc. No game data is included.");
+        ImGui::SetItemTooltip("The launcher's version, the same as the game's built beside it");
         ImGui::SeparatorText("Report a problem");
         if (link("Report a bug")) open_report(false);
         ImGui::SetItemTooltip("A new issue on GitLab, GitHub or Gitea (your choice), filled in with the version, your system,\n"
                               "these settings and the end of the console, and your logs in one .zip.");
         if (link("Request a feature")) open_report(true);
+        ImGui::SetItemTooltip("Opens a new feature request on GitLab, GitHub or Gitea (your choice)");
         if (link("Something else (a question, an idea, a problem building)")) open_url(issues_page(report_host()));
+        ImGui::SetItemTooltip("Opens the project's issues page in your browser");
         if (link("How to report a problem, and what to include")) open_url(repo_file_page(report_host(), "docs/REPORTING_ISSUES.md"));
+        ImGui::SetItemTooltip("Opens the guide to reporting problems (REPORTING_ISSUES.md) in your browser");
         ImGui::SeparatorText("Project");
         if (link("The project's page (GitLab, its home)")) open_url(REPO_URL);
+        ImGui::SetItemTooltip("Opens the project on GitLab in your browser");
         ImGui::TextDisabled("Mirrors:");
         ImGui::SameLine(); if (link("GitHub")) open_url(ISSUE_HOSTS[HOST_GITHUB].repo);
+        ImGui::SetItemTooltip("Opens the GitHub mirror in your browser");
         ImGui::SameLine(); if (link("Gitea")) open_url(ISSUE_HOSTS[HOST_GITEA].repo);
+        ImGui::SetItemTooltip("Opens the Gitea mirror in your browser");
         ImGui::TextDisabled("Issues are handled on all three.");
         ImGui::SeparatorText("Licences");
         ImGui::TextDisabled("GPL-3.0-or-later. The launcher uses SDL3 (zlib) and Dear ImGui (MIT).");
@@ -1486,6 +1512,8 @@ struct App {
             else if (start_after_tools) { start_after_tools = false; start(); }
             ImGui::CloseCurrentPopup();
         }
+        ImGui::SetItemTooltip(to_download ? "Downloads what is listed, checks each against its SHA-256, and carries on"
+                                          : "Lets the build download these when it needs them");
         ImGui::PopStyleColor(4);
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(em * 6, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
@@ -1493,6 +1521,7 @@ struct App {
             start_after_tools = false;
             ImGui::CloseCurrentPopup();
         }
+        ImGui::SetItemTooltip("Downloads nothing. Without these the build can't start");
         ImGui::EndPopup();
     }
 
@@ -1529,6 +1558,7 @@ struct App {
             ImGui::TextColored(colour(K_WARN), "Microsoft's C++ build tools were not found. Rust needs them to build on Windows.");
             ImGui::TextUnformatted("Install \"Build Tools for Visual Studio\" and tick \"Desktop development with C++\", then come back here.");
             if (link("visualstudio.microsoft.com/visual-cpp-build-tools")) open_url("https://visualstudio.microsoft.com/visual-cpp-build-tools/");
+            ImGui::SetItemTooltip("Opens Microsoft's download page for the C++ build tools in your browser");
         }
 #endif
         ImGui::TextDisabled("It takes ten minutes or more, and uses about 1.5 GB while it builds. The game runs without it: FILTER then does nothing.");
@@ -1537,10 +1567,12 @@ struct App {
         ImGui::BeginDisabled(child.busy() || msvc == 0);
         orange_button_push();
         if (ImGui::Button(rust ? "Build it" : "Install Rust and build", ImVec2(em * 13, 0))) { build_librashader(!rust); ImGui::CloseCurrentPopup(); }
+        ImGui::SetItemTooltip("Builds librashader, which FILTER's shaders need (installing Rust first if it is missing)");
         ImGui::PopStyleColor(4);
         ImGui::EndDisabled();
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(em * 6, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+        ImGui::SetItemTooltip("Closes this without building anything");
         ImGui::EndPopup();
     }
 
@@ -1565,9 +1597,11 @@ struct App {
             float lh = lw * (float)logo_h / (float)logo_w;
             ImGui::SetCursorScreenPos(ImVec2(top.x, top.y + (hh - lh) * 0.5f));
             ImGui::Image((ImTextureID)(intptr_t)logo, ImVec2(lw, lh));
+            ImGui::SetItemTooltip("A3MX %s", A3MX_VERSION);
         } else {
             ImGui::SetCursorScreenPos(ImVec2(top.x, top.y + (hh - line) * 0.5f));
             ImGui::TextUnformatted("A3MX");
+            ImGui::SetItemTooltip("A3MX %s", A3MX_VERSION);
         }
         /* the tabs */
         const float x0 = top.x + lw + em, y0 = top.y;
@@ -1582,6 +1616,7 @@ struct App {
             ImGui::SetCursorScreenPos(p);
             ImGui::PushID(t);
             if (ImGui::Selectable("##tab", sel, 0, ImVec2(tw - em * 0.25f, tab_h))) { set.tab = t; settings_save(set, settings_path); }
+            ImGui::SetItemTooltip("%s", TAB_TIPS[t]);
             const bool hov = ImGui::IsItemHovered();
             ImGui::PopID();
             const float cx = p.x + (tw - em * 0.25f) * 0.5f;
@@ -1615,6 +1650,7 @@ struct App {
         ImGui::TableNextColumn();
         ImGui::PushID(what);
         if (ImGui::Button("Open", ImVec2(-1, 0))) open_folder(where);
+        ImGui::SetItemTooltip("Opens the %s folder in your file manager", what);
         ImGui::PopID();
     }
     /* a row the player can choose: the folder typed or browsed for (empty: the default, shown as the hint), Open */
@@ -1631,9 +1667,11 @@ struct App {
         if (tip) ImGui::SetItemTooltip("%s\n\nEmpty: %s", tip, def.c_str());
         ImGui::TableNextColumn();
         if (ImGui::Button("Browse...", ImVec2(-1, 0))) { folder_target = f; browse_folder(folder_setting(f)->empty() ? def : *folder_setting(f)); }
+        ImGui::SetItemTooltip("Choose another folder for %s", what);
         ImGui::EndDisabled();
         ImGui::TableNextColumn();
         if (ImGui::Button("Open", ImVec2(-1, 0))) open_folder(folder_setting(f)->empty() ? def : *folder_setting(f));
+        ImGui::SetItemTooltip("Opens the %s folder in your file manager", what);
         ImGui::PopID();
     }
 
@@ -1685,12 +1723,15 @@ struct App {
         ImGui::TextDisabled("Nothing makes a shortcut by itself. If you want one to this launcher:");
         ImGui::PopTextWrapPos();
         if (ImGui::Button("Create a Desktop shortcut")) make_shortcut(SHORTCUT_DESKTOP);
+        ImGui::SetItemTooltip("Puts a shortcut to this launcher on your desktop");
         if (shortcut_menu_available()) {
             ImGui::SameLine();
 #ifdef _WIN32
             if (ImGui::Button("Create a Start menu shortcut")) make_shortcut(SHORTCUT_MENU);
+            ImGui::SetItemTooltip("Adds this launcher to the Start menu");
 #else
             if (ImGui::Button("Add to the applications menu")) make_shortcut(SHORTCUT_MENU);
+            ImGui::SetItemTooltip("Adds this launcher to your desktop's applications menu");
 #endif
         }
     }
@@ -1740,11 +1781,13 @@ struct App {
         ImGui::SeparatorText("Dependencies");
         ImGui::BeginDisabled(busy);
         if (ImGui::Button("Check build dependencies")) { check_deps(true); check_rust(); }
+        ImGui::SetItemTooltip("Looks again for everything the build needs on this computer, and lists what is missing");
         bool need_ok = !root.empty() && deps_err.empty() && (deps_any_to_download(deps) || !consent_given());
         if (need_ok) {
             ImGui::SameLine();
             orange_button_push();
             if (ImGui::Button(deps_any_to_download(deps) ? "Download what's missing..." : "Agree to the downloads...")) consent_modal = true;
+            ImGui::SetItemTooltip("Shows what would be downloaded, from where and how it is checked, and asks before anything is fetched");
             ImGui::PopStyleColor(4);
         }
         ImGui::EndDisabled();
@@ -1771,28 +1814,6 @@ struct App {
             }
             ImGui::EndTable();
         }
-        {   /* FILTER's two extras: asked for here, never fetched by a build */
-            bool have_shaders = true, have_lib = true;
-            for (const Dep &d : deps) { if (d.id == "slang-shaders") have_shaders = d.here; if (d.id == "librashader") have_lib = d.here; }
-            if (!have_shaders) {
-                ImGui::BeginDisabled(busy);
-                if (ImGui::Button("Download the FILTER shaders")) download_shaders();
-                ImGui::EndDisabled();
-                ImGui::SetItemTooltip("libretro's slang-shaders at the commit this project pins, about 85 MB, into the tools folder.\nPressing this is your agreement to that one download. The game runs without them: FILTER then does nothing.");
-                ImGui::SameLine();
-            }
-            if (!have_lib) {
-                ImGui::BeginDisabled(busy);
-                if (ImGui::Button("Build librashader...")) { check_rust(); lr_modal = true; }
-                ImGui::EndDisabled();
-                ImGui::SetItemTooltip("FILTER's library, built here from its pinned source with Rust (about ten minutes the first time).\n"
-                                      "Kept by --clean, so it is built once.");
-                ImGui::SameLine();
-            }
-            ImGui::TextDisabled(have_shaders && have_lib ? "FILTER has its shaders and its library." : !have_lib ? "FILTER also needs librashader: built here from its source, once." : "Optional: for SCREEN SETTING > FILTER.");
-        }
-        ImGui::Spacing();
-
         bool sys_missing = false, to_download = deps_any_to_download(deps), later = false;
         for (const Dep &d : deps) { if (d.system && !d.here && !d.optional) sys_missing = true; if (!d.system && !d.here && !d.optional && !d.when.empty()) later = true; }
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
@@ -1827,10 +1848,39 @@ struct App {
             ImGui::Text("Tools folder:     %s", tools_dir().c_str());
             ImGui::Text("Settings folder:  %s", user_root.c_str());
             ImGui::TextDisabled("Both can be seen, and the tools folder changed, on the Paths tab. The same list is in docs/DEPENDENCIES.md.");
-            ImGui::Spacing();
-            if (consent_given()) ImGui::TextColored(colour(K_GOOD), "You agreed to these. They are downloaded when the build first needs them.");
-            else ImGui::TextDisabled("Nothing is downloaded until you agree: \"%s\" at the top, or Run.", deps_any_to_download(deps) ? "Download what's missing..." : "Agree to the downloads...");
         }
+
+        /* ---- Consent: what has been agreed to, and what still asks (the button to agree stays at the top) */
+        ImGui::SeparatorText("Consent");
+        if (!downloads_pending()) ImGui::TextColored(colour(K_GOOD), "Nothing to agree to: the build has everything it downloads.");
+        else if (consent_given()) ImGui::TextColored(colour(K_GOOD), "You agreed to the downloads listed above. The build fetches them when it first needs them, each checked against its SHA-256.");
+        else ImGui::TextColored(colour(K_WARN), "Not agreed yet: nothing is downloaded until you press \"%s\" at the top (or Run, which asks).",
+                                deps_any_to_download(deps) ? "Download what's missing..." : "Agree to the downloads...");
+        ImGui::TextDisabled("You are asked again only if the list this project pins changes.");
+        ImGui::Spacing();
+        ImGui::TextDisabled("Optional, for SCREEN SETTING > FILTER, each its own agreement when you press it:");
+        {   /* FILTER's two extras: asked for here, never fetched by a build */
+            bool have_shaders = true, have_lib = true;
+            for (const Dep &d : deps) { if (d.id == "slang-shaders") have_shaders = d.here; if (d.id == "librashader") have_lib = d.here; }
+            if (!have_shaders) {
+                ImGui::BeginDisabled(busy);
+                if (ImGui::Button("Download the FILTER shaders")) download_shaders();
+                ImGui::EndDisabled();
+                ImGui::SetItemTooltip("libretro's slang-shaders at the commit this project pins, about 85 MB, into the tools folder.\nPressing this is your agreement to that one download. The game runs without them: FILTER then does nothing.");
+                ImGui::SameLine();
+            }
+            if (!have_lib) {
+                ImGui::BeginDisabled(busy);
+                if (ImGui::Button("Build librashader...")) { check_rust(); lr_modal = true; }
+                ImGui::EndDisabled();
+                ImGui::SetItemTooltip("FILTER's library, built here from its pinned source with Rust (about ten minutes the first time).\n"
+                                      "Kept by --clean, so it is built once.");
+                ImGui::SameLine();
+            }
+            ImGui::TextDisabled(have_shaders && have_lib ? "FILTER has its shaders and its library: nothing to agree to." : !have_lib ? "FILTER also needs librashader: built here from its source, once." : "The shaders: about 85 MB.");
+        }
+        ImGui::Spacing();
+
         ImGui::PopTextWrapPos();
     }
 
@@ -1986,6 +2036,7 @@ struct App {
             if (k) ImGui::SameLine();
             char lbl[48]; snprintf(lbl, sizeof lbl, "Player %d", k + 1);
             if (ImGui::RadioButton(lbl, ctl_player == k)) { ctl_player = k; cap_player = -1; }
+            ImGui::SetItemTooltip("Shows and sets player %d's inputs", k + 1);
         }
         ControlsPlayer &p = ctl.p[ctl_player];                 /* (a radio may have changed the player) */
         const Pad *mine = player_pad(ctl_player);
@@ -2067,8 +2118,8 @@ struct App {
     }
 
     /* Configure: a key and a controller button for each of the player's buttons, where the type uses
-     * them; the defaults; and Test. A window over the launcher that can be resized; its size is kept
-     * while the launcher is open but not saved (NoSavedSettings). */
+     * them; the defaults and unsetting, for each column; and Test. A window over the launcher that can be
+     * resized; its size is kept while the launcher is open but not saved (NoSavedSettings). */
     void configure_window() {
         const float em = ImGui::GetFontSize();
         ImGuiViewport *vp = ImGui::GetMainViewport();
@@ -2076,68 +2127,96 @@ struct App {
            near the top of the launcher; shorter only when the launcher itself is */
         const ImGuiStyle &st = ImGui::GetStyle();
         const float row = ImGui::GetFrameHeight() + st.CellPadding.y * 2;
+        const float heading = ImGui::GetTextLineHeightWithSpacing() + st.ItemSpacing.y;
         const float need = ImGui::GetFrameHeight() + st.WindowPadding.y * 2                  /* the title bar, the edges */
-                         + ImGui::GetFrameHeightWithSpacing()                                  /* Test */
-                         + row * (float)(CB_COUNT + 1) + st.ItemSpacing.y * 2                  /* the table and its header */
-                         + ImGui::GetFrameHeightWithSpacing();                                 /* the buttons at the bottom */
+                         + heading + ImGui::GetFrameHeightWithSpacing()                        /* Test input */
+                         + heading + row * (float)(CB_COUNT + 1) + st.ItemSpacing.y * 2        /* Configuration: the table */
+                         + ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y;          /* Default / Unset All, Close */
         const float top = em * 0.75f;
         ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f, vp->WorkPos.y + top), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(std::min(em * 40.0f, vp->WorkSize.x - em * 2), std::min(need, vp->WorkSize.y - top * 2)), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSizeConstraints(ImVec2(em * 28.0f, em * 14.0f), ImVec2(FLT_MAX, FLT_MAX));
+        ImGui::SetNextWindowSize(ImVec2(std::min(em * 42.0f, vp->WorkSize.x - em * 2), std::min(need, vp->WorkSize.y - top * 2)), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(em * 32.0f, em * 16.0f), ImVec2(FLT_MAX, FLT_MAX));
         char title[96];
         snprintf(title, sizeof title, "Player %d: %s###configure", ctl_player + 1, CONTROL_TYPE_LABELS[ctl.p[ctl_player].type]);
         bool open = true;
         if (!ImGui::BeginPopupModal(title, &open, ImGuiWindowFlags_NoSavedSettings)) return;
         ControlsPlayer &p = ctl.p[ctl_player];
         const Pad *mine = player_pad(ctl_player);
+        const bool use_keys = controls_uses_keys(&p), use_pad = controls_uses_pad(&p);
+
+        /* ---- Test input */
+        ImGui::SeparatorText("Test input");
         if (ImGui::Button(ctl_test ? "Stop test" : "Test", ImVec2(em * 6.0f, 0))) { ctl_test = !ctl_test; cap_player = -1; }
-        ImGui::SetItemTooltip("Press this player's keys and controller buttons: each button below lights up, with the player's\n"
-                              "pad icon, while it is down. Nothing is sent to the game, and the keys don't work the window\n"
-                              "while the test runs: stop it with the mouse.");
+        ImGui::SetItemTooltip(ctl_test ? "Stops the test. The keys work the window again."
+                                       : "Starts a test: press this player's keys and controller buttons, and each one lights up\n"
+                                         "below while it is held. Nothing is sent to the game. During the test the keys don't\n"
+                                         "work this window: stop it with the mouse.");
         ImGui::SameLine();
         ImGui::AlignTextToFramePadding();
         ImGui::PushTextWrapPos(0);
-        ImGui::TextDisabled("%s", ctl_test ? "Press the buttons: each lights up while it is down. Stop the test with the mouse." :
-                                  "Click one, then press the key or button you want (Esc: keep it).");
+        ImGui::TextDisabled("%s", ctl_test ? "Press the buttons: each lights up while it is down. Stop the test with the mouse."
+                                           : "Shows which button each key or controller button presses.");
         ImGui::PopTextWrapPos();
-        const float footer = ImGui::GetFrameHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
-        const bool use_keys = controls_uses_keys(&p), use_pad = controls_uses_pad(&p);
-        if (ImGui::BeginTable("map", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY,
+
+        /* ---- Configuration: the buttons */
+        ImGui::SeparatorText("Configuration");
+        const float footer = ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y;
+        const float icon_w = PADICON_SIZE * scale;
+        float col_x[2] = { 0, 0 }, col_w[2] = { 0, 0 };          /* where the Keyboard and Controller columns are, for the buttons under them */
+        const ImVec4 o = ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+        if (ImGui::BeginTable("map", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY,
                               ImVec2(0, -footer))) {
             ImGui::TableSetupScrollFreeze(0, 1);
-            ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, em * 7.0f);
+            ImGui::TableSetupColumn("##icon", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel, icon_w);
+            ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, em * 5.5f);
             ImGui::TableSetupColumn("Keyboard", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableSetupColumn("Controller", ImGuiTableColumnFlags_WidthStretch);
             ImGui::TableHeadersRow();
             for (int b = 0; b < CB_COUNT; b++) {
                 ImGui::TableNextRow();
+                const int down = ctl_test ? button_down(ctl_player, b) : 0;
+                /* the player's icon, always in the same place, while the button is held (as the game shows it) */
                 ImGui::TableNextColumn();
-                int down = ctl_test ? button_down(ctl_player, b) : 0;
                 ImGui::AlignTextToFramePadding();
-                if (down) {                                       /* by a key or a button: the player's icon, as the game shows it */
-                    ImGui::TextColored(colour(K_GOOD), "%s", CONTROL_BUTTONS[b].label);
-                    ImGui::SameLine(0, em * 0.4f);
-                    bubble_image(ctl_player, PADICON_SIZE * scale, 1.0f);
-                } else ImGui::TextUnformatted(CONTROL_BUTTONS[b].label);
+                if (down) {
+                    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetFrameHeight() - icon_w) * 0.5f);
+                    bubble_image(ctl_player, icon_w, 1.0f);
+                } else ImGui::Dummy(ImVec2(icon_w, ImGui::GetFrameHeight()));
+                /* its name, against the right of its column */
+                ImGui::TableNextColumn();
+                ImGui::AlignTextToFramePadding();
+                const char *name = CONTROL_BUTTONS[b].label;
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(name).x);
+                ImGui::TextUnformatted(name);
                 for (int col = 0; col < 2; col++) {
                     ImGui::TableNextColumn();
+                    if (b == 0) { col_x[col] = ImGui::GetCursorScreenPos().x; col_w[col] = ImGui::GetContentRegionAvail().x; }
                     ImGui::PushID(b * 2 + col);
-                    bool used = col == 0 ? use_keys : use_pad;
-                    bool waiting = cap_player == ctl_player && cap_button == b && cap_column == col;
+                    const bool used = col == 0 ? use_keys : use_pad;
+                    const bool held = (down & (col == 0 ? 1 : 2)) != 0;       /* this key, or this controller button, is down now */
+                    const bool waiting = cap_player == ctl_player && cap_button == b && cap_column == col;
                     const char *cur = col == 0 ? p.key[b] : p.pad[b];
                     std::string text = waiting ? (col == 0 ? "press a key... (Esc: cancel)" : "press a button... (Esc: cancel)")
                                      : !used ? (p.type == CT_AUTO ? (col == 0 && controls_auto_keys(&ctl, ctl_player) ? CONTROL_DEFAULT_KEYS[b] : col == 1 ? pad_binding_label(CONTROL_DEFAULT_PAD[b]) : std::string("-"))
                                                                   : std::string("-"))
                                      : col == 0 ? (cur[0] ? std::string(cur) : std::string("(not set)")) : pad_binding_label(cur);
+                    if (held) ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, ImGui::GetColorU32(ImVec4(o.x, o.y, o.z, 0.35f)));
                     ImGui::BeginDisabled(ctl_test || !used || (col == 1 && !mine));
-                    if (waiting) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-                    if ((!cur[0] || !used) && !waiting) ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+                    int pushed = 0;
+                    if (held) {                                       /* pressed: the radio buttons' orange, full strength even while disabled */
+                        ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+                        ImGui::PushStyleColor(ImGuiCol_Button, o); ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1)); pushed = 2;
+                    } else if (waiting) { ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive)); pushed = 1; }
+                    else if (!cur[0] || !used) { ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled)); pushed = 1; }
                     if (ImGui::Button(text.c_str(), ImVec2(ImGui::GetContentRegionAvail().x - em * 2.0f, 0))) { cap_player = ctl_player; cap_button = b; cap_column = col; }
-                    if ((!cur[0] || !used) && !waiting) ImGui::PopStyleColor();
-                    if (waiting) ImGui::PopStyleColor();
+                    ImGui::PopStyleColor(pushed);
+                    if (held) ImGui::PopStyleVar();
+                    char tip[160];
+                    snprintf(tip, sizeof tip, col == 0 ? "The key for %s: click, then press the key you want (Esc: keep this one)"
+                                                       : "The controller button for %s: click, then press the button you want (Esc: keep this one)", CONTROL_BUTTONS[b].label);
+                    ImGui::SetItemTooltip("%s", tip);
                     ImGui::SameLine();
                     {   /* unset: a white X on the radio buttons' orange */
-                        const ImVec4 o = ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
                         ImGui::PushStyleColor(ImGuiCol_Button, o);
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(std::min(1.0f, o.x + 0.08f), std::min(1.0f, o.y + 0.10f), std::min(1.0f, o.z + 0.08f), 1));
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(o.x * 0.85f, o.y * 0.85f, o.z * 0.85f, 1));
@@ -2146,25 +2225,48 @@ struct App {
                         ImGui::PopStyleColor(4);
                         if (hit && cur[0]) { if (col == 0) p.key[b][0] = 0; else p.pad[b][0] = 0; controls_changed(); }
                     }
-                    ImGui::SetItemTooltip("Unset");
+                    snprintf(tip, sizeof tip, col == 0 ? "Unset the key for %s" : "Unset the controller button for %s", CONTROL_BUTTONS[b].label);
+                    ImGui::SetItemTooltip("%s", tip);
                     ImGui::EndDisabled();
                     ImGui::PopID();
                 }
             }
             ImGui::EndTable();
         }
-        ImGui::BeginDisabled(!use_keys);
-        if (ImGui::Button("Default keys")) { for (int b = 0; b < CB_COUNT; b++) snprintf(p.key[b], sizeof p.key[b], "%s", CONTROL_DEFAULT_KEYS[b]); controls_changed(); }
-        ImGui::EndDisabled();
-        ImGui::SetItemTooltip("Arrows, Z X A S, Q W, E R, Enter, Backspace.");
-        ImGui::SameLine();
-        ImGui::BeginDisabled(!use_pad || !p.pad_guid[0]);
-        if (ImGui::Button("Default buttons")) { for (int b = 0; b < CB_COUNT; b++) snprintf(p.pad[b], sizeof p.pad[b], "%s", CONTROL_DEFAULT_PAD[b]); controls_changed(); }
-        ImGui::EndDisabled();
-        /* Close, in the bottom right corner (Esc too, unless a key is being waited for: then Esc cancels that) */
-        ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - em * 6.0f);
+
+        /* Default All and Unset All, a pair under each column: keys under Keyboard, buttons under Controller */
+        const float y = ImGui::GetCursorScreenPos().y;
+        for (int col = 0; col < 2; col++) {
+            if (col_w[col] <= 0) continue;
+            ImGui::SetCursorScreenPos(ImVec2(col_x[col], y));
+            const float bw = (col_w[col] - em * 2.0f - st.ItemSpacing.x) * 0.5f;
+            ImGui::PushID(100 + col);
+            if (col == 0) ImGui::BeginDisabled(ctl_test || !use_keys);
+            else ImGui::BeginDisabled(ctl_test || !use_pad || !p.pad_guid[0]);
+            if (ImGui::Button("Default All", ImVec2(bw, 0))) {
+                for (int b = 0; b < CB_COUNT; b++) {
+                    if (col == 0) snprintf(p.key[b], sizeof p.key[b], "%s", CONTROL_DEFAULT_KEYS[b]);
+                    else snprintf(p.pad[b], sizeof p.pad[b], "%s", CONTROL_DEFAULT_PAD[b]);
+                }
+                controls_changed();
+            }
+            ImGui::SetItemTooltip(col == 0 ? "Sets every key back to the usual layout: arrows, Z X A S, Q W, E R, Enter, Backspace"
+                                           : "Sets every controller button back to the usual layout for this controller");
+            ImGui::SameLine();
+            if (ImGui::Button("Unset All", ImVec2(bw, 0))) {
+                for (int b = 0; b < CB_COUNT; b++) { if (col == 0) p.key[b][0] = 0; else p.pad[b][0] = 0; }
+                controls_changed();
+            }
+            ImGui::SetItemTooltip(col == 0 ? "Clears every key, so this player has none on the keyboard"
+                                           : "Clears every controller button, so this player has none on the controller");
+            ImGui::EndDisabled();
+            ImGui::PopID();
+        }
+        /* Close, in the bottom right corner (Esc too, unless a key is being waited for or a test runs) */
+        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - st.WindowPadding.x - em * 6.0f);
         bool esc = cap_player < 0 && !ctl_test && ImGui::IsKeyPressed(ImGuiKey_Escape);
         if (ImGui::Button("Close", ImVec2(em * 6.0f, 0)) || esc) open = false;
+        ImGui::SetItemTooltip("Closes this window. Changes are already saved.");
         if (!open) { ctl_test = false; cap_player = -1; ImGui::CloseCurrentPopup(); }
         ImGui::EndPopup();
     }
@@ -2202,8 +2304,10 @@ struct App {
         }
         ImGui::Spacing();
         if (ImGui::Button("Defaults")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0; changed = true; }
+        ImGui::SetItemTooltip("Every extension back to how it starts: all on but the experimental ones");
         ImGui::SameLine();
         if (ImGui::Button("All off (the PSP game)")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = false; changed = true; }
+        ImGui::SetItemTooltip("Every extension off: the game plays as the PSP original");
         ImGui::EndDisabled();
         if (changed) settings_save(set, settings_path);
         ImGui::Spacing();
@@ -2258,8 +2362,10 @@ struct App {
                 }
             ImGui::EndCombo();
         }
+        ImGui::SetItemTooltip("The list so far: choose an entry to change or delete it");
         ImGui::SetNextItemWidth(em * 7);
         ImGui::InputTextWithHint("##from", to ? "address" : "instruction", from.data(), from.size(), ImGuiInputTextFlags_CharsHexadecimal);
+        ImGui::SetItemTooltip(to ? "The address to record or play, in hex" : "The instruction address, in hex");
         if (to) {
             ImGui::SameLine(); ImGui::TextUnformatted("to"); ImGui::SameLine();
             ImGui::SetNextItemWidth(em * 7);
@@ -2280,14 +2386,17 @@ struct App {
         ImGui::SameLine();
         ImGui::BeginDisabled(entry.empty() || dup || list.size() >= MAX_OUTPUTS);
         if (ImGui::Button("Add")) { list.push_back(entry); sel = (int)list.size() - 1; }
+        ImGui::SetItemTooltip("Adds what the boxes say to the list");
         ImGui::EndDisabled();
         ImGui::SameLine();
         ImGui::BeginDisabled(sel < 0 || entry.empty() || dup);
         if (ImGui::Button("Change")) list[sel] = entry;
+        ImGui::SetItemTooltip("Replaces the chosen entry with what the boxes say");
         ImGui::EndDisabled();
         ImGui::SameLine();
         ImGui::BeginDisabled(sel < 0);
         if (ImGui::Button("Delete")) { list.erase(list.begin() + sel); sel = -1; from[0] = 0; if (to) (*to)[0] = 0; }
+        ImGui::SetItemTooltip("Removes the chosen entry from the list");
         ImGui::EndDisabled();
         if (!why.empty() && why != " ") ImGui::TextColored(colour(K_WARN), "%s", why.c_str());
         else if (dup) ImGui::TextColored(colour(K_WARN), "That one is in the list already.");
@@ -2397,11 +2506,13 @@ struct App {
                 ImGui::SetNextItemWidth(-em);
                 if (ImGui::InputTextWithHint("##extra", "more game options, e.g. --p2 human", extra_buf.data(), extra_buf.size()))
                     set.extra = extra_buf.data();
+                ImGui::SetItemTooltip("More options for the game, added to its command line as typed (See option details lists them)");
             }
             ImGui::EndDisabled();
             if (advanced) {
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() + em * 5.5f - ImGui::GetStyle().CellPadding.x);
                 if (link("See option details") || show_at_start == "options") { ImGui::OpenPopup("The game's options"); if (show_at_start == "options") show_at_start.clear(); }
+                ImGui::SetItemTooltip("Lists every option the game takes, and what each does");
                 options_window();
             }
             ImGui::EndTable();
@@ -2451,13 +2562,13 @@ struct App {
 
         /* three bands: the side and the tab's page; the console, on every tab; the status line */
         const float footer = ImGui::GetFrameHeightWithSpacing();
-        const float head = ImGui::GetFrameHeightWithSpacing();          /* the console's title row */
+        const float head = ImGui::GetFrameHeightWithSpacing() + st.WindowPadding.y * 2;   /* the console's frame: its heading, its edges */
         float avail = ImGui::GetContentRegionAvail().y;
         float con_h = (float)set.console_h * scale;
         float min_top = em * 21.0f, min_con = em * 4.0f;            /* (the header's tabs included) */
         if (con_h > avail - footer - head - min_top) con_h = avail - footer - head - min_top;
         if (con_h < min_con) con_h = min_con;
-        float top_h = avail - footer - head - con_h - st.ItemSpacing.y * 2 - 6 * scale;
+        float top_h = avail - footer - head - con_h - st.ItemSpacing.y * 2 - 9 * scale;
 
         float hh = header();                                          /* the picture, the tabs, the version */
         if (show_at_start == "about") { set.tab = T_ABOUT; show_at_start.clear(); }
@@ -2474,21 +2585,25 @@ struct App {
         ImGui::EndChild();
 
         /* ---- the bar between the page and the console: drag it to give the console more or less room */
-        ImGui::InvisibleButton("split", ImVec2(-1, 6 * scale));
+        ImGui::InvisibleButton("split", ImVec2(-1, 9 * scale));
+        ImGui::SetItemTooltip("Drag up or down to give the console more or less room");
         if (ImGui::IsItemHovered() || ImGui::IsItemActive()) ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
         if (ImGui::IsItemActive()) set.console_h = (int)((con_h - ImGui::GetIO().MouseDelta.y) / scale);
         if (set.console_h < 60) set.console_h = 60;
         {
+            /* a thick line in the radio buttons' orange, brighter while the mouse is on it */
             ImVec2 a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+            const bool on = ImGui::IsItemActive() || ImGui::IsItemHovered();
             ImGui::GetWindowDrawList()->AddLine(ImVec2(a.x, (a.y + b.y) * 0.5f), ImVec2(b.x, (a.y + b.y) * 0.5f),
-                                                ImGui::GetColorU32(ImGui::IsItemActive() || ImGui::IsItemHovered() ? ImGuiCol_CheckMark : ImGuiCol_Border));
+                                                ImGui::GetColorU32(ImGuiCol_CheckMark, on ? 1.0f : 0.6f), 3 * scale);
         }
 
-        /* ---- the console: anchored here on every tab, showing whatever was started from any of them */
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Console");
+        /* ---- the console: anchored here on every tab, showing whatever was started from any of them; in a
+           frame of its own like the tabs' page, with its heading as theirs */
+        ImGui::BeginChild("console", ImVec2(0, -footer), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::SeparatorText("Console");
         ImGui::PushStyleColor(ImGuiCol_ChildBg, dark ? ImVec4(0.06f, 0.06f, 0.07f, 1) : ImVec4(1, 1, 1, 1));
-        ImGui::BeginChild("log", ImVec2(0, -footer), ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::BeginChild("log", ImVec2(0, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
         if (mono) ImGui::PushFont(mono, 14.0f);
         int n = (int)console.lines.size() + (console.partial.empty() ? 0 : 1);
         ImGuiListClipper clip;
@@ -2510,8 +2625,9 @@ struct App {
         if (mono) ImGui::PopFont();
         ImGui::EndChild();
         ImGui::PopStyleColor();
+        ImGui::EndChild();
 
-        /* ---- status, and the version in the bottom right corner */
+        /* ---- status, and the console's buttons in the bottom right corner */
         ImGui::SetCursorPosY(ImGui::GetWindowHeight() - st.WindowPadding.y - ImGui::GetFrameHeight());   /* the last row, clear of the edge */
         ImGui::AlignTextToFramePadding();
         ImGui::TextColored(colour(status_kind), "%s", status.c_str());
@@ -2538,8 +2654,10 @@ struct App {
                 if (game_running) close_both(); else { child.stop(); quit = true; }
                 ImGui::CloseCurrentPopup();
             }
+            ImGui::SetItemTooltip(game_running ? "Closes the game, then the launcher" : "Stops the build or download, then closes the launcher");
             ImGui::SameLine();
             if (ImGui::Button("Cancel", ImVec2(em * 6, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+            ImGui::SetItemTooltip("Keeps the launcher open");
             ImGui::EndPopup();
         }
         consent_window();
@@ -2561,6 +2679,10 @@ static const char *const UI_FONTS[] = {
     "C:/Windows/Fonts/segoeui.ttf", "/System/Library/Fonts/Supplemental/Arial.ttf", "/Library/Fonts/Arial.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", NULL };
+static const char *const BOLD_FONTS[] = {
+    "C:/Windows/Fonts/segoeuib.ttf", "/System/Library/Fonts/Supplemental/Arial Bold.ttf", "/Library/Fonts/Arial Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", NULL };
 static const char *const MONO_FONTS[] = {
     "C:/Windows/Fonts/consola.ttf", "/System/Library/Fonts/Menlo.ttc", "/System/Library/Fonts/Monaco.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "/usr/share/fonts/TTF/DejaVuSansMono.ttf", "/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono.ttf",
@@ -2668,6 +2790,7 @@ int main(int argc, char **argv) {
     app.set_theme_now();
     if (!system_font(UI_FONTS, 16.0f)) io.Fonts->AddFontDefault();
     app.mono = system_font(MONO_FONTS, 14.0f);
+    app.bold = system_font(BOLD_FONTS, 16.0f);
     ImGui_ImplSDL3_InitForSDLRenderer(app.window, app.renderer);
     ImGui_ImplSDLRenderer3_Init(app.renderer);
 

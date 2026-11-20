@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.102.2
+### For players
+- **Launcher, Inputs > Configure:** two headings, **Test input** (with **Test**) and **Configuration** (the buttons). During a test the player's icon lights in a column of its own, the same place on every row, beside the button's name (now right-aligned); the key or controller button that is pressing it turns orange, its cell too.
+- **Default All** and **Unset All** under each column: keys under Keyboard, controller buttons under Controller. (Default keys / Default buttons are gone.)
+- **Dependencies, Consent:** a new heading at the bottom says what you have agreed to (or that nothing is agreed yet, and which button at the top does it), and holds the FILTER shaders and librashader buttons, each its own agreement. The agree button stays at the top.
+- **The console** is in a frame of its own with a **Console** heading, like the tabs' page. The bar between them is thicker and orange (brighter while you drag it).
+- **About:** "A3MX - Launcher" in bold; the line "A decompilation of the PSP game..." is gone. Hover over the A3MX picture to see the version at a glance.
+- **Hover text everywhere:** every button, link, box and tab now says in a line what it does (the tabs, Open / Browse on Paths, the downloads' and librashader's windows, the report window, the extra options, Close both / Cancel, and the rest).
+
+### Technical
+- `launcher.cpp` `configure_window()`: four columns (icon, name right-aligned, Keyboard, Controller); `TableSetBgColor(CellBg)` and the button in `ImGuiCol_CheckMark` (with `DisabledAlpha` 1 so it shows while the cells are disabled during the test) for the side that is down (`button_down` bit 1 keys, 2 controller); the column positions are kept from the first row so the Default All / Unset All pairs line up under them; Close on its own row. Sized for the two headings and the extra row.
+- `bold`: a bold system font (segoeuib.ttf, Arial Bold, DejaVuSans-Bold, LiberationSans-Bold), else the title drawn twice a pixel apart. `TAB_TIPS` for the tabs; tooltips added to ~30 controls (`SetItemTooltip`, shown on hover and while disabled). Dear ImGui draws its own controls, so screen readers can't read them: the hover text is for people, not assistive software.
+- `deps_tab`: the FILTER extras and the consent line moved under `SeparatorText("Consent")`, shown on every check.
+- The console: `BeginChild("console", Borders)` with `SeparatorText("Console")` around the log; the split bar 9 px, drawn 3 px in `CheckMark` at 60 % (100 % on hover or drag).
+- Checked: the launcher built on Linux with no warnings; Configure, About, Dependencies (Consent, with a taller window) and the console looked at in screenshots. The orange key highlight needs a real key press: not seen here.
+
 ## 0.102.1
 ### For players
 - **Launcher, Inputs > Configure:** while **Test** runs, the keys are only the player's: the arrows, Enter, Space and Esc no longer move around, press buttons or close the window (stop the test with the mouse). The window now opens near the top and tall enough to show every button without scrolling.
