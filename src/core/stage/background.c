@@ -242,6 +242,7 @@ SFA_FUNC(0881BD28, stage_layer_16_split) {
    strip shows in each 256-pixel stretch of the layer's horizontal scroll (+18), and 0x0881B268's kind
    0x90 draws three of them side by side. a0 the layer, a1 its map. */
 #define STRIP_TABLE 0x08A08BDDu
+extern gaddr stage_strip_before;   /* tiles.c */
 
 static void draw_layer_16_strips(Cpu *c, gaddr layer, gaddr map) {
     c->r[29] -= 0x80;
@@ -265,6 +266,9 @@ static void draw_layer_16_strips(Cpu *c, gaddr layer, gaddr map) {
     *W(st + G_STRIPS) = map + strip1 * 64;
     *W(st + G_STRIPS + 4) = map + strip2 * 64;
     gaddr first = map + strip0 * 64;
+    /* WIDE NATIVE: the strip before the first (tiles.c draws the columns left of the first strip's start
+       from its end) */
+    stage_strip_before = map + (uint32_t)*B(STRIP_TABLE + (uint32_t)((n0 - 1) & 0x7F)) * 64u;
     *W(st + G_LINE) = first;
     *W(st + G_BASE) = first;
     SET16(st + G_MAP_COL, h >> 4);
@@ -278,6 +282,7 @@ static void draw_layer_16_strips(Cpu *c, gaddr layer, gaddr map) {
     SET16(st + G_ROWS, 0x10);
     SET16(st + G_DEPTH, *B(layer + 122));
     draw_record(c, st, map, 0x0881C59C);
+    stage_strip_before = 0;
     c->r[29] += 0x80;
 }
 

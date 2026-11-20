@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.37
+### For players
+- **WIDE NATIVE, GUILE's stage:** no more pale, broken column at the left edge as the train's strips go by: the train carries on to the screen's left edge. (The black block at the bottom left, below the floor, is still there: left for later.)
+
+### Technical
+- `stage/tiles.c` + `stage/background.c`: GUILE's strips layer (0x0881B268 kind 0x90, three 16-column strips picked by the table 0x08A08BDD) starts 3 tiles further left in WIDE NATIVE; left of the first strip's column 0 those tiles were read from the words before the strip (garbage). They now come from the end of the strip before it in the table (`stage_strip_before`, set by 0x0881C354 while it draws).
+- Not changed: GUILE's floor (kind 0xC0) has no tiles left of the 4:3 picture in its bottom rows (black, hidden by the super bar's over-long end until 0.99.35); the maintainer will come back to it.
+- Checked: parity (memory hashes, renderer lazy) stage_objects_31_guile, arcade_fight, attract_mode; wide_fight and wide_left_wall WIDE NATIVE off / on; by eye over GUILE's fight (frames 4700 - 5600).
+
 ## 0.99.36
 ### For players
 - **WIDE NATIVE, rival dialogue:** the lines before a rival or final fight are centred as in WIDE (each line's middle where WIDE shows it), instead of being pushed out toward their speaker's portrait.

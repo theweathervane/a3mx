@@ -183,6 +183,13 @@ static int wide_wraps_left(gaddr st, const Grid *g) {
     return kind != 0x85 && S16(st + GRID_COL_BACK) == S16(st + GRID_COLS_TO_WRAP) + col0;
 }
 
+/* WIDE NATIVE: 0x0881B268's kind 0x90 (GUILE's strips, 16 columns each, side by side as a table picks
+   them: stage/background.c) starts 3 tiles further left; left of the first strip's start (its map column
+   0) those come from the end of the strip before it in the table, which background.c sets here while it
+   draws (before 0.99.37 they were read from the words before the strip: a pale column, or none) */
+gaddr stage_strip_before;
+#define STRIP_W 16
+
 /* The grid, row by row: the map wraps down at GRID_ROW_WRAP rows and across at GRID_COL_WRAP columns. */
 static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
     *W(st + GRID_ROW) = 0;
@@ -214,6 +221,7 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
 
         *W(st + GRID_COL) = 0;
         gaddr strip = st;
+        int strip_left = rt_widescreen && g->b268 && S16(st + GRID_KIND) == 0x90 && stage_strip_before != 0;
         int32_t col = 0;
         do {
             if (scene_mirror) {   /* the scene's own column, mirrored past its sides */
@@ -229,7 +237,14 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
                 else *W(st + GRID_TILE) -= (uint32_t)(S16(st + GRID_COL_BACK) << 2);
             }
             gaddr tile = *W(st + GRID_TILE);
-            if ((int32_t)*W(tile) < 0) draw_tile(c, st, g);
+            int32_t r = col - (rt_widescreen ? g->wide_tiles : 0) + S16(st + GRID_MAP_COL);
+            if (strip_left && r < 0) {   /* WIDE NATIVE: left of the first strip: the strip before's end */
+                gaddr at = stage_strip_before + (*W(st + GRID_LINE) - (uint32_t)(S16(st + GRID_MAP_COL) * 4) - *W(st + GRID_BASE))
+                           + (uint32_t)((STRIP_W + r) * 4);
+                *W(st + GRID_TILE) = at;
+                if ((int32_t)*W(at) < 0) draw_tile(c, st, g);
+                *W(st + GRID_TILE) = tile;
+            } else if ((int32_t)*W(tile) < 0) draw_tile(c, st, g);
             col++;
             SET16(st + GRID_X, S16(st + GRID_X) + S16(st + GRID_STEP_X));
             *W(st + GRID_COL) = (uint32_t)col;
