@@ -87,7 +87,9 @@ downloaded. This page collects what works, what doesn't, and the rules for refin
     behind carry on round (`widescreen_edge_row` 3); the blue screens' name banners get one more name;
     the flames before M. Bison (a title backdrop of kind 5 at scroll 0, standing on a whole band of its
     map) carry on round their 12 tiles; the scene that scrolls from Ryu under the clouds up to M. Bison
-    keeps its black sides (0.99.29: carried on, it showed the wrong parts of the map at the sides);
+    is not carried on (0.99.29: it showed the wrong parts of the map at the sides) but its backdrop,
+    M. Bison's layer and the eagle are drawn 1.25 times over-sized about the screen's middle (0.99.31),
+    so the clouds and M. Bison fill the screen; Ryu, in front, stays as drawn;
   - the attract mode's Akuma screens (0.99.29): the blue swirl behind his back and the burst behind the
     red kanji are drawn whole 1.25 times over-sized about the screen's middle, as the super finish's
     swirl and burst are (`widescreen_oversize`);

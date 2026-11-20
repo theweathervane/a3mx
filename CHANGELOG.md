@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.99.31
+### For players
+- **WIDE NATIVE, attract mode:** the scene that goes from Ryu under the clouds up to M. Bison fills the screen: the clouds, the red behind M. Bison, M. Bison and the eagle above him are drawn larger (1.25 times, as Akuma's screens are), instead of the black sides 0.99.29 put back. Ryu stays his own size.
+
+### Technical
+- `stage/tiles.c`: tiles of a grid with `scene_oversize` are drawn 1.25 times over-sized about (192, 120), edges on whole pixels (`oversize()`), for the attract mode's kind 5 backdrop at v scroll under 768 (frames 1580 - 1607, 7403 - 7430, 13117 - 13144, 18891 - 18918 of attract_mode) and the 16-pixel layer of kind 3 (the clouds' and M. Bison's; the attract mode has kind 3 only there). Ryu's close-up (kind 4) is left alone. `stage_scene_oversized()`: either was drawn this frame or the last.
+- `object/sprite_grid.c` 0x08811BCC: while `stage_scene_oversized()`, the list's first picture (the eagle) is drawn with the same scale; Ryu's hair and headband, the list's other pictures, are not.
+- Reviewed by the maintainer on a branch first. Checked: parity (memory hashes, renderer lazy) attract_mode; wide_fight WIDE NATIVE off / on; by eye: the scene in all four attract cycles, the flames before M. Bison and the screen after the scene.
+
 ## 0.99.30
 ### For players
 - **WIDE NATIVE, attract mode:** on the black screens with the scrolling names (CHUN-LI, CHARLIE, DHALSIM, ZANGIEF) and the fighters' shadows, the names and shadows now reach the left edge of the screen. Before, the left strip was black or showed broken lines.

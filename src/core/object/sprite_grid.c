@@ -512,6 +512,13 @@ SFA_FUNC(088112A8, game_draw_cells_cached32) {
 SFA_FUNC(088117D0, game_draw_cells_paletted16) {
     c->r[29] -= FRAME_SIZE; draw_paletted(c, ARG(0), ARG(1), ARG(2), c->r[29]); c->r[29] += FRAME_SIZE;
 }
+int stage_scene_oversized(void);   /* stage/tiles.c: WIDE NATIVE, the attract mode's Ryu / M. Bison scene */
 SFA_FUNC(08811BCC, game_draw_cells_paletted32) {
+    /* WIDE NATIVE: in the attract mode's Ryu / M. Bison scene, the eagle above M. Bison (its list's first
+       picture, at x 192) drawn 1.25 times over-sized like the scene's backdrop and M. Bison's layer; Ryu's
+       hair and headband (the list's other pictures) stay as drawn, with the rest of him */
+    int over = rt_widescreen && sprite_grid_scale == 0.0f && stage_scene_oversized() && ARG(1) == ARG(2);
+    if (over) { sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = 120.0f; sprite_grid_scale_all = 1; }
     c->r[29] -= FRAME_SIZE; draw_paletted32(c, ARG(0), ARG(1), ARG(2), c->r[29]); c->r[29] += FRAME_SIZE;
+    if (over) { sprite_grid_scale = 0.0f; sprite_grid_scale_all = 0; }
 }

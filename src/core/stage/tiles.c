@@ -48,6 +48,7 @@ static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); retur
 #define QUAD         0x08B014DCu   /* the quad list's descriptor (its positions, colours and texels) */
 #define QUAD_XY      0x08B014ECu   /* s16 x, y for its 4 corners: top left, top right, bottom right, bottom left */
 #define QUAD_UV      0x08B0150Cu   /* s16 u, v, the same order */
+#define GAME         0x08E75910u   /* +0 u16: the screen (2: the attract mode) */
 #define PAUSED       0x08E75969u   /* s8: nonzero stops background animation (with the two below) */
 #define FIGHT        0x092E1228u   /* +15, +37: s8 flags that stop it too */
 #define ANIM_B268    0x092E8800u   /* 0x0881B268's animation for kind 0x85: +60 countdown, +131 frame (layer 0's record; 0.49.0 - 0.88.2 had 0x092F8800, writing elsewhere) */
@@ -110,6 +111,14 @@ static int columns(const Grid *g) { return rt_widescreen ? g->wide_cols : g->col
 static int scene_mirror;          /* set by 0x0881B7C8 for the grid it draws (1); 0x0881AB28's kind 5 (2) */
 static int32_t scene_map_w = 24;  /* the map's width in tiles */
 static uint32_t scene_flip;       /* the tile's word's flip across, toggled for a mirrored column */
+/* WIDE NATIVE: a grid drawn 1.25 times over-sized about the 4:3 screen's middle (192, 120 in the 2D
+   library's rows), as the attract mode's Akuma screens and the super finish's backdrops are: its 384
+   fill the 480. 32-pixel tiles become 40 (x' = 1.25 x - 48), on whole pixels, the shared edges alike */
+static int scene_oversize;
+uint64_t rt_vblank_count(void);
+static long scene_oversize_frame = -10;   /* the last frame the scene's kind 5 layer was drawn over-sized */
+int stage_scene_oversized(void) { return (long)rt_vblank_count() - scene_oversize_frame <= 1; }
+static int32_t oversize(int32_t p, int32_t mid) { int32_t d = (p - mid) * 5; return mid + (d >= 0 ? d / 4 : -((-d + 3) / 4)); }
 #define SCENE_W 12
 
 /* One tile: its palette, the quad's corners (flipped as the map word says) and texels, then the draw. */
@@ -123,6 +132,7 @@ static void draw_tile(Cpu *c, gaddr st, const Grid *g) {
     uint32_t flip = (*W(*W(st + GRID_TILE)) ^ scene_flip) & 0x30000000u;
     int32_t l = S16(st + GRID_LEFT), r = S16(st + GRID_RIGHT);
     int32_t t = S16(st + GRID_TOP), b = S16(st + GRID_BOTTOM);
+    if (scene_oversize) { l = oversize(l, 192); r = oversize(r, 192); t = oversize(t, 120); b = oversize(b, 120); }
     if (flip & 0x10000000u) { int32_t s = l; l = r; r = s; }
     if (flip & 0x20000000u) { int32_t s = t; t = b; b = s; }
     SET16(QUAD_XY + 0, l);  SET16(QUAD_XY + 12, l);
@@ -348,17 +358,24 @@ static void draw_layer_32(Cpu *c, gaddr layer, gaddr map) {
        +98, a multiple of 256, and not scrolling: moved less than 64 since the frame before, but not 0:
        the flames before M. Bison, which step from band to band): the columns past the scene's sides are
        its own, round within its 12 (the flames repeat every 6 tiles). A scene that scrolls through the
-       bands (Ryu under the clouds, then M. Bison, in the attract mode) keeps its black sides, as the 4:3
-       game has. */
+       bands (Ryu under the clouds, then M. Bison, in the attract mode) is not wrapped: it is drawn
+       over-sized instead (below). */
     static int32_t last_v = 0x7FFF;
     int32_t v = (int16_t)*H(layer + 98), dv = v - last_v;
     int scrolling = dv != 0 && dv > -64 && dv < 64;
     last_v = v;
     scene_mirror = rt_widescreen && kind == 5 && S16(st + GRID_MAP_COL) == 0 && S16(st + GRID_X0) == 0
                    && v % 256 == 0 && !scrolling ? 2 : 0;
+    /* WIDE NATIVE: that scene (the attract mode, GAME + 0 = 2: the map's top bands, v scroll under 768)
+       drawn 1.25 times over-sized instead, so it fills the 16:9 screen with its own picture (with M. Bison's
+       layer and the eagle; Ryu, in front, stays as drawn) */
+    scene_oversize = rt_widescreen && kind == 5 && *H(GAME) == 2 && v < 768 && S16(st + GRID_MAP_COL) == 0
+                     && S16(st + GRID_X0) == 0;
+    if (scene_oversize) { scene_mirror = 0; scene_oversize_frame = (long)rt_vblank_count(); }
     scene_map_w = 16;
     draw_grid(c, st, &GRID_AB28);
     scene_mirror = 0;
+    scene_oversize = 0;
     c->r[29] += 0xB0;
 }
 
@@ -401,7 +418,12 @@ static void draw_layer_16(Cpu *c, gaddr st) {
         SET16(st + GRID_COL_BACK, 0x40);
         SET16(st + GRID_LINE_STEP, 0x40);
     }
+    /* WIDE NATIVE: that scene's 16-pixel layer over the backdrop too (kind 3, the clouds' and M. Bison's;
+       the attract mode has kind 3 only in this scene). Ryu's close-up (kind 4) stays as drawn */
+    scene_oversize = rt_widescreen && *H(GAME) == 2 && kind == 3;
+    if (scene_oversize) scene_oversize_frame = (long)rt_vblank_count();
     draw_grid(c, st, &GRID_B268);
+    scene_oversize = 0;
     c->r[29] += 0x40;
 }
 
