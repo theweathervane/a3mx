@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.104.0
+### For players
+- **More of the game decompiled:** 20 larger functions, among them drawing every object with its parts (one of the busiest functions in the game), hit boxes meeting, the fighters pushed apart, a fighter's walk, and the attract mode's and menus' set-ups. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_large.c` (new): 20 of the ready functions of 61 - 100 instructions (`ready.py 61 400`): 0x0880BA94 (an object drawn with its parts, ~217,000 calls in the profile), 0x0880DA78 (the fading shape, translated beside `shapes.c` until now), 0x08821600, 0x08822D2C, 0x08856B38, 0x088627D0, 0x08862FF0, 0x08863E1C, 0x08873728, 0x08873BF0, 0x088AF9DC, 0x088B2A5C, 0x088B42D0, 0x088B520C, 0x088BD334, 0x088BE210, 0x088CF388, 0x088D0354, 0x089DFA54, 0x089DFED4. Tables in docs/PSP_PROGRAM_MAP.md.
+- 0x089DFED4's first object takes the caller's s0 as its + 88, as the original does.
+- Checked: the coverage pass maps all 20 to scenarios (attract_mode, arcade_ending, mode_tour and arcade_other_fighter run them all; 0x0880BA94 runs in every one of the 67 scenarios the pass covers, all but the three `wide_*` ones); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, arcade_other_fighter, arcade_match, free_battle_team, option_tour, save_load and stage_objects_05_akuma_2.
+
 ## 0.103.0
 ### For players
 - **More of the game decompiled:** 41 more of its functions are now hand-written C, among them the CPU's script frame, a fighter's routine by human or CPU, steps through the screens' tables, and objects' places, bounces and counters. Nothing plays differently.

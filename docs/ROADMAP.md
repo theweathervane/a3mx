@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  13.28% decompiled
+Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  13.59% decompiled
 
-Functions                                [█░░░░░░░░░]  12.09%  1,799 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  13.28%  64,294 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  12.22%  1,819 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  13.59%  65,798 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██░░░░░░░░]  29.39%  59,936 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  30.04%  61,265 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.23%  3,170 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.30%  3,345 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -183,6 +183,10 @@ Done:
 - [x] Forty-one more (`object/batch_steps.c`): steps through tables (with the bottom text, or freeing the
       object at GAME + 4 = 0), the CPU's script frame and a fighter's routine by human / CPU, places from
       tables, bounces and wrap-arounds, the frame record of a fighter, counters (0.103.0)
+- [x] Twenty larger ones (`object/batch_large.c`): an object drawn with its parts (0x0880BA94, the hottest
+      left), the fading shape (0x0880DA78), objects put on their lists and made from the twelve 0x168-byte
+      slots, hit boxes meeting, the fighters pushed apart, a fighter's walk step and box range, set-ups by
+      screen, a particle field, objects moving to a target and made from a record's list (0.104.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the
