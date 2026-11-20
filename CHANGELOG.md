@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.105.0
+### For players
+- **More of the game decompiled:** 18 more functions, among them drawing the four fighters, how much damage a guard takes off and when a fighter guards, a fighter's reset for each round, name entry, and the fighters' labels before a fight. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_large2.c` (new): the 6 small functions that became ready after 0.104.0 (0x088B0960, 0x088B48C4, 0x088BC044, 0x0887684C, 0x0880BA48, 0x088813EC) and 12 of the larger ready ones (0x088B5578, 0x088AED5C, 0x088BDBB8, 0x0887DD64, 0x0885ECE8, 0x088AE5A8, 0x0889229C, 0x088980F4, 0x08871ED0, 0x0886731C, 0x08897F34, 0x088B56E4). Left for later: 0x088386B0 (recursive, a dozen registers) and 0x0880E9E0 (allocates sprite cells and waits a frame when none are free).
+- 0x088AED5C's switch read from its table at 0x089FF750 (types 0 - 3 and 8, 4 - 6 and 9, 7).
+- Checked: the coverage pass maps all 18 to scenarios (attract_mode and arcade_ending run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, arcade_other_fighter, arcade_match, free_battle and stage_objects_10_guy.
+
 ## 0.104.0
 ### For players
 - **More of the game decompiled:** 20 larger functions, among them drawing every object with its parts (one of the busiest functions in the game), hit boxes meeting, the fighters pushed apart, a fighter's walk, and the attract mode's and menus' set-ups. Nothing plays differently.
