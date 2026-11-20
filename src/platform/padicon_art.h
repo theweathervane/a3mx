@@ -1,6 +1,6 @@
 /* The player bubbles drawn on the MODE MENU's bar (src/extensions/padicons.c): a disc in the player's
  * colour with its number, as the game's own 1P / 2P / 3P boxes are coloured (4 is ours). The launcher's
- * Controllers tab draws the same pixels (Pad icon, and Test), so what it shows is what the game shows.
+ * Inputs tab draws the same pixels (Current, Pad icon, and Test), so what it shows is what the game shows.
  *
  * Shared by the game (C) and the launcher (C++): plain data and one function, no SDL, no game memory. */
 #pragma once
@@ -10,20 +10,23 @@
 #define PADICON_SIZE 16                        /* a bubble, with its outline and shadow: 16 x 16 */
 #define PADICON_SET  (1u << 24)                /* a pixel that is drawn (black is PADICON_SET alone) */
 #define PADICON_LIGHT 0xF7F7E7u                /* the outline round it, like the boxes' frame */
+#define PADICON_NONE 4                         /* the launcher's (0) bubble, light grey: a player set to None (never in the game) */
 
 /* the numbers, 6 x 5, in the chunky style of the game's 1P / 2P / 3P */
-static const char *const padicon_digits[4][5] = {
+static const char *const padicon_digits[5][5] = {
     { ".###..", "..##..", "..##..", "..##..", ".####." },
     { "######", "....##", "######", "##....", "######" },
     { "######", "....##", ".#####", "....##", "######" },
     { "##..##", "##..##", "######", "....##", "....##" },
+    { "######", "##..##", "##..##", "##..##", "######" },   /* 0: PADICON_NONE */
 };
 /* per player: number outline, bubble, bubble rim, number (RGB) */
-static const uint32_t padicon_colours[4][4] = {
+static const uint32_t padicon_colours[5][4] = {
     { 0x520000, 0x842110, 0xAD7C29, 0xF7F7E7 },   /* 1 red, as the game's 1P box */
     { 0x002163, 0x104284, 0x1F7384, 0xE7F7F7 },   /* 2 blue */
     { 0x082108, 0x214219, 0x5B7319, 0xF7F7E7 },   /* 3 green */
     { 0x4A3100, 0x9C7B10, 0xD6B529, 0xF7F7E7 },   /* 4 yellow (ours) */
+    { 0x6B6B6B, 0xC6C6C6, 0xA5A5A5, 0xF7F7F7 },   /* 0 light grey: PADICON_NONE (the launcher only) */
 };
 
 static int padicon_near(const uint32_t p[PADICON_SIZE][PADICON_SIZE], int y, int x, int diagonals) {
@@ -35,7 +38,7 @@ static int padicon_near(const uint32_t p[PADICON_SIZE][PADICON_SIZE], int y, int
     return 0;
 }
 
-/* Player K's bubble (0 - 3): each pixel 0 (clear) or PADICON_SET | RGB. A disc 13 across at 1, 1 with
+/* Player K's bubble (0 - 3, or PADICON_NONE): each pixel 0 (clear) or PADICON_SET | RGB. A disc 13 across at 1, 1 with
  * its rim, the number in its outline (columns 5 - 10), then a light outline round it all and a black
  * shadow down and to the right. */
 static void padicon_bubble(int k, uint32_t out[PADICON_SIZE][PADICON_SIZE]) {

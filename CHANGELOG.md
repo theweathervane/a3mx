@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.100.0
+The WIDE NATIVE presentation work of 0.99.x is finished. From here the minor version goes up until the decompilation is complete.
+
+### For players
+- **Launcher, Inputs tab (was Controllers):** a new setup now has **player 1 on the keyboard and players 2 to 4 set to None**. No controller arrangement is assumed any more, so input mappers and overlays (reWASD, Steam Input) only get what you set up yourself (issue #20). An existing `controllers.cfg` keeps what it says.
+- **Current** (was "Now:") is at the top of the tab with the larger bubbles; under the new **Configuration** heading the chosen player's **Pad icon** comes first, small, with no text beside it. A player set to None shows a greyed-out **0** bubble.
+- Changing a player to Controller or Keyboard/Controller gives it the usual buttons to start from.
+- The unset button is now an orange **X** in white, like the radio buttons.
+- **Default keys** no longer says two players can't share a key: they can, and nothing stops it.
+
+### Technical
+- `platform/controls.h` `controls_defaults`: player 1 `CT_KEYBOARD` (usual keys, usual pad buttons kept for later), players 2 - 4 `CT_NONE`; the game's no-file log line in `host_sdl.c` to match. Runs with `--save-dir` (the tests) read no file and are unchanged.
+- `platform/padicon_art.h`: a light grey bubble with a 0, `PADICON_NONE` (index 4), drawn only by the launcher; the game's pad icons still use 0 - 3.
+- `launcher.cpp`: tab renamed Inputs (`--tab inputs`; `--tab controllers` removed); `bubble[5]`; the control type combo fills `CONTROL_DEFAULT_PAD` for a controller type with no buttons; the unset button styled from `ImGuiCol_CheckMark`.
+- Docs: CONTROLLERS.md, BUILDING.md; screenshots.json takes `--tab inputs`.
+- Checked: g++ syntax check of `launcher.cpp`; the bubbles drawn from `padicon_art.h` by eye. Not run here: a launcher build, the screenshot retake (`python tools/screenshots.py launcher-controllers`), parity (no game logic changed).
+
 ## 0.99.37
 ### For players
 - **WIDE NATIVE, GUILE's stage:** no more pale, broken column at the left edge as the train's strips go by: the train carries on to the screen's left edge. (The black block at the bottom left, below the floor, is still there: left for later.)
