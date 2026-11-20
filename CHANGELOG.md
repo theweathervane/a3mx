@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.102.4
+### For players
+- **Launcher, Inputs > Configure:** **Close** now sits below a line with space above it, away from the **Default All** / **Unset All** buttons, so Unset All isn't pressed by mistake.
+
+### Technical
+- `configure_window()`: a gap (`em * 1.2` and the item spacing) with a `Separator` between the Default / Unset All row and Close; the window's height and the table's footer allow for it.
+
 ## 0.102.3
 ### For players
 - **Launcher, Inputs > Configure:** the table no longer jumps while you test. The pad icon used to be taller than a row, so a row grew while its button was held and everything under it moved; and the hint beside **Test** wrapped to a second line during a test, moving the whole table. Both now keep their size.

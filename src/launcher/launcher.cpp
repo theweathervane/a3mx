@@ -2127,11 +2127,12 @@ struct App {
            near the top of the launcher; shorter only when the launcher itself is */
         const ImGuiStyle &st = ImGui::GetStyle();
         const float row = ImGui::GetFrameHeight() + st.CellPadding.y * 2;
+        const float gap = em * 1.2f + st.ItemSpacing.y * 2;      /* between Default / Unset All and Close, with a line: no Unset All by mistake */
         const float heading = ImGui::GetTextLineHeightWithSpacing() + st.ItemSpacing.y;
         const float need = ImGui::GetFrameHeight() + st.WindowPadding.y * 2                  /* the title bar, the edges */
                          + heading + ImGui::GetFrameHeightWithSpacing()                        /* Test input */
                          + heading + row * (float)(CB_COUNT + 1) + st.ItemSpacing.y * 2        /* Configuration: the table */
-                         + ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y;          /* Default / Unset All, Close */
+                         + ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y + gap;    /* Default / Unset All, a gap, Close */
         const float top = em * 0.75f;
         ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + vp->WorkSize.x * 0.5f, vp->WorkPos.y + top), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(std::min(em * 42.0f, vp->WorkSize.x - em * 2), std::min(need, vp->WorkSize.y - top * 2)), ImGuiCond_FirstUseEver);
@@ -2159,7 +2160,7 @@ struct App {
 
         /* ---- Configuration: the buttons */
         ImGui::SeparatorText("Configuration");
-        const float footer = ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y;
+        const float footer = ImGui::GetFrameHeightWithSpacing() * 2 + st.ItemSpacing.y + gap;
         /* the icon: whole multiples of its pixels, never taller than a row, so a row never grows when it shows */
         const float icon_w = (float)PADICON_SIZE * std::max(1.0f, std::floor(ImGui::GetFrameHeight() / (float)PADICON_SIZE));
         float col_x[2] = { 0, 0 }, col_w[2] = { 0, 0 };          /* where the Keyboard and Controller columns are, for the buttons under them */
@@ -2266,7 +2267,10 @@ struct App {
             ImGui::EndDisabled();
             ImGui::PopID();
         }
-        /* Close, in the bottom right corner (Esc too, unless a key is being waited for or a test runs) */
+        /* Close, in the bottom right corner, clear of the row above (Esc too, unless a key is being waited for or a test runs) */
+        ImGui::Dummy(ImVec2(0, em * 0.6f));
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0, em * 0.6f - st.ItemSpacing.y));
         ImGui::SetCursorPosX(ImGui::GetWindowWidth() - st.WindowPadding.x - em * 6.0f);
         bool esc = cap_player < 0 && !ctl_test && ImGui::IsKeyPressed(ImGuiKey_Escape);
         if (ImGui::Button("Close", ImVec2(em * 6.0f, 0)) || esc) open = false;
