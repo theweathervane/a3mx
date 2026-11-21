@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.107.0
+### For players
+- **More of the game decompiled:** 34 more functions, among them the reset of objects and tables before a fight, the CPU script's opening for a fighter, fighters kept on screen by their routine, the VS screen's lists, and screen objects' places, counters, shapes and texts. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid2.c` (new): 34 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x088B4F70, 0x088BBFA0, 0x088BDB2C, 0x08822144, 0x088369C8, 0x0883A6E0, 0x088558C0, 0x08856DA4, 0x08857CFC, 0x08881644, 0x088B0C94, 0x088BC070, 0x088BC740, 0x088CED2C, 0x088CFBFC, 0x088D0738, 0x089DEBE8, 0x0880D5B4, 0x088557FC, 0x08878D30, 0x0887B418, 0x0885F050, 0x0887D7F8, 0x0892EE70, 0x089DE978, 0x0887BBC8, 0x088A377C, 0x088AB0A4, 0x088B265C, 0x088B4498, 0x088B54FC, 0x088BCCF4, 0x088CEE04, 0x089D3174. Tables in docs/PSP_PROGRAM_MAP.md.
+- mult's lo / hi kept for the side records (0x088D0738).
+- Checked: the coverage pass maps all 34 to scenarios (attract_mode, arcade_ending, mode_tour and free_battle_team run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, arcade_match and option_tour, with 0.107.0 - 0.109.0 built and checked together (each batch's functions are independent of the later ones).
+
 ## 0.106.0
 ### For players
 - **More of the game decompiled:** 40 more functions, among them the CPU's script commands that test its level, fighters' input records and press counters, the reset of the two side records when a fight starts, and many screen objects' counters, trails and set-ups. Nothing plays differently.
