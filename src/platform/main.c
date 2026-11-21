@@ -16,6 +16,8 @@
  *   --watch-from N start watching at frame N
  *   --watch-pc PC  only report accesses made by the instruction at PC (repeatable, up to 16)
  *   --watch-log FILE  write the watch's hits there instead of watch.log in the logs folder
+ *   --date SECONDS  the date the game is given at frame 0, then the game's own time since (as a replay
+ *                  does), so runs started at different times play alike (tools/watch_scenario.py)
  *   --record FILE  record this session (inputs, starting settings and save, the date) for --replay
  *   --replay FILE  play a recorded session back, from its own copy of the settings and save
  *   --dump-from N   no screens saved before frame N
@@ -605,6 +607,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--fast")) rt_realtime = 0;
         else if (!strcmp(argv[i], "--fast-until") && i + 1 < argc) { fast_until = atol(argv[++i]); rt_realtime = 0; }
         else if (!strcmp(argv[i], "--trace")) rt_trace = 1;
+        else if (!strcmp(argv[i], "--date") && i + 1 < argc) { extern int64_t rt_time_base; rt_time_base = atoll(argv[++i]); }
         else if (!strcmp(argv[i], "--log-level") && i + 1 < argc) {
             rt_log_level = parse_log_level(argv[++i]);
             if (rt_log_level < 0) { rt_log_level = RT_LOG_INFO; rt_fatal("--log-level: off, error, warn, info, debug or verbose"); }

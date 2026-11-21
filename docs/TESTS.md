@@ -275,6 +275,10 @@ scenarios) works, without the `.txt`. `--list` shows them all with a line on eac
 python tools/watch_scenario.py --list
 ```
 
+The watch tool gives the game a fixed date (`--date`), so a scenario plays the same on every machine
+and every run, as it did when it was written. (The game reads the date, and without this two runs drift
+apart within seconds.)
+
 ### 3. Options
 
 | Option | What it does |
@@ -326,9 +330,9 @@ for s in arcade kumite dramatic rdramatic variable final; do python3 tools/watch
 ### 4. The endings (`tests/watch/`)
 
 Each one plays a mode to its end in a few minutes. Menus and the character select go by at full speed;
-the last fight starts at normal speed. The game is told the fight is the last one, the opponent's
-computer control is switched off so they stand still, their health is kept at one point, and your
-character walks up and jabs: a hit or two ends it. Then the ending plays out: the congratulations,
+the last fight starts at normal speed. ROUNDS is set to 1, the game is told the fight is the last one,
+the opponents' computer control is switched off before the fight, and their health is kept at one
+point. Pad 2 walks them into your character, who walks up and jabs: a hit or two ends it. Then the ending plays out: the congratulations,
 the story or the credits, GAME OVER and back to the MODE MENU, where the window closes.
 
 | Scenario | What you see | `--character` |
@@ -350,8 +354,8 @@ pad does nothing useful while it plays.
 
 A two-player Free Battle where player 2 stands still with one point of health, and player 1 throws a
 super combo as soon as the fight starts: a super finish, with its backdrop. Each scenario holds the
-backdrop to one kind, so you see each picture without waiting for the game to choose it. Player 1 wins
-both rounds this way (two super finishes), then the win screen.
+backdrop to one kind, so you see each picture without waiting for the game to choose it. ROUNDS is set
+to 1, so it's one super finish, then the win screen.
 
 | Scenario | Backdrop |
 |---|---|

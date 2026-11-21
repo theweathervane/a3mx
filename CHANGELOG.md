@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.117.4
+### For players
+- **The ending scenarios work with any character:** with CHUNLI the opponent still fought back and the round timed out (your run). Now the opponents' computer control is off from before the fight, pad 2 walks them into player 1, and ROUNDS is set to 1, so a jab or two ends it. Final Battle handles the characters whose Final Battle is two fights (CHUNLI: the Dolls, then M. Bison).
+- **Watch scenarios play the same on every machine:** the game reads the date, so two runs drifted apart within seconds and a scenario written here could go differently on yours. The watch tool now gives the game a fixed date.
+- The super finishes are one round too.
+
+### Technical
+- `--date SECONDS` (`src/platform/main.c`, docs/BUILDING.md): the date at frame 0, then the game's own time since, as `--replay` does. `tools/watch_scenario.py` passes 1767225600 (2026-01-01).
+- `tests/watch/ending_*.txt`: `config rounds=1`; the CPU flag (fighter + 0x175 = 0), health caps and controller slots (+ 2 = 1) from the fight-number poke on; `--p2 human` and pad 2 holding left through the fight; the fight's input cleared of the original scenario's moves (a jump in ending_arcade swapped the fighters once the character pick delayed it).
+- Checked: all six endings headless to the MODE MENU with RYU, CHUNLI and GUILE; super_kind_7 with CHUNLI; two runs of one scenario a minute apart give the same pictures.
+
 ## 0.117.3
 ### For players
 - **Character names without spaces or punctuation:** `--character` takes CHUNLI, RMIKA, FEILONG, EHONDA, MBISON, THAWK, DEEJAY, EVILRYU and so on (any case). docs/TESTS.md lists all 38.

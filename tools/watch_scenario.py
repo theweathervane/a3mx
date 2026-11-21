@@ -35,6 +35,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tests'))
 import parity  # noqa: E402
 
+DATE = 1767225600    # 2026-01-01: the date the game is given (--date), so every run plays alike
 MOVE_GAP = 30       # frames between cursor moves on the select screen
 
 # The two character selects: each character's box as (column, row), named as the screens show them
@@ -220,11 +221,12 @@ def main():
     if 'supers' in sc:
         add_supers(sc, find_character(a.character) if a.character else parse_select(sc['select'])[2])
     if a.character: pick_character(sc, a.character)
+    sc['args'] += ['--date', str(DATE)]
+    config = sc['config'] + screen_lines(sc, a.screen)
     if a.print_input:                       # for running the same thing headless
-        print(sc['frames']); print(sc['input']); print(' '.join(sc['args'])); return 0
+        print(sc['frames']); print(sc['input']); print(' '.join(sc['args'])); print('|'.join(config)); return 0
 
     save = tempfile.mkdtemp(prefix='a3mx_watch_')
-    config = sc['config'] + screen_lines(sc, a.screen)
     if config:
         with open(os.path.join(save, 'a3mx.cfg'), 'w', encoding='utf-8') as f: f.write('\n'.join(config) + '\n')
 
