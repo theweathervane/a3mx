@@ -1587,7 +1587,7 @@ SFA_FUNC_WRAPPED(088A5174, game_bselect_box_driver, selectscreen_box_driver) { R
 SFA_FUNC(088A60F8, game_bselect_fighter_box) { SELECT_FRAME(0x60, fighter_box(c, ARG(0), ARG(1))); }
 SFA_FUNC(088A2578, game_bselect_difficulty)  { SELECT_FRAME(0x30, box_difficulty(c, ARG(0))); }
 SFA_FUNC(088A4D30, game_bselect_style_line)  { SELECT_FRAME(0x40, box_style(c, ARG(0), ARG(1) & 0xFFFF)); }
-SFA_FUNC(088A6A10, game_bselect_grid)        { SELECT_FRAME(0x30, bselect_grid(c, ARG(0), ARG(1), ARG(2))); }
+SFA_FUNC_WRAPPED(088A6A10, game_bselect_grid, i_ism_bselect_grid) { SELECT_FRAME(0x30, bselect_grid(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A2480, game_bselect_team_lines)  { SELECT_FRAME(0x40, box_team(c, ARG(0))); }
 SFA_FUNC(088A5600, game_bselect_free_turn)  { SELECT_FRAME(0x30, free_battle_turn(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A1AB8, game_bselect_cursors_on)  { SELECT_FRAME(0x20, cursors_on(c, ARG(0), ARG(1), ARG(2))); }

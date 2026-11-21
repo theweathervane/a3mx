@@ -230,6 +230,7 @@ def main():
     ap.add_argument('--features', default='default,-shaders', help='the game\'s --features (default: default,-shaders)')
     ap.add_argument('--print-input', action='store_true', help=argparse.SUPPRESS)
     a = ap.parse_args()
+    if a.scenario and a.scenario.startswith('i_ism'): a.my_save = True     # these need your entries
     if (a.character or '').lower() == 'list':
         print('  '.join(sorted(GRIDS['arcade']))); return 0
     if a.list or not a.scenario:

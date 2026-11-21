@@ -398,3 +398,11 @@ python tools/watch_scenario.py i_ism_wipe --features default,-shaders,-i_ism
 
 The last one is the game's own wipe for comparison. It needs an entry in that box in your save.
 
+`i_ism_cpu_entry` is the other side: in Free Battle, player 1 moves the computer's box up onto the
+entries' row and picks your entry 1, which the game didn't allow (its cursor skipped the entries for a
+side no player had joined). The VS screen then shows I-ISM on the right, and the wipe is the yellow I.
+
+```
+python tools/watch_scenario.py i_ism_cpu_entry
+```
+

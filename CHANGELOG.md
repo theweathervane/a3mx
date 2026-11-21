@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.118.5
+### For players
+- **The other side can play an entry character (I-ISM):** in Free Battle (and the other modes on that select screen: Survival, Training ...), the box for player 2 or the computer can now go onto the entries' row and pick one. The game skipped those boxes for a side no player had joined. Part of the `i_ism` feature; a network battle keeps the game's own rule (each side has its own entries there).
+- `tests/watch/i_ism_cpu_entry` shows it: the computer as your entry 1, I-ISM on the VS screen and the yellow I wipe. The watch tool brings in your save for every `i_ism_*` scenario.
+
+### Technical
+- `src/core/select/battle_select.c`: 0x088A6A10 (the grid's cursor) wrapped by `i_ism_bselect_grid`, which opens the grid's lock (0x08A2B3A9) on row 6, the entries', while the cursor moves and puts it back after.
+- Checked: parity passed for free_battle, free_battle_rows, free_battle_team, free_battle_join_in and no_extensions; the pick and the wipe looked at with Dan's save.
+
 ## 0.118.4
 ### For players
 - **The I-ISM wipe's I leaves a band at the top as at the bottom,** as X-ISM's X does: its top serif moved 8 down (the serifs keep their widths; the stem is 8 shorter).
