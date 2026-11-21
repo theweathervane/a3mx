@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.118.2
+### For players
+- **The I-ISM logo's gradient as deep as the other ISMs':** X-ISM's, A-ISM's and V-ISM's run from nearly black to the wipe's colour, so the gold one now runs from a dark brown (#311800) through #C87B01 to the yellow (#F3E40C); the outline is magenta (#B53184, from the World Tour map's NEXT STAGE bar), a bright contrasting line as their orange, yellow-green and cyan are.
+
+### Technical
+- `src/extensions/i_ism.c`: the GOLD table.
+
 ## 0.118.1
 ### For players
 - **The I-ISM logo's gold, as Dan's second mock-up:** the gradient now runs from #C87B01 to the wipe's own yellow (#F3E40C) in the middle, as the green logo's runs into the wipe's green (ALPHA's H matches the background); the letters' outline is a vibrant purple (#943184) instead of a dull maroon, and their corner pixels are halfway between the outline and the fill, as A-ISM's are. The wipe's yellow is #F3E40C.
