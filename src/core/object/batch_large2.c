@@ -175,7 +175,7 @@ SFA_FUNC(088AED5C, setup_by_type_ea10) {
 /* (object): +128 on, shown (+93), +55 = 7, +3 = the owner's (+124) +14, +136 = 0x80; at the owner's place.
    Without +92: 0xBB right and 0x60 up unless the character (0x08ACCD54 by 0x09525DE8's +8) is 1, a
    0x120 x 0x7E white box. With +92 = 1 / 2 / 3: a 0x60 x 0x10 box in red, green or blue tints. */
-SFA_FUNC(088BDBB8, setup_name_box) {
+SFA_FUNC_WRAPPED(088BDBB8, setup_name_box, i_ism_name_box) {
     gaddr o = ARG(0), w = *W(o + 124);
     *B(o + 128) = (uint8_t)(*B(o + 128) + 1);
     *B(o + 93) = 1;

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.119.1
+### For players
+- **The I-ISM ranking's plates:** the small plates behind the faces on the rows are I-ISM's yellow, where they were V-ISM's blue-purple. The faces keep their own colours (0.119.0 turned some of their purples gold too).
+
+### Technical
+- The plates are flat translucent boxes, not pictures: `object/batch_large2.c`'s 0x088BDBB8 (`setup_name_box`) colours them by the row's ISM (+92: 1 red E05000, 2 green 50E000, 3 blue 5050E0, at half alpha). It is wrapped (`i_ism_name_box`), and on the I-ISM ranking its colour becomes E0D020. The row palettes 56 - 63 are no longer recoloured.
+- Checked: parity passed for attract_mode and no_extensions.
+
 ## 0.119.0
 ### For players
 - **The I-ISM ranking:** the game keeps the entry characters' records (their own score table) but the attract mode never showed them. With the `i_ism` feature the rankings after the third demo now go X-ISM, A-ISM, V-ISM, then I-ISM: "I-ISM SCORE RANKING" in gold, the bars and band in I-ISM's yellow. `tests/watch/i_ism_ranking` jumps straight to it.

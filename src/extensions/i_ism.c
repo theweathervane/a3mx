@@ -159,8 +159,9 @@ int i_ism_bselect_grid(Cpu *c, uint32_t a0, int after) {
  *     cache has put them (0x088112A8), by an I copied out of the "-I" cell of "-ISM" (picture 0x2E),
  *     right-aligned where X's X ends;
  *   - the screen's palettes (the five V-ISM ones 0x088BC164 loads) are turned gold: each colour's hue
- *     moved to I-ISM's yellow, its lightness and saturation kept; and each frame the rows' face plates
- *     (palettes 14 - 19 and 56 - 63, loaded as the rows come in) have their blues and purples turned the same way.
+ *     moved to I-ISM's yellow, its lightness and saturation kept;
+ *   - the rows' plates behind the faces (translucent boxes, object/batch_large2.c's 0x088BDBB8: red,
+ *     green or blue by the ISM) are yellow.
  * The pieces are put back when the next ranking starts. */
 #define CYCLE         0x09358400u
 #define RANK_TABLES   0x08A05AA8u
@@ -206,15 +207,6 @@ static int hue_to_gold_in(uint32_t a, float lo, float hi) {
 }
 static void hue_to_gold(uint32_t a) { hue_to_gold_in(a, 0.0f, 360.0f); }
 
-/* The rows' palettes, loaded as each row comes in: 14 - 19 (0x088BC520) and 56 - 63 (the plates behind
-   the faces), their blues and purples turned gold (the faces' own colours stay) */
-static void rows_to_gold(void) {
-    int changed = 0;
-    for (uint32_t i = 0; i < 6 * 16; i++) changed |= hue_to_gold_in(PALETTES + 0x1C0 + i * 2, 180.0f, 320.0f);
-    for (uint32_t i = 0; i < 8 * 16; i++) changed |= hue_to_gold_in(PALETTES + 0x700 + i * 2, 180.0f, 320.0f);
-    if (changed) WW(PALETTES_DIRTY, 1);
-}
-
 static void restore_title(void) {
     for (int k = 0; k < npatched; k++) WH(patched[k], (RH(patched[k]) & ~0x3FFFu) | PIC_V);
     npatched = 0;
@@ -252,7 +244,6 @@ int i_ism_cached32(Cpu *c, uint32_t a0, int after) {
     uint32_t pic = c->r[5], base = c->r[6], page = c->r[7];
     if (!page || base != RW(PICTURE_LISTS + RANK_LIST * 4) || (pic - base) % 12) return 0;
     uint32_t n = (pic - base) / 12, buf = page_texels(page);
-    if (n == PIC_DASH_ISM) rows_to_gold();
     if (n == PIC_DASH_ISM && !have_glyph) {
         /* "-I" then the start of "S": the I is the run of columns 8 - 17; moved to 20 - 29 */
         memset(i_glyph, 0, sizeof i_glyph);
@@ -270,5 +261,17 @@ int i_ism_attract_cycle(Cpu *c, uint32_t a0, int after) {
     static int8_t before;
     if (!after) { before = (int8_t)RB(CYCLE); return 0; }
     if (before == 2) WB(CYCLE, 6);
+    return 0;
+}
+
+/* A row's plate (batch_large2.c, 0x088BDBB8; the object, +92 its ISM 1 - 3, +36 / +42 / +48 its
+   colour's red, green and blue at each corner): yellow on the I-ISM ranking, where V's blue was. */
+#define PLATE_R  0xE0
+#define PLATE_G  0xD0
+#define PLATE_B  0x20
+int i_ism_name_box(Cpu *c, uint32_t o, int after) {
+    (void)c;
+    if (!after || !ranking_i || RB(o + 92) == 0) return 0;
+    for (uint32_t k = 0; k < 4; k++) { WB(o + 36 + k, PLATE_R); WB(o + 42 + k, PLATE_G); WB(o + 48 + k, PLATE_B); }
     return 0;
 }
