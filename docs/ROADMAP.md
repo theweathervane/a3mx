@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.96% decompiled
+Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.10% decompiled
 
-Functions                                [█░░░░░░░░░]  13.42%  1,997 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  14.96%  72,453 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  13.53%  2,013 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  15.10%  73,103 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  33.05%  67,392 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  33.31%  67,921 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.51%  3,873 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.55%  3,994 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -204,6 +204,8 @@ Done:
       description, a fighter's input for its team, three press counters, a file loaded and waited for (0.110.0)
 - [x] Nineteen more (`object/batch_mid6.c`): the random numbers' tempering, the fighters' routine
       tables, the score for a hit, script commands that set the CPU's state, a frame record stepped on (0.111.0)
+- [x] Sixteen more (`object/batch_mid7.c`): the list at 0x0950FFB0 run before the first, the CPU's first
+      script at random, a fighter's pad byte for its team, particles and panels (0.112.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

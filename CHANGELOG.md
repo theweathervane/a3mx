@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.112.0
+### For players
+- **More of the game decompiled:** 16 more functions, among them the second list of objects run each frame, the CPU's first script picked at random, a fighter's pad byte for its team, and particles and panels set up. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid7.c` (new): 16 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x08846B58, 0x089D32D4, 0x088764A8, 0x088B4618, 0x088B47B8, 0x088B3E84, 0x088726EC, 0x088377A8, 0x088B0AA8, 0x088B0DE4, 0x088B2544, 0x088B4174, 0x088EAD20, 0x0888AE14, 0x0887BC44, 0x0890EC3C. Tables in docs/PSP_PROGRAM_MAP.md.
+- These became ready once 0.106.0 - 0.111.0 had decompiled their callees.
+- Checked: the coverage pass maps all 16 to scenarios (attract_mode, arcade_ending and mode_tour run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, arcade_other_fighter, free_battle_team, arcade_match, option_tour, network_match, free_battle_dramatic, super_finish and stage_objects_13_sagat.
+
 ## 0.111.0
 ### For players
 - **More of the game decompiled:** 19 more functions, among them the game's random numbers, the fighters' routine tables for a fight, the score for a hit, the CPU's script commands that set its state, a choice on the select screen, and objects' colours from the palette. Nothing plays differently.
