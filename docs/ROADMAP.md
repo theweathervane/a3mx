@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  13.86% decompiled
+Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.08% decompiled
 
-Functions                                [█░░░░░░░░░]  12.34%  1,837 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  13.86%  67,111 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  12.61%  1,877 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  14.08%  68,168 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  30.69%  62,578 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  31.14%  63,509 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.30%  3,345 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.35%  3,471 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -190,6 +190,9 @@ Done:
 - [x] Eighteen more (`object/batch_large2.c`): the four fighters drawn, a guard's damage cut and the
       guard choice, a fighter's round reset, effects made beside a fighter, name entry, the fighters'
       labels, objects that move, turn and bounce at a target, set-ups by type and name boxes (0.105.0)
+- [x] Forty more (`object/batch_mid.c`): the CPU's script commands by level, fighters' input records and
+      press counters, the two side records cleared at a fight's start, objects' trails, timed lists, steps
+      while a parent lives, counters and set-ups (0.106.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.106.0
+### For players
+- **More of the game decompiled:** 40 more functions, among them the CPU's script commands that test its level, fighters' input records and press counters, the reset of the two side records when a fight starts, and many screen objects' counters, trails and set-ups. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid.c` (new): 40 of the ready functions of 25 - 28 instructions (`ready.py 25 60`): 0x08848050, 0x08856AA0, 0x08878ACC, 0x08887CBC, 0x088B4514, 0x088CF908, 0x088D42F0, 0x08998214, 0x089D99E8, 0x089DFC40, 0x089E044C, 0x088237DC, 0x08837950, 0x088B08F8, 0x088B3040, 0x088B30A8, 0x088BBDFC, 0x088BC4B8, 0x088BCC8C, 0x088BD8B0, 0x088CF73C, 0x089DDB68, 0x08847FE4, 0x0886B468, 0x088768F0, 0x088A2660, 0x088AA9BC, 0x088B4FD4, 0x088BC7FC, 0x088CE120, 0x0882BD04, 0x088344E8, 0x088636D8, 0x08869B70, 0x08877FBC, 0x088815D4, 0x088A904C, 0x088AE240, 0x088B29C0, 0x088B4EBC. Tables in docs/PSP_PROGRAM_MAP.md.
+- 0x089E044C's switch read from its table at 0x08A01D70 (0 and 15, 2 and 10, the rest); mult's and divu's lo / hi kept (0x08848050, 0x088B4EBC).
+- 0x088B4514 (the trail) first failed attract_mode at frame 5894: a branch's delay slot sets the register the empty-slot mark then uses (the slot two on, not +72's). Found by bisecting with `--reference-only`.
+- Checked: the coverage pass maps all 40 to scenarios (attract_mode, arcade_ending, mode_tour, arcade_other_fighter and free_battle_team run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, arcade_other_fighter, free_battle_team, arcade_match and option_tour.
+
 ## 0.105.0
 ### For players
 - **More of the game decompiled:** 18 more functions, among them drawing the four fighters, how much damage a guard takes off and when a fighter guards, a fighter's reset for each round, name entry, and the fighters' labels before a fight. Nothing plays differently.
