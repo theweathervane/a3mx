@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.110.0
+### For players
+- **More of the game decompiled:** 19 more functions, among them the run of the first object list, objects made from a description, a fighter's input copied to its team mates, three press counters at once, a file loaded and waited for, and screen objects' set-ups. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid5.c` (new): 19 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x08878B88, 0x088728B0, 0x08869AC8, 0x088BC6A4, 0x089E3364, 0x08809934, 0x08821384, 0x08846BBC, 0x0887E7AC, 0x088B14D8, 0x088B4230, 0x088B4DD4, 0x08837854, 0x0884A0B4, 0x088814A0, 0x088BD99C, 0x089D9C04, 0x088230F4, 0x088B0D08. Tables in docs/PSP_PROGRAM_MAP.md.
+- 0x089E3364's switch read from its table at 0x08A01DE8; mult's lo / hi kept (0x08821384).
+- Checked: the coverage pass maps all 19 to scenarios (arcade_ending, attract_mode, mode_tour and arcade_other_fighter run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, arcade_other_fighter, free_battle_team, arcade_match and option_tour.
+
 ## 0.109.0
 ### For players
 - **More of the game decompiled:** 23 more functions, among them the stage picked at random for a fight, a fighter's first state, a throw's range check, numbers drawn as pictures, and screen panels and their companions. Nothing plays differently.

@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.63% decompiled
+Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.79% decompiled
 
-Functions                                [█░░░░░░░░░]  13.16%  1,959 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  14.63%  70,834 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  13.29%  1,978 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  14.79%  71,602 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  32.36%  65,986 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  32.69%  66,674 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.42%  3,660 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.46%  3,740 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -200,6 +200,8 @@ Done:
       counters, the intro's pieces moving in, objects made beside others, the particle field's start (0.108.0)
 - [x] Twenty-three more (`object/batch_mid4.c`): the stage and fighters picked at random, a fighter's
       first state, the throw range check, numbers as pictures, panels and the intro's owner (0.109.0)
+- [x] Nineteen more (`object/batch_mid5.c`): the first object list's run, objects made from a
+      description, a fighter's input for its team, three press counters, a file loaded and waited for (0.110.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the
