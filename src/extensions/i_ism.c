@@ -33,18 +33,20 @@ void shapes_draw(Cpu *c, uint32_t place, const uint16_t *quads, uint32_t rgb, ui
 
 /* ---- the colours ---- */
 
-/* The wipe's yellow (0xRRGGBB, as the game's own green 0x00D000), from the mock-up: #F2E50A */
-#define I_YELLOW      0xF2E50Au
+/* The wipe's yellow (0xRRGGBB, as the game's own green 0x00D000), from the mock-ups: #F3E40C */
+#define I_YELLOW      0xF3E40Cu
 
-/* The logo's gold, for A's green palette entry by entry: 0 is clear; 1 - 4 the letters' lines and
-   highlights; 5 - 15 the gradient, from the darkest (STREET's fill, #C57E00 in the mock-up) to the
-   brightest (the glow in the middle, #F9FB8B). */
+/* The logo's gold, for A's green palette entry by entry. The green logo's gradient runs from its
+   darkest (STREET's fill) to the wipe's own green in the middle (the H of ALPHA), so the gold one runs
+   from #C87B01 to the wipe's yellow #F3E40C (5 - 15), as Dan's second mock-up has it. 4 is the
+   letters' outline: a vibrant purple (#943184, as the purple and yellow of the World Tour map's
+   ranking frames), where the green logo has a bright yellow-green; 2 and 3 are its corner pixels,
+   halfway between the outline and the darkest / brightest fill (as A's are); 1 is the yellow; 0 clear. */
 static const uint8_t GOLD[16][3] = {
-    { 0, 0, 0 },
-    { 0xF3, 0xC2, 0x30 }, { 0x83, 0x6C, 0x00 }, { 0xC5, 0xA4, 0x00 }, { 0x6A, 0x3A, 0x3A },
-    { 0xC5, 0x7E, 0x00 }, { 0xCA, 0x8B, 0x0E }, { 0xCF, 0x99, 0x1C }, { 0xD4, 0xA6, 0x29 },
-    { 0xD9, 0xB4, 0x37 }, { 0xDF, 0xC1, 0x45 }, { 0xE4, 0xCE, 0x53 }, { 0xE9, 0xDB, 0x61 },
-    { 0xEE, 0xE8, 0x6E }, { 0xF4, 0xF2, 0x7C }, { 0xF9, 0xFB, 0x8B },
+    { 0x00, 0x00, 0x00 }, { 0xF3, 0xE4, 0x0C }, { 0xAE, 0x56, 0x42 }, { 0xC3, 0x8A, 0x48 },
+    { 0x94, 0x31, 0x84 }, { 0xC8, 0x7B, 0x01 }, { 0xCC, 0x86, 0x02 }, { 0xD1, 0x90, 0x03 },
+    { 0xD5, 0x9A, 0x04 }, { 0xD9, 0xA5, 0x05 }, { 0xDE, 0xB0, 0x06 }, { 0xE2, 0xBA, 0x08 },
+    { 0xE6, 0xC4, 0x09 }, { 0xEA, 0xCF, 0x0A }, { 0xEF, 0xDA, 0x0B }, { 0xF3, 0xE4, 0x0C },
 };
 
 /* ---- the I ---- */

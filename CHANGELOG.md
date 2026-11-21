@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.118.1
+### For players
+- **The I-ISM logo's gold, as Dan's second mock-up:** the gradient now runs from #C87B01 to the wipe's own yellow (#F3E40C) in the middle, as the green logo's runs into the wipe's green (ALPHA's H matches the background); the letters' outline is a vibrant purple (#943184) instead of a dull maroon, and their corner pixels are halfway between the outline and the fill, as A-ISM's are. The wipe's yellow is #F3E40C.
+
+### Technical
+- `src/extensions/i_ism.c`: the GOLD table and I_YELLOW.
+
 ## 0.118.0
 ### For players
 - **I-ISM has its own wipe into the fight (new `i_ism` feature, on by default):** between the VS screen and the fight, an entry character's columns now roll into a yellow I and the STREET FIGHTER ALPHA3 logo slides in gold, where the game gave it its ISM's wipe (an A-ISM entry got A-ISM's green). The I and its yellow were measured from Dan's WIDE NATIVE mock-up, and it works in NORMAL, WIDE and WIDE NATIVE. Off in the launcher's Extensions tab (I-ISM extras) or with `--features default,-i_ism`.
