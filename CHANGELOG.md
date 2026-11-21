@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.118.6
+### For players
+- **The I-ISM wipe after a win too:** the wipe from the win screen to the map is the same logo (the single object's type 0x0E); an entry who wins now gets the yellow I and the gold logo there as well, where it was A-ISM's green columns with a leftover gold logo.
+- **Not in World Tour:** there an entry's ISM is the one chosen to level up, so the wipes keep that ISM's look, as the game has it.
+
+### Technical
+- `src/extensions/i_ism.c`: the fading shapes of types 0x0D and 0x0E; `wipe_is_entry` is false in mode 3 (World Tour).
+- Checked: Arcade with Dan's entry 1, the second fight's wipe and the wipe after the win.
+
 ## 0.118.5
 ### For players
 - **The other side can play an entry character (I-ISM):** in Free Battle (and the other modes on that select screen: Survival, Training ...), the box for player 2 or the computer can now go onto the entries' row and pick one. The game skipped those boxes for a side no player had joined. Part of the `i_ism` feature; a network battle keeps the game's own rule (each side has its own entries there).

@@ -11,6 +11,10 @@
  *    yellow around it; the margins of WIDE NATIVE are filled by shapes.c's rule as for the other
  *    letters. NORMAL and WIDE draw the same shapes.
  *
+ * The same wipe plays after a win (the single object's type 0x0E instead of 0x0D, the same start), and
+ * gets the I there too. Not in World Tour, where an entry's ISM is the one chosen to level up: there
+ * it keeps that ISM's wipe, as the game has it.
+ *
  * The wipe is for one fighter, as the game picks it (logo_ism in screen_steps.c): fighter 3 when BATTLE
  * + 56 is 3, fighter 2 when BATTLE + 48 is set, else fighter 1. It plays an entry when its player (+337,
  * 0 or 1) has one in use (0x09358528 + 0x354 n: the entry a player plays as), as the VS screen's ISM
@@ -27,7 +31,8 @@ void shapes_draw(Cpu *c, uint32_t place, const uint16_t *quads, uint32_t rgb, ui
 #define ENTRIES       0x09358528u       /* the entry each player plays as (+0 in use) */
 #define ENTRY_SIZE    0x354u
 #define SINGLE        0x092E5100u       /* the logo's object: +0 in use, +3 its type */
-#define LOGO_TYPE     0x0D
+#define LOGO_TYPE     0x0D       /* into the fight; 0x0E after a win */
+#define WIN_LOGO_TYPE 0x0E
 #define PALETTES      0x092DF980u       /* 16 colours (u16) a palette */
 #define PALETTES_DIRTY 0x092E0980u
 #define LOGO_PALETTE  0x1Eu
@@ -70,7 +75,10 @@ static const uint16_t *const I_SHAPES[3] = { I_LEFT, I_MIDDLE, I_RIGHT };
 
 /* ---- which fighter ---- */
 
+#define GAME_MODE     (0x08E75910u + 0x72)
+#define MODE_WORLD_TOUR 3
 static int wipe_is_entry(void) {
+    if ((int8_t)RB(GAME_MODE) == MODE_WORLD_TOUR) return 0;     /* there the ISM is chosen to level up */
     uint32_t f = (int16_t)RH(BATTLE + 56) == 3 ? FIGHTER(2) : (int8_t)RB(BATTLE + 48) != 0 ? FIGHTER(1) : FIGHTER(0);
     int player = (int8_t)RB(f + 337);
     return player >= 0 && player < 2 && RB(ENTRIES + ENTRY_SIZE * (uint32_t)player) != 0;
@@ -96,7 +104,8 @@ int i_ism_logo_start(Cpu *c, uint32_t a0, int after) {
 static int drawing_entry_wipe;
 int i_ism_fading_shape(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
-    drawing_entry_wipe = !after && RB(SINGLE) && RB(SINGLE + 3) == LOGO_TYPE && wipe_is_entry();
+    drawing_entry_wipe = !after && RB(SINGLE) && (RB(SINGLE + 3) == LOGO_TYPE || RB(SINGLE + 3) == WIN_LOGO_TYPE) &&
+                         wipe_is_entry();
     return 0;
 }
 
