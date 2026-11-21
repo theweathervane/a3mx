@@ -28,6 +28,7 @@ enum {
     FEAT_STAGE_EXT,      /* stagestrips.c */
     FEAT_SHADERS,        /* platform: shader.c (the FILTER setting) */
     FEAT_BOOTMENU,       /* bootmenu.c */
+    FEAT_I_ISM,          /* i_ism.c */
     FEAT_COUNT,
     FEAT_ANY = FEAT_COUNT   /* on while any feature is: the plumbing several features share */
 };
@@ -77,6 +78,10 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "the load run off screen at full speed, with no title, logos, story, attract demos or PRESS START.\n"
       "If the save can't be loaded, the game's own question is shown first.\n"
       "Off: the title and attract mode first, as on the PSP.", 0, -1 },
+    { "i_ism", "I-ISM extras",
+      "What the game left out for entry characters (I-ISM): their own wipe into the fight, a yellow I\n"
+      "and a gold logo, where they had A-ISM's.\n"
+      "Off: an entry gets its ISM's wipe, as on the PSP.", 1, -1 },
 };
 
 #ifndef FEATURES_TABLE_ONLY

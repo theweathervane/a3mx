@@ -55,7 +55,7 @@
  *   --assets DIR         load each archive that DIR/index.json gives an unpacked folder from it (default:
  *                        assets/<region> beside the work folder, when it exists; docs/ASSET_LOADING.md)
  *   --features LIST      which extensions are on, by name (ext_features.h): saves, unlocks, menus, local_multiplayer, hud,
- *                        quit_key, widescreen, stage_extensions, shaders, boot_to_menu; also all, none, default, and -name to
+ *                        quit_key, widescreen, stage_extensions, shaders, boot_to_menu, i_ism; also all, none, default, and -name to
  *                        take one out ("default,-hud"). The launcher's Extensions tab sets it
  *   --no-extensions      none of them: the PSP program alone
  *   --custom-assets      as before 0.60.0: also turns stage_extensions on (the project's own stage edge art)
@@ -809,7 +809,7 @@ int main(int argc, char **argv) {
     if (renderer_asked) rt_warn("renderer: %s is not available in this version (only OpenGL and the software renderer are): using OpenGL", renderer_asked);
     {   /* which features are on (ext_features.h): --features, --no-extensions, or the defaults */
         const char *bad = NULL;
-        if (!features_set(features_arg, &bad)) rt_fatal("--features: %s is not a feature (saves, unlocks, menus, local_multiplayer, hud, quit_key, widescreen, stage_extensions, shaders, boot_to_menu; all, none, default)", bad);
+        if (!features_set(features_arg, &bad)) rt_fatal("--features: %s is not a feature (saves, unlocks, menus, local_multiplayer, hud, quit_key, widescreen, stage_extensions, shaders, boot_to_menu, i_ism; all, none, default)", bad);
         if (rt_custom_assets) features_add(FEAT_STAGE_EXT);
     }
     if (record_path) {   /* before the settings are read: the files as the session starts from them */

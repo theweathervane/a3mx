@@ -1,0 +1,10 @@
+# Watch: the wipe into the fight for an entry character (I-ISM), with the i_ism feature: three columns
+# roll into a yellow I and the STREET FIGHTER ALPHA3 logo slides in gold. Not a parity test.
+# Arcade, player 1 picking entry 1 (the box top left of the grid, two above RYU) and the cross button
+# through the story and the VS screen. It needs your own save, with an entry in that box: the watch tool
+# copies it in when the character is an ENTRY (--character ENTRY2 ... ENTRY6 for the others). With
+# --features default,-shaders,-i_ism it is the entry's ISM's wipe (A-ISM's green), as the game had it.
+frames 4100
+select 2100 arcade ENTRY1
+watch 3200
+input 1200=start;1206=;1500=start;1506=;1800=cross;1806=;2100=cross;2106=;2190=cross;2196=;2280=cross;2286=;2370=cross;2376=;2460=cross;2466=;2550=cross;2556=;2640=cross;2646=;2730=cross;2736=;2820=cross;2826=;2910=cross;2916=;3000=cross;3006=;3090=cross;3096=;3180=cross;3186=;3270=cross;3276=;3360=cross;3366=;3450=cross;3456=;3540=cross;3546=;3630=cross;3636=;3720=cross;3726=;3810=cross;3816=

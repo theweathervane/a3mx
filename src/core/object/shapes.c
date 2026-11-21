@@ -65,17 +65,18 @@ static void wide_side(Cpu *c, const int16_t x[4], const int16_t y[4], int right,
     f_089E1618(c);
 }
 
-static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
+/* (place, quads: 4 corners of u16 x, y each, ending at 0xFFFF, the colour (0xRRGGBB; the alpha byte
+   is ORed in), the alpha's index): the quads in one colour. Also extensions/i_ism.c's I shapes. */
+void shapes_draw(Cpu *c, gaddr place, const uint16_t *q, uint32_t rgb, uint32_t alpha) {
     int32_t px = (int16_t)*H(place), py = (int16_t)*H(place + 2);
-    uint32_t colour = (uint32_t)*B(ALPHAS + alpha) << 24 | *W(COLOURS + (uint32_t)((int32_t)shape / 3) * 4u);
+    uint32_t colour = (uint32_t)*B(ALPHAS + alpha) << 24 | rgb;
     *W(QUAD_COL + 12) = colour; *W(QUAD_COL + 8) = colour; *W(QUAD_COL + 4) = colour; *W(QUAD_COL) = colour;
-    gaddr p = *W(SHAPES + shape * 4u);
     float sx = F(SCALE_X), ox = F(OFFSET_X), sy = F(SCALE_Y), oy = F(OFFSET_Y);
-    while (*H(p) != 0xFFFF) {
+    while (*q != 0xFFFF) {
         int16_t qx[4], qy[4];
-        for (int i = 0; i < 4; i++, p += 4) {
-            qx[i] = to_screen(px + (int32_t)*H(p), sx, ox);
-            qy[i] = to_screen(py + (int32_t)*H(p + 2), sy, oy);
+        for (int i = 0; i < 4; i++, q += 2) {
+            qx[i] = to_screen(px + (int32_t)q[0], sx, ox);
+            qy[i] = to_screen(py + (int32_t)q[1], sy, oy);
             *H(QUAD_XY + i * 4) = (uint16_t)qx[i];
             *H(QUAD_XY + i * 4 + 2) = (uint16_t)qy[i];
         }
@@ -88,7 +89,12 @@ static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
     }
 }
 
-SFA_FUNC(0880E434, screen_draw_shape) {
+static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
+    gaddr p = *W(SHAPES + shape * 4u);
+    shapes_draw(c, place, H(p), *W(COLOURS + (uint32_t)((int32_t)shape / 3) * 4u), alpha);
+}
+
+SFA_FUNC_WRAPPED(0880E434, screen_draw_shape, i_ism_shape) {
     gaddr place = ARG(0); uint32_t shape = ARG(1), alpha = ARG(2);
     c->r[29] -= 0x40; draw_shape(c, place, shape, alpha); c->r[29] += 0x40;
 }

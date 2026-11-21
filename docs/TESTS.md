@@ -291,6 +291,8 @@ apart within seconds.)
 | `--renderer soft` | the software renderer instead of the GPU one (slower; for comparing the two) |
 | `--assets` | load the files in `assets/` (the stage strips) |
 | `--list` | the scenarios there are |
+| `--my-save` | play with a copy of your own save (your entries, rankings and unlocks). On by itself when the character is an ENTRY. The copy is thrown away afterwards: your save is never changed |
+| `--features LIST` | the game's features (`default,-shaders` unless you say): add `-i_ism` to see an I-ISM part as the original game had it |
 
 The characters, for `--character` (without spaces or punctuation, any case; `--character list`
 prints the same):
@@ -304,8 +306,11 @@ prints the same):
 | MAKI | MBISON | RMIKA | ROLENTO | ROSE | RYU |
 | SAGAT | SAKURA | SODOM | THAWK | VEGA | YUN |
 | ZANGIEF | RANDOM | | | | |
+| ENTRY1 | ENTRY2 | ENTRY3 | ENTRY4 | ENTRY5 | ENTRY6 |
 
-RYU is the default. RANDOM picks the random box, so the game chooses.
+RYU is the default. RANDOM picks the random box, so the game chooses. ENTRY1 - ENTRY6 are your entry
+characters (I-ISM), the six boxes in the grid's top corners (1 top left two above RYU, 2 top right, 3 - 6
+the corners above them), on Arcade's select screen; the tool brings in your own save for them.
 
 Examples:
 
@@ -378,4 +383,18 @@ python tools/watch_scenario.py super_kind_6 --character DEEJAY --screen native
 
 `tests/scenarios/super_finish` is the parity test the super finishes come from: Ryu, the game's own
 backdrop.
+
+### 6. I-ISM (`tests/watch/i_ism_wipe`)
+
+The `i_ism` feature gives entry characters (I-ISM) what the game left out. `i_ism_wipe` plays Arcade
+with your entry 1 to the first fight: between the VS screen and the fight the three columns roll into a
+yellow I, and the STREET FIGHTER ALPHA3 logo slides in gold, where an entry had its ISM's wipe before.
+
+```
+python tools/watch_scenario.py i_ism_wipe --screen native
+python tools/watch_scenario.py i_ism_wipe --character ENTRY3
+python tools/watch_scenario.py i_ism_wipe --features default,-shaders,-i_ism
+```
+
+The last one is the game's own wipe for comparison. It needs an entry in that box in your save.
 

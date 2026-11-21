@@ -21,6 +21,10 @@ tests use them; the game runs at its own speed in a window and closes after the 
   --skip-to F     race through the scenario up to frame F, then play at the game's speed (the
                   scenario's `watch F` line by default; 0 to watch it all)
   --assets        load assets/ (the stage strips); the parity tests run without them
+  --my-save       play with a copy of your own save (your entries, rankings and unlocks); on by itself
+                  when the character is an ENTRY. The copy is thrown away: your save is not changed
+  --features L    the game's --features (default,-shaders by default; add -i_ism to see a part as the
+                  game had it)
 
 A scenario's `select FRAME [GRID] [NAME]` line says where the pick is made: GRID is `arcade` (the
 default; Arcade, Kumite, the Dramatic modes, Variable, Final Battle) or `free` (Free Battle's select),
@@ -29,7 +33,7 @@ NAME the character it picks without --character (RYU when left out).
 Example, a super finish's burst backdrop in WIDE NATIVE, with Ken:
   python tools/watch_scenario.py super_kind_7 --screen native --character ken
 """
-import argparse, glob, os, re, subprocess, sys, tempfile
+import argparse, glob, os, re, shutil, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tests'))
@@ -54,6 +58,7 @@ GRIDS = {
         'YUN': (0, 5), 'THAWK': (1, 5), 'ROLENTO': (2, 5), 'SAKURA': (3, 5), 'GEN': (4, 5), 'BALROG': (5, 5),
         'INGRID': (6, 5),
         'EAGLE': (2, 6), 'ROSE': (3, 6), 'MAKI': (4, 6),
+        'ENTRY1': (0, 1), 'ENTRY2': (6, 1), 'ENTRY3': (1, 0), 'ENTRY4': (5, 0), 'ENTRY5': (0, 0), 'ENTRY6': (6, 0),
     },
     'free': {
         'RYU': (0, 0), 'EHONDA': (1, 0), 'BLANKA': (2, 0), 'CHUNLI': (3, 0), 'ZANGIEF': (4, 0),
@@ -73,6 +78,7 @@ GRIDS = {
 def moves_to(grid, name):
     """The cursor moves from RYU to NAME: Arcade's along RYU's row first, then up or down; Free Battle's
     right, then down. Every box on those paths is a character."""
+    if name not in GRIDS[grid]: raise SystemExit('%s is not on the %s select screen here' % (name, grid))
     col, row = GRIDS[grid][name]
     if grid == 'arcade': return ['right'] * col + (['up'] * (3 - row) if row < 3 else ['down'] * (row - 3))
     return ['right'] * col + ['down'] * row
@@ -106,7 +112,7 @@ CLOSE_IN = ['BALROG', 'CHUNLI', 'FEILONG', 'GUILE', 'THAWK', 'VEGA']   # supers 
 
 
 def super_motion(name):
-    kind, btn = next(k for k, v in SUPERS.items() if name in v).split()
+    kind, btn = next((k for k, v in SUPERS.items() if name in v), 'qcf P').split()   # an entry: its own
     btn = 'square' if btn == 'P' else 'cross'
     if kind == 'charge':
         steps = [(0, 'down+left' if name in CLOSE_IN else 'left')] + [(60 + 5 * i, d) for i, d in enumerate(['right', 'left', 'right'])]
@@ -176,6 +182,17 @@ def screen_lines(sc, screen):
     return ['[screen setting]', 'screen_size=' + SCREEN[screen.upper()]]
 
 
+def my_save():
+    """Your own a3mx.dat, where the game keeps it (src/platform/userdir.h), or None"""
+    if os.environ.get('A3MX_USER_DIR'): base = os.environ['A3MX_USER_DIR']
+    elif os.name == 'nt': base = os.path.join(os.environ.get('APPDATA', ''), 'a3mx')
+    elif sys.platform == 'darwin': base = os.path.expanduser('~/Library/Application Support/a3mx')
+    else: base = os.path.join(os.environ.get('XDG_DATA_HOME') or os.path.expanduser('~/.local/share'), 'a3mx')
+    for p in (os.path.join(base, 'saves', 'a3mx.dat'), os.path.join(ROOT, 'saves', 'a3mx.dat')):
+        if os.path.exists(p): return p
+    return None
+
+
 def scenario_path(name):
     if os.path.exists(name): return name
     name += '' if name.endswith('.txt') else '.txt'
@@ -208,6 +225,9 @@ def main():
                     '(default: the scenario\'s watch line; 0 to watch it all)')
     ap.add_argument('--assets', action='store_true')
     ap.add_argument('--character', help='player 1\'s character (scenarios with a `select` line); list to see them')
+    ap.add_argument('--my-save', action='store_true',
+                    help='play with a copy of your own save (your entries, rankings, unlocks); on by itself for an ENTRY')
+    ap.add_argument('--features', default='default,-shaders', help='the game\'s --features (default: default,-shaders)')
     ap.add_argument('--print-input', action='store_true', help=argparse.SUPPRESS)
     a = ap.parse_args()
     if (a.character or '').lower() == 'list':
@@ -220,18 +240,23 @@ def main():
         raise SystemExit('this scenario has no `select` line: --character needs one')
     if 'supers' in sc:
         add_supers(sc, find_character(a.character) if a.character else parse_select(sc['select'])[2])
-    if a.character: pick_character(sc, a.character)
+    if 'select' in sc: pick_character(sc, a.character)
+    picked = find_character(a.character) if a.character else parse_select(sc['select'])[2] if 'select' in sc else ''
     sc['args'] += ['--date', str(DATE)]
     config = sc['config'] + screen_lines(sc, a.screen)
     if a.print_input:                       # for running the same thing headless
         print(sc['frames']); print(sc['input']); print(' '.join(sc['args'])); print('|'.join(config)); return 0
 
     save = tempfile.mkdtemp(prefix='a3mx_watch_')
+    if a.my_save or picked.startswith('ENTRY'):
+        mine = my_save()
+        if mine: shutil.copy(mine, os.path.join(save, 'a3mx.dat')); print('your save:', mine)
+        else: print('no save of yours found (a3mx.dat in your user folder): the entries are empty')
     if config:
         with open(os.path.join(save, 'a3mx.cfg'), 'w', encoding='utf-8') as f: f.write('\n'.join(config) + '\n')
 
     cmd = [a.exe, '--work', a.work, '--save-dir', save, '--frames', str(a.frames or sc['frames']),
-           '--features', 'default,-shaders'] + sc['args']
+           '--features', a.features] + sc['args']
     if not a.assets: cmd.append('--no-assets')
     cmd.append('--fullscreen' if a.fullscreen else '--windowed')
     skip = a.skip_to if a.skip_to is not None else sc.get('watch', 0)

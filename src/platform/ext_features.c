@@ -74,6 +74,7 @@ static const struct { const char *prefix; int feature; } BY_PREFIX[] = {
     { "bootmenu_", FEAT_BOOTMENU },
     { "widescreen_", FEAT_WIDESCREEN },
     { "stagestrips_", FEAT_STAGE_EXT },
+    { "i_ism_", FEAT_I_ISM },
 };
 static const unsigned char always_on = 1;     /* platform code wrapping the game's functions: bootscreen.c */
 const unsigned char *feature_flag(const char *ext_name) {

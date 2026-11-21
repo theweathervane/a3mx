@@ -289,6 +289,54 @@ SFA_FUNC(088858D8, single_object_take) {
     RETURN(1);
 }
 
+/* The logo between the VS screen and the fight starts (0x08885A44, the single object's step, type 0xD):
+   the object's fields set, its six slots from the table 0x08A257B8 (8 bytes each: x, y, +10, +11 and
+   an animation; the first animations, below 12, are the wipe's shapes and go by the ISM: + 0 X-ISM,
+   + 3 A-ISM, + 6 V-ISM), the logo's palette by the same ISM (16 colours from 0x08A25826 + 0, 0x20,
+   0x40 into palette 0x1E), the fade levels reset (0x0882E0D0) and an object made in list 4 (kind 2),
+   kept at +20. The ISM is the fighter's the wipe is for: fighter 3 with BATTLE + 56 = 3 (Dramatic's
+   boss side), fighter 2 when BATTLE + 48 is set, else fighter 1. Wrapped by extensions/i_ism.c, which
+   gives an entry (I-ISM) its own colours. */
+void f_0880AEA8(Cpu *c);   /* (1, palette list, 0, slot, count): loads a palette */
+void f_0882E0D0(Cpu *c);   /* the fade levels reset */
+void f_08823338(Cpu *c);   /* object_make_list_3 (pool.c) */
+#define LOGO_SLOTS    0x08A257B8u
+#define LOGO_PALETTES 0x08A25826u
+#define LOGO_PALETTE  0x1Eu
+static int logo_ism(void) {
+    if (S16(BATTLE + 56) == 3) return S8(0x092E47D0u + 386);
+    if (S8(BATTLE + 48) != 0)  return S8(0x092E4338u + 386);
+    return S8(0x092E3EA0u + 386);
+}
+static void logo_start(Cpu *c, gaddr o) {
+    *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    *B(o + 1) = 1; *B(o + 9) = 0; *B(o + 11) = 0; *B(o + 14) = 0; *B(o + 15) = 0;
+    *H(o + 38) = 0; *B(o + 78) = 0; *H(o + 86) = 7; *H(o + 16) = 0; *H(o + 18) = 10;
+    int ism = logo_ism();
+    uint32_t shapes = ism < 0 ? 0 : ism == 0 ? 3 : 6, palette = ism < 0 ? 0 : ism == 0 ? 0x20 : 0x40;
+    c->r[16] = o; c->r[17] = 1; c->r[18] = shapes; c->r[22] = palette;
+    for (uint32_t i = 0; i < 6; i++) {
+        gaddr slot = o + 0x20 + i * 16, t = LOGO_SLOTS + i * 8;
+        *B(slot) = 1; *B(slot + 1) = 1;
+        *H(slot + 2) = *H(t); *H(slot + 4) = *H(t + 2);
+        *B(slot + 10) = *B(t + 4); *B(slot + 11) = *B(t + 5);
+        uint32_t n = *B(t + 6);
+        if (n < 12) n = (n + shapes) & 0xFFFF;
+        c->r[19] = t; c->r[20] = slot; c->r[21] = 5 - i;
+        c->r[4] = slot; c->r[5] = n; f_08885910(c);
+    }
+    c->r[19] = LOGO_SLOTS + 48; c->r[20] = o + 0x80; c->r[21] = 0xFFFF;
+    CALL5(f_0880AEA8, 1, LOGO_PALETTES + palette, 0, LOGO_PALETTE, 1);
+    f_0882E0D0(c);
+    *W(o + 20) = CALL2(f_08823338, 4, 2);
+}
+SFA_FUNC_WRAPPED(08885A44, logo_start_step, i_ism_logo_start) {
+    gaddr o = ARG(0);
+    uint32_t s[7]; for (int i = 0; i < 7; i++) s[i] = c->r[16 + i];
+    c->r[29] -= 0x40; logo_start(c, o); c->r[29] += 0x40;
+    for (int i = 0; i < 7; i++) c->r[16 + i] = s[i];
+}
+
 /* Its first 16 bytes cleared and +8 = 8, with GAME + 40. */
 SFA_FUNC(088865F8, single_object_free) {
     gaddr o = ARG(0);

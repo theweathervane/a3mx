@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.118.0
+### For players
+- **I-ISM has its own wipe into the fight (new `i_ism` feature, on by default):** between the VS screen and the fight, an entry character's columns now roll into a yellow I and the STREET FIGHTER ALPHA3 logo slides in gold, where the game gave it its ISM's wipe (an A-ISM entry got A-ISM's green). The I and its yellow were measured from Dan's WIDE NATIVE mock-up, and it works in NORMAL, WIDE and WIDE NATIVE. Off in the launcher's Extensions tab (I-ISM extras) or with `--features default,-i_ism`.
+- **Watch scenarios with your own entries:** `--character ENTRY1` - `ENTRY6` picks an entry box on Arcade's select, and the watch tool then plays with a copy of your own save (also `--my-save`; your save isn't changed). `tests/watch/i_ism_wipe` shows the new wipe. `--features` passes the game's features (`-i_ism` shows the original).
+
+### Technical
+- `src/core/object/screen_steps.c`: 0x08885A44 decompiled, the logo's start (the single object's step, type 0xD): its six slots from 0x08A257B8, the wipe's shapes and the logo's palette (from 0x08A25826, into palette 0x1E) by the ISM of the fighter the wipe is for (fighter 3 with BATTLE + 56 = 3, fighter 2 with BATTLE + 48, else fighter 1; X-ISM -1, A-ISM 0, V-ISM 1). Wrapped by `extensions/i_ism.c`.
+- `object/shapes.c`: the quad drawing split out as `shapes_draw` (the shapes' colours are 0xRRGGBB); 0x0880E434 and 0x0880DA78 (`batch_large.c`) are wrapped by `i_ism.c`, which draws A's three columns as the I while an entry's wipe is shown. An entry is told as the VS screen's ISM label tells it: its player (+337, 0 or 1) has one in use at 0x09358528 + 0x354 n.
+- `src/platform/ext_features.*`: the `i_ism` feature (FEAT_I_ISM, functions `i_ism_*`).
+- Checked: parity passed for attract_mode, arcade_match, free_battle_dramatic, arcade_fight, super_finish and no_extensions (the logo's start runs in the first five); the wipe looked at with Dan's save (entry 1, I-ISM Ryu) in NORMAL and WIDE NATIVE.
+
 ## 0.117.4
 ### For players
 - **The ending scenarios work with any character:** with CHUNLI the opponent still fought back and the round timed out (your run). Now the opponents' computer control is off from before the fight, pad 2 walks them into player 1, and ROUNDS is set to 1, so a jab or two ends it. Final Battle handles the characters whose Final Battle is two fights (CHUNLI: the Dolls, then M. Bison).
