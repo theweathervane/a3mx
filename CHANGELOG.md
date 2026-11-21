@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.116.0
+### For players
+- **More of the game decompiled:** 7 more functions, among them the pairing of a fight's two fighters (who faces whom, each player's colour), the CPU's aggression nudged at random, a chain of four objects, the camera layers set from their tables, and panels by type. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid11.c` (new): 7 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x088CE18C, 0x088B3A84, 0x088B3258, 0x089DE52C, 0x089DDA68, 0x088BE69C, 0x0885CC1C. Tables in docs/PSP_PROGRAM_MAP.md.
+- These became ready once 0.106.0 - 0.115.0 had decompiled their callees.
+- Checked: the coverage pass maps all 7 to scenarios (attract_mode, arcade_ending and mode_tour run them all); parity passed for attract_mode, arcade_ending, mode_tour, arcade_other_fighter, free_battle_team, arcade_match, option_tour, network_match, free_battle_dramatic, super_finish and stage_objects_13_sagat
+
 ## 0.115.0
 ### For players
 - **More of the game decompiled:** 10 more functions, among them a fighter put into a throw's hold, the continue checks between rounds, the special match for character 9, the demo screen's set-up, and panels lit by mode. Nothing plays differently.
