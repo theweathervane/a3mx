@@ -41,10 +41,10 @@ void shapes_draw(Cpu *c, uint32_t place, const uint16_t *quads, uint32_t rgb, ui
    ALPHA), so the gold one runs from a dark brown #311800 through #C87B01 (Dan's mock-up) to the wipe's
    yellow #F3E40C (5 - 15). 4 is the letters' outline, a bright contrasting hue as theirs are (orange,
    yellow-green, cyan): magenta #B53184, from the World Tour map's NEXT STAGE bar; 2 and 3 are its
-   corner pixels, halfway between the outline and the darkest / brightest fill (as A's are); 1 is the
-   yellow; 0 clear. */
+   corner pixels, in the outline's own hue as theirs are (X's are a darker orange, V's a darker
+   cyan): purple #943184 and pink #C64273, Dan's picks from the same bar; 1 is the yellow; 0 clear. */
 static const uint8_t GOLD[16][3] = {
-    { 0x00, 0x00, 0x00 }, { 0xF3, 0xE4, 0x0C }, { 0x73, 0x24, 0x42 }, { 0xD4, 0x8A, 0x48 },
+    { 0x00, 0x00, 0x00 }, { 0xF3, 0xE4, 0x0C }, { 0x94, 0x31, 0x84 }, { 0xC6, 0x42, 0x73 },
     { 0xB5, 0x31, 0x84 }, { 0x31, 0x18, 0x00 }, { 0x4A, 0x28, 0x00 }, { 0x63, 0x39, 0x00 },
     { 0x7C, 0x4A, 0x00 }, { 0x96, 0x5A, 0x01 }, { 0xAF, 0x6A, 0x01 }, { 0xC8, 0x7B, 0x01 },
     { 0xD3, 0x95, 0x04 }, { 0xDE, 0xB0, 0x06 }, { 0xE8, 0xCA, 0x09 }, { 0xF3, 0xE4, 0x0C },

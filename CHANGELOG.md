@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.118.3
+### For players
+- **The I-ISM logo's corner pixels in the outline's hue:** purple #943184 and pink #C64273 (Dan's picks from the World Tour map's NEXT STAGE bar), as X-ISM's are a darker orange and V-ISM's a darker cyan, where they were a muddy blend of the outline and the gold.
+
+### Technical
+- `src/extensions/i_ism.c`: GOLD entries 2 and 3.
+
 ## 0.118.2
 ### For players
 - **The I-ISM logo's gradient as deep as the other ISMs':** X-ISM's, A-ISM's and V-ISM's run from nearly black to the wipe's colour, so the gold one now runs from a dark brown (#311800) through #C87B01 to the yellow (#F3E40C); the outline is magenta (#B53184, from the World Tour map's NEXT STAGE bar), a bright contrasting line as their orange, yellow-green and cyan are.
