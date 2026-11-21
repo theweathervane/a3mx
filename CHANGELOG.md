@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.117.2
+### For players
+- **The super finishes are watch scenarios of their own:** `tests/watch/super_kind_1` - `super_kind_8`, one per backdrop (slanted lines both ways, vertical lines, a second set of vertical lines, speed lines, splash, burst, swirl). `--super-kind`, `--super-from` and `--super-to` are gone.
+- **`--character` works in them too:** the watch tool knows each character's super motion and throws it for whoever you pick, two super finishes a match. JUNI and ZANGIEF have none yet (a normal KO).
+- **`--screen NORMAL|WIDE|NATIVE` replaces `--wide`,** so plain WIDE can be watched too. **`--list`** shows every scenario with a line on each.
+- **Known issue added (WIDESCREEN.md):** the endings are not fixed for WIDE NATIVE yet; they are being checked by eye with the ending scenarios.
+
+### Technical
+- `tools/watch_scenario.py`: Free Battle's select grid (7 x 6, RYU at the top left; names read off the VS screen) beside Arcade's; a scenario's `select FRAME [GRID] [NAME]` line picks the grid; `supers FROM TO` adds player 1's super every 180 frames (`SUPERS`, found by trying QCF QCF / QCB QCB / HCB HCB / charge with punch and kick for each character; `CLOSE_IN` walks in first for the short ones). Scenarios are looked up in `tests/watch` first.
+- `tests/parity.py` reads `select` as text and `supers`, both ignored by parity.
+- The super scenarios keep player 2's health at most 1 and the backdrop's kind (BATTLE + 43) from 3650 to 5200, as a fight starts later for characters whose data loads longer.
+- Checked: super_kind_7 with every character headless: a super finish for all but JUNI and ZANGIEF; the endings unchanged. No game code changed.
+
 ## 0.117.1
 ### For players
 - **The ending scenarios no longer depend on winning a real fight:** the opponents' computer control is switched off for the last fight, so they stand still, and your character walks up and jabs. Before, the computer could still beat a weaker character in Kumite (on your machine, Sakura) and the ending never came.

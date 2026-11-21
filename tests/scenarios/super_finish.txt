@@ -2,7 +2,7 @@
 # joining on the select screen with Start and confirming its rows, so both fighters are players and
 # stand still; player 2's health set to 1 once the fight starts, then player 1's Shinku Hadoken (QCF
 # QCF + punch, the gauge full): the super finish's green backdrop (0x0880C208, frames 3855 - 3970)
-# and the KO. tools/watch_scenario.py --super-kind forces each backdrop here.
+# and the KO. tests/watch/super_kind_1 - 8 force each backdrop (tools/watch_scenario.py).
 frames 4050
 args --p2 human --poke 3650-3655:092E43A8=1/2
 config [ex setting]

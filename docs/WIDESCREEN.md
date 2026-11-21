@@ -133,6 +133,10 @@ works, what doesn't, and the rules for refining it.
 - **Off-screen loading is visible in the pre-battle sequences:**
 - **MODE MENU background tiles** (the Street Fighter Alpha logo) are missing on the left side; they
   extend to the right correctly.
+- **Endings are not fixed for WIDE NATIVE yet:** the endings, the story scenes before them and the
+  credits have not been checked or fixed in WIDE NATIVE. They are being looked at by eye, mode by mode
+  and character by character, with the watch scenarios: `python tools/watch_scenario.py ending_arcade
+  --screen native --character NAME` ([TESTS.md](TESTS.md#4-the-endings-testswatch)).
 - **Stage art runs out at the camera limits:** on many stages: a black strip of up to 48 pixels at the
   edge. Measured stage by stage in [STAGES.md](STAGES.md#widescreen). This can be filled by stage
   extensions, but new art must be drawn behind the stage in WIDE NATIVE only: [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md).

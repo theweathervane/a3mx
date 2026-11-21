@@ -268,28 +268,44 @@ python tools/watch_scenario.py arcade_fight --fullscreen
 
 F11 or Alt+Enter switch between the two while it plays.
 
-Any name in `tests/scenarios/` (the parity scenarios) or `tests/watch/` (the endings, below) works,
-without the `.txt`.
+Any name in `tests/watch/` (the endings and super finishes, below) or `tests/scenarios/` (the parity
+scenarios) works, without the `.txt`. `--list` shows them all with a line on each:
+
+```
+python tools/watch_scenario.py --list
+```
 
 ### 3. Options
 
 | Option | What it does |
 |---|---|
+| `--screen S` | SCREEN SIZE: `NORMAL` (4:3, the default here), `WIDE` (stretched) or `NATIVE` (WIDE NATIVE). Case doesn't matter |
+| `--character NAME` | player 1's character, in the scenarios with a `select` line (all of `tests/watch/`). `--character list` shows the names. Player 2 stays as the scenario has it |
 | `--fullscreen` | full screen instead of a window |
-| `--wide` | the WIDE NATIVE widescreen mode |
-| `--renderer soft` | the software renderer instead of the GPU one (slower; for comparing the two) |
-| `--skip-to F` | run at full speed up to frame F, then at normal speed. The endings skip their menus this way already; `--skip-to 0` watches from the start |
+| `--skip-to F` | run at full speed up to frame F, then at normal speed. The watch scenarios skip their menus this way already; `--skip-to 0` watches from the start |
 | `--frames N` | stop after N frames instead of the scenario's own count |
-| `--character NAME` | pick this character instead of Ryu (scenarios with a `select` line: the endings). `--character list` shows the names |
+| `--renderer soft` | the software renderer instead of the GPU one (slower; for comparing the two) |
 | `--assets` | load the files in `assets/` (the stage strips) |
-| `--super-kind N` | `super_finish` only: force the super finish's backdrop (1 / 2 slanted lines, 3 vertical lines, 5 speed lines, 6 splash, 7 burst, 8 swirl) and skip to just before it |
+| `--list` | the scenarios there are |
 
 Examples:
 
 ```
-python tools/watch_scenario.py super_finish --super-kind 7
-python tools/watch_scenario.py ending_arcade --character "chun-li" --fullscreen
+python tools/watch_scenario.py ending_arcade --character chun-li --screen native
+python tools/watch_scenario.py super_kind_7 --character sakura --screen wide --fullscreen
 python tools/watch_scenario.py ending_arcade --character list
+```
+
+To go through every ending in WIDE NATIVE, one after another (Windows cmd):
+
+```
+for %s in (arcade kumite dramatic rdramatic variable final) do python tools\watch_scenario.py ending_%s --screen native
+```
+
+On Linux or Mac:
+
+```
+for s in arcade kumite dramatic rdramatic variable final; do python3 tools/watch_scenario.py ending_$s --screen native; done
 ```
 
 ### 4. The endings (`tests/watch/`)
@@ -314,3 +330,33 @@ here. World Tour, Training, Free Battle and the rest don't end.
 
 The fight itself is the scenario's own button presses (walk forward, two jabs, again), not you: the
 pad does nothing useful while it plays.
+
+### 5. The super finishes (`tests/watch/super_kind_1` - `super_kind_8`)
+
+A two-player Free Battle where player 2 stands still with one point of health, and player 1 throws a
+super combo as soon as the fight starts: a super finish, with its backdrop. Each scenario holds the
+backdrop to one kind, so you see each picture without waiting for the game to choose it. Player 1 wins
+both rounds this way (two super finishes), then the win screen.
+
+| Scenario | Backdrop |
+|---|---|
+| `super_kind_1` | slanted lines |
+| `super_kind_2` | slanted lines, the other way |
+| `super_kind_3` | vertical lines |
+| `super_kind_4` | vertical lines, the second set |
+| `super_kind_5` | speed lines |
+| `super_kind_6` | splash |
+| `super_kind_7` | burst |
+| `super_kind_8` | swirl |
+
+`--character` works here too: the tool knows each character's super motion (a table in
+`watch_scenario.py`, `SUPERS`) and throws it for whoever you pick. For JUNI and ZANGIEF none is known
+yet, so their round ends with a normal hit and no backdrop.
+
+```
+python tools/watch_scenario.py super_kind_6 --character "dee jay" --screen native
+```
+
+`tests/scenarios/super_finish` is the parity test the super finishes come from: Ryu, the game's own
+backdrop.
+

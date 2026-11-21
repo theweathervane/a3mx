@@ -1,0 +1,14 @@
+# Watch: the super finish's backdrop kind 6, splash. Not a parity test.
+# Free Battle with player 2 a human (2P PRIORITY PLAYER) who stands still. From the fight's start player
+# 2's health is kept at most 1, and player 1 walks forward and throws its super every 180 frames with
+# the gauge full (`supers`: watch_scenario.py adds the motion for player 1's character): a super finish
+# each round. The backdrop's kind (BATTLE + 43, 0x092E1253) is held at 6 throughout.
+# The windows are wide because a fight starts later for some characters (their data loads longer).
+frames 5200
+select 2300 free
+watch 3700
+supers 3700 5000
+args --p2 human --poke 3650-5200:092E43A8<=1/2 --poke 3650-5200:092E1253=6/1
+config [ex setting]
+config p2_priority=PLAYER
+input 1200=start;1206=;1500=start;1506=;1600=down;1606=;1640=down;1646=;1680=down;1686=;1760=cross;1766=;2100=cross;2106=;2180=p2:start;2186=p2:;2240=p2:cross;2246=p2:;2300=cross;2306=;2360=p2:cross;2366=p2:;2420=cross;2426=;2480=p2:cross;2486=p2:;2540=cross;2546=;2600=p2:cross;2606=p2:;2660=cross;2666=;2720=p2:cross;2726=p2:;2780=cross;2786=;2840=p2:cross;2846=p2:;2900=cross;2906=;2960=p2:cross;2966=p2:;3020=cross;3026=;3080=p2:cross;3086=p2:;3200=down;3200=p2:cross;3204=;3206=p2:;3284=cross;3290=

@@ -48,7 +48,8 @@ def read_scenario(path):
         elif key == 'stick': sc['args'] += ['--stick', val.strip()]
         elif key == 'config': sc['config'].append(val.strip())
         elif key == 'wide': sc['wide'] = True
-        elif key == 'select': sc['select'] = int(val)      # watch_scenario.py --character: the pick's frame
+        elif key == 'select': sc['select'] = val.strip()  # watch_scenario.py --character: FRAME [GRID] [NAME]
+        elif key == 'supers': sc['supers'] = val.strip()  # watch_scenario.py: FROM TO, player 1's super tried
         elif key == 'watch': sc['watch'] = int(val)        # watch_scenario.py: skip at full speed to here
         else: raise SystemExit('%s: unknown line %r' % (path, line))
     return sc
