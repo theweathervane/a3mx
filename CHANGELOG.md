@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.117.1
+### For players
+- **The ending scenarios no longer depend on winning a real fight:** the opponents' computer control is switched off for the last fight, so they stand still, and your character walks up and jabs. Before, the computer could still beat a weaker character in Kumite (on your machine, Sakura) and the ending never came.
+
+### Technical
+- `tests/watch/ending_*.txt`: each opponent's computer-controlled flag (fighter + 0x175) poked to 0 through the fight; in Dramatic, Reverse Dramatic and Variable their controller slot (+ 2) to 3 as well, since they share player 1's slot and would otherwise copy its buttons. The fight's input is now right for 24 frames and two squares, every 60 frames.
+- Checked: all six played headless to the MODE MENU with RYU and with Sakura, Cammy, Zangief, Guile, Zangief and Chun-Li.
+
 ## 0.117.0
 ### For players
 - **Watch any mode's ending:** `tests/watch/` has six scenarios that play a mode to its end in a few minutes, in a window: `ending_arcade`, `ending_kumite` (STAGE 100 and 100 WINS), `ending_dramatic`, `ending_rdramatic`, `ending_variable` and `ending_final`. The menus go by at full speed, the last fight is won with a hit or two, then the ending, the credits and GAME OVER. `--character NAME` picks who plays (`--character list` shows the names). Watch-only: not parity tests.

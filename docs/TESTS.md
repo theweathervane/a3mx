@@ -295,8 +295,9 @@ python tools/watch_scenario.py ending_arcade --character list
 ### 4. The endings (`tests/watch/`)
 
 Each one plays a mode to its end in a few minutes. Menus and the character select go by at full speed;
-the last fight starts at normal speed. The game is told the fight is the last one, the opponent is
-left with one point of health, and a hit or two ends it. Then the ending plays out: the congratulations,
+the last fight starts at normal speed. The game is told the fight is the last one, the opponent's
+computer control is switched off so they stand still, their health is kept at one point, and your
+character walks up and jabs: a hit or two ends it. Then the ending plays out: the congratulations,
 the story or the credits, GAME OVER and back to the MODE MENU, where the window closes.
 
 | Scenario | What you see | `--character` |
@@ -311,5 +312,5 @@ the story or the credits, GAME OVER and back to the MODE MENU, where the window 
 Survival has no ending of its own (it ends on a score screen when you lose), so it has no scenario
 here. World Tour, Training, Free Battle and the rest don't end.
 
-The fight itself is the scenario's own button presses (a punch every few frames), not you: the pad does
-nothing useful while it plays.
+The fight itself is the scenario's own button presses (walk forward, two jabs, again), not you: the
+pad does nothing useful while it plays.
