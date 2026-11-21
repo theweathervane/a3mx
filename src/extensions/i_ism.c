@@ -7,8 +7,9 @@
  *    plays as its ISM underneath (an A-ISM entry got A's wipe), so I-ISM had none of its own. Now an
  *    entry gets an I: the same rolling columns (A's animation) with I shapes in yellow, and a gold logo.
  *    The I was measured from Dan's WIDE NATIVE mock-up: a serifed I across the 4:3 picture (its serifs
- *    from x 16 to 368, 32 high; its stem 168 - 216), the yellow around it; the margins of WIDE NATIVE
- *    are filled by shapes.c's rule as for the other letters. NORMAL and WIDE draw the same shapes.
+ *    from x 16 to 368, 32 high, 8 in from the top and the bottom as X's are; its stem 168 - 216), the
+ *    yellow around it; the margins of WIDE NATIVE are filled by shapes.c's rule as for the other
+ *    letters. NORMAL and WIDE draw the same shapes.
  *
  * The wipe is for one fighter, as the game picks it (logo_ism in screen_steps.c): fighter 3 when BATTLE
  * + 56 is 3, fighter 2 when BATTLE + 48 is set, else fighter 1. It plays an entry when its player (+337,
@@ -54,16 +55,17 @@ static const uint8_t GOLD[16][3] = {
 
 /* Quads (4 corners: top left, top right, bottom right, bottom left) of each of the three columns, 128
    wide and 256 high like the other letters' (object/shapes.c), in yellow; what they leave open is the
-   I. At rest a column's y 16 is the screen's top. */
-#define BAND_TOP    0, 0, 128, 0, 128, 16, 0, 16
+   I. At rest a column's y 16 is the screen's top: like X-ISM's X, the I leaves a band of 8 at the top
+   and the bottom (24 and 232), its serifs 32 high (to 56, from 200) and its stem between. */
+#define BAND_TOP    0, 0, 128, 0, 128, 24, 0, 24
 #define BAND_BOTTOM 0, 232, 128, 232, 128, 256, 0, 256
-#define MIDDLE      0, 48, 128, 48, 128, 200, 0, 200
+#define MIDDLE      0, 56, 128, 56, 128, 200, 0, 200
 static const uint16_t I_LEFT[] = {
-    BAND_TOP, 0, 16, 16, 16, 64, 48, 0, 48, MIDDLE, 0, 200, 64, 200, 16, 232, 0, 232, BAND_BOTTOM, 0xFFFF };
+    BAND_TOP, 0, 24, 16, 24, 64, 56, 0, 56, MIDDLE, 0, 200, 64, 200, 16, 232, 0, 232, BAND_BOTTOM, 0xFFFF };
 static const uint16_t I_MIDDLE[] = {
-    BAND_TOP, 0, 48, 40, 48, 40, 200, 0, 200, 88, 48, 128, 48, 128, 200, 88, 200, BAND_BOTTOM, 0xFFFF };
+    BAND_TOP, 0, 56, 40, 56, 40, 200, 0, 200, 88, 56, 128, 56, 128, 200, 88, 200, BAND_BOTTOM, 0xFFFF };
 static const uint16_t I_RIGHT[] = {
-    BAND_TOP, 112, 16, 128, 16, 128, 48, 64, 48, MIDDLE, 64, 200, 128, 200, 128, 232, 112, 232, BAND_BOTTOM, 0xFFFF };
+    BAND_TOP, 112, 24, 128, 24, 128, 56, 64, 56, MIDDLE, 64, 200, 128, 200, 128, 232, 112, 232, BAND_BOTTOM, 0xFFFF };
 static const uint16_t *const I_SHAPES[3] = { I_LEFT, I_MIDDLE, I_RIGHT };
 
 /* ---- which fighter ---- */

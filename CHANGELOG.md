@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.118.4
+### For players
+- **The I-ISM wipe's I leaves a band at the top as at the bottom,** as X-ISM's X does: its top serif moved 8 down (the serifs keep their widths; the stem is 8 shorter).
+
+### Technical
+- `src/extensions/i_ism.c`: the I's quads (top band to 24, top serif 24 - 56).
+
 ## 0.118.3
 ### For players
 - **The I-ISM logo's corner pixels in the outline's hue:** purple #943184 and pink #C64273 (Dan's picks from the World Tour map's NEXT STAGE bar), as X-ISM's are a darker orange and V-ISM's a darker cyan, where they were a muddy blend of the outline and the gold.
