@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.108.0
+### For players
+- **More of the game decompiled:** 25 more functions, among them the CPU's script commands that test its opponent, the fighters' press counters, the intro's pieces coming in, the particle field's start, and screen panels flashing. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid3.c` (new): 25 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x08877B58, 0x088781C4, 0x08878F40, 0x088793A8, 0x08834558, 0x08834430, 0x08855470, 0x08856C60, 0x088572E4, 0x088AADD8, 0x088CFB7C, 0x089CF0A4, 0x08863748, 0x088637CC, 0x088CE97C, 0x08855774, 0x0887D738, 0x0889C04C, 0x088AB150, 0x088AC210, 0x088B5334, 0x088BD268, 0x088CEA34, 0x088CF880, 0x088D06B0. Tables in docs/PSP_PROGRAM_MAP.md.
+- mult's lo / hi kept for the side record (0x088D06B0).
+- Checked: the coverage pass maps all 25 to scenarios (attract_mode, arcade_ending and mode_tour run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, arcade_match and option_tour, with 0.107.0 - 0.109.0 built and checked together (each batch's functions are independent of the later ones).
+
 ## 0.107.0
 ### For players
 - **More of the game decompiled:** 34 more functions, among them the reset of objects and tables before a fight, the CPU script's opening for a fighter, fighters kept on screen by their routine, the VS screen's lists, and screen objects' places, counters, shapes and texts. Nothing plays differently.

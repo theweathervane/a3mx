@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.29% decompiled
+Overall  [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  14.45% decompiled
 
-Functions                                [█░░░░░░░░░]  12.84%  1,911 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  14.29%  69,172 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  13.01%  1,936 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  14.45%  69,991 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  31.58%  64,393 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  31.96%  65,180 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.40%  3,591 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.41%  3,623 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -196,6 +196,8 @@ Done:
 - [x] Thirty-four more (`object/batch_mid2.c`): the reset before a fight, a fighter's script start and
       routine, the VS screen's lists, objects placed by parent or screen, texts and shapes, a free colour
       taken for a character (0.107.0)
+- [x] Twenty-five more (`object/batch_mid3.c`): the CPU's script commands by the opponent's state, press
+      counters, the intro's pieces moving in, objects made beside others, the particle field's start (0.108.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the
