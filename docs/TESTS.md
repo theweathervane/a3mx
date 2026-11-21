@@ -406,3 +406,10 @@ side no player had joined). The VS screen then shows I-ISM on the right, and the
 python tools/watch_scenario.py i_ism_cpu_entry
 ```
 
+`i_ism_ranking` is the ranking the game kept for entries but never showed: the attract mode's rankings
+now go X-ISM, A-ISM, V-ISM, then I-ISM (your entries' scores) in gold. The scenario jumps straight to it.
+
+```
+python tools/watch_scenario.py i_ism_ranking --screen native
+```
+

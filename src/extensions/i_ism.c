@@ -147,3 +147,128 @@ int i_ism_bselect_grid(Cpu *c, uint32_t a0, int after) {
     }
     return 0;
 }
+
+/* ---- 2. The I-ISM ranking ---- */
+
+/* The system data keeps the entries' records (object/ranking.c): table 6 their scores, 7 their VS
+ * wins, which the attract mode never showed. Its cycle (0x09358400: 0 - 2, X-, A- and V-ISM's scores,
+ * title.c) now goes 0, 1, 2, 6: after V-ISM's, the I-ISM scores. Table 6's records say kind 2, so the
+ * game dresses it as V-ISM's; while it is shown:
+ *   - its title, "V-ISM SCORE RANKING" repeated across the band (pieces 0x08A38208, the letter picture
+ *     0x2C), has picture 0x2B instead, the unused Z: its cell's texels are replaced, where the picture
+ *     cache has put them (0x088112A8), by an I copied out of the "-I" cell of "-ISM" (picture 0x2E),
+ *     right-aligned where X's X ends;
+ *   - the screen's palettes (the five V-ISM ones 0x088BC164 loads) are turned gold: each colour's hue
+ *     moved to I-ISM's yellow, its lightness and saturation kept; and each frame the rows' face plates
+ *     (palettes 14 - 19 and 56 - 63, loaded as the rows come in) have their blues and purples turned the same way.
+ * The pieces are put back when the next ranking starts. */
+#define CYCLE         0x09358400u
+#define RANK_TABLES   0x08A05AA8u
+#define RANK_TABLE_SZ 0x2F8u
+#define I_TABLE       (RANK_TABLES + 6 * RANK_TABLE_SZ)
+#define SCREEN_TABLE  0x09525DE8u
+#define TITLE_PIECES  0x08A38208u
+#define TITLE_PIECE_N 0x60
+#define PIC_V         0x2C
+#define PIC_Z         0x2B
+#define PIC_DASH_ISM  0x2E
+#define PICTURE_LISTS 0x08E75AD8u
+#define RANK_LIST     22
+#define CACHE_PAGES   0x08B0C334u   /* a cached page's texels: *(this + its flags * 24) */
+#define I_HUE         52.0f         /* degrees: the wipe's yellow */
+
+static int ranking_i;               /* the I-ISM table is on screen */
+static uint32_t patched[TITLE_PIECE_N];
+static int npatched;
+static uint8_t i_glyph[32][32];     /* 4-bit indices */
+static int have_glyph;
+
+/* A colour's hue moved to I_HUE (lightness and saturation kept); only hues between lo and hi degrees
+   (0 - 360: all). Answers whether it changed. */
+static int hue_to_gold_in(uint32_t a, float lo, float hi) {
+    uint16_t v = (uint16_t)RH(a);
+    float r = (float)(v & 31) / 31.0f, g = (float)((v >> 5) & 31) / 31.0f, b = (float)((v >> 10) & 31) / 31.0f;
+    float mx = r > g ? (r > b ? r : b) : (g > b ? g : b), mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+    if (mx <= 0.0f || (mx - mn) / mx < 0.15f) return 0;       /* greys and black stay */
+    float d = mx - mn, hue = mx == r ? 60.0f * ((g - b) / d) : mx == g ? 60.0f * ((b - r) / d + 2) : 60.0f * ((r - g) / d + 4);
+    if (hue < 0) hue += 360.0f;
+    if (hue < lo || hue > hi) return 0;
+    float sat = (mx - mn) / mx, val = mx;
+    float h = I_HUE / 60.0f; int i = (int)h; float f = h - (float)i;
+    float p = val * (1 - sat), q = val * (1 - sat * f), t = val * (1 - sat * (1 - f));
+    float rr, gg, bb;
+    switch (i) { case 0: rr = val; gg = t; bb = p; break; default: rr = q; gg = val; bb = p; break; }
+    uint16_t out = (uint16_t)((v & 0x8000) | (uint32_t)(rr * 31.0f + 0.5f) | (uint32_t)(gg * 31.0f + 0.5f) << 5 |
+                              (uint32_t)(bb * 31.0f + 0.5f) << 10);
+    if (out == v) return 0;
+    WH(a, out);
+    return 1;
+}
+static void hue_to_gold(uint32_t a) { hue_to_gold_in(a, 0.0f, 360.0f); }
+
+/* The rows' palettes, loaded as each row comes in: 14 - 19 (0x088BC520) and 56 - 63 (the plates behind
+   the faces), their blues and purples turned gold (the faces' own colours stay) */
+static void rows_to_gold(void) {
+    int changed = 0;
+    for (uint32_t i = 0; i < 6 * 16; i++) changed |= hue_to_gold_in(PALETTES + 0x1C0 + i * 2, 180.0f, 320.0f);
+    for (uint32_t i = 0; i < 8 * 16; i++) changed |= hue_to_gold_in(PALETTES + 0x700 + i * 2, 180.0f, 320.0f);
+    if (changed) WW(PALETTES_DIRTY, 1);
+}
+
+static void restore_title(void) {
+    for (int k = 0; k < npatched; k++) WH(patched[k], (RH(patched[k]) & ~0x3FFFu) | PIC_V);
+    npatched = 0;
+}
+
+int i_ism_ranking_start(Cpu *c, uint32_t a0, int after) {
+    (void)c; (void)a0;
+    if (!after) { restore_title(); ranking_i = 0; return 0; }
+    if (RW(SCREEN_TABLE) != I_TABLE) return 0;
+    ranking_i = 1;
+    for (uint32_t k = 0; k < TITLE_PIECE_N; k++) {
+        uint32_t a = TITLE_PIECES + k * 6 + 4;
+        if ((RH(a) & 0x3FFF) == PIC_V) { WH(a, (RH(a) & ~0x3FFFu) | PIC_Z); patched[npatched++] = a; }
+    }
+    static const uint32_t slots[] = { 0x100, 0x120, 0x140, 0x160, 0x180, 0x280 };
+    for (unsigned k = 0; k < sizeof slots / sizeof *slots; k++)
+        for (uint32_t i = 1; i < 16; i++) hue_to_gold(PALETTES + slots[k] + i * 2);
+    WW(PALETTES_DIRTY, 1);
+    rt_log("i_ism: the I-ISM ranking");
+    return 0;
+}
+
+/* A cached page's cell 0, 32 x 32 at 4 bits, 32 bytes a row (object/sprite_grid.c) */
+static uint32_t page_texels(uint32_t page) { return RW(CACHE_PAGES + RW(page + 8) * 24u); }
+static uint8_t texel(uint32_t buf, int x, int y) { uint8_t b = (uint8_t)RB(buf + (uint32_t)(y * 32 + x / 2)); return x & 1 ? b >> 4 : b & 15; }
+static void set_texel(uint32_t buf, int x, int y, uint8_t v) {
+    uint32_t a = buf + (uint32_t)(y * 32 + x / 2); uint8_t b = (uint8_t)RB(a);
+    WB(a, x & 1 ? (uint8_t)((b & 0x0F) | v << 4) : (uint8_t)((b & 0xF0) | v));
+}
+
+/* 0x088112A8 (a0 draw state, a1 the picture, a2 its list, a3 its first cached page) */
+int i_ism_cached32(Cpu *c, uint32_t a0, int after) {
+    (void)a0;
+    if (after || !ranking_i) return 0;
+    uint32_t pic = c->r[5], base = c->r[6], page = c->r[7];
+    if (!page || base != RW(PICTURE_LISTS + RANK_LIST * 4) || (pic - base) % 12) return 0;
+    uint32_t n = (pic - base) / 12, buf = page_texels(page);
+    if (n == PIC_DASH_ISM) rows_to_gold();
+    if (n == PIC_DASH_ISM && !have_glyph) {
+        /* "-I" then the start of "S": the I is the run of columns 8 - 17; moved to 20 - 29 */
+        memset(i_glyph, 0, sizeof i_glyph);
+        for (int y = 0; y < 32; y++) for (int x = 8; x < 18; x++) i_glyph[y][x + 12] = texel(buf, x, y);
+        have_glyph = 1;
+    } else if (n == PIC_Z && have_glyph) {
+        for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++) set_texel(buf, x, y, i_glyph[y][x]);
+    }
+    return 0;
+}
+
+/* The attract cycle (title.c, 0x0888B8D4): after V-ISM's scores, the I-ISM ones (table 6). */
+int i_ism_attract_cycle(Cpu *c, uint32_t a0, int after) {
+    (void)c; (void)a0;
+    static int8_t before;
+    if (!after) { before = (int8_t)RB(CYCLE); return 0; }
+    if (before == 2) WB(CYCLE, 6);
+    return 0;
+}

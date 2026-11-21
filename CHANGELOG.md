@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.119.0
+### For players
+- **The I-ISM ranking:** the game keeps the entry characters' records (their own score table) but the attract mode never showed them. With the `i_ism` feature the rankings after the third demo now go X-ISM, A-ISM, V-ISM, then I-ISM: "I-ISM SCORE RANKING" in gold, the bars and band in I-ISM's yellow. `tests/watch/i_ism_ranking` jumps straight to it.
+
+### Technical
+- `src/core/object/ranking.c` (new): 0x088BC164 decompiled, the ranking screen's start: the table of the attract cycle (0x09358400) into 0x09525DE8, the background layer, the first place's portrait colours and the screen's five palettes by the kind's ISM (+14 % 3). The rankings: system data 0x08A05AA8, eight tables of 38 records of 0x14 bytes; 0 - 2 X / A / V scores, 3 - 5 their VS wins, 6 / 7 the entries' (the record writer 0x08892A98 sends an entry's run there).
+- `extensions/i_ism.c`: the attract cycle (title.c's 0x0888B8D4 wrapped) goes 0, 1, 2, 6; while table 6 is shown its title's letter (picture 0x2C, V) becomes the unused Z (0x2B), whose cached cell (0x088112A8 wrapped, `sprite_grid.c`) gets an I copied from the "-I" cell of "-ISM"; the screen's palettes, and the rows' as they come in (14 - 19, 56 - 63), turned gold by hue.
+- Checked: parity passed for attract_mode (the ranking start runs twice) and no_extensions; a 24,000-frame attract run with Dan's save reaches the I-ISM ranking fourth.
+- Known: the small plates behind the faces on the rows stay V-ISM's blue-purple.
+
 ## 0.118.6
 ### For players
 - **The I-ISM wipe after a win too:** the wipe from the win screen to the map is the same logo (the single object's type 0x0E); an entry who wins now gets the yellow I and the gold logo there as well, where it was A-ISM's green columns with a leftover gold logo.

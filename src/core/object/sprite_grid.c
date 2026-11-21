@@ -596,7 +596,7 @@ static void draw_paletted32(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr frame
 SFA_FUNC(08810D84, game_draw_cells_cached16) {
     c->r[29] -= FRAME_SIZE; draw_cached(c, &SMALL, ARG(0), ARG(1), ARG(2), ARG(3), c->r[29]); c->r[29] += FRAME_SIZE;
 }
-SFA_FUNC(088112A8, game_draw_cells_cached32) {
+SFA_FUNC_WRAPPED(088112A8, game_draw_cells_cached32, i_ism_cached32) {
     c->r[29] -= FRAME_SIZE; draw_cached(c, &BIG, ARG(0), ARG(1), ARG(2), ARG(3), c->r[29]); c->r[29] += FRAME_SIZE;
 }
 SFA_FUNC(088117D0, game_draw_cells_paletted16) {
