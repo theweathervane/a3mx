@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.109.0
+### For players
+- **More of the game decompiled:** 23 more functions, among them the stage picked at random for a fight, a fighter's first state, a throw's range check, numbers drawn as pictures, and screen panels and their companions. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid4.c` (new): 23 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x088AAC80, 0x088ABB18, 0x088B5AA0, 0x088BCA0C, 0x088576EC, 0x088BCB9C, 0x08855CB0, 0x0885777C, 0x0888AB48, 0x0888ABDC, 0x088AA398, 0x088AAD44, 0x088B1078, 0x088B2204, 0x088B2298, 0x088BC868, 0x088BD1D4, 0x088BE4E0, 0x0892B31C, 0x088CF598, 0x08871E40, 0x0887B9EC, 0x088BE178. Tables in docs/PSP_PROGRAM_MAP.md.
+- 0x088576EC keeps div / divu's lo / hi as the original leaves them.
+- Checked: the coverage pass maps all 23 to scenarios (attract_mode, arcade_ending and mode_tour run them all); parity passed for arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, arcade_match and option_tour, with 0.107.0 - 0.109.0 built and checked together (each batch's functions are independent of the later ones).
+
 ## 0.108.0
 ### For players
 - **More of the game decompiled:** 25 more functions, among them the CPU's script commands that test its opponent, the fighters' press counters, the intro's pieces coming in, the particle field's start, and screen panels flashing. Nothing plays differently.
