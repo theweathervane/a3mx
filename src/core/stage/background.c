@@ -20,6 +20,8 @@ void f_0881A8E0(Cpu *c);   /* 16-pixel layer from the layer (below): a0 the laye
 void f_0881BD28(Cpu *c);   /* 16-pixel layer, wide (below) */
 void f_0881C354(Cpu *c);   /* 16-pixel layer, strips (below) */
 void f_0881AB28(Cpu *c);   /* stage_draw_layer_32 (tiles.c): a0 the layer, a1 its map */
+extern int tiles_ending_mode;   /* tiles.c: WIDE NATIVE, an ending's layers cut or scaled */
+int tiles_ending_quad(void);
 
 static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
 static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
@@ -341,6 +343,7 @@ static void draw_picture(Cpu *c, gaddr layer) {
     SET16(QUAD_UV + 2, v); SET16(QUAD_UV + 6, v);
     v = S16(QUAD_UV + 2) + 0x50;
     SET16(QUAD_UV + 14, v); SET16(QUAD_UV + 10, v);
+    if (tiles_ending_mode && !tiles_ending_quad()) { c->r[29] += 0x30; return; }   /* WIDE NATIVE, an ending */
     int32_t depth = (int32_t)CALL2(f_0880A3C4, 1, *B(layer + 122));
     set_float_arg(c, (float)depth);
     c->r[4] = QUADS; c->r[5] = 4; c->r[6] = 0x80000060u; c->r[31] = 0x088196B4;
@@ -411,10 +414,16 @@ static void draw_sky(Cpu *c, gaddr layer) {
             SET16(QUAD_UV + 14, texrow);
             SET16(QUAD_UV + 6, v); SET16(QUAD_UV + 2, v);
             SET16(QUAD_UV + 10, texrow);
-            int32_t depth = (int32_t)CALL2(f_0880A3C4, 1, *B(layer + 122));
-            set_float_arg(c, (float)depth);
-            c->r[4] = QUADS; c->r[5] = 4; c->r[6] = 0x80000020u; c->r[31] = 0x0881C2E4;
-            f_089E1618(c);
+            uint16_t keep[16];   /* WIDE NATIVE, an ending: the slice cut or scaled, then put back (the next
+                                    slice starts from this one's bottom) */
+            if (tiles_ending_mode) { memcpy(keep, guest_ptr(QUAD_XY), 16); memcpy(keep + 8, guest_ptr(QUAD_UV), 16); }
+            if (!tiles_ending_mode || tiles_ending_quad()) {
+                int32_t depth = (int32_t)CALL2(f_0880A3C4, 1, *B(layer + 122));
+                set_float_arg(c, (float)depth);
+                c->r[4] = QUADS; c->r[5] = 4; c->r[6] = 0x80000020u; c->r[31] = 0x0881C2E4;
+                f_089E1618(c);
+            }
+            if (tiles_ending_mode) { memcpy(guest_ptr(QUAD_XY), keep, 16); memcpy(guest_ptr(QUAD_UV), keep + 8, 16); }
         }
         x0 = (int16_t)(x0 + 0x100);
     }

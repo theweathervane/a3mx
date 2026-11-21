@@ -29,6 +29,7 @@ enum {
     FEAT_SHADERS,        /* platform: shader.c (the FILTER setting) */
     FEAT_BOOTMENU,       /* bootmenu.c */
     FEAT_I_ISM,          /* i_ism.c */
+    FEAT_SCALED_ENDINGS, /* scaled_endings.c */
     FEAT_COUNT,
     FEAT_ANY = FEAT_COUNT   /* on while any feature is: the plumbing several features share */
 };
@@ -82,6 +83,10 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "What the game left out for entry characters (I-ISM): their own wipe into the fight, a yellow I\n"
       "and a gold logo, where they had A-ISM's.\n"
       "Off: an entry gets its ISM's wipe, as on the PSP.", 1, -1 },
+    { "scaled_endings", "Scaled endings (WIDE NATIVE)",
+      "The endings fill the 16:9 screen: a scene that has more of its picture shows it, the others are\n"
+      "drawn 1.25 times larger, and the profile pictures move out to the screen's edges.\n"
+      "Off: the endings keep black sides, their scenes the 4:3 picture. Needs Widescreen.", 1, FEAT_WIDESCREEN },
 };
 
 #ifndef FEATURES_TABLE_ONLY

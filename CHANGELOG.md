@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.120.0
+### For players
+- **WIDE NATIVE, endings: the new Scaled endings extension** (on by default; launcher **Extensions** tab, `--features ...,-scaled_endings` to turn it off). A scene with its own art past the 4:3 sides (scrolling skies, stages) shows it; any other is drawn 1.25 times larger, layers and pictures together, as the super finish's backdrops are, so it fills the 16:9 screen. Profile pictures move to the screen's edges.
+- **With Scaled endings off** the endings keep black sides: nothing of the scenes, nor anything waiting off the 4:3 screen, shows in the margins, and nothing moves.
+- **No more mirrored endings:** the speed-line and vertical-line scenes are no longer carried on mirrored; they are scaled (or black-sided) like the rest.
+- **WIDE NATIVE, the endings' lines:** before the credits they are laid out across the screen, centred, with longer lines; while the staff credits roll they move into the left margin, giving the credits more room.
+
+### Technical
+- `src/core/task/ending.c` (new): the ending's task and its layers decompiled: 0x089DE2C0 (the step), 0x089DE390 (the draw-only step), 0x089DE444 / 0x089DE4B4 (the layers' places), 0x089DE7C0 (timed fade-out, 0x0887C708, sound 0xB4), 0x0881A2C8 (the three layers by the ending's kind, 0x09358BE0 + 308: 0 a stage's, 1 16/32-pixel layers, 2 the 24-tile map 0x0881B7C8; maps from 0x08A07918).
+- `extensions/widescreen.c`: an ending's frame is noted (0x089DE2C0 / 0x089DE390 wrapped, `widescreen_in_ending`); the staff credits are known by a text asked for through the text queue (0x0880A6CC, `core/text/queue.c`) above y 240.
+- `extensions/scaled_endings.c` (new feature `scaled_endings`, needs `widescreen`). The scene decision is in `ending.c`'s 0x0881A2C8: scaled when a layer stands still on a multiple of 384 (its map's 4:3 pictures side by side), or when no tile layer has art past both 4:3 sides (each layer's columns counted first, `tiles_counting` in `tiles.c`); then the tile layers, the picture layers (`background.c`) and the sprites of kinds 73, 77 and 78 with what is linked to them (`sprite.c`, `sprite_drawers.c`) are drawn 1.25 times larger about (192, 72); profile pictures (kind 74, x 64 / 320) move 48 out. Off: `tiles_ending_quad` cuts every layer quad at the 4:3 sides.
+- `core/object/sprite.c`: in an ending a sprite tree is cut at the 4:3 sides (`sprite_grid_clip_x`), a moved profile picture at the 16:9 edge on its side.
+- `core/stage/tiles.c`: 0x0881B7C8's mirroring (0.99.22) removed; `scene_mirror` is only 0x0881AB28's kind 5 now (its columns round its 12).
+- `core/object/text_boxes.c`: an ending's lines: while the credits roll 40 further left; otherwise joined, wrapped at 44 characters and centred on x 192, only the characters typed so far shown.
+- Checked: parity arcade_ending, arcade_ending_full (the ending task and layers decompiled), arcade_fight, arcade_rival_dialogue, attract_mode, no_extensions and wide_fight; by eye (headless, every 20 frames) Akuma's, M. Bison's, Chun-Li's, Sakura's, Ryu's and Ken's arcade endings with Scaled endings on, Chun-Li's off.
+
 ## 0.119.1
 ### For players
 - **The I-ISM ranking's plates:** the small plates behind the faces on the rows are I-ISM's yellow, where they were V-ISM's blue-purple. The faces keep their own colours (0.119.0 turned some of their purples gold too).

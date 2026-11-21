@@ -43,6 +43,13 @@ int widescreen_widen(uint32_t sp) { (void)sp; return 0; }
 void widescreen_plain_adjust(uint32_t ob, int *left, int *right) { (void)ob; *left = *right = 0; }
 int widescreen_plain_halves(uint32_t ob) { (void)ob; return 0; }
 int widescreen_oversize(uint32_t sp) { (void)sp; return 0; }
+int widescreen_in_ending(void) { return 0; }
+int widescreen_ending_credits(void) { return 0; }
+void widescreen_text_asked(int y) { (void)y; }
+int scaled_endings_on(void) { return 0; }
+void scaled_endings_scene(int scaled) { (void)scaled; }
+int scaled_endings_oversize(uint32_t sp) { (void)sp; return 0; }
+int scaled_endings_profile_shift(uint32_t sp) { (void)sp; return 0; }
 int widescreen_column_copies(uint32_t sp, int dx[2]) { (void)sp; (void)dx; return 0; }
 int widescreen_bar_ends(uint32_t sp) { (void)sp; return 0; }
 int widescreen_piece_shift(uint32_t sp, int dx) { (void)sp; (void)dx; return 0; }

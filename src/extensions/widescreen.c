@@ -388,3 +388,25 @@ int widescreen_text_shift(uint32_t rec) {
     }
     return 0;
 }
+
+/* ---- The endings (core/task/ending.c) ----
+   Each frame the ending's task steps (0x089DE2C0, or 0x089DE390 while it only draws) is noted, so the
+   drawers can tell an ending's frame (its scenes, its dialogue, the staff credits) from the rest of the
+   fight screen it shares. Once the staff credits are on the screen (a text asked for through the text
+   queue, 0x0880A6CC, core/text/queue.c, above y 240: the credits are the ending's only such text, rising
+   from the bottom) they roll to the ending's end. */
+uint64_t rt_vblank_count(void);
+static long ending_frame = -100;
+static int ending_credits;
+int widescreen_ending_frame(Cpu *c, uint32_t a0, int after) {
+    (void)c; (void)a0;
+    long now = (long)rt_vblank_count();
+    if (!after) {
+        if (now - ending_frame > 1) ending_credits = 0;   /* a new ending */
+        ending_frame = now;
+    }
+    return 0;
+}
+int widescreen_in_ending(void) { return rt_widescreen && (long)rt_vblank_count() - ending_frame <= 1; }
+int widescreen_ending_credits(void) { return widescreen_in_ending() && ending_credits; }
+void widescreen_text_asked(int y) { if (y < 240 && widescreen_in_ending()) ending_credits = 1; }

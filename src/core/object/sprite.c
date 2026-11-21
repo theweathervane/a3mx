@@ -2,6 +2,7 @@
  * and handed to a drawer chosen by its kind.
  */
 #include "../decomp.h"
+#include <string.h>
 
 void rt_call_indirect(Cpu *c, uint32_t addr);
 void f_089E0C4C(Cpu *c);   /* switches a GE drawing mode on (1) or off (0) around a sprite that asks for it */
@@ -71,15 +72,43 @@ int widescreen_edge_copy(gaddr sp, int n);   /* the nth extra drawing, moved by 
 int widescreen_linked_shift(gaddr sp);       /* a linked sprite's own move, added to its parent's */
 static int edge_shift, edge_depth;
 
+/* WIDE NATIVE, an ending's frame (extensions/widescreen.c, scaled_endings.c): its sprites are cut at the
+   4:3 picture's sides (what the 4:3 screen kept off it stays hidden), except a picture across the scene
+   drawn 1.25 times larger (sprite_drawers.c) and, with the scaled endings, a profile picture moved out to
+   the 16:9 edge, which is cut there instead. With the scaled endings off nothing moves. */
+int widescreen_in_ending(void);
+int scaled_endings_oversize(gaddr sp);
+int scaled_endings_profile_shift(gaddr sp);
+extern int sprite_grid_clip_x;                  /* sprite_grid.c */
+extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
+#define SCALE_X  0x08E759E8u
+#define OFFSET_X 0x08E75A04u
+static float fl(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
+int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c) */
+static int ending_sides(gaddr sp, int *shift) {
+    *shift = 0;
+    if (!widescreen_in_ending()) return 0;
+    if (scaled_endings_oversize(sp)) { sprite_ending_oversize = 1; return 0; }
+    int px = scaled_endings_profile_shift(sp);
+    float sx = fl(SCALE_X), ox = fl(OFFSET_X);
+    float lo = px < 0 ? -48.0f : 0.0f, hi = px > 0 ? 432.0f : 384.0f;
+    lo = lo * sx; lo = lo + ox;
+    hi = hi * sx; hi = hi + ox;
+    sprite_grid_clip_lo = lo; sprite_grid_clip_hi = hi;
+    if (px != 0 && sx > 0.0f) { float u = (float)px / sx; *shift = (int)(u < 0.0f ? u - 0.5f : u + 0.5f); }
+    return 1;
+}
+
 /* Draws the sprite at `sp` if it is active and shown: the two sprites linked before it, itself, then
    (unless it stands alone) the one linked after it and the next in its chain. */
 static void draw_sprite(Cpu *c, gaddr sp);
 static void draw_sprite_wide(Cpu *c, gaddr sp) {
     if (!rt_widescreen) { draw_sprite(c, sp); return; }
     int keep = edge_shift;
-    int top = edge_depth == 0;
+    int top = edge_depth == 0, clip_keep = sprite_grid_clip_x, ending = 0;
     if (top) edge_shift = widescreen_edge_shift(sp);
     else edge_shift += widescreen_linked_shift(sp);
+    if (top) { int shift; ending = ending_sides(sp, &shift); if (ending) { sprite_grid_clip_x = 1; edge_shift += shift; } }
     edge_depth++;
     for (int n = 0; top && n < 2; n++) {
         int copy = widescreen_edge_copy(sp, n);
@@ -88,6 +117,8 @@ static void draw_sprite_wide(Cpu *c, gaddr sp) {
     draw_sprite(c, sp);
     edge_depth--;
     edge_shift = keep;
+    if (ending) sprite_grid_clip_x = clip_keep;
+    if (top) sprite_ending_oversize = 0;
 }
 static void draw_sprite(Cpu *c, gaddr sp) {
     if (*B(sp + SP_ACTIVE) == 0 || *B(sp + SP_SHOWN) == 0 || *W(DRAW_OFF) != 0) return;

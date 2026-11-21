@@ -44,6 +44,8 @@ extern int sprite_grid_half;   /* sprite_grid.c */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid.c */
 extern int sprite_grid_scale_all;                                  /* sprite_grid.c */
 int widescreen_oversize(gaddr sp);                                 /* extensions/widescreen.c */
+extern int sprite_ending_oversize;                                 /* sprite.c: an ending's scene picture (scaled_endings.c) */
+#define ENDING_MID_Y 72.0f   /* an ending's scene, rows 8 - 136 above its text band */
 int widescreen_column_copies(gaddr sp, int dx[2]);                 /* extensions/widescreen.c */
 int widescreen_bar_ends(gaddr sp);                                 /* extensions/widescreen.c */
 int widescreen_piece_shift(gaddr sp, int dx);                      /* extensions/widescreen.c */
@@ -158,11 +160,13 @@ static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     if (frame & 0x8000) return;
     copy_effects(ds, sp);
     if (rt_widescreen && widescreen_beam(sp)) wide_beam(c, ds, sp, list + frame * 12u, list);
-    if (rt_widescreen && widescreen_oversize(sp)) {
+    int ending_pic = rt_widescreen && sprite_ending_oversize;
+    if (rt_widescreen && (widescreen_oversize(sp) || ending_pic)) {
         /* WIDE NATIVE: a backdrop across the whole 4:3 picture drawn whole, 1.25 times over-sized about
            the 4:3 screen's middle (192, 112), as the super finish's swirl and burst are
-           (super_backdrop.c): its 384 fill the 480 and its rings and rays go on unbroken */
-        sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = 112.0f; sprite_grid_scale_all = 1;
+           (super_backdrop.c): its 384 fill the 480 and its rings and rays go on unbroken. An ending's
+           picture across its scene (extensions/scaled_endings.c) about the scene's middle (192, ENDING_MID_Y) */
+        sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = ending_pic ? ENDING_MID_Y : 112.0f; sprite_grid_scale_all = 1;
         draw_picture(c, ds, sp, list + frame * 12u, list, 0);
         sprite_grid_scale = 0.0f; sprite_grid_scale_all = 0;
         return;

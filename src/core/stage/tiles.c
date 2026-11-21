@@ -102,15 +102,10 @@ static const Grid GRID_B7C8 = { 32, 13, 17, 2, 0, 1 };
 
 static int columns(const Grid *g) { return rt_widescreen ? g->wide_cols : g->cols; }
 
-/* WIDE NATIVE, 0x0881B7C8: the endings' map holds two scenes side by side, 12 tiles each (the speed
-   lines and the vertical lines, say), and a scene that stands still is shown whole at a scroll of 0 or
-   384. The columns past its sides would then come from the other scene, so instead the scene's own
-   columns are mirrored out at its sides (column -1 is column 0 flipped across, -2 column 1, 12 column
-   11 ...), as the super finish's backdrop carries on its lines. A scene that scrolls wraps round the
-   map as it does on the 4:3 screen. Only the drawing changes. */
-static int scene_mirror;          /* set by 0x0881B7C8 for the grid it draws (1); 0x0881AB28's kind 5 (2) */
+/* WIDE NATIVE, 0x0881AB28's kind 5 (the title and attract screens' backdrops): a scene standing still
+   has its own columns carried on round its 12 past its sides (scene_mirror). */
+static int scene_mirror;          /* set for 0x0881AB28's kind 5 */
 static int32_t scene_map_w = 24;  /* the map's width in tiles */
-static uint32_t scene_flip;       /* the tile's word's flip across, toggled for a mirrored column */
 /* WIDE NATIVE: a grid drawn 1.25 times over-sized about the 4:3 screen's middle (192, 120 in the 2D
    library's rows), as the attract mode's Akuma screens and the super finish's backdrops are: its 384
    fill the 480. 32-pixel tiles become 40 (x' = 1.25 x - 48), on whole pixels, the shared edges alike */
@@ -119,17 +114,71 @@ uint64_t rt_vblank_count(void);
 static long scene_oversize_frame = -10;   /* the last frame the scene's kind 5 layer was drawn over-sized */
 int stage_scene_oversized(void) { return (long)rt_vblank_count() - scene_oversize_frame <= 1; }
 static int32_t oversize(int32_t p, int32_t mid) { int32_t d = (p - mid) * 5; return mid + (d >= 0 ? d / 4 : -((-d + 3) / 4)); }
+/* WIDE NATIVE, an ending's layers (core/task/ending.c sets tiles_ending_mode around them; every tile and
+   picture layer of the ending draws through tiles_ending_quad):
+     1  the scaled endings off: each quad cut at the 4:3 picture's sides, its texels across cut with it,
+        so the sides stay black;
+     2  the scene drawn 1.25 times larger about its middle (192, 72: its rows 8 - 136 above the text band).
+   And tiles_counting: the tile layers' columns counted instead of drawn, in and past each side of the
+   4:3 picture (rows 8 - 136), the ones with a tile and all of them (ending.c: does the scene have art past its sides?) */
+int tiles_ending_mode, tiles_counting;
+int32_t tiles_count_in, tiles_count_in_art, tiles_count_out[2], tiles_count_out_art[2];   /* past the left side, the right */
+#define ENDING_MID_Y 72
+#define SCENE_TOP    8
+#define SCENE_BOTTOM 136
+static void picture_sides(int32_t *lo, int32_t *hi) {
+    float a = F(SCALE_X), b = F(SCALE_X);
+    a = a * 0.0f; a = a + F(OFFSET_X);
+    b = b * 384.0f; b = b + F(OFFSET_X);
+    *lo = (int32_t)a; *hi = (int32_t)b;
+}
+/* the quad list's quad (QUAD_XY / QUAD_UV: top left, top right, bottom right, bottom left) as the mode
+   says; 0 when nothing of it is left to draw */
+int tiles_ending_quad(void) {
+    if (tiles_ending_mode == 2) {
+        for (uint32_t i = 0; i < 4; i++) {
+            SET16(QUAD_XY + i * 4, oversize(S16(QUAD_XY + i * 4), 192));
+            SET16(QUAD_XY + i * 4 + 2, oversize(S16(QUAD_XY + i * 4 + 2), ENDING_MID_Y));
+        }
+        return 1;
+    }
+    if (tiles_ending_mode != 1) return 1;
+    int32_t lo, hi;
+    picture_sides(&lo, &hi);
+    static const uint32_t pair[2][2] = { { 0, 1 }, { 3, 2 } };   /* the top edge's corners, the bottom's */
+    for (int e = 0; e < 2; e++) {
+        gaddr a = pair[e][0] * 4u, b = pair[e][1] * 4u;
+        int32_t xa = S16(QUAD_XY + a), xb = S16(QUAD_XY + b), ua = S16(QUAD_UV + a), ub = S16(QUAD_UV + b);
+        if ((xa <= lo && xb <= lo) || (xa >= hi && xb >= hi) || xa == xb) return 0;
+        int32_t na = xa < lo ? lo : xa > hi ? hi : xa, nb = xb < lo ? lo : xb > hi ? hi : xb;
+        SET16(QUAD_XY + a, na); SET16(QUAD_XY + b, nb);
+        SET16(QUAD_UV + a, ua + (ub - ua) * (na - xa) / (xb - xa));
+        SET16(QUAD_UV + b, ua + (ub - ua) * (nb - xa) / (xb - xa));
+    }
+    return 1;
+}
+/* a tile layer's column counted (tiles_counting): in or past the 4:3 picture, and whether it has a tile */
+static void count_column(gaddr st, int art) {
+    int32_t mid_y = (S16(st + GRID_TOP) + S16(st + GRID_BOTTOM)) / 2;
+    if (mid_y < SCENE_TOP || mid_y >= SCENE_BOTTOM) return;
+    int32_t lo, hi;
+    picture_sides(&lo, &hi);
+    int32_t x = S16(st + GRID_X) + S16(st + GRID_OFS_X) + S16(st + GRID_STEP_X) / 2;
+    if (x >= lo && x < hi) { tiles_count_in++; tiles_count_in_art += art; }
+    else { int side = x >= hi; tiles_count_out[side]++; tiles_count_out_art[side] += art; }
+}
 #define SCENE_W 12
 
 /* One tile: its palette, the quad's corners (flipped as the map word says) and texels, then the draw. */
 static void draw_tile(Cpu *c, gaddr st, const Grid *g) {
+    if (tiles_counting) return;   /* counted in draw_grid */
     SET16(st + GRID_WORD, *W(*W(st + GRID_TILE)));
     CALL1(f_089E0EA4, (uint32_t)(*H(st + GRID_WORD) >> 8));
     int32_t x = S16(st + GRID_X);
     SET16(st + GRID_LEFT, x + S16(st + GRID_OFS_X));
     SET16(st + GRID_RIGHT, x + S16(st + GRID_STEP_X) + S16(st + GRID_OFS_X));
 
-    uint32_t flip = (*W(*W(st + GRID_TILE)) ^ scene_flip) & 0x30000000u;
+    uint32_t flip = *W(*W(st + GRID_TILE)) & 0x30000000u;
     int32_t l = S16(st + GRID_LEFT), r = S16(st + GRID_RIGHT);
     int32_t t = S16(st + GRID_TOP), b = S16(st + GRID_BOTTOM);
     if (scene_oversize) { l = oversize(l, 192); r = oversize(r, 192); t = oversize(t, 120); b = oversize(b, 120); }
@@ -149,6 +198,7 @@ static void draw_tile(Cpu *c, gaddr st, const Grid *g) {
     SET16(QUAD_UV + 2, v);  SET16(QUAD_UV + 6, v);
     SET16(QUAD_UV + 10, v + g->size); SET16(QUAD_UV + 14, v + g->size);
 
+    if (tiles_ending_mode && !tiles_ending_quad()) return;
     uint32_t column = g->b268 ? (uint32_t)S16(st + GRID_DEPTH) : *B(*W(st + GRID_LAYER) + 122);
     uint32_t blend = *W(*W(st + GRID_TILE)) & 0x40000000u;
     uint32_t depth = CALL2(f_0880A3C4, 1, column);
@@ -224,12 +274,9 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
         int strip_left = rt_widescreen && g->b268 && S16(st + GRID_KIND) == 0x90 && stage_strip_before != 0;
         int32_t col = 0;
         do {
-            if (scene_mirror) {   /* the scene's own column, mirrored past its sides */
+            if (scene_mirror) {   /* the scene's own column, round within its 12 past its sides */
                 int32_t r = col - g->wide_tiles;
-                scene_flip = 0;
-                if (scene_mirror == 2) r = (r % SCENE_W + SCENE_W) % SCENE_W;   /* round within the 12 */
-                else if (r < 0) { r = -1 - r; scene_flip = 0x10000000u; }
-                else if (r >= SCENE_W) { r = 2 * SCENE_W - 1 - r; scene_flip = 0x10000000u; }
+                r = (r % SCENE_W + SCENE_W) % SCENE_W;
                 int32_t col0 = S16(st + GRID_MAP_COL), mc = (col0 + r) % scene_map_w;
                 *W(st + GRID_TILE) = *W(st + GRID_LINE) + (uint32_t)((mc - col0) * 4);
             } else if (col == S16(st + GRID_COL_WRAP)) {
@@ -238,6 +285,7 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
             }
             gaddr tile = *W(st + GRID_TILE);
             int32_t r = col - (rt_widescreen ? g->wide_tiles : 0) + S16(st + GRID_MAP_COL);
+            if (tiles_counting) count_column(st, (int32_t)*W(tile) < 0);
             if (strip_left && r < 0) {   /* WIDE NATIVE: left of the first strip: the strip before's end */
                 gaddr at = stage_strip_before + (*W(st + GRID_LINE) - (uint32_t)(S16(st + GRID_MAP_COL) * 4) - *W(st + GRID_BASE))
                            + (uint32_t)((STRIP_W + r) * 4);
@@ -250,7 +298,6 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
             *W(st + GRID_COL) = (uint32_t)col;
             *W(st + GRID_TILE) = tile + 4;
         } while (col < columns(g));
-        scene_flip = 0;
 
         row++;
         *W(st + GRID_ROW) = (uint32_t)row;
@@ -380,7 +427,7 @@ static void draw_layer_32(Cpu *c, gaddr layer, gaddr map) {
     int scrolling = dv != 0 && dv > -64 && dv < 64;
     last_v = v;
     scene_mirror = rt_widescreen && kind == 5 && S16(st + GRID_MAP_COL) == 0 && S16(st + GRID_X0) == 0
-                   && v % 256 == 0 && !scrolling ? 2 : 0;
+                   && v % 256 == 0 && !scrolling;
     /* WIDE NATIVE: that scene (the attract mode, GAME + 0 = 2: the map's top bands, v scroll under 768)
        drawn 1.25 times over-sized instead, so it fills the 16:9 screen with its own picture (with M. Bison's
        layer and the eagle; Ryu, in front, stays as drawn) */
@@ -506,15 +553,8 @@ static void draw_layer_32_wide_map(Cpu *c, gaddr layer, gaddr map) {
     SET16(st + GRID_BOTTOM, S16(st + GRID_Y0) + S16(st + GRID_OFS_Y));
     *W(st + GRID_MAP) = map;
 
-    /* WIDE NATIVE: a scene standing still on a half of the map (scroll 0 or 384, not moving on from
-       a scroll near it the frame before) is mirrored at its sides */
-    static int32_t last_h = -10000;
-    int32_t raw_h = (int16_t)*H(layer + 18), dh = raw_h - last_h;
-    scene_mirror = rt_widescreen && h % (SCENE_W * 32) == 0 && (dh == 0 || dh > 64 || dh < -64);
     scene_map_w = 2 * SCENE_W;
-    last_h = raw_h;
     draw_grid(c, st, &GRID_B7C8);
-    scene_mirror = 0;
     c->r[29] += 0xB0;
 }
 

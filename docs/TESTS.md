@@ -355,6 +355,11 @@ here. World Tour, Training, Free Battle and the rest don't end.
 The fight itself is the scenario's own button presses (walk forward, two jabs, again), not you: the
 pad does nothing useful while it plays.
 
+In WIDE NATIVE (`--screen native`) the endings fill the screen with the Scaled endings extension, and
+keep black sides without it: add `--features default,-shaders,-scaled_endings` to see them that way
+([WIDESCREEN.md](WIDESCREEN.md)). Things to look for: a scene whose sides show a piece of another scene,
+a picture cut off at the 4:3 side, a profile picture away from the edge, the lines over the credits.
+
 ### 5. The super finishes (`tests/watch/super_kind_1` - `super_kind_8`)
 
 A two-player Free Battle where player 2 stands still with one point of health, and player 1 throws a

@@ -88,10 +88,60 @@ static int32_t line_shift(gaddr rec, gaddr s) {
     return (int32_t)(d < 0.0f ? d - 0.5f : d + 0.5f);
 }
 
+/* WIDE NATIVE, an ending's lines (extensions/widescreen.c: widescreen_in_ending): the 4:3 screen keeps
+   them in its left part (their middle near x 136), the right being the staff credits'. While the credits
+   roll (widescreen_ending_credits) each line goes CREDITS_SHIFT further left, into the 16:9 screen's left
+   margin, leaving the credits more room; otherwise there are no credits, and the lines are laid out again
+   across the 16:9 screen: joined, wrapped at WRAP_CHARS and each centred on the screen's middle (x 192),
+   from the first line's height. As the 4:3 screen does, only the first +35 characters are shown (a line's
+   end is not counted; a space joining two lines shows with the character after it). */
+int widescreen_in_ending(void);
+int widescreen_ending_credits(void);
+#define CREDITS_SHIFT (-40)
+#define WRAP_CHARS    44
+#define MIDDLE_X      192
+static void draw_box_wide(Cpu *c, gaddr rec, gaddr s, gaddr frame) {
+    char ch[512]; int16_t at[512]; int n = 0, shown = 0;   /* the characters joined, each one's count */
+    int32_t count = (int32_t)*B(rec + TB_COUNT);
+    s++;
+    for (int guard = 0; guard < 1024 && n < 500; guard++) {
+        uint8_t k = *B(s++);
+        if (k == 0) {
+            if (*B(s + 1) == 0 || shown >= 255) break;   /* the text's end: a line with nothing on it */
+            s++;                                          /* a new line: its offset */
+            if (n > 0 && ch[n - 1] != ' ') { ch[n] = ' '; at[n] = (int16_t)shown; n++; }
+            continue;
+        }
+        if (k == ' ' && (n == 0 || ch[n - 1] == ' ')) { shown++; continue; }
+        ch[n] = (char)k; at[n] = (int16_t)shown; n++; shown++;
+    }
+    while (n > 0 && ch[n - 1] == ' ') n--;
+    gaddr ds = DRAW_STATE;
+    int32_t y = S16(rec + TB_Y);
+    *W(ds + 44) = *B(rec + TB_DEPTH);
+    for (int start = 0; start < n;) {
+        int end = start + WRAP_CHARS < n ? start + WRAP_CHARS : n;
+        if (end < n) {                          /* break at the last space that fits */
+            int b = end;
+            while (b > start && ch[b] != ' ') b--;
+            if (b > start) end = b;
+        }
+        int len = end - start;
+        *H(ds + 2) = (uint16_t)y;
+        *H(ds) = (uint16_t)(MIDDLE_X - len * 4);
+        for (int i = start; i < end; i++) if (at[i] < count) draw_glyph(c, ds, rec, (uint32_t)(uint8_t)ch[i], frame + 32);
+        y += 16;
+        start = end;
+        while (start < n && ch[start] == ' ') start++;
+    }
+}
+
 static void draw_box(Cpu *c, gaddr rec, gaddr frame) {
     gaddr ds = DRAW_STATE, s = *W(rec + TB_TEXT);
+    if (rt_widescreen && widescreen_in_ending() && !widescreen_ending_credits()) { draw_box_wide(c, rec, s, frame); return; }
+    int32_t ending_shift = rt_widescreen && widescreen_in_ending() ? CREDITS_SHIFT : 0;
     int dialogue = rt_widescreen && widescreen_text_shift(rec) != 0;
-    int32_t shift = dialogue ? line_shift(rec, s) : 0;
+    int32_t shift = dialogue ? line_shift(rec, s) : ending_shift;
     *H(ds + 2) = *H(rec + TB_Y);
     *H(ds) = (uint16_t)(S16(rec + TB_X) + (int8_t)*B(s) + shift);
     *W(ds + 44) = *B(rec + TB_DEPTH);

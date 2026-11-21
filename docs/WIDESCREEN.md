@@ -101,9 +101,20 @@ works, what doesn't, and the rules for refining it.
   - the attract mode's Akuma screens (0.99.29): the blue swirl behind his back and the burst behind the
     red kanji are drawn whole 1.25 times over-sized about the screen's middle, as the super finish's
     swirl and burst are (`widescreen_oversize`);
-  - the endings (0.99.22): a scene of the ending's 24-tile map standing still on one of its halves has
-    its own columns mirrored out at its sides instead of the other scene's (`src/core/stage/tiles.c`),
-    and the black sides that narrow a scene to a panel reach the screen's sides;
+  - the endings (0.120.0; the ending's task and layers decompiled in `src/core/task/ending.c`): the
+    black sides that narrow a scene to a panel reach the screen's sides (0.99.22); sprites are cut at
+    the 4:3 sides, so what the 4:3 screen kept off it (the next scene's pieces, props waiting to come
+    in) stays hidden; nothing is mirrored any more. With the **Scaled endings** extension (`scaled_endings`,
+    on by default, `src/extensions/scaled_endings.c`) a scene fills the 16:9 screen: one whose layers
+    have art of their own past both 4:3 sides (scrolling skies, stages) shows it; any other (a layer
+    standing still on one of its map's 4:3 pictures, the ones beside it being other scenes; layers bare
+    past the sides) is drawn 1.25 times larger about the picture's middle (192, 72), its layers and its
+    pictures (sprites of kinds 73, 77, 78: close-ups, statues, bursts, speed lines) alike, as the super
+    finish's backdrops are; the profile pictures (kind 74) move out to the 16:9 edges. With it off the
+    endings keep black sides: the layers' tiles and the sprites are cut at the 4:3 sides and nothing
+    moves. The ending's lines (`src/core/object/text_boxes.c`): while the staff credits roll they go 40
+    further left, into the left margin, leaving the credits room; before the credits they are laid out
+    again across the screen, centred, wrapped at 44 characters;
   - the map screen (0.99.12): the ladder moves to the edge away from the middle; the beam, where its
     picture ends in a margin (toward England, Italy, Hong Kong, Thailand and the like), has its noise
     carried on to the screen's side as it is, not scaled, cut to the beam's edges (0.99.34; it was drawn
@@ -133,10 +144,12 @@ works, what doesn't, and the rules for refining it.
 - **Off-screen loading is visible in the pre-battle sequences:**
 - **MODE MENU background tiles** (the Street Fighter Alpha logo) are missing on the left side; they
   extend to the right correctly.
-- **Endings are not fixed for WIDE NATIVE yet:** the endings, the story scenes before them and the
-  credits have not been checked or fixed in WIDE NATIVE. They are being looked at by eye, mode by mode
-  and character by character, with the watch scenarios: `python tools/watch_scenario.py ending_arcade
-  --screen native --character NAME` ([TESTS.md](TESTS.md#4-the-endings-testswatch)).
+- **Endings are still being checked by eye:** since 0.120.0 the endings fill the screen (Scaled endings)
+  or keep black sides, and their lines make room for the credits; each character's ending in each mode
+  is being looked at with the watch scenarios: `python tools/watch_scenario.py ending_arcade
+  --screen native --character NAME` ([TESTS.md](TESTS.md#4-the-endings-testswatch)). A scene the rules
+  get wrong (art past the sides that belongs to another scene, a picture that should not grow) needs
+  its own rule.
 - **Stage art runs out at the camera limits:** on many stages: a black strip of up to 48 pixels at the
   edge. Measured stage by stage in [STAGES.md](STAGES.md#widescreen). This can be filled by stage
   extensions, but new art must be drawn behind the stage in WIDE NATIVE only: [STAGE_EXTENSIONS.md](STAGE_EXTENSIONS.md).

@@ -38,7 +38,11 @@ static gaddr text_request(gaddr string, uint8_t font, int16_t x, int16_t y, uint
     return 0;
 }
 
+/* WIDE NATIVE: a text asked for during an ending is the staff credits' (extensions/widescreen.c) */
+void widescreen_text_asked(int y);
+
 /* text(string, font, x, y, colour) */
 SFA_FUNC(0880A6CC, game_text) {
+    widescreen_text_asked((int16_t)ARG(3));
     RETURN(text_request(ARG(0), (uint8_t)ARG(1), (int16_t)ARG(2), (int16_t)ARG(3), (uint8_t)ARG(4)));
 }
