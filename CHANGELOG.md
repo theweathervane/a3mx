@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.117.0
+### For players
+- **Watch any mode's ending:** `tests/watch/` has six scenarios that play a mode to its end in a few minutes, in a window: `ending_arcade`, `ending_kumite` (STAGE 100 and 100 WINS), `ending_dramatic`, `ending_rdramatic`, `ending_variable` and `ending_final`. The menus go by at full speed, the last fight is won with a hit or two, then the ending, the credits and GAME OVER. `--character NAME` picks who plays (`--character list` shows the names). Watch-only: not parity tests.
+- **watch_scenario.py opens in a window by default;** `--fullscreen` for full screen (F11 or Alt+Enter switch while it plays).
+- **docs/TESTS.md starts with a step-by-step guide:** building, a quick check, the whole suite, saving the results to a file on Windows, Linux and Mac, what a pass and a failure look like, and how watching a scenario differs from the tests (a real window and the GPU, not headless).
+
+### Technical
+- `--poke F-G:ADDR<=VALUE[/SIZE]` lowers a value to VALUE (signed) only while it is above, so a KO'd fighter isn't revived the way a plain poke would (`src/platform/main.c`, docs/BUILDING.md).
+- Scenario files take `select F` (the frame of the character pick, for `--character`) and `watch F` (where watching starts at normal speed); `tests/parity.py` reads and ignores both.
+- `tools/watch_scenario.py`: `--fullscreen`, `--character` (the select grid at 0x08A26F60 by name; moves the cursor before the pick and shifts later inputs, pokes and frames), scenarios looked up in `tests/scenarios` then `tests/watch`, the default skip from `watch`.
+- The endings use BATTLE + 20 (0x092E123C: the fight number; 9 makes the current fight the final one in Arcade, Dramatic, Variable and Final Battle; Kumite's stage count from 0) and fighter 1 + 426 (0x092E404A, Kumite's wins). Survival has no ending (it ends on a score screen), so it has none.
+- Checked: each ending played headless to the MODE MENU with RYU and with another character (Chun-Li, Zangief, Guile, Sakura, Cammy; Arcade with Zangief); parity is unchanged (no game code changed).
+
 ## 0.116.0
 ### For players
 - **More of the game decompiled:** 7 more functions, among them the pairing of a fight's two fighters (who faces whom, each player's colour), the CPU's aggression nudged at random, a chain of four objects, the camera layers set from their tables, and panels by type. Nothing plays differently.

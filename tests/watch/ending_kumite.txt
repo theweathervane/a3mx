@@ -1,0 +1,13 @@
+# Watch: VS 100 KUMITE's end, from the 100th fight to the results. Not a parity test.
+# The stage count (BATTLE + 20, 0x092E123C, from 0) is set to 99 before the first fight, so it is fought
+# as STAGE 100, and the win count (fighter 1 + 426, 0x092E404A) to 100, kept at most 100 through the
+# results (the win would make it 101). The opponent's health (0x092E43A8) is kept at most 1 (<=: a KO'd
+# fighter isn't revived), so one hit wins.
+# Then CONGRATULATIONS!! VS100 KUMITE ALL CLEAR, the staff credits, the results (100 wins, 0 losses;
+# the clear time and score are from the one fight), a button back to the MODE MENU.
+# --character NAME picks someone else (select: the frame of the pick); the default is RYU.
+frames 14200
+select 1940
+watch 2300
+input 1200=start;1206=;1500=start;1506=;1700=right;1706=;1730=down;1736=;1760=down;1766=;1790=down;1796=;1850=cross;1856=;1940=cross;1946=;2030=cross;2036=;2120=cross;2126=;2210=cross;2216=;2300=cross;2306=;2390=cross;2396=;2800=square;2806=;2824=square;2830=;2848=square;2854=;2872=square;2878=;2896=square;2902=;2920=square;2926=;2944=square;2950=;2968=square;2974=;2992=square;2998=;3016=square;3022=;3040=square;3046=;3064=square;3070=;3088=square;3094=;3112=square;3118=;3136=square;3142=;3160=square;3166=;3184=square;3190=;3208=square;3214=;3232=square;3238=;3256=square;3262=;3280=square;3286=;3304=square;3310=;3328=square;3334=;3352=square;3358=;3376=square;3382=;3400=square;3406=;3424=square;3430=;3448=square;3454=;3472=square;3478=;3496=square;3502=;3520=square;3526=;3544=square;3550=;3568=square;3574=;3592=square;3598=;3616=square;3622=;3640=square;3646=;3664=square;3670=;3688=square;3694=;3712=square;3718=;3736=square;3742=;3760=square;3766=;3784=square;3790=;3808=square;3814=;3832=square;3838=;3856=square;3862=;3880=square;3886=;3904=square;3910=;3928=square;3934=;3952=square;3958=;3976=square;3982=;4000=square;4006=;4024=square;4030=;4048=square;4054=;4072=square;4078=;4096=square;4102=;4120=square;4126=;4144=square;4150=;4168=square;4174=;4192=square;4198=;4216=square;4222=;4240=square;4246=;4264=square;4270=;4288=square;4294=;4312=square;4318=;4336=square;4342=;4360=square;4366=;4384=square;4390=;13500=cross;13506=
+args --poke 2200-2700:092E123C=63/2 --poke 2200-2700:092E404A=64/2 --poke 2600-4400:092E43A8<=1/2 --poke 2700-13500:092E404A<=64/2

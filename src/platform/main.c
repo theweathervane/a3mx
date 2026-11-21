@@ -20,7 +20,8 @@
  *   --replay FILE  play a recorded session back, from its own copy of the settings and save
  *   --dump-from N   no screens saved before frame N
  *   --snap F:FILE  save user RAM (0x08800000-0x0A000000) at frame F
- *   --poke F[-G]:ADDR=VAL[/SIZE]  force a byte (or /2, /4) every frame from frame F (to frame G)
+ *   --poke F[-G]:ADDR=VAL[/SIZE]  force a byte (or /2, /4) every frame from frame F (to frame G);
+ *                     ADDR<=VAL only lowers it to VAL (signed) when it is above
  *   --net-hub PORT   be node 0 of a local multi-instance network (PORT 0: any)
  *   --net-join PORT N  be node N (1-3) of that network (tests)
  *   --renderer opengl|soft   the GPU renderer (the default) or the software one. vulkan, d3d12 and metal are
@@ -258,7 +259,7 @@ static void watch_open(const char *logs_dir) {
 /* ---------------------------------------------------------------- snapshots and pokes (reverse-engineering aids) */
 static struct { long frame; char path[600]; } snaps[16];
 static int nsnaps;
-static struct { long frame, until; uint32_t addr; uint32_t value; int size; } pokes[1024];
+static struct { long frame, until; uint32_t addr; uint32_t value; int size, cap; } pokes[1024];
 static int npokes;
 static void snaps_and_pokes(long f) {
     for (int i = 0; i < nsnaps; i++) if (snaps[i].frame == f) {
@@ -266,6 +267,11 @@ static void snaps_and_pokes(long f) {
         if (o) { fwrite(HOST(USER_LO), 1, USER_HI - USER_LO, o); fclose(o); rt_log("snapshot of user RAM -> %s", snaps[i].path); }
     }
     for (int i = 0; i < npokes; i++) if (pokes[i].frame <= f && pokes[i].frame >= 0 && (pokes[i].until < 0 || f <= pokes[i].until)) {
+        if (pokes[i].cap) {                 /* ADDR<=VALUE: lowered to VALUE only while it is above (signed) */
+            int32_t now = pokes[i].size == 1 ? (int8_t)RB(pokes[i].addr) : pokes[i].size == 2 ? (int16_t)RH(pokes[i].addr)
+                                             : (int32_t)RW(pokes[i].addr);
+            if (now <= (int32_t)pokes[i].value) continue;
+        }
         if (pokes[i].size == 1) WB(pokes[i].addr, pokes[i].value); else if (pokes[i].size == 2) WH(pokes[i].addr, pokes[i].value); else WW(pokes[i].addr, pokes[i].value);
     }
 }
@@ -687,10 +693,11 @@ int main(int argc, char **argv) {
             char *a = argv[++i], *colon = strchr(a, ':');
             if (colon) { snaps[nsnaps].frame = atol(a); snprintf(snaps[nsnaps].path, sizeof snaps[0].path, "%s", colon + 1); nsnaps++; }
         }
-        else if (!strcmp(argv[i], "--poke") && i + 1 < argc && npokes < 1024) {      /* FRAME[-END]:ADDR=VALUE[/SIZE], held every frame from FRAME (to END) */
+        else if (!strcmp(argv[i], "--poke") && i + 1 < argc && npokes < 1024) {      /* FRAME[-END]:ADDR=VALUE[/SIZE], held every frame from FRAME (to END); ADDR<=VALUE only lowers it */
             char *a = argv[++i]; char *c1 = strchr(a, ':'), *eq = strchr(a, '='), *sl = strchr(a, '/');
             if (c1 && eq) { char *dash = strchr(a, '-'); pokes[npokes].frame = atol(a); pokes[npokes].until = dash && dash < c1 ? atol(dash + 1) : -1; pokes[npokes].addr = (uint32_t)strtoul(c1 + 1, NULL, 16);
-                pokes[npokes].value = (uint32_t)strtoul(eq + 1, NULL, 16); pokes[npokes].size = sl ? atoi(sl + 1) : 1; npokes++; }
+                pokes[npokes].value = (uint32_t)strtoul(eq + 1, NULL, 16); pokes[npokes].size = sl ? atoi(sl + 1) : 1;
+                pokes[npokes].cap = eq > a && eq[-1] == '<'; npokes++; }
         }
         else if (!strcmp(argv[i], "--watch-pc") && i + 1 < argc && nwatch_pc < 16) { watch_pc[nwatch_pc++] = (uint32_t)strtoul(argv[++i], NULL, 16); watch_asked = 1; }
         else if (!strcmp(argv[i], "--record-audio") && i + 1 < argc) { extern const char *rt_record_audio_dir; rt_record_audio_dir = argv[++i]; }

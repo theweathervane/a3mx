@@ -1,21 +1,123 @@
 # Tests
 
-What is tested, why, and how long it takes. Run them with `ctest` from a build folder
-(`ctest --test-dir build-headless -j2`), or `build.cmd --test` / `./build.sh --test`, or the launcher's
-**Run the tests after building**.
+How to run the tests, step by step, then what each test checks, why, and how long it takes. The tests
+need the release build and your disc's files in `work/` ([BUILDING.md](BUILDING.md) sets both up).
 
-To run them in a container instead (a Docker host or Portainer, with your ISO mounted read-only):
-[docker/tests/README.md](../docker/tests/README.md).
+## Running the tests
 
-Two builds run tests:
+### 1. Build
+
+From the project folder (`C:\_Repos\a3mx` or wherever you cloned it):
+
+```
+cmake --build --preset release
+```
+
+`build.cmd` / `./build.sh` do the same and more. Don't rebuild while tests are running: they use the
+program in `build/`, and a rebuild changes it under them.
+
+### 2. A quick check (about 5 minutes)
+
+Two short scenarios first. If these fail, there's no point running the rest:
+
+```
+ctest --preset release -j 2 -R "boot_to_select|arcade_fight"
+```
+
+`-R` picks tests whose names match. `-j 2` runs two at once.
+
+### 3. The whole suite
+
+```
+ctest --preset release -j 2
+```
+
+**How many at once (`-j`).** Each parity test runs the game twice side by side (the original and the
+decompiled code), so `-j 2` keeps about four cores busy. On a laptop, stay at `-j 1` or `-j 2`. Higher
+numbers finish sooner, but hours of every core flat out can overheat a laptop: a black screen or a
+shutdown part way through means "lower `-j`", not "the tests are broken". A desktop can take about
+half its core count (`echo %NUMBER_OF_PROCESSORS%` on Windows, `nproc` on Linux, `sysctl -n hw.ncpu` on
+a Mac).
+
+The whole suite is about 2½ hours on a 2-core machine at `-j 2`; a desktop is three to five times
+quicker.
+
+### 4. Saving the results to a file
+
+ctest can print to the screen and write a log at the same time, the same way on every system:
+
+```
+ctest --preset release -j 2 --output-log test_run.txt
+```
+
+Or with your shell's tools:
+
+| System | Screen and file | File only |
+|---|---|---|
+| Windows, Command Prompt | `--output-log test_run.txt` (above) | `ctest --preset release -j 2 > test_run.txt 2>&1` |
+| Windows, PowerShell | `ctest --preset release -j 2 2>&1 \| Tee-Object test_run.txt` | `ctest --preset release -j 2 *> test_run.txt` |
+| Linux, Mac | `ctest --preset release -j 2 2>&1 \| tee test_run.txt` | `ctest --preset release -j 2 > test_run.txt 2>&1` |
+
+The file lands in the folder you ran the command from.
+
+### What you'll see
+
+Each test prints a line when it starts and one when it ends. Tests run side by side, so they finish out
+of order:
+
+```
+Test project C:/_Repos/a3mx/build
+      Start 12: parity_arcade_match
+      Start 27: parity_network_match
+ 1/13 Test #27: parity_network_match .............   Passed  334.49 sec
+      Start 15: parity_attract_mode
+ 2/13 Test #12: parity_arcade_match ..............   Passed  355.04 sec
+ ...
+13/13 Test #17: parity_boot_to_select ............   Passed   81.68 sec
+
+100% tests passed, 0 tests failed out of 13
+
+Label Time Summary:
+parity    = 2613.34 sec*proc (13 tests)
+
+Total Test time (real) = 1318.70 sec
+```
+
+A failed parity test says `***Failed`. Its message, shown at the end of the run (or in the log), names
+the first frame that differs, for example:
+
+```
+ 4/13 Test #15: parity_attract_mode ..............***Failed  712.30 sec
+...
+PARITY FAIL in attract_mode at frame 5894: memory differ.
+  Bisect with --reference-only ADDR[,ADDR] (hex) on the decomp run, and compare screens with
+  --dump DIR --dump-from 5889 --dump-every 1 on both runs.
+```
+
+The frame number says how far into the scenario things went wrong; [DECOMPILING.md](DECOMPILING.md) has
+what to do next. To run only the tests that failed last time:
+
+```
+ctest --preset release --rerun-failed --output-on-failure
+```
+
+### Other ways to run them
+
+- `build.cmd --test` / `./build.sh --test`: builds, then runs every test, one at a time.
+- The launcher's **Run the tests after building**.
+- In a container (a Docker host or Portainer, with your ISO mounted read-only):
+  [docker/tests/README.md](../docker/tests/README.md).
+- A list of what there is, without running anything: `ctest --preset release -N`.
+
+### Which build runs which tests
 
 | Build | What it is | Needs your disc | Tests |
 |---|---|---|---|
 | `ci` preset (`build-ci/`) | every hand-written file compiled against a stand-in for the generated code; this is what the GitLab pipeline builds | no | `pacing_rules`, `png_cases`, `png_decoder` |
 | `headless` or `release` preset | the real game | yes (`work/`) | everything below |
 
-The times are from a 2-core cloud machine with `--fast` (the game not waiting for the clock); a
-desktop PC is three to five times quicker. Run with `-j2` or more: the tests are independent.
+The times in the tables below are from a 2-core cloud machine with `--fast` (the game not waiting for
+the clock).
 
 ## Why parity
 
@@ -129,9 +231,85 @@ tests/scenarios/attract_mode.txt --size wide --scales 2 --every 10`.
 
 ## Watching a scenario
 
-`python tools/watch_scenario.py SCENARIO [--wide] [--renderer opengl]` plays a scenario's inputs in a
-window at the game's own speed, to look at what it draws (nothing is compared). `--super-kind N`
-forces the super finish's backdrop in `super_finish` (1 / 2 slanted lines, 3 vertical lines, 5 speed
-lines, 6 splash, 7 burst, 8 swirl), which a normal fight shows only one of, and skips at full speed to
-just before it (`--skip-to F` to choose the frame, `--skip-to 0` to watch it all; the game's
-`--fast-until`). `--assets` loads assets/ (the stage strips).
+The tests above run **headless**: no window, no GPU, nothing on screen. They play a scenario's button
+presses as fast as they can and compare memory with the disc's own run. That's why they run fine over
+SSH or on a server.
+
+`tools/watch_scenario.py` is the other way round. It plays the same button presses **in a real window,
+at the game's own speed**, so you can see what happens. It compares nothing, it isn't part of `ctest`,
+and it needs what the game itself needs: a desktop and a graphics card (the GPU renderer, OpenGL). On a
+machine with no screen, use `ctest` instead.
+
+### 1. Build the game
+
+The watch tool runs `build/a3mx.exe` (Windows) or `build/a3mx` (Linux, Mac), the normal release build:
+
+```
+cmake --build --preset release
+```
+
+### 2. Watch one
+
+From the project folder:
+
+| | Command |
+|---|---|
+| Windows (cmd or PowerShell) | `python tools\watch_scenario.py arcade_fight` |
+| Linux / Mac | `python3 tools/watch_scenario.py arcade_fight` |
+
+A window opens and the game plays itself: boot, menus, the character select, the fight. The window
+closes by itself when the scenario's frames run out. Close it sooner to stop.
+
+It opens **in a window** by default. For full screen:
+
+```
+python tools/watch_scenario.py arcade_fight --fullscreen
+```
+
+F11 or Alt+Enter switch between the two while it plays.
+
+Any name in `tests/scenarios/` (the parity scenarios) or `tests/watch/` (the endings, below) works,
+without the `.txt`.
+
+### 3. Options
+
+| Option | What it does |
+|---|---|
+| `--fullscreen` | full screen instead of a window |
+| `--wide` | the WIDE NATIVE widescreen mode |
+| `--renderer soft` | the software renderer instead of the GPU one (slower; for comparing the two) |
+| `--skip-to F` | run at full speed up to frame F, then at normal speed. The endings skip their menus this way already; `--skip-to 0` watches from the start |
+| `--frames N` | stop after N frames instead of the scenario's own count |
+| `--character NAME` | pick this character instead of Ryu (scenarios with a `select` line: the endings). `--character list` shows the names |
+| `--assets` | load the files in `assets/` (the stage strips) |
+| `--super-kind N` | `super_finish` only: force the super finish's backdrop (1 / 2 slanted lines, 3 vertical lines, 5 speed lines, 6 splash, 7 burst, 8 swirl) and skip to just before it |
+
+Examples:
+
+```
+python tools/watch_scenario.py super_finish --super-kind 7
+python tools/watch_scenario.py ending_arcade --character "chun-li" --fullscreen
+python tools/watch_scenario.py ending_arcade --character list
+```
+
+### 4. The endings (`tests/watch/`)
+
+Each one plays a mode to its end in a few minutes. Menus and the character select go by at full speed;
+the last fight starts at normal speed. The game is told the fight is the last one, the opponent is
+left with one point of health, and a hit or two ends it. Then the ending plays out: the congratulations,
+the story or the credits, GAME OVER and back to the MODE MENU, where the window closes.
+
+| Scenario | What you see | `--character` |
+|---|---|---|
+| `ending_arcade` | Arcade: the last fight, your character's ending and the credits | yes |
+| `ending_kumite` | VS. 100 Kumite: STAGE 100, ALL CLEAR, the credits and 100 WINS 0 LOSE | yes |
+| `ending_dramatic` | Dramatic Battle: two on one against the boss, ALL CLEAR and the credits | yes |
+| `ending_rdramatic` | Reverse Dramatic Battle: one against two, ALL CLEAR and the credits | yes |
+| `ending_variable` | Variable Battle: a tag team, ALL CLEAR and the credits | yes |
+| `ending_final` | Final Battle: M. Bison, then your character's ending and the credits | yes |
+
+Survival has no ending of its own (it ends on a score screen when you lose), so it has no scenario
+here. World Tour, Training, Free Battle and the rest don't end.
+
+The fight itself is the scenario's own button presses (a punch every few frames), not you: the pad does
+nothing useful while it plays.
