@@ -280,7 +280,7 @@ python tools/watch_scenario.py --list
 | Option | What it does |
 |---|---|
 | `--screen S` | SCREEN SIZE: `NORMAL` (4:3, the default here), `WIDE` (stretched) or `NATIVE` (WIDE NATIVE). Case doesn't matter |
-| `--character NAME` | player 1's character, in the scenarios with a `select` line (all of `tests/watch/`). `--character list` shows the names. Player 2 stays as the scenario has it |
+| `--character NAME` | player 1's character, in the scenarios with a `select` line (all of `tests/watch/`): one of the names below. Player 2 stays as the scenario has it |
 | `--fullscreen` | full screen instead of a window |
 | `--skip-to F` | run at full speed up to frame F, then at normal speed. The watch scenarios skip their menus this way already; `--skip-to 0` watches from the start |
 | `--frames N` | stop after N frames instead of the scenario's own count |
@@ -288,10 +288,25 @@ python tools/watch_scenario.py --list
 | `--assets` | load the files in `assets/` (the stage strips) |
 | `--list` | the scenarios there are |
 
+The characters, for `--character` (without spaces or punctuation, any case; `--character list`
+prints the same):
+
+| | | | | | |
+|---|---|---|---|---|---|
+| ADON | AKUMA | BALROG | BIRDIE | BLANKA | CAMMY |
+| CHARLIE | CHUNLI | CODY | DAN | DEEJAY | DHALSIM |
+| EAGLE | EHONDA | EVILRYU | FEILONG | GEN | GUILE |
+| GUY | INGRID | JULI | JUNI | KARIN | KEN |
+| MAKI | MBISON | RMIKA | ROLENTO | ROSE | RYU |
+| SAGAT | SAKURA | SODOM | THAWK | VEGA | YUN |
+| ZANGIEF | RANDOM | | | | |
+
+RYU is the default. RANDOM picks the random box, so the game chooses.
+
 Examples:
 
 ```
-python tools/watch_scenario.py ending_arcade --character chun-li --screen native
+python tools/watch_scenario.py ending_arcade --character CHUNLI --screen native
 python tools/watch_scenario.py super_kind_7 --character sakura --screen wide --fullscreen
 python tools/watch_scenario.py ending_arcade --character list
 ```
@@ -354,7 +369,7 @@ both rounds this way (two super finishes), then the win screen.
 yet, so their round ends with a normal hit and no backdrop.
 
 ```
-python tools/watch_scenario.py super_kind_6 --character "dee jay" --screen native
+python tools/watch_scenario.py super_kind_6 --character DEEJAY --screen native
 ```
 
 `tests/scenarios/super_finish` is the parity test the super finishes come from: Ryu, the game's own

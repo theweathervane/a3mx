@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.117.3
+### For players
+- **Character names without spaces or punctuation:** `--character` takes CHUNLI, RMIKA, FEILONG, EHONDA, MBISON, THAWK, DEEJAY, EVILRYU and so on (any case). docs/TESTS.md lists all 38.
+
+### Technical
+- `tools/watch_scenario.py`: the names in `GRIDS`, `SUPERS` and `CLOSE_IN` are written without spaces or punctuation; typed ones are still matched with them taken out.
+
 ## 0.117.2
 ### For players
 - **The super finishes are watch scenarios of their own:** `tests/watch/super_kind_1` - `super_kind_8`, one per backdrop (slanted lines both ways, vertical lines, a second set of vertical lines, speed lines, splash, burst, swirl). `--super-kind`, `--super-from` and `--super-to` are gone.

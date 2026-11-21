@@ -16,8 +16,8 @@ tests use them; the game runs at its own speed in a window and closes after the 
   --fullscreen    open full screen (the default is a window; F11 or Alt+Enter switch while it plays)
   --character C   in a scenario with a `select` line, pick C for player 1 instead of the scenario's own
                   choice: the cursor is moved there before the pick, and every input and poke after it
-                  waits for the moves. C is a name as the select screen shows it (KEN, CHUN-LI, M.BISON,
-                  T.HAWK, ...; case, dots and spaces don't matter); --character list shows them
+                  waits for the moves. C is a name without spaces or punctuation (KEN, CHUNLI, MBISON,
+                  THAWK, ...; any case); --character list shows them, and docs/TESTS.md lists them
   --skip-to F     race through the scenario up to frame F, then play at the game's speed (the
                   scenario's `watch F` line by default; 0 to watch it all)
   --assets        load assets/ (the stage strips); the parity tests run without them
@@ -37,32 +37,33 @@ import parity  # noqa: E402
 
 MOVE_GAP = 30       # frames between cursor moves on the select screen
 
-# The two character selects: each character's box as (column, row), names as the screens show them.
+# The two character selects: each character's box as (column, row), named as the screens show them
+# without spaces or punctuation.
 # Arcade's (0x08A26F60, 7 x 7) starts on RYU (0, 3); Free Battle's (7 x 6) on RYU (0, 0), both players.
 GRIDS = {
     'arcade': {
-        'RYU': (0, 3), 'E.HONDA': (1, 3), 'CODY': (2, 3), 'KARIN': (3, 3), 'VEGA': (4, 3), 'BLANKA': (5, 3),
+        'RYU': (0, 3), 'EHONDA': (1, 3), 'CODY': (2, 3), 'KARIN': (3, 3), 'VEGA': (4, 3), 'BLANKA': (5, 3),
         'KEN': (6, 3),
-        'DEE JAY': (0, 2), 'DAN': (1, 2), 'GUY': (2, 2), 'R.MIKA': (3, 2), 'BIRDIE': (4, 2), 'AKUMA': (5, 2),
-        'EVIL RYU': (6, 2),
-        'GUILE': (1, 1), 'CHARLIE': (2, 1), 'CHUN-LI': (3, 1), 'SAGAT': (4, 1), 'FEI LONG': (5, 1),
-        'M.BISON': (3, 0), 'RANDOM': (2, 0),
+        'DEEJAY': (0, 2), 'DAN': (1, 2), 'GUY': (2, 2), 'RMIKA': (3, 2), 'BIRDIE': (4, 2), 'AKUMA': (5, 2),
+        'EVILRYU': (6, 2),
+        'GUILE': (1, 1), 'CHARLIE': (2, 1), 'CHUNLI': (3, 1), 'SAGAT': (4, 1), 'FEILONG': (5, 1),
+        'MBISON': (3, 0), 'RANDOM': (2, 0),
         'JULI': (0, 4), 'DHALSIM': (1, 4), 'SODOM': (2, 4), 'CAMMY': (3, 4), 'ADON': (4, 4), 'ZANGIEF': (5, 4),
         'JUNI': (6, 4),
-        'YUN': (0, 5), 'T.HAWK': (1, 5), 'ROLENTO': (2, 5), 'SAKURA': (3, 5), 'GEN': (4, 5), 'BALROG': (5, 5),
+        'YUN': (0, 5), 'THAWK': (1, 5), 'ROLENTO': (2, 5), 'SAKURA': (3, 5), 'GEN': (4, 5), 'BALROG': (5, 5),
         'INGRID': (6, 5),
         'EAGLE': (2, 6), 'ROSE': (3, 6), 'MAKI': (4, 6),
     },
     'free': {
-        'RYU': (0, 0), 'E.HONDA': (1, 0), 'BLANKA': (2, 0), 'CHUN-LI': (3, 0), 'ZANGIEF': (4, 0),
+        'RYU': (0, 0), 'EHONDA': (1, 0), 'BLANKA': (2, 0), 'CHUNLI': (3, 0), 'ZANGIEF': (4, 0),
         'DHALSIM': (5, 0), 'KEN': (6, 0),
         'AKUMA': (0, 1), 'CHARLIE': (1, 1), 'CAMMY': (2, 1), 'BALROG': (3, 1), 'VEGA': (4, 1), 'SAGAT': (5, 1),
-        'M.BISON': (6, 1),
+        'MBISON': (6, 1),
         'ADON': (0, 2), 'GEN': (1, 2), 'BIRDIE': (2, 2), 'CODY': (3, 2), 'GUY': (4, 2), 'ROLENTO': (5, 2),
         'SODOM': (6, 2),
-        'ROSE': (0, 3), 'SAKURA': (1, 3), 'KARIN': (2, 3), 'DAN': (3, 3), 'R.MIKA': (4, 3), 'JULI': (5, 3),
+        'ROSE': (0, 3), 'SAKURA': (1, 3), 'KARIN': (2, 3), 'DAN': (3, 3), 'RMIKA': (4, 3), 'JULI': (5, 3),
         'JUNI': (6, 3),
-        'EVIL RYU': (1, 4), 'FEI LONG': (2, 4), 'DEE JAY': (3, 4), 'T.HAWK': (4, 4), 'GUILE': (5, 4),
+        'EVILRYU': (1, 4), 'FEILONG': (2, 4), 'DEEJAY': (3, 4), 'THAWK': (4, 4), 'GUILE': (5, 4),
         'EAGLE': (1, 5), 'MAKI': (2, 5), 'RANDOM': (3, 5), 'YUN': (4, 5), 'INGRID': (5, 5),
     },
 }
@@ -81,7 +82,7 @@ def find_character(name):
     names = GRIDS['arcade']
     for n in names:
         if re.sub(r'[\s._-]', '', n) == key: return n
-    for n in names:                                  # HONDA for E.HONDA, MIKA for R.MIKA, BISON, HAWK
+    for n in names:                                  # HONDA for EHONDA, MIKA for RMIKA, BISON, HAWK
         if re.sub(r'[\s._-]', '', n).endswith(key): return n
     raise SystemExit('no character %r: --character list shows the names' % name)
 
@@ -91,16 +92,16 @@ def find_character(name):
 # (square) or a kick (cross). Found by trying each motion with each character. JUNI and ZANGIEF have none
 # here yet: their tries end in a normal KO.
 SUPERS = {
-    'qcf P': ['RYU', 'KEN', 'AKUMA', 'BIRDIE', 'CODY', 'DAN', 'EAGLE', 'EVIL RYU', 'FEI LONG', 'GUY', 'INGRID',
-              'KARIN', 'MAKI', 'R.MIKA', 'SAGAT', 'SAKURA', 'SODOM', 'T.HAWK', 'YUN', 'JUNI', 'ZANGIEF', 'RANDOM'],
+    'qcf P': ['RYU', 'KEN', 'AKUMA', 'BIRDIE', 'CODY', 'DAN', 'EAGLE', 'EVILRYU', 'FEILONG', 'GUY', 'INGRID',
+              'KARIN', 'MAKI', 'RMIKA', 'SAGAT', 'SAKURA', 'SODOM', 'THAWK', 'YUN', 'JUNI', 'ZANGIEF', 'RANDOM'],
     'qcf K': ['ADON', 'CAMMY', 'JULI', 'ROLENTO'],
     'qcb P': ['DHALSIM', 'ROSE'],
     'hcb P': ['GEN'],
-    'charge P': ['BALROG', 'BLANKA', 'CHARLIE', 'E.HONDA', 'GUILE'],
-    'charge K': ['CHUN-LI', 'DEE JAY', 'M.BISON', 'VEGA'],
+    'charge P': ['BALROG', 'BLANKA', 'CHARLIE', 'EHONDA', 'GUILE'],
+    'charge K': ['CHUNLI', 'DEEJAY', 'MBISON', 'VEGA'],
 }
 SUPER_GAP = 180     # frames between tries
-CLOSE_IN = ['BALROG', 'CHUN-LI', 'FEI LONG', 'GUILE', 'T.HAWK', 'VEGA']   # supers that only reach up close: walk in first
+CLOSE_IN = ['BALROG', 'CHUNLI', 'FEILONG', 'GUILE', 'THAWK', 'VEGA']   # supers that only reach up close: walk in first
 
 
 def super_motion(name):
