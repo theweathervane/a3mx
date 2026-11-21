@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.21% decompiled
+Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  15.29% decompiled
 
-Functions                                [█░░░░░░░░░]  13.61%  2,025 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  15.21%  73,633 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  13.66%  2,033 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  15.29%  74,045 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  33.48%  68,267 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  33.63%  68,587 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.63%  4,178 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.66%  4,270 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -208,6 +208,8 @@ Done:
       script at random, a fighter's pad byte for its team, particles and panels (0.112.0)
 - [x] Twelve more (`object/batch_mid8.c`): a record's timed lines, a fighter's input recorded for its
       team, an effect following a fighter's frame, pieces' counters and set-ups (0.113.0)
+- [x] Eight more (`object/batch_mid9.c`): a fighter's damage scaled by move and state, the reward count,
+      the intro's owner by stage, option panels and camera lines (0.114.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the
