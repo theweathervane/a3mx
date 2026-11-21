@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.111.0
+### For players
+- **More of the game decompiled:** 19 more functions, among them the game's random numbers, the fighters' routine tables for a fight, the score for a hit, the CPU's script commands that set its state, a choice on the select screen, and objects' colours from the palette. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_mid6.c` (new): 19 more of the ready functions of 25 - 42 instructions (`ready.py 25 60`): 0x08820BE0, 0x088288F0, 0x088782C8, 0x088783B0, 0x08871CA4, 0x088734B4, 0x08887D54, 0x088A44B8, 0x088AA2BC, 0x088BCFC0, 0x088569F0, 0x08892438, 0x088B544C, 0x0896A424, 0x089DE194, 0x089DEA64, 0x0880D3B0, 0x088AA184, 0x08821AA8. Tables in docs/PSP_PROGRAM_MAP.md.
+- 0x08820BE0 is the Mersenne twister's tempering (the twist 0x08820A68 was already decompiled), one of the busiest functions left (~38,000 calls in the profile).
+- Checked: the coverage pass maps all 19 to scenarios (attract_mode, arcade_ending, arcade_other_fighter and free_battle_team run them all); since 0x08820BE0 runs nearly everywhere, parity ran wider: arcade_fight, boot_to_select, attract_mode, arcade_ending, arcade_other_fighter, free_battle_team, mode_tour, arcade_match, option_tour, network_match, free_battle_dramatic, super_finish and stage_objects_13_sagat all passed.
+
 ## 0.110.0
 ### For players
 - **More of the game decompiled:** 19 more functions, among them the run of the first object list, objects made from a description, a fighter's input copied to its team mates, three press counters at once, a file loaded and waited for, and screen objects' set-ups. Nothing plays differently.
