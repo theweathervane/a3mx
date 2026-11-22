@@ -1,12 +1,22 @@
 # Changelog
 
-## 0.127.1
+## 0.127.2
 ### For players
 - **WIDE NATIVE, M. Bison's stages, corrected:** the trees at the screen's sides now sway with the rest of the background at both walls, with no seam and no flicker. 0.121.1 fixed only the left side, and with the wrong picture.
 
 ### Technical
 - `core/stage/tiles.c`: the animated 32-pixel layers (kinds 0xDA / 0xEE, stages 0x0A / 0x1E) keep each map row as one strip of pictures; a frame's window starts 24 columns on from the last's and its own picture is the window's columns 8 - 31 (0 - 7 are the previous frame's end, frame 0's empty; 32 on the next frame's start). In WIDE NATIVE their columns now wrap round within the frame's own picture (`anim_wrap` in draw_grid), on both sides; 0.121.1's frame-10 tiles for frame 0 are gone. NORMAL and WIDE draw as before.
 - Checked: the map's tile words logged for every frame; stage_objects_29_bison1 drawn in WIDE NATIVE over twelve frames at each wall (fighters held at the right wall with --poke), the joins' colour step (16:9 x 39 at the left wall, x 442 at the right) no bigger than the art's own tile edges; parity passed for stage_objects_29_bison1, stage_objects_30_bison2 and wide_fight.
+
+## 0.127.1
+### For players
+- **WORLD TOUR EXP MAX now maxes the character too:** Lv 32 and every STATUS value (ATTACK, SC ATTACK, DEFENSE, GAUGE, STAMINA) at its limit, at once; X-, A- and V-ISM EXP MAX put that ISM at Lv 32 (MASTER). Before, the EXP was full but the levels stayed at 1. SAVE the World Tour data to keep it.
+- **LOAD DATA in World Tour and LOAD in ENTRY MODE:** the confirm sound is no longer cut short.
+
+### Technical
+- `cheats_unlocks.c`: the World Tour entry's levels (+4 the total, +5 / +6 / +7 X-, A-, V-ISM, level - 1, 31 = Lv 32) and its five STATUS values (+0x26 - +0x2E) set to their limits (+0x30 - +0x38), found by poking and looking at World Tour's status screen.
+- `sysdata.c`: the save / load task's off-screen hold is paced in World Tour and ENTRY MODE (mode 3 / 4), and lasts 40 frames after the load (~9 frames): frames run at full speed had played the confirm sound faster than real time, and the audio queue dropped the rest.
+- Checked: the status screen with WORLD TOUR EXP and A-ISM EXP MAX (Lv 32, A-ISM Lv 32 MASTER, STATUS 120 / 120 / 120 / 120 / 140); a World Tour SAVE then LOAD DATA still loads; parity for mode_tour, save_load and arcade_fight. The sound itself can't be heard here: please listen.
 
 ## 0.127.0
 ### For players

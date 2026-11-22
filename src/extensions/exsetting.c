@@ -301,10 +301,10 @@ static const Row page_fighters[] = {
     R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
 };
 static const Row page_world_tour[] = {
-    { "WORLD TOUR EXP", &rt_cheat_wt[0], cheat_wt_names, { "WORLD TOUR EXPERIENCE.", "MAX - FULL. LEVELS UP ON A WIN." } },
-    { "WORLD TOUR X-ISM EXP", &rt_cheat_wt[1], cheat_wt_names, { "WORLD TOUR X-ISM EXPERIENCE.", "MAX - FULL." } },
-    { "WORLD TOUR A-ISM EXP", &rt_cheat_wt[2], cheat_wt_names, { "WORLD TOUR A-ISM EXPERIENCE.", "MAX - FULL." } },
-    { "WORLD TOUR V-ISM EXP", &rt_cheat_wt[3], cheat_wt_names, { "WORLD TOUR V-ISM EXPERIENCE.", "MAX - FULL." } },
+    { "WORLD TOUR EXP", &rt_cheat_wt[0], cheat_wt_names, { "WORLD TOUR EXP. MAX - FULL AND", "LV 32 WITH EVERY STATUS AT MOST." } },
+    { "WORLD TOUR X-ISM EXP", &rt_cheat_wt[1], cheat_wt_names, { "WORLD TOUR X-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." } },
+    { "WORLD TOUR A-ISM EXP", &rt_cheat_wt[2], cheat_wt_names, { "WORLD TOUR A-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." } },
+    { "WORLD TOUR V-ISM EXP", &rt_cheat_wt[3], cheat_wt_names, { "WORLD TOUR V-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." } },
     { "UNLOCK ALL", &unlock_shown, v_on_off, { "EVERY MODE FIGHTER AND ISM-PLUS.", "OFF - UNLOCKED BY PLAYING." } },
     R_DEFAULT_ROW("NORMAL AND UNLOCK ALL ON."), R_EXIT_ROW,
 };

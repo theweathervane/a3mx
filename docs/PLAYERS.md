@@ -59,8 +59,8 @@ battles, and never in the attract mode's demos. In `a3mx.cfg` they are `[cheats 
 | 1P / 2P / 3P HEALTH | NORMAL, INFINITE, HALF, NONE | INFINITE back to full every frame; HALF never above half the round's full health; NONE never above 1, so one hit knocks out |
 | 1P / 2P / 3P GUARD | NORMAL, INFINITE, HALF, NONE | the guard gauge: never damaged; at least half damaged; NONE one short of a crush, so the next guarded hit crushes |
 | 1P / 2P / 3P SUPER | NORMAL, INFINITE, LV1, LV2, LV3, NONE | the super gauge: full; held at that level; empty |
-| WORLD TOUR EXP | NORMAL, MAX | World Tour: the total experience at its most (9,999,999); the levels rise after a win, by the game's own rules and cap |
-| WORLD TOUR X- / A- / V-ISM EXP | NORMAL, MAX | the same for that ISM's experience |
+| WORLD TOUR EXP | NORMAL, MAX | World Tour: the total experience at its most (9,999,999), the character at Lv 32 and every STATUS value at its limit. SAVE the World Tour data to keep it |
+| WORLD TOUR X- / A- / V-ISM EXP | NORMAL, MAX | that ISM's experience at its most and its level at 32 (MASTER) |
 | UNLOCK ALL | ON, OFF | every mode, fighter and ISM-Plus from the start (what the `unlocks` extension did before 0.127.0); OFF, they are unlocked by playing, and what your save has unlocked stays |
 
 ## Mode by mode

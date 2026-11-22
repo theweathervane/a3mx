@@ -12,10 +12,13 @@
  * They act while a round is on (GAME + 2 = 2, + 6 = 3) in every mode but the network battles (mode 1,
  * and NETWORK's own, 12), and never on a knocked-out fighter (health below 0).
  *
- * Page 2/3: World Tour EXP (the entry each side plays as, 0x09358528 + 0x354 n while +0 is 1: +8 the
- * total, +0xC / +0x10 / +0x14 X-, A- and V-ISM's) held at 9,999,999 in World Tour (mode 3); the game
- * raises the levels itself after a win, by its own rules and cap. And UNLOCK ALL, the unlocks
- * (sysdata.c, on by default as the unlocks feature was before 0.127.0).
+ * Page 2/3, in World Tour (mode 3), for the entry each side plays as (0x09358528 + 0x354 n while +0 is
+ * 1): WORLD TOUR EXP MAX holds the total EXP (+8) at 9,999,999, the level (+4, level - 1) at 32 and the
+ * five STATUS values (+0x26 - +0x2E: ATTACK, SC ATTACK, DEFENSE, GAUGE, STAMINA, s16) at their limits
+ * (+0x30 - +0x38: 120, 120, 120, 120, 140 for Ryu); X-, A- and V-ISM EXP MAX hold that ISM's EXP (+0xC /
+ * +0x10 / +0x14) at 9,999,999 and its level (+5 / +6 / +7) at 32 (MASTER). The game raised levels only
+ * one at a time after a win, so EXP alone left them at 1. Kept by saving the World Tour data. And UNLOCK
+ * ALL, the unlocks (sysdata.c, on by default as the unlocks feature was before 0.127.0).
  *
  * Fighters (0x092E3EA0 + 0x498 k): +0 in play, +0x70 health (s16), +0x72 the round's full health,
  * +0x16E the super gauge (0 - 144), +0x22C the guard gauge's size (60, less after each crush), +0x22D
@@ -65,6 +68,10 @@ void cheats_unlocks_default_world_tour(void) {
 #define E_EXP         8
 #define E_ISM_EXP     0xC
 #define EXP_MOST      9999999u
+#define E_LEVEL       4         /* level - 1: the total, then X-, A-, V-ISM's */
+#define E_STATUS      0x26      /* five s16: ATTACK, SC ATTACK, DEFENSE, GAUGE, STAMINA */
+#define E_STATUS_MAX  0x30      /* the same five's limits */
+#define LEVEL_MOST    31        /* Lv 32: MASTER */
 
 static void fighter(uint32_t f, int k) {
     int16_t full = (int16_t)RH(f + F_FULL), hp = (int16_t)RH(f + F_HEALTH);
@@ -98,8 +105,16 @@ void cheats_unlocks_frame(void) {
         for (uint32_t n = 0; n < 2; n++) {
             uint32_t e = ENTRIES + ENTRY_SIZE * n;
             if (RB(e) != 1) continue;
-            if (rt_cheat_wt[0] && RW(e + E_EXP) != EXP_MOST) WW(e + E_EXP, EXP_MOST);
-            for (uint32_t i = 0; i < 3; i++)
-                if (rt_cheat_wt[1 + i] && RW(e + E_ISM_EXP + 4 * i) != EXP_MOST) WW(e + E_ISM_EXP + 4 * i, EXP_MOST);
+            if (rt_cheat_wt[0]) {
+                if (RW(e + E_EXP) != EXP_MOST) WW(e + E_EXP, EXP_MOST);
+                if (RB(e + E_LEVEL) != LEVEL_MOST) WB(e + E_LEVEL, LEVEL_MOST);
+                for (uint32_t s = 0; s < 5; s++)
+                    if ((int16_t)RH(e + E_STATUS_MAX + 2 * s) > 0 && RH(e + E_STATUS + 2 * s) != RH(e + E_STATUS_MAX + 2 * s))
+                        WH(e + E_STATUS + 2 * s, RH(e + E_STATUS_MAX + 2 * s));
+            }
+            for (uint32_t i = 0; i < 3; i++) if (rt_cheat_wt[1 + i]) {
+                if (RW(e + E_ISM_EXP + 4 * i) != EXP_MOST) WW(e + E_ISM_EXP + 4 * i, EXP_MOST);
+                if (RB(e + E_LEVEL + 1 + i) != LEVEL_MOST) WB(e + E_LEVEL + 1 + i, LEVEL_MOST);
+            }
         }
 }

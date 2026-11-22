@@ -89,7 +89,12 @@ void rt_hold_display_paced(int frames);    /* main.c: the same, in real time */
  * frames kept off screen are not paced (kernel.c), so they take no time: checking the memory stick
  * (state 7, 9), the question (2, messages 0x41 / 0x18), loading or saving (3), "Load completed." /
  * "Save completed." (4, messages 0x11 / 0x0E), and the moment the next screen takes to draw. Anything
- * that waits for a button (a different question, an error) is shown. */
+ * that waits for a button (a different question, an error) is shown. In World Tour and ENTRY MODE the
+ * hold is paced (0.127.0): LOAD DATA / LOAD is chosen with a confirm sound, and frames run at full
+ * speed made it come out faster than it plays, so the audio queue cut it short (main.c). */
+#define MODE_WORLD_TOUR 3
+#define MODE_ENTRY      4
+#define AFTER_SOUND     40                  /* frames (paced) after the load in those two: ~0.8 s with the load */
 #define MSG_LOAD_WTR 0x41                   /* "Would you like to load previously saved WORLD TOUR DATA?" */
 #define MSG_LOAD_SYS 0x18                   /* "Would you like to load SYSTEM DATA?" (ENTRY MODE: entry characters) */
 #define MSG_OVERWRITE_SYS 0x31              /* "Would you like to overwrite previously saved SYSTEM DATA?" (SAVE LOAD > SAVE) */
@@ -97,8 +102,10 @@ static void hide_load_save(void) {
     static int was;
     int st = RB(SL_TASK + 2), msg = RB(SL_TASK + 4);
     int on = st == 7 || st == 9 || st == 3 || (st == 2 && (msg == MSG_LOAD_WTR || msg == MSG_LOAD_SYS)) || (st == 4 && (msg == 0x11 || msg == 0x0E));
-    if (on) rt_hold_display(2);                       /* (the frame on screen was drawn a frame ago) */
-    else if (was) rt_hold_display(20);
+    int mode = (int8_t)RB(GAME + 0x72), sound = mode == MODE_WORLD_TOUR || mode == MODE_ENTRY;
+    void (*hold)(int) = sound ? rt_hold_display_paced : rt_hold_display;
+    if (on) hold(2);                                  /* (the frame on screen was drawn a frame ago) */
+    else if (was) hold(sound ? AFTER_SOUND : 20);     /* the load itself is ~9 frames: the confirm sound plays on */
     was = on;
 }
 
