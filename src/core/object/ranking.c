@@ -11,7 +11,7 @@
  * (0x09525DE8), the fill and the objects reset, the background layer 0x092E8800 set, and the palettes
  * loaded: the first place's portrait (its character's 0x80 colours from 0x09336B80 by its colour +9;
  * for characters 0x14, 0x1C and 0x29 sixteen more from 0x09337240) and the screen's own five, by the
- * kind's ISM (+14 % 3: X, A, V), from 0x09335A00 on. Wrapped by extensions/i_ism.c, which gives an I-ISM
+ * kind's ISM (+14 % 3: X, A, V), from 0x09335A00 on. Wrapped by extensions/i_ism_display.c, which gives an I-ISM
  * table its own look.
  */
 #include "../decomp.h"
@@ -85,7 +85,7 @@ static void ranking_start(Cpu *c, gaddr task) {
     CALL1(f_0887C6E4, 0x107);
 }
 
-SFA_FUNC_WRAPPED(088BC164, ranking_start_step, i_ism_ranking_start) {
+SFA_FUNC_WRAPPED(088BC164, ranking_start_step, i_ism_display_ranking_start) {
     gaddr task = ARG(0);
     gaddr s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];
     c->r[29] -= 0x20;

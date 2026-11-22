@@ -277,10 +277,10 @@ static int wait_until(Cpu *c, int (*cond)(void *), void *arg, uint32_t timeout_u
 }
 
 /* ---------------------------------------------------------------- sceNet / sceNetAdhoc */
-/* OPTION MODE > EX. SETTING > COUCH CO-OP off: the network is a stub, as it was at first:
+/* OPTION MODE > EX. SETTING > VIRTUAL PSPS off: the network is a stub, as it was at first:
  * every ad hoc call fails (0x80410001), so the game finds no wireless network. */
-extern int rt_couch_coop;                    /* settings.c */
-#define STUB_UNLESS_COOP(n) do { if (!rt_couch_coop) { TRACE(#n " (couch co-op off)"); RET(0x80410001); } } while (0)
+extern int rt_virtual_psps;                    /* settings.c */
+#define STUB_UNLESS_COOP(n) do { if (!rt_virtual_psps) { TRACE(#n " (virtual PSPs off)"); RET(0x80410001); } } while (0)
 void hle_sceNetInit(Cpu *c) { RET(0); }
 void hle_sceNetTerm(Cpu *c) { RET(0); }
 void hle_sceNetFreeThreadinfo(Cpu *c) { RET(0); }

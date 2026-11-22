@@ -1,4 +1,4 @@
-/* Boot straight to the MODE MENU (feature boot_to_menu, off by default).
+/* Boot straight to the MODE MENU (feature boot_to_menu, on by default since 0.127.0).
  *
  * The PSP's way in: the boot screens (src/core/task/boot.c: fades, NOW LOADING, set-up loads), then
  * task 0 restarts at the title (0x0888B398, src/core/task/title.c), whose first screen after boot is 8:

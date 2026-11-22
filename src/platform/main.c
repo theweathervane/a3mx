@@ -54,9 +54,10 @@
  *   --stick "F=LX,LY;.." scripted analogue stick by frame (tests)
  *   --assets DIR         load each archive that DIR/index.json gives an unpacked folder from it (default:
  *                        assets/<region> beside the work folder, when it exists; docs/ASSET_LOADING.md)
- *   --features LIST      which extensions are on, by name (ext_features.h): saves, unlocks, menus, local_multiplayer, hud,
- *                        quit_key, widescreen, stage_extensions, shaders, boot_to_menu, i_ism, scaled_endings; also all, none, default, and -name to
- *                        take one out ("default,-hud"). The launcher's Extensions tab sets it
+ *   --features LIST      which extensions are on, by name (ext_features.h): saves, boot_to_menu, mode_menu_icons, quit_key,
+ *                        menus, widescreen, i_ism_display, scaled_endings, stage_extensions, shaders, cheats_unlocks,
+ *                        local_multiplayer, i_ism_select; also all, none, default, and -name to take one out
+ *                        ("default,-mode_menu_icons"). The launcher's Extensions tab sets it
  *   --no-extensions      none of them: the PSP program alone
  *   --custom-assets      as before 0.60.0: also turns stage_extensions on (the project's own stage edge art)
  *   --no-assets          load everything from the disc
@@ -809,7 +810,11 @@ int main(int argc, char **argv) {
     if (renderer_asked) rt_warn("renderer: %s is not available in this version (only OpenGL and the software renderer are): using OpenGL", renderer_asked);
     {   /* which features are on (ext_features.h): --features, --no-extensions, or the defaults */
         const char *bad = NULL;
-        if (!features_set(features_arg, &bad)) rt_fatal("--features: %s is not a feature (saves, unlocks, menus, local_multiplayer, hud, quit_key, widescreen, stage_extensions, shaders, boot_to_menu, i_ism, scaled_endings; all, none, default)", bad);
+        if (!features_set(features_arg, &bad)) {
+            char names[400]; size_t n = 0;                  /* the features' names, from the table */
+            for (int f = 0; f < FEAT_COUNT; f++) n += (size_t)snprintf(names + n, sizeof names - n, "%s, ", FEATURES[f].name);
+            rt_fatal("--features: %s is not a feature (%sall, none, default)", bad, names);
+        }
         if (rt_custom_assets) features_add(FEAT_STAGE_EXT);
     }
     if (record_path) {   /* before the settings are read: the files as the session starts from them */

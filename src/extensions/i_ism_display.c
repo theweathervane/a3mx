@@ -1,5 +1,6 @@
-/* I-ISM extras (the i_ism feature): what the game left out for the entry characters (EDIT / ENTRY,
- * shown as I-ISM).
+/* I-ISM display (the i_ism_display feature): what the game left out on screen for the entry characters
+ * (EDIT / ENTRY, shown as I-ISM): their wipe into the fight and their ranking in the attract mode.
+ * Picking an entry for the other side is i_ism_select.c (the i_ism_select feature).
  *
  * 1. The wipe into the fight. Between the VS screen and the fight three columns roll like a slot
  *    machine and settle into the ISM's letter, X, A or V, in its colour, and the STREET FIGHTER ALPHA3
@@ -90,19 +91,19 @@ static uint16_t rgb555(const uint8_t c[3]) {
 
 /* The logo starts (screen_steps.c, 0x08885A44): after the game has loaded the ISM's palette, an entry's
    is gold instead. */
-int i_ism_logo_start(Cpu *c, uint32_t a0, int after) {
+int i_ism_display_logo_start(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
     if (!after || !wipe_is_entry()) return 0;
     for (uint32_t i = 1; i < 16; i++) WH(PALETTES + LOGO_PALETTE * 32u + i * 2u, rgb555(GOLD[i]));
     WW(PALETTES_DIRTY, 1);
-    rt_log("i_ism: an entry's wipe: the I and the gold logo");
+    rt_log("i_ism_display: an entry's wipe: the I and the gold logo");
     return 0;
 }
 
 /* A fading shape of the logo's wipe (batch_large.c, 0x0880DA78): while one of an entry's is drawn,
-   A's shapes (3 - 5) are drawn as the I by i_ism_shape. */
+   A's shapes (3 - 5) are drawn as the I by i_ism_display_shape. */
 static int drawing_entry_wipe;
-int i_ism_fading_shape(Cpu *c, uint32_t a0, int after) {
+int i_ism_display_fading_shape(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
     drawing_entry_wipe = !after && RB(SINGLE) && (RB(SINGLE + 3) == LOGO_TYPE || RB(SINGLE + 3) == WIN_LOGO_TYPE) &&
                          wipe_is_entry();
@@ -110,42 +111,13 @@ int i_ism_fading_shape(Cpu *c, uint32_t a0, int after) {
 }
 
 /* A shape drawn (shapes.c, 0x0880E434: a0 its place, a1 the shape, a2 the alpha). */
-int i_ism_shape(Cpu *c, uint32_t a0, int after) {
+int i_ism_display_shape(Cpu *c, uint32_t a0, int after) {
     uint32_t shape = c->r[5], alpha = c->r[6];
     if (after || !drawing_entry_wipe || shape < 3 || shape > 5) return 0;
     c->r[29] -= 0x40;
     shapes_draw(c, a0, I_SHAPES[shape - 3], I_YELLOW, alpha);
     c->r[29] += 0x40;
     return 1;
-}
-
-/* ---- 3. Entries for the other side ---- */
-
-/* Free Battle's select (and Survival's, Training's ...: battle_select.c) keeps the six entries on row 6
- * of its grid, and the grid's lock (0x08A2B3A9, by row * 7 + column) keeps those boxes from any box
- * whose player isn't present: the box a player picks for the computer could not land on them. Offline
- * the entries are the save's, everyone's, so while a cursor moves (0x088A6A10) row 6 is opened; the
- * lock is put back after. A network session (0x088D5E44) keeps it: there each side has its own. */
-#define BGRID_LOCK    0x08A2B3A9u
-void f_088D5E44(Cpu *c);
-static int8_t saved_lock[7];
-int i_ism_bselect_grid(Cpu *c, uint32_t a0, int after) {
-    (void)a0;
-    static int opened;
-    if (!after) {
-        opened = 0;
-        uint32_t s4 = c->r[4], s5 = c->r[5], s6 = c->r[6], s31 = c->r[31];
-        f_088D5E44(c);
-        int net = c->r[2] != 0;
-        c->r[4] = s4; c->r[5] = s5; c->r[6] = s6; c->r[31] = s31;
-        if (net) return 0;
-        for (uint32_t k = 0; k < 7; k++) { saved_lock[k] = (int8_t)RB(BGRID_LOCK + 42 + k); WB(BGRID_LOCK + 42 + k, 0xFF); }
-        opened = 1;
-    } else if (opened) {
-        for (uint32_t k = 0; k < 7; k++) WB(BGRID_LOCK + 42 + k, (uint8_t)saved_lock[k]);
-        opened = 0;
-    }
-    return 0;
 }
 
 /* ---- 2. The I-ISM ranking ---- */
@@ -212,7 +184,7 @@ static void restore_title(void) {
     npatched = 0;
 }
 
-int i_ism_ranking_start(Cpu *c, uint32_t a0, int after) {
+int i_ism_display_ranking_start(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
     if (!after) { restore_title(); ranking_i = 0; return 0; }
     if (RW(SCREEN_TABLE) != I_TABLE) return 0;
@@ -225,7 +197,7 @@ int i_ism_ranking_start(Cpu *c, uint32_t a0, int after) {
     for (unsigned k = 0; k < sizeof slots / sizeof *slots; k++)
         for (uint32_t i = 1; i < 16; i++) hue_to_gold(PALETTES + slots[k] + i * 2);
     WW(PALETTES_DIRTY, 1);
-    rt_log("i_ism: the I-ISM ranking");
+    rt_log("i_ism_display: the I-ISM ranking");
     return 0;
 }
 
@@ -238,7 +210,7 @@ static void set_texel(uint32_t buf, int x, int y, uint8_t v) {
 }
 
 /* 0x088112A8 (a0 draw state, a1 the picture, a2 its list, a3 its first cached page) */
-int i_ism_cached32(Cpu *c, uint32_t a0, int after) {
+int i_ism_display_cached32(Cpu *c, uint32_t a0, int after) {
     (void)a0;
     if (after || !ranking_i) return 0;
     uint32_t pic = c->r[5], base = c->r[6], page = c->r[7];
@@ -256,7 +228,7 @@ int i_ism_cached32(Cpu *c, uint32_t a0, int after) {
 }
 
 /* The attract cycle (title.c, 0x0888B8D4): after V-ISM's scores, the I-ISM ones (table 6). */
-int i_ism_attract_cycle(Cpu *c, uint32_t a0, int after) {
+int i_ism_display_attract_cycle(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
     static int8_t before;
     if (!after) { before = (int8_t)RB(CYCLE); return 0; }
@@ -269,7 +241,7 @@ int i_ism_attract_cycle(Cpu *c, uint32_t a0, int after) {
 #define PLATE_R  0xE0
 #define PLATE_G  0xD0
 #define PLATE_B  0x20
-int i_ism_name_box(Cpu *c, uint32_t o, int after) {
+int i_ism_display_name_box(Cpu *c, uint32_t o, int after) {
     (void)c;
     if (!after || !ranking_i || RB(o + 92) == 0) return 0;
     for (uint32_t k = 0; k < 4; k++) { WB(o + 36 + k, PLATE_R); WB(o + 42 + k, PLATE_G); WB(o + 48 + k, PLATE_B); }

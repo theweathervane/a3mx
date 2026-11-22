@@ -138,7 +138,7 @@ def start(a, sc, out, name, renderer, scale):
         f.write('\n'.join(config + ['[screen setting]', 'screen_size=' + size]) + '\n')
     cmd = [a.exe, '--work', a.work, '--save-dir', d, '--log', os.path.join(d, 'run.log'), '--headless', '--fast',
            '--renderer', renderer, '--frames', str(sc['frames']), '--hash-log', os.path.join(d, 'hashes.txt'),
-           '--no-assets', '--features', 'default,-shaders', '--dump', os.path.join(d, 'dump'),
+           '--no-assets', '--features', 'default,-shaders,-boot_to_menu,i_ism_display', '--dump', os.path.join(d, 'dump'),
            '--dump-every', str(a.every), '--perf-log', os.path.join(d, 'perf.csv')] + sc['args']
     if scale: cmd += ['--scale', str(scale)]
     if sc['input']: cmd += ['--input', sc['input']]

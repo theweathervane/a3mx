@@ -1,8 +1,8 @@
-# Watch: the I-ISM score ranking in the attract mode, with the i_ism feature: "I-ISM SCORE RANKING" in
+# Watch: the I-ISM score ranking in the attract mode, with the i_ism_display feature: "I-ISM SCORE RANKING" in
 # gold, your entries' records (the system data's table 6, kept by the game but never shown). Not a
 # parity test. Boot and press nothing; the attract cycle (0x09358400) is set to 6 before the third demo
 # so the first ranking is the I-ISM one, where it would come fourth (after X, A and V). Uses your save.
-# With --features default,-shaders,-i_ism the same table shows dressed as V-ISM's, as the game would.
+# With --features default,-shaders,-boot_to_menu the same table shows dressed as V-ISM's, as the game would.
 frames 5800
 watch 4300
 args --poke 4200-4300:09358400=6

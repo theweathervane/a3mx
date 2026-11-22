@@ -38,10 +38,30 @@ that pad (PLAYER) or the computer (COM). Before 0.86.0 they were called JOIN-IN,
 | 1P PRIORITY | COM / PLAYER | Pad 1 (and the keyboard) takes over a computer fighter when it **didn't** start the mode (player 2 started it) |
 | 2P PRIORITY | COM / PLAYER | Pad 2 takes over a computer fighter when it didn't start or join |
 | 3P PRIORITY | COM / PLAYER | Pad 3 takes over a computer fighter when it didn't join |
-| COUCH CO-OP | ON / OFF | The network modes: ON plays them on this PC with pads 2 and 3; OFF leaves the network stubbed, as if no wireless network were found |
+| VIRTUAL PSPS | ON / OFF | The network modes: ON, NETWORK finds pads 2 and 3 (or the computer) as other PSPs on its wireless link, all on this PC; OFF leaves the network stubbed, as if no other PSP were found. Called COUCH CO-OP before 0.127.0 (`a3mx.cfg`: `virtual_psps`) |
 
 A pad set to PLAYER that isn't plugged in changes nothing: the computer keeps the fighter. DEFAULT puts
-the three PRIORITY rows back to COM and COUCH CO-OP to ON.
+the three PRIORITY rows back to COM and VIRTUAL PSPS to ON.
+
+These rows are EX. SETTING's last page. With the **Cheats and Unlocks** extension on (the launcher's
+Extensions tab, Extra; on by default) there are two pages before it, so this one is 3/3; without it,
+1/1. L / R turn the page anywhere, and left / right on DEFAULT or EXIT; DEFAULT puts back only the page
+on screen. Under the rows, a line or two says what the row under the cursor does.
+
+## Cheats and Unlocks (EX. SETTING pages 1/3 and 2/3)
+
+1P, 2P and 3P are the fighter slots, whoever plays them: in Arcade 2P is the computer's fighter, in
+Dramatic Battle 3P is the boss. The cheats act while a round is on, in every mode but the network
+battles, and never in the attract mode's demos. In `a3mx.cfg` they are `[cheats and unlocks]`.
+
+| Row | Values (default first) | What it does |
+|---|---|---|
+| 1P / 2P / 3P HEALTH | NORMAL, INFINITE, HALF, NONE | INFINITE back to full every frame; HALF never above half the round's full health; NONE never above 1, so one hit knocks out |
+| 1P / 2P / 3P GUARD | NORMAL, INFINITE, HALF, NONE | the guard gauge: never damaged; at least half damaged; NONE one short of a crush, so the next guarded hit crushes |
+| 1P / 2P / 3P SUPER | NORMAL, INFINITE, LV1, LV2, LV3, NONE | the super gauge: full; held at that level; empty |
+| WORLD TOUR EXP | NORMAL, MAX | World Tour: the total experience at its most (9,999,999); the levels rise after a win, by the game's own rules and cap |
+| WORLD TOUR X- / A- / V-ISM EXP | NORMAL, MAX | the same for that ISM's experience |
+| UNLOCK ALL | ON, OFF | every mode, fighter and ISM-Plus from the start (what the `unlocks` extension did before 0.127.0); OFF, they are unlocked by playing, and what your save has unlocked stays |
 
 ## Mode by mode
 
@@ -72,9 +92,9 @@ roadmap checks them.
 | **Training** | One player and a training dummy, which TRAINING's own options control | **No** | **No change**: the dummy stays TRAINING's |
 | **Edit, Entry** | Menus (Edit has a test fight against the computer) | No (not checked) | Edit's test fight: the opponent goes to the first free pad (not checked) |
 | **Option, Score Ranking** | Menus | n/a | n/a |
-| **Network:** VS / TEAM / VARIABLE BATTLE | Two PSPs over the wireless link | COUCH CO-OP ON: played on this PC; pad 2 is PLAYER2, or the computer (CPU2) if no pad 2 is plugged in. OFF: the game finds no wireless network | Not used |
-| **Network:** DRAMATIC BATTLE | Three PSPs: two players against one | COUCH CO-OP ON: pads 2 and 3 are PLAYER2 and PLAYER3, CPU2 / CPU3 when not plugged in; player 1 is always the host. OFF: no network | Not used |
-| **Network:** LEAGUE, TOURNAMENT | Several PSPs in a league or a bracket | COUCH CO-OP ON: as DRAMATIC BATTLE (players 2 and 3). OFF: no network | Not used |
+| **Network:** VS / TEAM / VARIABLE BATTLE | Two PSPs over the wireless link | VIRTUAL PSPS ON: played on this PC; pad 2 is PLAYER2, or the computer (CPU2) if no pad 2 is plugged in. OFF: the game finds no wireless network | Not used |
+| **Network:** DRAMATIC BATTLE | Three PSPs: two players against one | VIRTUAL PSPS ON: pads 2 and 3 are PLAYER2 and PLAYER3, CPU2 / CPU3 when not plugged in; player 1 is always the host. OFF: no network | Not used |
+| **Network:** LEAGUE, TOURNAMENT | Several PSPs in a league or a bracket | VIRTUAL PSPS ON: as DRAMATIC BATTLE (players 2 and 3). OFF: no network | Not used |
 
 Network modes are emulated on one PC for now: the other PSPs are virtual players in the same program
 (`vpeer.c`, `hle_net.c`). After a match the CONTINUE / SELECT / EXIT menu belongs to player 1 (the

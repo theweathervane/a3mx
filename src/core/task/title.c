@@ -443,7 +443,7 @@ SFA_FUNC(0888B518, game_title_screen_demo_1)   { FRAME(0x20, screen_demo_1(c, AR
 SFA_FUNC(0888B650, game_title_screen_demo_2)   { FRAME(0x10, screen_demo_2(c, ARG(0))); }
 SFA_FUNC(0888B6C8, game_title_screen_demo_3)   { FRAME(0x20, screen_demo_3(c, ARG(0))); }
 SFA_FUNC(0888B7B8, game_title_screen_demo_4)   { FRAME(0x30, screen_demo_4(c, ARG(0))); }
-SFA_FUNC_WRAPPED(0888B8D4, game_title_screen_cycle, i_ism_attract_cycle) { screen_cycle(ARG(0)); }
+SFA_FUNC_WRAPPED(0888B8D4, game_title_screen_cycle, i_ism_display_attract_cycle) { screen_cycle(ARG(0)); }
 SFA_FUNC(0888BA9C, game_title_screen_to_menu)  { FRAME(0x20, screen_to_mode_menu(c, ARG(0))); }
 SFA_FUNC_WRAPPED(0888BFBC, game_title_screen_press_start, bootmsg_load_screen) { FRAME(0x20, screen_press_start(c, ARG(0))); }
 SFA_FUNC_WRAPPED(0888BCC8, game_title_draw, bootscreen_title) { FRAME(0x30, draw_title(c)); }

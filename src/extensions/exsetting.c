@@ -14,6 +14,7 @@
  */
 #include "rt.h"
 #include "version.h"
+#include "ext_features.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -56,7 +57,7 @@ static uint32_t mem;                        /* our block: two page textures (256
 #define STR(i)    (mem + 0x40180u + 0x20u * (uint32_t)(i))   /* our strings, 32 bytes each */
 enum { S_TITLE, S_P1, S_P2, S_P3, S_COOP, S_EXIT, S_ON, S_OFF, S_PLAY, S_COM, S_PLAYER, S_P1C, S_P2C, S_P3C, S_P4C, S_TAUNT,
        S_COMMAND, S_TYPE, S_RAPID, S_DEFAULT, S_EXIT2, S_VERSION, S_COUNT };
-static const char *const strings[S_COUNT] = { "EX. SETTING", "1P PRIORITY", "2P PRIORITY", "3P PRIORITY", "COUCH CO-OP", "EXIT", "ON", "OFF", "PLAYER", "COM",
+static const char *const strings[S_COUNT] = { "EX. SETTING", "1P PRIORITY", "2P PRIORITY", "3P PRIORITY", "VIRTUAL PSPS", "EXIT", "ON", "OFF", "PLAYER", "COM",
     "PLAYER CONFIG", "P1 CONFIG", "P2 CONFIG", "P3 CONFIG", "P4 CONFIG", "TAUNT", "COMMAND", "TYPE", "RAPID", "DEFAULT", "EXIT", A3MX_VERSION_SCREEN };
 static int clone = -1, item_v, sub_from, built;
 static int starting;                        /* the option menu just started, not laid out yet (f_088B5FB8) */
@@ -91,7 +92,7 @@ static void text(Cpu *c, uint32_t s, int font, int x, int y, int colour) {
 int tiles_draw(uint32_t tex, int dst, int page_entry, int v0, int mirror, const char *text);
 enum { ROW_EX, ROW_PLAYER, ROW_P1, ROW_SL = ROW_P1 + 4 };   /* rows of page 4 (32 high) */
 enum { ROW_GO, ROW_SCR, ROW_EXIT };                         /* rows of page 5 */
-static int tiles_ok, two_ready;
+static int tiles_ok, two_ready, arrows_ready;
 static void build_picture(void) {
     static const struct { int page, row, src, v0, mirror; const char *text; } t[] = {
         { 4, ROW_EX, 2, 64, 1, "EX. SETTING" },     { 4, ROW_PLAYER, 2, 32, 0, "PLAYER CONFIG" },
@@ -102,7 +103,7 @@ static void build_picture(void) {
         { 5, ROW_EXIT, 2, 96, 0, "EXIT" },
     };
     memset(HOST(TEX), 0, 256 * 256 * 2); memset(HOST(TEX2), 0, 256 * 256 * 2);
-    two_ready = 0;                                            /* (the 2 of L2 / R2 is on page 4 too) */
+    two_ready = 0; arrows_ready = 0;                          /* (the 2 of L2 / R2 and the arrows are on page 4 too) */
     tiles_ok = 1;
     for (size_t i = 0; i < sizeof t / sizeof *t; i++)
         tiles_ok &= tiles_draw(t[i].page == 4 ? TEX : TEX2, t[i].row, PAGE_BASE + t[i].src, t[i].v0, t[i].mirror, t[i].text);
@@ -172,7 +173,7 @@ static void clone_off(void) {
  * cursor in the option context's +7, colour 0xB on its row and 0xA elsewhere, and GAME OPTION's green
  * bar (object kind 0xC, type 4; once a frame 0x088BA8F4) under it. PLAYER CONFIG reuses the menu's
  * buttons as five tiles. */
-extern int rt_join_in[3], rt_couch_coop, rt_l2[4], rt_r2[4];
+extern int rt_join_in[3], rt_virtual_psps, rt_l2[4], rt_r2[4];
 extern const uint8_t pcfg_default[20];
 uint8_t *pcfg_block(int p);
 void settings_save(void);
@@ -243,32 +244,185 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
 
-/* EX. SETTING: the project's options */
-enum { R_P1, R_P2, R_P3, R_COOP, R_DEFAULT, R_EXIT, N_ROWS };
-static int *const row_value[N_ROWS] = { &rt_join_in[0], &rt_join_in[1], &rt_join_in[2], &rt_couch_coop, NULL, NULL };
-static const int row_label[N_ROWS] = { S_P1, S_P2, S_P3, S_COOP, S_DEFAULT, S_EXIT };
-static const int row_names[N_ROWS][2] = { { S_COM, S_PLAY }, { S_COM, S_PLAY }, { S_COM, S_PLAY }, { S_OFF, S_ON }, { 0, 0 }, { 0, 0 } };
-static void ex_open(Cpu *c) { mode = M_EX; row = 0; bar_y = -1; WB(OPT + 5, EX_ITEM + 1); WB(OPT + 7, 0); bar_on(c); sound(c, 0x39); }
-static void ex_close(Cpu *c, int snd) { mode = M_MENU; WB(OPT + 5, 0); WB(OPT + 7, 0); bar_off(); settings_save(); sound(c, snd); }
+/* EX. SETTING: the project's options, on pages (0.127.0). With the Cheats and Unlocks extension three:
+ *   1/3  1P - 3P HEALTH, GUARD and SUPER (cheats_unlocks.c)
+ *   2/3  WORLD TOUR EXP, its X-, A- and V-ISM EXP, UNLOCK ALL
+ *   3/3  1P - 3P PRIORITY and VIRTUAL PSPS (the options EX. SETTING always had)
+ * and without it only the last, as 1/1. Each page ends with DEFAULT (that page's rows back to their
+ * defaults) and EXIT. As on SCORE RANKING, an arrow on each side and the page number (font 2, colour 9,
+ * above the version) show there are more pages: L / R turn the page, and so do left / right on DEFAULT
+ * and EXIT (on a row with a value they change it). With one page it is 1/1, with no arrows. Under the rows, the row's description in the small
+ * font, as SAVE LOAD's messages. Rows 14 apart from y 0x1C (eleven fit above the description). */
+extern int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3], rt_cheat_wt[4], rt_unlock_all;   /* cheats_unlocks.c */
+extern const char *const cheat_health_names[], *const cheat_guard_names[], *const cheat_super_names[], *const cheat_wt_names[];
+void cheats_unlocks_default_fighters(void);
+void cheats_unlocks_default_world_tour(void);
+static const char *const v_priority[] = { "COM", "PLAYER", NULL };
+static const char *const v_off_on[] = { "OFF", "ON", NULL };
+static const char *const v_on_off[] = { "ON", "OFF", NULL };   /* UNLOCK ALL, shown ON first: its value is 1 - index */
+
+/* Strings drawn by the text queue must stay in guest memory until the text pass: each host string gets a
+   slot of its own, once, in a pool of ours (the same string, the same slot, every frame) */
+#define POOL_SIZE 0x2000u
+static uint32_t pool, pool_used;
+static const char *pool_key[160];
+static uint32_t pool_at[160];
+static int pool_n;
+static uint32_t gstr(const char *s) {
+    for (int i = 0; i < pool_n; i++) if (pool_key[i] == s) return pool_at[i];
+    size_t n = strlen(s) + 1;
+    if (!pool) { pool = rt_alloc(POOL_SIZE, 1, 16, "ex. setting text"); pool_used = 0; }
+    if (!pool || pool_n == 160 || pool_used + n > POOL_SIZE) return STR(S_EXIT);   /* (never: the strings are few) */
+    uint32_t a = pool + pool_used; pool_used += (uint32_t)((n + 3) & ~3u);
+    memcpy(HOST(a), s, n);
+    pool_key[pool_n] = s; pool_at[pool_n++] = a;
+    return a;
+}
+
+typedef struct {
+    const char *label;
+    int *value;                     /* NULL: DEFAULT or EXIT */
+    const char *const *names;
+    const char *what[2];            /* the description, two lines of at most 32: clear of the page number */
+} Row;
+#define R_DEFAULT_ROW(w) { "DEFAULT", NULL, NULL, { "THIS PAGE BACK TO ITS DEFAULTS.", w } }
+#define R_EXIT_ROW { "EXIT", NULL, NULL, { "SAVE AND BACK TO OPTION MODE.", "" } }
+static int unlock_shown;            /* UNLOCK ALL's row: the index into v_on_off */
+static const Row page_fighters[] = {
+    { "1P HEALTH", &rt_cheat_health[0], cheat_health_names, { "THE 1P FIGHTER HEALTH.", "NONE - ONE HIT KNOCKS OUT." } },
+    { "1P GUARD", &rt_cheat_guard[0], cheat_guard_names, { "THE 1P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." } },
+    { "1P SUPER", &rt_cheat_super[0], cheat_super_names, { "THE 1P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." } },
+    { "2P HEALTH", &rt_cheat_health[1], cheat_health_names, { "THE 2P FIGHTER HEALTH - CPU TOO.", "NONE - ONE HIT KNOCKS OUT." } },
+    { "2P GUARD", &rt_cheat_guard[1], cheat_guard_names, { "THE 2P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." } },
+    { "2P SUPER", &rt_cheat_super[1], cheat_super_names, { "THE 2P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." } },
+    { "3P HEALTH", &rt_cheat_health[2], cheat_health_names, { "THE 3P FIGHTER HEALTH.", "NONE - ONE HIT KNOCKS OUT." } },
+    { "3P GUARD", &rt_cheat_guard[2], cheat_guard_names, { "THE 3P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." } },
+    { "3P SUPER", &rt_cheat_super[2], cheat_super_names, { "THE 3P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." } },
+    R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
+};
+static const Row page_world_tour[] = {
+    { "WORLD TOUR EXP", &rt_cheat_wt[0], cheat_wt_names, { "WORLD TOUR EXPERIENCE.", "MAX - FULL. LEVELS UP ON A WIN." } },
+    { "WORLD TOUR X-ISM EXP", &rt_cheat_wt[1], cheat_wt_names, { "WORLD TOUR X-ISM EXPERIENCE.", "MAX - FULL." } },
+    { "WORLD TOUR A-ISM EXP", &rt_cheat_wt[2], cheat_wt_names, { "WORLD TOUR A-ISM EXPERIENCE.", "MAX - FULL." } },
+    { "WORLD TOUR V-ISM EXP", &rt_cheat_wt[3], cheat_wt_names, { "WORLD TOUR V-ISM EXPERIENCE.", "MAX - FULL." } },
+    { "UNLOCK ALL", &unlock_shown, v_on_off, { "EVERY MODE FIGHTER AND ISM-PLUS.", "OFF - UNLOCKED BY PLAYING." } },
+    R_DEFAULT_ROW("NORMAL AND UNLOCK ALL ON."), R_EXIT_ROW,
+};
+static const Row page_options[] = {
+    { "1P PRIORITY", &rt_join_in[0], v_priority, { "PLAYER - PAD 1 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." } },
+    { "2P PRIORITY", &rt_join_in[1], v_priority, { "PLAYER - PAD 2 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." } },
+    { "3P PRIORITY", &rt_join_in[2], v_priority, { "PLAYER - PAD 3 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." } },
+    { "VIRTUAL PSPS", &rt_virtual_psps, v_off_on, { "NETWORK FINDS PADS 2 AND 3 OR", "THE CPU AS OTHER PSPS HERE." } },
+    R_DEFAULT_ROW("COM AND VIRTUAL PSPS ON."), R_EXIT_ROW,
+};
+enum { PG_FIGHTERS, PG_WORLD_TOUR, PG_OPTIONS, N_PAGES };
+static const struct { const Row *rows; int n, value_x; } pages[N_PAGES] = {
+    { page_fighters, (int)(sizeof page_fighters / sizeof *page_fighters), 0xA0 },
+    { page_world_tour, (int)(sizeof page_world_tour / sizeof *page_world_tour), 0xE0 },
+    { page_options, (int)(sizeof page_options / sizeof *page_options), 0xA0 },
+};
+static int page;                    /* PG_* */
+static int first_page(void) { return FEATURE(CHEATS_UNLOCKS) ? PG_FIGHTERS : PG_OPTIONS; }
+static int page_count(void) { return N_PAGES - first_page(); }
+static int count_names(const char *const *n) { int k = 0; while (n[k]) k++; return k; }
+static int ex_row_y(int r) { return 0x1C + 14 * r; }
+static void page_defaults(int pg) {
+    if (pg == PG_FIGHTERS) cheats_unlocks_default_fighters();
+    else if (pg == PG_WORLD_TOUR) cheats_unlocks_default_world_tour();
+    else { rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
+}
+
+/* The side arrows: drawn into our page at ARROW_U / ARROW_V (left, then right), shown by two objects of
+   ours like the 2 of L2 (kind 0xC, type 4), beside the first row. Our own drawing, in SCORE RANKING's
+   colours: a white edge round a purple fill, lighter towards the point. */
+#define ARROW_U 8
+#define ARROW_V 224
+#define ARROW_W 7
+#define ARROW_H 13
+#define ARROW_LX 4                  /* at the 4:3 picture's sides (the user's mock-up) */
+#define ARROW_RX (384 - 4 - ARROW_W)
+static int arrow[2] = { -1, -1 };
+static uint16_t rgb15(int r, int g, int b) { return (uint16_t)(0x8000u | (uint32_t)(r >> 3) | (uint32_t)(g >> 3) << 5 | (uint32_t)(b >> 3) << 10); }
+static void arrows_build(void) {
+    for (int side = 0; side < 2; side++)
+        for (int y = 0; y < ARROW_H; y++)
+            for (int x = 0; x < ARROW_W; x++) {
+                int d = y <= ARROW_H / 2 ? y : ARROW_H - 1 - y;       /* rows from the nearer end: 0 - 6 */
+                int from_point = side ? ARROW_W - 1 - x : x;           /* 0 at the point */
+                int inside = from_point >= ARROW_W - 1 - d;            /* the triangle: wider towards the middle */
+                int edge = inside && (from_point == ARROW_W - 1 - d || from_point == ARROW_W - 1 || d == 0);
+                uint16_t p = 0;
+                if (edge) p = rgb15(0xFF, 0xFF, 0xFF);
+                else if (inside) { int t = from_point * 255 / (ARROW_W - 1); p = rgb15(0x60 + t * 0x60 / 255, 0x90 - t * 0x70 / 255, 0xFF); }
+                WH(TEX + (uint32_t)(((ARROW_V + y) * 256 + ARROW_U + side * 8 + x) * 2), p);
+            }
+    arrows_ready = 1;
+}
+static void arrows_on(Cpu *c) {
+    if (!arrows_ready) arrows_build();
+    for (int i = 0; i < 2; i++) if (arrow[i] < 0) arrow[i] = new_obj(c, 0xC, 4);
+}
+static void arrows_off(void) { free_obj(&arrow[0]); free_obj(&arrow[1]); }
+static void arrow_frame(uint32_t o, int side) {
+    two_frame(o, 0);                                          /* drawn like the 2: then ours */
+    int u = ARROW_U + side * 8;
+    WH(o + 0x40, (uint32_t)u); WH(o + 0x42, (uint32_t)(u + ARROW_W)); WH(o + 0x4C, ARROW_V); WH(o + 0x4E, ARROW_V + ARROW_H);
+    WH(o + 6, side ? ARROW_RX : ARROW_LX); WH(o + 0xA, (uint32_t)(2 * (ex_row_y(0) + 1)));
+    WH(o + 0xE, ARROW_W); WH(o + 0x1A, 2 * ARROW_H);
+    WB(o + 0x5D, mode == M_EX && page_count() > 1);
+}
+
+static void ex_open(Cpu *c) {
+    mode = M_EX; page = first_page(); row = 0; bar_y = 239 - ex_row_y(0);
+    WB(OPT + 5, EX_ITEM + 1); WB(OPT + 7, 0); bar_on(c); if (page_count() > 1) arrows_on(c); sound(c, 0x39);
+}
+static void ex_close(Cpu *c, int snd) { mode = M_MENU; WB(OPT + 5, 0); WB(OPT + 7, 0); bar_off(); arrows_off(); bar_y = -1; settings_save(); sound(c, snd); }
 #define VERSION_Y 0xD4
 #define VERSION_X (0x178 - 8 * (int)(sizeof A3MX_VERSION_SCREEN - 1))
+#define PAGE_Y    0xB6
+#define WHAT_Y    0xBC
+#define B_L       0x40u
+#define B_R       0x200u
+static void turn_page(Cpu *c, int step) {
+    int n = page_count(), at = page - first_page();
+    const int from_end = pages[page].n - row;                  /* DEFAULT and EXIT stay DEFAULT and EXIT */
+    page = first_page() + (at + step + n) % n;
+    row = from_end <= 2 ? pages[page].n - from_end : row < pages[page].n - 2 ? row : pages[page].n - 3;
+    sound(c, 0x38);
+}
 static void ex_screen(Cpu *c) {
     uint32_t p = pressed();
-    if (p & 8) { row = (row + N_ROWS - 1) % N_ROWS; sound(c, 0x38); }
-    else if (p & 4) { row = (row + 1) % N_ROWS; sound(c, 0x38); }
-    else if ((p & 3) && row_value[row]) { *row_value[row] = !*row_value[row]; sound(c, 0x38); }
-    else if ((p & B_CONFIRM) && row_value[row]) { *row_value[row] = !*row_value[row]; sound(c, 0x39); }
-    else if ((p & B_CONFIRM) && row == R_DEFAULT) {          /* DEFAULT: as a fresh a3mx.cfg (settings.c) */
-        rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_couch_coop = 1; sound(c, 0x39);
-    }
-    else if ((p & B_CONFIRM) && row == R_EXIT) { ex_close(c, 0x39); return; }   /* EXIT chosen: a confirm */
+    if (page < first_page()) page = first_page();
+    unlock_shown = !rt_unlock_all;
+    const Row *rows = pages[page].rows; int n = pages[page].n;
+    const Row *r = &rows[row];
+    int step = (p & 1) ? 1 : (p & 2) ? -1 : 0;                /* right / left */
+    int more = page_count() > 1;
+    if (p & 8) { row = (row + n - 1) % n; sound(c, 0x38); }
+    else if (p & 4) { row = (row + 1) % n; sound(c, 0x38); }
+    else if (more && (p & (B_L | B_R))) turn_page(c, (p & B_R) ? 1 : -1);
+    else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; sound(c, 0x38); }
+    else if (step && more) turn_page(c, step);
+    else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; sound(c, 0x39); }
+    else if ((p & B_CONFIRM) && row == n - 2) { page_defaults(page); unlock_shown = !rt_unlock_all; sound(c, 0x39); }   /* DEFAULT: this page */
+    else if ((p & B_CONFIRM) && row == n - 1) { ex_close(c, 0x39); return; }   /* EXIT chosen: a confirm */
     else if (p & B_BACK) { ex_close(c, 0x2F); return; }
-    WB(OPT + 7, (uint32_t)row);
+    if (page == PG_WORLD_TOUR) rt_unlock_all = !unlock_shown;
+    rows = pages[page].rows; n = pages[page].n; r = &rows[row];
+    WB(OPT + 7, (uint32_t)row); bar_y = 239 - ex_row_y(row);
     title(c, S_TITLE);
-    for (int i = 0; i < N_ROWS; i++) {
-        int y = 0x20 + 15 * i, colour = i == row ? 0xB : 0xA;
-        text(c, STR(row_label[i]), 1, 0x30, y, colour);
-        if (row_value[i]) text(c, STR(row_names[i][!!*row_value[i]]), 1, 0xA0, y, 0xB);   /* values: always yellow, as GAME OPTION */
+    for (int i = 0; i < n; i++) {
+        int y = ex_row_y(i), colour = i == row ? 0xB : 0xA;
+        text(c, gstr(rows[i].label), 1, 0x30, y, colour);
+        if (rows[i].value) {
+            int k = count_names(rows[i].names), v = *rows[i].value;
+            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, 0xB);   /* values: always yellow, as GAME OPTION */
+        }
+    }
+    for (int k = 0; k < 2; k++) if (r->what[k][0]) text(c, gstr(r->what[k]), 0, 0x30, WHAT_Y + 10 * k, 9);
+    {                                                         /* the page number, 1/1 too (the user, 0.127.0) */
+        static const char *const numbers[3][3] = { { "1/1" }, { "1/2", "2/2" }, { "1/3", "2/3", "3/3" } };
+        text(c, gstr(numbers[page_count() - 1][page - first_page()]), 2, 0x178 - 48, PAGE_Y, 9);
     }
     text(c, STR(S_VERSION), 0, VERSION_X, VERSION_Y, 0xA);   /* The project's version, bottom right in the small font: just shown */
 }
@@ -509,7 +663,7 @@ void exsetting_frame(void) {
         if (have_buttons) { seen = (long)rt_vblank_count(); return; }
     }
     /* (not sub_from: a load or save runs frames of its own inside a submenu, without the menu) */
-    if ((long)rt_vblank_count() - seen > 2) { clone_off(); page_off(); bar_off(); two_off(); icons_off(NULL); mode = M_MENU; seen = -1; }
+    if ((long)rt_vblank_count() - seen > 2) { clone_off(); page_off(); bar_off(); two_off(); arrows_off(); icons_off(NULL); mode = M_MENU; seen = -1; }
 }
 
 /* GAME OPTION's green bar, once a frame: it shows only on GAME OPTION (+5 == 1) and goes away when
@@ -517,6 +671,7 @@ void exsetting_frame(void) {
 int exsetting_green_bar(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
     uint32_t o = c->r[4];
+    for (int i = 0; i < 2; i++) if (arrow[i] >= 0 && o == obj(arrow[i])) { arrow_frame(o, i); return 1; }
     for (int i = 0; i < 2; i++) if (two[i] >= 0 && o == obj(two[i])) {
         if (mode == M_PEDIT) two_frame(o, erow_y(E_L2 + i)); else WB(o + 0x5D, 0);
         return 1;

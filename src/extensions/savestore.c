@@ -346,13 +346,15 @@ int store_exists(const char *name) {
 
 /* SAVE LOAD > DELETE: the system data back to the game's defaults (World Tour kept), and the project's own
    settings too; the game then LOADs it (exsetting.c) */
-extern int rt_join_in[3], rt_couch_coop, rt_l2[4], rt_r2[4];
+extern int rt_join_in[3], rt_virtual_psps, rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
 extern const uint8_t pcfg_default[20];
 int store_delete_sys(void) {
     if (!have_default) return 0;
     memcpy(store_sys, default_sys, SYS_SIZE); store_have_sys = 1;
-    rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_couch_coop = 1;
+    rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1;
+    { void cheats_unlocks_default_fighters(void), cheats_unlocks_default_world_tour(void);
+      cheats_unlocks_default_fighters(); cheats_unlocks_default_world_tour(); }
     for (int p = 0; p < 4; p++) { rt_l2[p] = 6; rt_r2[p] = 7; }
     memcpy(rt_p4_config, pcfg_default, sizeof rt_p4_config);
     int ok = dat_write();

@@ -3,5 +3,5 @@
 # passed once it has faded in and the hold ends with the menu drawn (frame ~258). Then Cross chooses
 # ARCADE-MODE and its select screen opens.
 frames 1100
-args --features default,-shaders,boot_to_menu
+args --features default,-shaders,boot_to_menu,i_ism_display
 input 500=cross;506=

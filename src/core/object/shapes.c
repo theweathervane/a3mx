@@ -66,7 +66,7 @@ static void wide_side(Cpu *c, const int16_t x[4], const int16_t y[4], int right,
 }
 
 /* (place, quads: 4 corners of u16 x, y each, ending at 0xFFFF, the colour (0xRRGGBB; the alpha byte
-   is ORed in), the alpha's index): the quads in one colour. Also extensions/i_ism.c's I shapes. */
+   is ORed in), the alpha's index): the quads in one colour. Also extensions/i_ism_display.c's I shapes. */
 void shapes_draw(Cpu *c, gaddr place, const uint16_t *q, uint32_t rgb, uint32_t alpha) {
     int32_t px = (int16_t)*H(place), py = (int16_t)*H(place + 2);
     uint32_t colour = (uint32_t)*B(ALPHAS + alpha) << 24 | rgb;
@@ -94,7 +94,7 @@ static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
     shapes_draw(c, place, H(p), *W(COLOURS + (uint32_t)((int32_t)shape / 3) * 4u), alpha);
 }
 
-SFA_FUNC_WRAPPED(0880E434, screen_draw_shape, i_ism_shape) {
+SFA_FUNC_WRAPPED(0880E434, screen_draw_shape, i_ism_display_shape) {
     gaddr place = ARG(0); uint32_t shape = ARG(1), alpha = ARG(2);
     c->r[29] -= 0x40; draw_shape(c, place, shape, alpha); c->r[29] += 0x40;
 }

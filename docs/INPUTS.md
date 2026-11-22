@@ -108,7 +108,7 @@ button. (Esc used to quit, and was too easy to press by mistake.)
 - **Offline modes:** whoever starts a mode plays it. Gamepads 2 and 3 come in by pressing Start where a
   select screen shows JOIN, or through OPTION MODE > EX. SETTING > PRIORITY (PLAYER). Mode by mode:
   [PLAYERS.md](PLAYERS.md).
-- **Network modes on one PC** (COUCH CO-OP): gamepads 2 and 3 are PLAYER2 and PLAYER3; a pad that is
+- **Network modes on one PC** (EX. SETTING > VIRTUAL PSPS): gamepads 2 and 3 are PLAYER2 and PLAYER3; a pad that is
   not plugged in is played by the computer (CPU2 / CPU3).
 - **Pause:** a player who plays a fighter pauses with their own Start, and the pause menu's BUTTON
   CONFIG then edits that player's buttons.

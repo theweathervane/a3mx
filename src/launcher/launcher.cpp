@@ -2297,6 +2297,10 @@ struct App {
             if (w > name_col) name_col = w;
         }
         for (int f = 0; f < FEAT_COUNT; f++) {
+            if (f == 0 || FEATURES[f].section != FEATURES[f - 1].section) {   /* a heading: Core, Display, Extra */
+                if (f > 0) ImGui::Spacing();
+                ImGui::SeparatorText(FEATURE_SECTIONS[FEATURES[f].section]);
+            }
             int need = FEATURES[f].needs;
             bool blocked = need >= 0 && !set.feature[need];
             ImGui::BeginDisabled(blocked);
@@ -2312,7 +2316,7 @@ struct App {
         }
         ImGui::Spacing();
         if (ImGui::Button("Defaults")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0; changed = true; }
-        ImGui::SetItemTooltip("Every extension back to how it starts: all on but the experimental ones");
+        ImGui::SetItemTooltip("Every extension back to how it starts: on, but for the ones marked off by default");
         ImGui::SameLine();
         if (ImGui::Button("All off (the PSP game)")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = false; changed = true; }
         ImGui::SetItemTooltip("Every extension off: the game plays as the PSP original");

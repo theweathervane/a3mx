@@ -70,7 +70,7 @@ SFA_FUNC(0880BA94, object_draw_with_parts) {
 /* (place, record): the fading shape: the record's +12 picks shape 3 * (n / 24) + (n % 24) / 8 and its
    alpha n % 8 (n the low 12 bits of the word at its +4), drawn 64 left and 16 up of the record's place
    (+2, +4), and again 256 higher unless the record's +1 is set. */
-SFA_FUNC_WRAPPED(0880DA78, draw_fading_shape, i_ism_fading_shape) {
+SFA_FUNC_WRAPPED(0880DA78, draw_fading_shape, i_ism_display_fading_shape) {
     gaddr place = ARG(0), r = ARG(1);
     gaddr s[4] = { c->r[16], c->r[17], c->r[18], c->r[19] };
     c->r[29] -= 0x30;

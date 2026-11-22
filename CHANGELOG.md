@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.127.0
+### For players
+- **Cheats and Unlocks:** OPTION MODE > EX. SETTING now has pages. Page 1/3: 1P, 2P and 3P HEALTH (NORMAL, INFINITE, HALF, NONE: one hit knocks out), GUARD (NORMAL, INFINITE, HALF, NONE: the next guard crushes) and SUPER (NORMAL, INFINITE, LV1 - LV3, NONE), for each fighter slot, the computer's too, in every mode but network battles. Page 2/3: World Tour EXP and its X-, A- and V-ISM EXP at MAX, and UNLOCK ALL (what the launcher's *Everything unlocked* did, on by default). Page 3/3: the options EX. SETTING always had.
+- **EX. SETTING's pages:** side arrows and the page number above the version, as on SCORE RANKING; L / R turn the page anywhere, left / right on DEFAULT and EXIT. DEFAULT puts back only the page you are on. A line or two under the rows says what the row under the cursor does. In NORMAL, WIDE and WIDE NATIVE. With the Cheats and Unlocks extension off, EX. SETTING is only its own page, 1/1.
+- **COUCH CO-OP is now VIRTUAL PSPS:** NETWORK finds pads 2 and 3 (or the computer) as other PSPs, all on this PC.
+- **The launcher's Extensions tab in three sections:** Core (Silent saves, Boot to the MODE MENU, MODE MENU icons, the F2 / SELECT + START key, Extra menus and settings), Display (Widescreen, I-ISM ranking and wipe, Scaled endings, Stage Extensions, Shaders) and Extra (Cheats and Unlocks, Local multiplayer, I-ISM for both sides).
+- **I-ISM is now two extensions:** *I-ISM ranking and wipe* (`i_ism_display`: the I-ISM score ranking in the attract mode and the yellow I / gold logo wipe into the fight), now **off by default**, and *I-ISM for both sides* (`i_ism_select`: an entry character can be picked for the other side where a mode allows it), on by default.
+- **Boot to the MODE MENU is now on by default.**
+- The MODE MENU bar extension is now called *MODE MENU icons*.
+- Not carried over (none needed before 1.0): your Extensions ticks for `hud`, `i_ism` and `unlocks`, and `couch_coop` in a3mx.cfg (now `virtual_psps`): check the tab and EX. SETTING once.
+
+### Technical
+- `ext_features.h`: `hud` renamed `mode_menu_icons`; `i_ism` split into `i_ism_display` and `i_ism_select`; `unlocks` replaced by `cheats_unlocks` (`FEAT_CHEATS_UNLOCKS`, on by default); the enum and table in the launcher's order, each feature with a `section` (`FEATURE_SECTIONS`: Core, Display, Extra), drawn as headings. Defaults: `boot_to_menu` on, `i_ism_display` off. Old names are refused.
+- `src/extensions/i_ism.c` split into `i_ism_display.c` (wrappers `i_ism_display_*`) and `i_ism_select.c` (`i_ism_select_bselect_grid`); the wrapper names in `src/core` follow.
+- `src/extensions/cheats_unlocks.c` (new): `cheats_unlocks_frame`, from `sysdata_frame`, while a round is on (GAME + 2 = 2, + 6 = 3: not the attract demos) and the mode isn't 1 or 12. Fighter offsets measured on the PSP program: health +0x70, full +0x72, super gauge +0x16E (0 - 144, levels of 48), guard gauge size +0x22C / damage +0x22D; World Tour EXP in the entry each side plays as (0x09358528 + 0x354 n: +8 the total, +0xC / +0x10 / +0x14 the ISMs'). Settings in a3mx.cfg's `[cheats and unlocks]` (settings.c); SAVE LOAD > DELETE resets them. `sysdata.c` holds the unlocks only with the feature and UNLOCK ALL on.
+- `exsetting.c`: EX. SETTING as pages of rows (label, value, names, description); strings for the text queue kept in a pool of ours; the side arrows drawn into our texture page and shown by two objects like L2's 2; rows 14 apart from y 0x1C; the green bar placed on the row. `rt_couch_coop` renamed `rt_virtual_psps`.
+- `--features` with an unknown name lists the names from the table; the features' description buffer is 256 bytes.
+- Tests keep running what they ran before: `tests/parity.py` `TEST_FEATURES` = `default,-shaders,-boot_to_menu,i_ism_display` (also `tools/watch_scenario.py`'s default and `tests/gl_test.py`); `boot_to_menu.txt` adds `i_ism_display`; the stage measuring tools turn `boot_to_menu` off.
+- Checked: parity (memory hashes, lazy renderer) for option_tour, attract_mode, free_battle_rows, arcade_fight and save_load; EX. SETTING's pages looked at in NORMAL, WIDE and WIDE NATIVE, and as 1/1; the cheats in arcade_fight (INFINITE health, LV2 super, HALF health, NONE guard and super all held) and World Tour EXP MAX in a World Tour fight.
+
 ## 0.126.0
 ### For players
 - **More of the game decompiled:** 44 more small functions, among them 14 step dispatchers, objects moving by their speeds and counting down, the network session's list, checksum and flags, and a fighter's script start. Nothing plays differently.

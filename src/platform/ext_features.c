@@ -7,7 +7,7 @@ void rt_log(const char *fmt, ...);
 extern int rt_extensions;                    /* main.c: any feature on (0: the PSP program alone) */
 
 unsigned char rt_feature_on[FEAT_COUNT + 1];
-static char described[160] = "none";
+static char described[256] = "none";
 
 static void finish(void) {
     /* a feature whose need is off goes off with it (twice: a need can itself have just gone) */
@@ -68,13 +68,15 @@ static const struct { const char *prefix; int feature; } BY_PREFIX[] = {
     { "bootmsg_", FEAT_SAVES }, { "sysdata_", FEAT_SAVES },
     { "exsetting_", FEAT_MENUS }, { "screensetting_", FEAT_MENUS },
     { "hooks_", FEAT_MULTIPLAYER }, { "selectscreen_", FEAT_MULTIPLAYER },
-    { "padicons_mode_menu", FEAT_ANY },      /* also tells pacing.c the MODE MENU has opened; its drawing goes by FEAT_HUD */
-    { "padicons_", FEAT_HUD },
+    { "padicons_mode_menu", FEAT_ANY },      /* also tells pacing.c the MODE MENU has opened; its drawing goes by FEAT_MODE_MENU_ICONS */
+    { "padicons_", FEAT_MODE_MENU_ICONS },
     { "quitkey_", FEAT_QUITKEY },
     { "bootmenu_", FEAT_BOOTMENU },
     { "widescreen_", FEAT_WIDESCREEN },
     { "stagestrips_", FEAT_STAGE_EXT },
-    { "i_ism_", FEAT_I_ISM },
+    { "i_ism_display_", FEAT_I_ISM_DISPLAY },
+    { "i_ism_select_", FEAT_I_ISM_SELECT },
+    { "cheats_unlocks_", FEAT_CHEATS_UNLOCKS },
     { "scaled_endings_", FEAT_SCALED_ENDINGS },
 };
 static const unsigned char always_on = 1;     /* platform code wrapping the game's functions: bootscreen.c */

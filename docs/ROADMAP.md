@@ -317,7 +317,7 @@ decompiled.
 
 - [ ] Up to three local players, join-in (EX. SETTING PRIORITY, Start on select screens, JOIN / WAIT).
       Now: hooks.c, selectscreen.c. Needs: input records and select screens.
-- [ ] Network modes on one PC (virtual players, COUCH CO-OP). Now: vpeer.c, netplay.c, hle_net.c.
+- [ ] Network modes on one PC (virtual players, VIRTUAL PSPS (was COUCH CO-OP)). Now: vpeer.c, netplay.c, hle_net.c.
       Needs: the wireless block.
 - [ ] L2 / R2 buttons, PLAYER CONFIG for four pads, pause BUTTON CONFIG rows. Now: playercfg.c,
       exsetting.c. Needs: fighter input.
@@ -450,7 +450,7 @@ Can start once phase 4's join-in item is native code; the rule itself is in [PLA
         Battle from the MODE MENU), and why
   - [ ] Plugging a pad in or pulling it out mid-mode: what happens to the fighter it was playing
   - [x] Bring the page's file paths up to date (it still names `src/runtime/`)
-- [ ] Audit the names and labels: the JOIN / WAIT boxes, the CPU2 / CPU3 names, COUCH CO-OP
+- [ ] Audit the names and labels: the JOIN / WAIT boxes, the CPU2 / CPU3 names, VIRTUAL PSPS
   - [x] JOIN-IN HUMAN / CPU renamed 1P / 2P / 3P PRIORITY PLAYER / COM, as the game's own COM
         (0.86.0; the old `a3mx.cfg` lines are still read)
 - [ ] Free Battle (Arcade and Team): a MODE row on the 2P side too, so the second side's MODE can be
@@ -469,13 +469,13 @@ Can start once phase 4's join-in item is native code; the rule itself is in [PLA
       CPU's fighter: YES / NO"), agree it, and implement it, with the saved setting carried over
 - [ ] A parity scenario per changed row: with every row at its default, every mode still plays as on a PSP
 
-## Phase 11: Couch co-op architecture review
+## Phase 11: Virtual PSPs (was couch co-op) architecture review
 
-COUCH CO-OP plays the game's network modes on one PC: the other PSPs are virtual players in the same
+VIRTUAL PSPS (was COUCH CO-OP) plays the game's network modes on one PC: the other PSPs are virtual players in the same
 process (`vpeer.c`, `netplay.c`, `hle_net.c`), and pads 2 and 3 drive network players 2 and 3. Local
 play therefore depends on emulating the wireless layer. Needs: phase 4's network item.
 
-- [ ] Audit how COUCH CO-OP hooks players 1–3's input into the network modes: the virtual players,
+- [ ] Audit how VIRTUAL PSPS hooks players 1–3's input into the network modes: the virtual players,
       the emulated ad-hoc calls, which modes need how many players, the host-only CONTINUE menu
 - [ ] List what only exists in the network menu (VS / TEAM / VARIABLE BATTLE, DRAMATIC BATTLE,
       LEAGUE, TOURNAMENT) and what an offline mode already offers the same way
@@ -501,7 +501,7 @@ re-run exactly.
 - [ ] Rollback: input delay, prediction, re-simulation, and keeping sound and effects right through a
       rollback (an existing library such as GGPO or GGRS, or our own; decide after the state work)
 - [ ] Connecting: host / join, lobby, connection and desync states, disconnects; a separate input
-      path from couch co-op's
+      path from virtual PSPs's
 - [ ] Adapt the network modes' screens: the PSP's ad-hoc menus to lobby, waiting and connection screens
 - [ ] Network tests: two instances on one machine with simulated latency and packet loss, compared
       frame for frame with an offline run of the same inputs

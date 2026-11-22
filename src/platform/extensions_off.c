@@ -14,7 +14,7 @@ int rt_widescreen;                       /* WIDE NATIVE stays off */
 int rt_vsync = 1;                        /* host_sdl.c */
 int rt_frame_timing = 2;                 /* pacing.c: AUTO */
 int rt_filter;                           /* shader_gl.c: OFF */
-int rt_couch_coop = 1;                   /* hle_net.c: the network modes as a PSP has them */
+int rt_virtual_psps = 1;                   /* hle_net.c: the network modes as a PSP has them */
 int rt_human[3] = { 1, -1, -1 };         /* --p2 / --p3: no effect */
 int rt_pads_forced;                      /* --pads: no effect */
 int store_save_fails;                    /* --save-fails: no effect */

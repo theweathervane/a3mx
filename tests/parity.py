@@ -28,6 +28,11 @@ A scenario file:
 """
 import argparse, os, shutil, subprocess, sys, time
 
+# The features the tests run with (0.127.0): the defaults, without FILTER (the menu scripts count
+# SCREEN SETTING's rows without it) and without boot_to_menu (the inputs start from the title), and
+# with i_ism_display (off by default, but on in every test before it was split from i_ism).
+TEST_FEATURES = 'default,-shaders,-boot_to_menu,i_ism_display'
+
 
 def screen_lines(sc, wide):
     """SCREEN SIZE for a run: WIDE NATIVE for `wide`, else NORMAL (a new save is WIDE NATIVE since
@@ -65,8 +70,10 @@ def start(exe, work, sc, out, mode, extra):
            '--headless', '--fast', '--renderer', 'soft', '--frames', str(sc['frames']),
            '--hash-log', os.path.join(d, 'hashes.txt'), '--no-assets',
            # the scenarios' menu scripts count SCREEN SETTING's rows without FILTER (0.60.0): the shaders
-           # feature is off here (a scenario's own --features or --no-extensions, coming later, wins)
-           '--features', 'default,-shaders'] + sc['args'] + extra
+           # feature is off here; their inputs start from the title, so boot_to_menu is off (on by default
+           # since 0.127.0), and i_ism_display is on as it was before (a scenario's own --features or
+           # --no-extensions, coming later, wins)
+           '--features', TEST_FEATURES] + sc['args'] + extra
     if sc['input']: cmd += ['--input', sc['input']]
     return cmd, subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 

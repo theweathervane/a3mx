@@ -23,8 +23,8 @@ tests use them; the game runs at its own speed in a window and closes after the 
   --assets        load assets/ (the stage strips); the parity tests run without them
   --my-save       play with a copy of your own save (your entries, rankings and unlocks); on by itself
                   when the character is an ENTRY. The copy is thrown away: your save is not changed
-  --features L    the game's --features (default,-shaders by default; add -i_ism to see a part as the
-                  game had it)
+  --features L    the game's --features (default,-shaders,-boot_to_menu,i_ism_display by default, as
+                  the tests; add -i_ism_display or -i_ism_select to see a part as the game had it)
 
 A scenario's `select FRAME [GRID] [NAME]` line says where the pick is made: GRID is `arcade` (the
 default; Arcade, Kumite, the Dramatic modes, Variable, Final Battle) or `free` (Free Battle's select),
@@ -227,7 +227,7 @@ def main():
     ap.add_argument('--character', help='player 1\'s character (scenarios with a `select` line); list to see them')
     ap.add_argument('--my-save', action='store_true',
                     help='play with a copy of your own save (your entries, rankings, unlocks); on by itself for an ENTRY')
-    ap.add_argument('--features', default='default,-shaders', help='the game\'s --features (default: default,-shaders)')
+    ap.add_argument('--features', default=parity.TEST_FEATURES, help='the game\'s --features (default: %s)' % parity.TEST_FEATURES)
     ap.add_argument('--print-input', action='store_true', help=argparse.SUPPRESS)
     a = ap.parse_args()
     if a.scenario and a.scenario.startswith('i_ism'): a.my_save = True     # these need your entries

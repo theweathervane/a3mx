@@ -114,10 +114,13 @@ static void boot_load_done(void) {
     if ((long)rt_vblank_count() > loaded_at + 10) boot_loads = 2;
 }
 void widescreen_frame(void);               /* widescreen.c */
+void cheats_unlocks_frame(void);           /* cheats_unlocks.c */
+extern int rt_unlock_all;                  /* cheats_unlocks.c: EX. SETTING's UNLOCK ALL */
 void sysdata_frame(void) {              /* once a frame, while any feature is on: each part by its own (ext_features.h) */
     extern int rt_widescreen;
     if (FEATURE(WIDESCREEN)) widescreen_frame(); else rt_widescreen = 0;   /* (a saved WIDE NATIVE is not used) */
     if (FEATURE(MENUS)) exsetting_frame();
+    if (FEATURE(CHEATS_UNLOCKS)) cheats_unlocks_frame();
     if (FEATURE(SAVES)) { boot_load_done(); hide_load_save(); }
     /* from a moment after the system data is in. Unlocks without Silent saves: the game may have no
        save to load at all (an empty memory stick), so then from 15 seconds in */
@@ -126,7 +129,7 @@ void sysdata_frame(void) {              /* once a frame, while any feature is on
         if (RB(AUTOSAVE) != 1) WB(AUTOSAVE, 1);
         if (RB(AUTOSAVE_S) != 1) WB(AUTOSAVE_S, 1);
     }
-    if (!FEATURE(UNLOCKS) || !(ready || (!FEATURE(SAVES) && rt_vblank_count() > 900))) return;
+    if (!FEATURE(CHEATS_UNLOCKS) || !rt_unlock_all || !(ready || (!FEATURE(SAVES) && rt_vblank_count() > 900))) return;
     if (RH(UNLOCKS) != 0xFFFF) WH(UNLOCKS, 0xFFFF);
     if ((RB(CLEARED) & 7) != 7) WB(CLEARED, RB(CLEARED) | 7);
     if ((RW(ISM_PLUS) & ALL_ISM_PLUS) != ALL_ISM_PLUS) WW(ISM_PLUS, RW(ISM_PLUS) | ALL_ISM_PLUS);

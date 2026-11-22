@@ -233,7 +233,7 @@ void hle_sceUtilitySavedataInitStart(Cpu *c) {
             n = sd_read(path, RW(prm + 0x74), RW(prm + 0x78));
         }
         if (n < 0) result = 0x80110307;                    /* no data */
-        else { WW(prm + 0x7C, (uint32_t)n); if (FEATURE(SAVES) || FEATURE(UNLOCKS)) sysdata_loaded(file); }
+        else { WW(prm + 0x7C, (uint32_t)n); if (FEATURE(SAVES) || FEATURE(CHEATS_UNLOCKS)) sysdata_loaded(file); }
         break;
     }
     case 1: case 3: case 5: {                               /* AUTOSAVE, SAVE, LISTSAVE */

@@ -1,8 +1,8 @@
 # Watch: player 2's box (the computer, moved by player 1) picks an entry character in Free Battle, with
-# the i_ism feature: the cursor goes up from RYU onto the entries' row (the box under the grid, left),
+# the i_ism_select feature: the cursor goes up from RYU onto the entries' row (the box under the grid, left),
 # which the game kept for a player present only. Then the VS screen shows I-ISM on the right and the
 # wipe into the fight is the yellow I. Not a parity test. Needs your save with an entry in that box
-# (--my-save; the tool brings it in by itself). With --features default,-shaders,-i_ism the cursor
+# (--my-save; the tool brings it in by itself). With --features default,-shaders,-boot_to_menu,i_ism_display,-i_ism_select the cursor
 # skips the entries, as the game had it.
 frames 4100
 watch 2500

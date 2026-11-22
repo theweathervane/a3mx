@@ -105,7 +105,7 @@ def run(exe, work, out, k, side, lifted):
            '--log', os.path.join(d, 'log'), '--headless', '--fast', '--renderer', 'lazy',
            '--frames', str(last + 1), '--input', inp, '--dump', d, '--dump-from', str(e), '--dump-every', '1',
            '--snap', '%d:%s' % (e, os.path.join(d, 'mem.bin')),
-           '--features', 'default,stage_extensions']   # the measuring hook is the extension's (off by default since 0.60.0)
+           '--features', 'default,-boot_to_menu,stage_extensions']   # the measuring hook is the extension's (off by default since 0.60.0)
     for q in pokes: cmd += ['--poke', q]
     env = dict(os.environ, A3MX_STRIP_MEASURE=spec)
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, check=True, env=env)

@@ -55,7 +55,7 @@ def run(exe, out, k, pos, hide):
     cmd = [exe, '--work', os.path.join(ROOT, 'work'), '--assets', os.path.join(ROOT, 'assets', 'us'), '--save-dir', d,
            '--log', os.path.join(d, 'log'), '--headless', '--fast', '--renderer', 'lazy', '--frames', str(e + 1),
            '--input', inp, '--dump', d, '--dump-from', str(e), '--dump-every', str(e),
-           '--features', 'default,stage_extensions'] + pokes
+           '--features', 'default,-boot_to_menu,stage_extensions'] + pokes
     env = dict(os.environ, A3MX_OBJ_MEASURE='%d-%d:%s' % (e - 5, e + 5, hide))
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, check=True, env=env)
     objs = []

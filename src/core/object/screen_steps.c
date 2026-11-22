@@ -295,7 +295,7 @@ SFA_FUNC(088858D8, single_object_take) {
    + 3 A-ISM, + 6 V-ISM), the logo's palette by the same ISM (16 colours from 0x08A25826 + 0, 0x20,
    0x40 into palette 0x1E), the fade levels reset (0x0882E0D0) and an object made in list 4 (kind 2),
    kept at +20. The ISM is the fighter's the wipe is for: fighter 3 with BATTLE + 56 = 3 (Dramatic's
-   boss side), fighter 2 when BATTLE + 48 is set, else fighter 1. Wrapped by extensions/i_ism.c, which
+   boss side), fighter 2 when BATTLE + 48 is set, else fighter 1. Wrapped by extensions/i_ism_display.c, which
    gives an entry (I-ISM) its own colours. */
 void f_0880AEA8(Cpu *c);   /* (1, palette list, 0, slot, count): loads a palette */
 void f_0882E0D0(Cpu *c);   /* the fade levels reset */
@@ -330,7 +330,7 @@ static void logo_start(Cpu *c, gaddr o) {
     f_0882E0D0(c);
     *W(o + 20) = CALL2(f_08823338, 4, 2);
 }
-SFA_FUNC_WRAPPED(08885A44, logo_start_step, i_ism_logo_start) {
+SFA_FUNC_WRAPPED(08885A44, logo_start_step, i_ism_display_logo_start) {
     gaddr o = ARG(0);
     uint32_t s[7]; for (int i = 0; i < 7; i++) s[i] = c->r[16 + i];
     c->r[29] -= 0x40; logo_start(c, o); c->r[29] += 0x40;

@@ -183,7 +183,7 @@ void pause_frame(void);                     /* exsetting.c: the pause BUTTON CON
 /* the two text passes carry three features' drawing: each only while its feature is on (ext_features.h) */
 static void after_text(Cpu *c) {
     if (FEATURE(MULTIPLAYER)) draw_words(c);
-    if (FEATURE(HUD)) padicons_draw(c);
+    if (FEATURE(MODE_MENU_ICONS)) padicons_draw(c);
     if (FEATURE(MENUS)) pause_frame();
 }
 void hook_f_0880B098(Cpu *c) { orig_f_0880B098(c); after_text(c); }

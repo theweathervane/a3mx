@@ -292,7 +292,7 @@ apart within seconds.)
 | `--assets` | load the files in `assets/` (the stage strips) |
 | `--list` | the scenarios there are |
 | `--my-save` | play with a copy of your own save (your entries, rankings and unlocks). On by itself when the character is an ENTRY. The copy is thrown away afterwards: your save is never changed |
-| `--features LIST` | the game's features (`default,-shaders` unless you say): add `-i_ism` to see an I-ISM part as the original game had it |
+| `--features LIST` | the game's features (`default,-shaders,-boot_to_menu,i_ism_display` unless you say, as the tests): add `-i_ism_display` or `-i_ism_select` to see an I-ISM part as the original game had it |
 
 The characters, for `--character` (without spaces or punctuation, any case; `--character list`
 prints the same):
@@ -356,7 +356,7 @@ The fight itself is the scenario's own button presses (walk forward, two jabs, a
 pad does nothing useful while it plays.
 
 In WIDE NATIVE (`--screen native`) the endings fill the screen with the Scaled endings extension, and
-keep black sides without it: add `--features default,-shaders,-scaled_endings` to see them that way
+keep black sides without it: add `--features default,-shaders,-boot_to_menu,-scaled_endings` to see them that way
 ([WIDESCREEN.md](WIDESCREEN.md)). Things to look for: a scene whose sides show a piece of another scene,
 a picture cut off at the 4:3 side, a profile picture away from the edge, the lines over the credits.
 
@@ -391,19 +391,21 @@ backdrop.
 
 ### 6. I-ISM (`tests/watch/i_ism_wipe`)
 
-The `i_ism` feature gives entry characters (I-ISM) what the game left out. `i_ism_wipe` plays Arcade
+Two features give entry characters (I-ISM) what the game left out: `i_ism_display` (off by default; the
+watch tool turns it on) their wipe and their ranking, `i_ism_select` (on by default) picking one for the
+other side. `i_ism_wipe` plays Arcade
 with your entry 1 to the first fight: between the VS screen and the fight the three columns roll into a
 yellow I, and the STREET FIGHTER ALPHA3 logo slides in gold, where an entry had its ISM's wipe before.
 
 ```
 python tools/watch_scenario.py i_ism_wipe --screen native
 python tools/watch_scenario.py i_ism_wipe --character ENTRY3
-python tools/watch_scenario.py i_ism_wipe --features default,-shaders,-i_ism
+python tools/watch_scenario.py i_ism_wipe --features default,-shaders,-boot_to_menu
 ```
 
 The last one is the game's own wipe for comparison. It needs an entry in that box in your save.
 
-`i_ism_cpu_entry` is the other side: in Free Battle, player 1 moves the computer's box up onto the
+`i_ism_cpu_entry` is the other side (`i_ism_select`): in Free Battle, player 1 moves the computer's box up onto the
 entries' row and picks your entry 1, which the game didn't allow (its cursor skipped the entries for a
 side no player had joined). The VS screen then shows I-ISM on the right, and the wipe is the yellow I.
 
