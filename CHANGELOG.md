@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.123.0
+### For players
+- **More of the game decompiled:** 12 more functions, among them the ending task itself, the fight's resets, when a fighter may throw and when one gets up early (a human by buttons or Training's setting, the computer by its level), the score a hit is worth, the score panel's digits and the entries' panel. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_large4.c` (new): the eight functions made ready by 0.122.0 (0x08821FC8, 0x08821F9C, 0x0885EB2C, 0x088B4D88, 0x08821FEC, 0x089DE0E8, 0x088CE274, 0x08862484) and four of 137 - 142 instructions (0x088586C8, 0x08887EE8, 0x08857810, 0x08866A84). Tables in docs/PSP_PROGRAM_MAP.md.
+- Checked: the coverage pass maps all twelve to scenarios (arcade_ending, attract_mode and mode_tour run them all); parity (memory hashes, lazy renderer) passed for arcade_ending, attract_mode, mode_tour, arcade_match, arcade_fight, arcade_other_fighter, network_match, super_finish, arcade_rival_dialogue, arcade_ending_full, free_battle_team, free_battle_dramatic and no_extensions, and a paired Survival R.DRAMATIC run (6,000 frames, NORMAL).
+
 ## 0.122.0
 ### For players
 - **More of the game decompiled:** 10 larger functions, among them how much a hit takes off and the spark it makes, a fighter's life at the start of a round in each mode (Survival's kinds, TEAM, network battles), the select screen's cursor set up for a player and the entry characters put into its grid, the entries' names and numbers, and a screen's set of objects. Nothing plays differently.
