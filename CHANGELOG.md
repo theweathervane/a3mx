@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.125.0
+### For players
+- **More of the game decompiled:** 10 more functions, among them six characters' set-ups when a fight starts (their move tables, shadows and companion objects), another character's data unpacked, a score put into the attract mode's rankings, and a fighter's name panel. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_large6.c` (new): the eight made ready by 0.124.0 (0x08896160, 0x08891FA0, 0x088ED71C, 0x08929B8C, 0x08908F68, 0x0890DEC4, 0x0899A430, 0x08982ECC) and two of 166 - 168 instructions (0x08892D6C, 0x0896A6C4). Tables in docs/PSP_PROGRAM_MAP.md.
+- Checked: the coverage pass maps all ten to scenarios (arcade_match, attract_mode and arcade_other_fighter run them all); parity (memory hashes, lazy renderer) passed for arcade_match, attract_mode, arcade_other_fighter, arcade_ending, free_battle_team, free_battle_dramatic, network_match, arcade_fight, arcade_rival_dialogue, arcade_ending_full, super_finish and no_extensions, and the paired Survival R.DRAMATIC run.
+
 ## 0.124.0
 ### For players
 - **More of the game decompiled:** 10 more functions, among them how much damage a hit does (by character, level, combo, health and the hit's strength), a hit's effect and its score, a character's data unpacked when it is loaded, whether a button counts for a fighter (Training's guard settings included), a fighter's name and win count on screen, and screens that reset the fight as they start. Nothing plays differently.
