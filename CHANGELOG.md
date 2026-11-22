@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.122.0
+### For players
+- **More of the game decompiled:** 10 larger functions, among them how much a hit takes off and the spark it makes, a fighter's life at the start of a round in each mode (Survival's kinds, TEAM, network battles), the select screen's cursor set up for a player and the entry characters put into its grid, the entries' names and numbers, and a screen's set of objects. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_large3.c` (new): the ten smallest of the 31 ready functions of 61 - 400 instructions (`ready.py 61 400`, 93 - 136 instructions): 0x0885EB74, 0x088B1ED0, 0x08871AC4, 0x08865BEC, 0x08875DBC, 0x088CE33C, 0x088939DC, 0x088625C0, 0x08896DE8, 0x088CD7E4. Tables in docs/PSP_PROGRAM_MAP.md.
+- Checked: the coverage pass maps all ten to scenarios (arcade_other_fighter, mode_tour and no_extensions run them all); parity (memory hashes, lazy renderer) passed for arcade_other_fighter, mode_tour, no_extensions, attract_mode, arcade_fight, arcade_join_select, network_match, free_battle_team, select_choices, arcade_ending, free_battle_dramatic, arcade_rival_dialogue, arcade_match and super_finish; also a Survival R.DRAMATIC run (6,000 frames, reference and decomp paired, NORMAL), where 0x08865BEC takes its Survival branch.
+
 ## 0.121.2
 ### For players
 - **WIDE NATIVE, Survival's results after a round:** the four rows (TIME, the ISM's score, MAX COMBO, VITAL) now fly in to the screen's right edge, as the five-row panel of the other modes does, instead of stopping at the old 4:3 side. This is the panel of every Survival variation (R.DRAMATIC and R.DRAMATIC with lives included) and of Free Battle's TEAM.
