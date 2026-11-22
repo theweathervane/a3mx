@@ -72,8 +72,8 @@ OFF always goes back to what you really earned. All ON by default.
 (The first four are one flag in the game's save; the game is told to bar the ones that are OFF.)
 
 **Pages 2/5 and 3/5, the fighters.** 1P, 2P and 3P are the fighter slots, whoever plays them: in Arcade
-2P is the computer's fighter, in Dramatic Battle 3P is the boss. 4P is shown greyed out: there is no
-fourth fighter yet. They act while a round is on, in every mode but the network battles, and never in
+2P is the computer's fighter, in Dramatic Battle 3P is the boss. 4P is shown greyed out (solid grey; lighter
+with a red outline under the cursor) and can't be changed: there is no fourth fighter yet. They act while a round is on, in every mode but the network battles, and never in
 the attract mode's demos.
 
 | Row | Values (default first) | What it does |

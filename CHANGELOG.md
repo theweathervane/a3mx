@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.128.1
+### For players
+- **EX. SETTING's greyed rows (4P) in a new grey:** solid grey with a dark outline, and under the cursor a lighter grey with a dark red outline. No gradient. The cursor can now land on them; their values can't be changed.
+
+### Technical
+- `exsetting.c`: font 1 gets two colours of its own, 14 and 15, for good (the first time EX. SETTING opens): a ninth texture page (page table entry 0x3F2) and a ninth descriptor in a copy of the font list (0x08A05080), made from colour 10's glyphs (14: dark outline, grey inside; 15: colour 9's red outline, light grey inside). Colour k of font 1 is at rows 144 k + 32 to + 80 of the font's pages, so 14 and 15 fall in the ninth.
+- Checked in WIDE NATIVE (page 3/5, a greyed row unselected and selected); parity for option_tour and attract_mode.
+
 ## 0.128.0
 ### For players
 - **EX. SETTING has five pages with Cheats and Unlocks:** 1/5 the unlocks, 2/5 1P and 2P HEALTH / GUARD / SUPER, 3/5 3P's (4P shown greyed out: there is no fourth fighter yet), 4/5 World Tour and EDIT MODE, 5/5 PRIORITY and VIRTUAL PSPS.

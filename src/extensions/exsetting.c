@@ -249,7 +249,7 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
  *   1/5  the unlocks: SHIN AKUMA, FINAL M.BISON, EX BALROG, SHIN AKUMA BATTLE, BATTLE VARIANTS, EDIT
  *        MODE POINTS, ISM-PLUS (ON forced, OFF as the save earned them)
  *   2/5  1P and 2P HEALTH, GUARD and SUPER
- *   3/5  3P's, and 4P's greyed out (there is no fourth fighter: the cursor passes them)
+ *   3/5  3P's, and 4P's greyed out (there is no fourth fighter: their values can't be changed)
  *   4/5  WORLD TOUR EXP and its X-, A- and V-ISM EXP; the same four for EDIT MODE
  *   5/5  1P - 3P PRIORITY and VIRTUAL PSPS (the options EX. SETTING always had)
  * and without it only the last, as 1/1. Each page ends with DEFAULT (that page's rows back to their
@@ -286,12 +286,14 @@ static uint32_t gstr(const char *s) {
     return a;
 }
 
+static uint16_t rgb15(int r, int g, int b) { return (uint16_t)(0x8000u | (uint32_t)(r >> 3) | (uint32_t)(g >> 3) << 5 | (uint32_t)(b >> 3) << 10); }
+
 typedef struct {
     const char *label;
     int *value;                     /* NULL: DEFAULT or EXIT */
     const char *const *names;
     const char *what[2];            /* the description, two lines of at most 32: clear of the page number */
-    int greyed;                     /* shown, but the cursor passes it (4P) */
+    int greyed;                     /* shown in grey, its value can't be changed (4P) */
 } Row;
 #define R_DEFAULT_ROW(w) { "DEFAULT", NULL, NULL, { "THIS PAGE BACK TO ITS DEFAULTS.", w }, 0 }
 #define R_EXIT_ROW { "EXIT", NULL, NULL, { "SAVE AND BACK TO OPTION MODE.", "" }, 0 }
@@ -367,7 +369,6 @@ static void page_defaults(int pg) {
 #define ARROW_LX 4                  /* at the 4:3 picture's sides (the user's mock-up) */
 #define ARROW_RX (384 - 4 - ARROW_W)
 static int arrow[2] = { -1, -1 };
-static uint16_t rgb15(int r, int g, int b) { return (uint16_t)(0x8000u | (uint32_t)(r >> 3) | (uint32_t)(g >> 3) << 5 | (uint32_t)(b >> 3) << 10); }
 static void arrows_build(void) {
     for (int side = 0; side < 2; side++)
         for (int y = 0; y < ARROW_H; y++)
@@ -397,16 +398,67 @@ static void arrow_frame(uint32_t o, int side) {
     WB(o + 0x5D, mode == M_EX && page_count() > 1);
 }
 
+static void grey_font_on(void);
 static void ex_open(Cpu *c) {
     mode = M_EX; page = first_page(); row = 0; bar_y = 239 - ex_row_y(0);
-    WB(OPT + 5, EX_ITEM + 1); WB(OPT + 7, 0); bar_on(c); if (page_count() > 1) arrows_on(c); sound(c, 0x39);
+    WB(OPT + 5, EX_ITEM + 1); WB(OPT + 7, 0); bar_on(c); if (page_count() > 1) arrows_on(c); grey_font_on(); sound(c, 0x39);
 }
 static void ex_close(Cpu *c, int snd) { mode = M_MENU; WB(OPT + 5, 0); WB(OPT + 7, 0); bar_off(); arrows_off(); bar_y = -1; settings_save(); sound(c, snd); }
 #define VERSION_Y 0xD4
 #define VERSION_X (0x178 - 8 * (int)(sizeof A3MX_VERSION_SCREEN - 1))
 #define PAGE_Y    0xB6
 #define WHAT_Y    0xBC
-#define GREYED    8                   /* a text colour: light grey to slate (0x08A03D04) */
+/* Greyed rows (4P): two colours of font 1 of our own, 14 (unselected) and 15 (selected), added to the
+ * game's font for good the first time EX. SETTING opens (grey_font_on). The font's glyphs are in eight
+ * texture pages (the font list 0x08A05080: descriptors, count), colour k's font 1 at rows 144 k + 32 to
+ * + 80 of them all (32 glyphs of 8 x 16 a row, from '!'; descriptor = row / 256). Colours 14 and 15 fall
+ * at rows 2048 and 2192: a ninth page, ours, given page table entry 0x3F2 (next to the font's own 0x3F0
+ * and 0x3F1; never used by the game in any screen seen) and a ninth descriptor in a copy of the list.
+ * Their glyphs are made from colour 10's (the cyan of the unselected rows, navy outline): 14 with the
+ * outline dark and the inside one solid grey; 15 with colour 9's dark red outline (grey on red: the
+ * user's pick) and the inside one solid lighter grey. No gradients. */
+#define GREYED      14
+#define GREYED_ON   15
+#define FONT_LIST   0x08A05080u
+#define FONT1_Y     32
+#define FONT1_H     48
+#define FONT_SET_H  144
+#define GREY_PAGE   0x3F2
+static uint32_t grey_mem;                   /* our page (256 x 256 x 2), its description, the descriptors */
+#define GREY_TEX    (grey_mem)
+#define GREY_DESC   (grey_mem + 0x20000u)
+#define GREY_LIST   (grey_mem + 0x20080u)
+static uint32_t font1_texel(int colour, int x, int y) {
+    int v = FONT_SET_H * colour + FONT1_Y + y;
+    uint32_t list = RW(FONT_LIST), page = RW(list + 12u * (uint32_t)(v >> 8) + 8);
+    return RW(PAGES + 0x18u * page) + (uint32_t)(((v & 255) * 256 + x) * 2);
+}
+static int bright(uint16_t p) { int r = p & 31, g = (p >> 5) & 31, b = (p >> 10) & 31; return (r > g ? (r > b ? r : b) : (g > b ? g : b)) >= 18; }
+static void grey_font_on(void) {
+    uint32_t list = RW(FONT_LIST), n = RW(FONT_LIST + 4), e = PAGES + 0x18u * GREY_PAGE, e8 = PAGES + 0x18u * 0x8F;
+    if (!list || (grey_mem && list == GREY_LIST && RW(e) == GREY_TEX)) return;   /* not loaded yet, or ours already */
+    if (n != 8 || RW(e) != 0 || !RW(e8)) { rt_log("exsetting: the font isn't as expected, no grey colours"); return; }
+    if (!grey_mem && !(grey_mem = rt_alloc(0x20080u + 12u * 9u, 1, 256, "grey font"))) return;
+    memset(HOST(GREY_TEX), 0, 0x20000);
+    memcpy(HOST(GREY_DESC), HOST(RW(e8 + 0x14)), 0x44); WW(GREY_DESC, GREY_PAGE);
+    for (int k = 0; k < 5; k++) WW(e + 4u * (uint32_t)k, k == 0 ? GREY_TEX : RW(e8 + 4u * (uint32_t)k));   /* as the font's own pages */
+    WW(e + 0x14, GREY_DESC);
+    memcpy(HOST(GREY_LIST), HOST(list), 12u * 8u);
+    memcpy(HOST(GREY_LIST + 96), HOST(list), 12); WW(GREY_LIST + 96 + 8, GREY_PAGE);
+    uint16_t red = rgb15(0x78, 0x20, 0x00);                         /* colour 9's outline, as it is in the font */
+    for (int y = 0; y < FONT1_H; y++) for (int x = 0; x < 256; x++) {
+        uint16_t b = (uint16_t)RH(font1_texel(9, x, y));
+        if ((b >> 15) && !bright(b)) { red = b; y = FONT1_H; break; }
+    }
+    const uint16_t dark = rgb15(0x20, 0x20, 0x20), grey = rgb15(0x88, 0x88, 0x88), light = rgb15(0xD0, 0xD0, 0xD0);
+    for (int y = 0; y < FONT1_H; y++) for (int x = 0; x < 256; x++) {               /* both in colour 10's glyph shapes */
+        uint16_t a = (uint16_t)RH(font1_texel(10, x, y));
+        WH(GREY_TEX + (uint32_t)(((FONT_SET_H * GREYED + FONT1_Y + y - 2048) * 256 + x) * 2), !(a >> 15) ? a : bright(a) ? grey : dark);
+        WH(GREY_TEX + (uint32_t)(((FONT_SET_H * GREYED_ON + FONT1_Y + y - 2048) * 256 + x) * 2), !(a >> 15) ? a : bright(a) ? light : red);
+    }
+    WW(FONT_LIST, GREY_LIST); WW(FONT_LIST + 4, 9);
+    rt_log("exsetting: font colours 14 and 15 (greyed rows) added on page %X", GREY_PAGE);
+}
 #define B_L       0x40u
 #define B_R       0x200u
 static void turn_page(Cpu *c, int step) {
@@ -423,9 +475,10 @@ static void ex_screen(Cpu *c) {
     const Row *r = &rows[row];
     int step = (p & 1) ? 1 : (p & 2) ? -1 : 0;                /* right / left */
     int more = page_count() > 1;
-    if (p & 8) { do row = (row + n - 1) % n; while (rows[row].greyed); sound(c, 0x38); }
-    else if (p & 4) { do row = (row + 1) % n; while (rows[row].greyed); sound(c, 0x38); }
+    if (p & 8) { row = (row + n - 1) % n; sound(c, 0x38); }
+    else if (p & 4) { row = (row + 1) % n; sound(c, 0x38); }
     else if (more && (p & (B_L | B_R))) turn_page(c, (p & B_R) ? 1 : -1);
+    else if ((step || (p & B_CONFIRM)) && r->greyed) sound(c, 0x2F);   /* not there yet: nothing to change */
     else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; sound(c, 0x38); }
     else if (step && more) turn_page(c, step);
     else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; sound(c, 0x39); }
@@ -436,11 +489,11 @@ static void ex_screen(Cpu *c) {
     WB(OPT + 7, (uint32_t)row); bar_y = 239 - ex_row_y(row);
     title(c, S_TITLE);
     for (int i = 0; i < n; i++) {
-        int y = ex_row_y(i), colour = rows[i].greyed ? GREYED : i == row ? 0xB : 0xA;
+        int y = ex_row_y(i), colour = rows[i].greyed ? (i == row ? GREYED_ON : GREYED) : i == row ? 0xB : 0xA;
         text(c, gstr(rows[i].label), 1, 0x30, y, colour);
         if (rows[i].value) {
             int k = count_names(rows[i].names), v = *rows[i].value;
-            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, rows[i].greyed ? GREYED : 0xB);   /* values: always yellow, as GAME OPTION */
+            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, rows[i].greyed ? (i == row ? GREYED_ON : GREYED) : 0xB);   /* values: always yellow, as GAME OPTION */
         }
     }
     for (int k = 0; k < 2; k++) if (r->what[k][0]) text(c, gstr(r->what[k]), 0, 0x30, WHAT_Y + 10 * k, 9);
