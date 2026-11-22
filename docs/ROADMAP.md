@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.14% decompiled
+Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.33% decompiled
 
-Functions                                [█░░░░░░░░░]  14.15%  2,105 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  16.14%  78,162 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  14.21%  2,115 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  16.33%  79,072 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  35.40%  72,193 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  35.76%  72,931 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   1.86%  4,781 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   1.93%  4,953 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -220,6 +220,8 @@ Done:
       the select cursor's set-up, the entries into the grid and their names, a screen's objects (0.122.0)
 - [x] Twelve more (`object/batch_large4.c`): the ending task, the fight resets, a throw allowed, getting up
       early, a hit's score, the score panel's digits, the entries' panel (0.123.0)
+- [x] Ten more (`object/batch_large5.c`): a hit's damage, its effect step, a character's data unpacked,
+      whether a button counts, the name panel, screens resetting the fight (0.124.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

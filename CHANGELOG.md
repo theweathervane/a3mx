@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.124.0
+### For players
+- **More of the game decompiled:** 10 more functions, among them how much damage a hit does (by character, level, combo, health and the hit's strength), a hit's effect and its score, a character's data unpacked when it is loaded, whether a button counts for a fighter (Training's guard settings included), a fighter's name and win count on screen, and screens that reset the fight as they start. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_large5.c` (new): the four made ready by 0.123.0 and 0x08857BD0 (0x08896190, 0x089DE3F4, 0x088B2FE8, 0x088BE118, 0x08857BD0), and five of 146 - 159 instructions (0x08872D20, 0x0886EB48, 0x08988FAC, 0x088758E8, 0x08892020). Tables in docs/PSP_PROGRAM_MAP.md.
+- Checked: the coverage pass maps all ten to scenarios (arcade_ending and attract_mode run them all); parity (memory hashes, lazy renderer) passed for arcade_ending, attract_mode, arcade_fight, arcade_match, arcade_other_fighter, network_match, super_finish, free_battle_team, free_battle_dramatic, arcade_ending_full, arcade_rival_dialogue, no_extensions and stage_objects_13_sagat, and the paired Survival R.DRAMATIC run.
+
 ## 0.123.0
 ### For players
 - **More of the game decompiled:** 12 more functions, among them the ending task itself, the fight's resets, when a fighter may throw and when one gets up early (a human by buttons or Training's setting, the computer by its level), the score a hit is worth, the score panel's digits and the entries' panel. Nothing plays differently.
