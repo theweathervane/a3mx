@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.121.2
+### For players
+- **WIDE NATIVE, Survival's results after a round:** the four rows (TIME, the ISM's score, MAX COMBO, VITAL) now fly in to the screen's right edge, as the five-row panel of the other modes does, instead of stopping at the old 4:3 side. This is the panel of every Survival variation (R.DRAMATIC and R.DRAMATIC with lives included) and of Free Battle's TEAM.
+
+### Technical
+- `extensions/widescreen.c`: `panel_piece` takes the round-win panel's other pair of parts too. 0x08855BD8 picks them from 0x08A16DF8: kind 1 types 9 / 15 (five rows), or 8 / 7 (four rows) in mode 7 (Survival, all eight variations), mode 6 and mode 0x10 with BATTLE + 159 = 2 (Free Battle TEAM); the table has no other pair. Both stop at x 240, so the same shift (-48 at x -144 to +48 at x 240) applies.
+- Checked: Survival R.DRAMATIC drawn in WIDE NATIVE through the panel (frames 4200 - 4330 of a headless run, opponents held at 1 health); found by logging the pool's kind 1 objects with their maker (removed). Parity passed for wide_fight, free_battle_team and arcade_fight.
+
 ## 0.121.1
 ### For players
 - **WIDE NATIVE, M. Bison's stages:** the trees and the ground's dark band at the screen's left side no longer blink out for a moment every second or so near the left wall (M. Bison's first stage, as in Final Battle, and his second).

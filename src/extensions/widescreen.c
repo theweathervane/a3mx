@@ -130,7 +130,10 @@ static int units_x(uint32_t sp) {
 }
 static int round_win(void) { return RB(GAME + 2) == 2 && RH(GAME + 4) == 3; }
 static int win_piece(uint32_t kind, uint32_t type) { return (kind == 0 && type == 2) || (kind == 1 && type == 12); }
-static int panel_piece(uint32_t kind, uint32_t type) { return kind == 1 && (type == 9 || type == 15); }
+/* the panel's two parts, as 0x08855BD8 picks them from 0x08A16DF8: types 9 / 15 (five rows: COMPLETE ...
+   SCORE), or 8 / 7 (four rows: TIME, the ISM's score, MAX COMBO, VITAL) in Survival (mode 7), mode 6 and
+   Free Battle's TEAM (mode 0x10, BATTLE + 159 = 2); both stop at x 240 */
+static int panel_piece(uint32_t kind, uint32_t type) { return kind == 1 && (type == 9 || type == 15 || type == 7 || type == 8); }
 /* the 8-pool's piece of that sort, shown, if any (its x through *x) */
 static int find_piece(int panel, int *x) {
     for (uint32_t o = 0x09512170u; o < 0x09512170u + 8u * 0xC0u; o += 0xC0u) {
