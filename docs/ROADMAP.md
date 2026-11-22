@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.48% decompiled
+Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.58% decompiled
 
-Functions                                [█░░░░░░░░░]  14.28%  2,125 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  16.48%  79,794 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  14.58%  2,169 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  16.58%  80,296 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  35.86%  73,127 / 203,929
-  wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.36%  88 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   2.13%  5,479 / 257,012
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  36.04%  73,488 / 203,929
+  wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.66%  99 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   2.18%  5,609 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -224,6 +224,8 @@ Done:
       whether a button counts, the name panel, screens resetting the fight (0.124.0)
 - [x] Ten more (`object/batch_large6.c`): six characters' set-ups, another's lists unpacked, a score into the
       rankings, the name panel's count (0.125.0)
+- [x] Forty-four small ones (`object/batch_steps2.c`, 14 step dispatchers in `steps.c`), from the profile
+      refreshed at 0.125.0: moves and count-downs, the network session's list and checksum (0.126.0)
 
 To do, in rough order:
 - [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the

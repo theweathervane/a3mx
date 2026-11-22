@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.126.0
+### For players
+- **More of the game decompiled:** 44 more small functions, among them 14 step dispatchers, objects moving by their speeds and counting down, the network session's list, checksum and flags, and a fighter's script start. Nothing plays differently.
+
+### Technical
+- **The batch tool's profile refreshed:** the list of translated functions the 69 scenarios reach (decomp-tools prof/union.txt, last made at 0.82.0) was made again with a counting build: 2,051 reached, 781 of them new to the list, so 307 functions of 9 - 400 instructions are ready instead of 12. The function count itself (14,881) was checked against the program: the functions cover all its code, with at most about 10 small ones merged into others.
+- `src/core/object/batch_steps2.c` (new): 30 of the 87 ready functions of 9 - 16 instructions. `src/core/object/steps.c`: 14 more step dispatchers (0x08824F28, 0x08831B34, 0x08832C28, 0x08845530, 0x0884559C, 0x08874400, 0x0887E950, 0x0887F250, 0x0888A364, 0x0888A920, 0x088EB67C, 0x088EB6B0, 0x088EBEC4, 0x088EF988). Left out: 0x088DE8F0 (two system calls, sceNetGetLocalEtherAddr and sceUtilityGetSystemParamString, with no wrapper yet).
+- Checked: the coverage pass maps all 44 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_rival_dialogue, arcade_match, free_battle_rows, stage_objects_03_ken, arcade_ending_full, super_finish, free_battle_dramatic, stage_objects_15_sakura, pause_config_original, stage_objects_19_gen, attract_mode, arcade_fight and no_extensions.
+
 ## 0.125.0
 ### For players
 - **More of the game decompiled:** 10 more functions, among them six characters' set-ups when a fight starts (their move tables, shadows and companion objects), another character's data unpacked, a score put into the attract mode's rankings, and a fighter's name panel. Nothing plays differently.
