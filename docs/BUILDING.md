@@ -377,10 +377,10 @@ Either way:
 |---|---|---|
 | Hooked functions (`hooks.txt`) | the hook (`hook_f_ADDR`) | the translated original |
 | Wrapped functions (`SFA_FUNC_WRAPPED`) | the function with its extension around it | the function alone |
-| Saves | `a3mx.dat` / `a3mx.cfg`, auto-save on, everything unlocked (`cheats_unlocks`, EX. SETTING > UNLOCK ALL), save messages silent | the game's own, on the emulated memory stick (`<save dir>/ms0/PSP/SAVEDATA/`), with its own messages and questions; nothing unlocked |
-| OPTION MODE | EX. SETTING (with `cheats_unlocks` its cheats pages), PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE NATIVE, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
+| Saves | `a3mx.dat` / `a3mx.cfg`, auto-save on, save messages silent; everything unlocked while playing (`cheats_unlocks`, EX. SETTING page 1; never written into the save) | the game's own, on the emulated memory stick (`<save dir>/ms0/PSP/SAVEDATA/`), with its own messages and questions; nothing unlocked |
+| OPTION MODE | EX. SETTING (five pages with `cheats_unlocks`: unlocks, fighters' cheats, World Tour / EDIT MODE EXP, PRIORITY / VIRTUAL PSPS), PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE NATIVE, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
 | Pads | up to four; join-in, JOIN / WAIT, pad icons | player 1's pad only, as on a PSP; no L2 / R2 |
-| Network modes | played on one PC with virtual players | as a PSP's ad-hoc wireless: only other instances linked with `--net-hub` / `--net-join` answer |
+| Network modes | played on one PC with virtual players (EX. SETTING > VIRTUAL PSPS; OFF: NETWORK greyed out on the MODE MENU) | as a PSP's ad-hoc wireless: only other instances linked with `--net-hub` / `--net-join` answer |
 | F2, or SELECT + START on player 1's pad | back to the MODE MENU | nothing |
 | Boot | `boot_to_menu`: straight to the MODE MENU, the boot screens and the load run off screen | the title, PRESS START and the attract mode |
 | I-ISM on screen | `i_ism_display` (off by default): entry characters get their own wipe into the fight (a yellow I, a gold logo), and the attract mode an I-ISM score ranking | an entry gets its ISM's wipe; no I-ISM ranking |

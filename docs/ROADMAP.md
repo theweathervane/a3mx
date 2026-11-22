@@ -317,7 +317,7 @@ decompiled.
 
 - [ ] Up to three local players, join-in (EX. SETTING PRIORITY, Start on select screens, JOIN / WAIT).
       Now: hooks.c, selectscreen.c. Needs: input records and select screens.
-- [ ] Network modes on one PC (virtual players, VIRTUAL PSPS (was COUCH CO-OP)). Now: vpeer.c, netplay.c, hle_net.c.
+- [ ] Network modes on one PC (EX. SETTING > VIRTUAL PSPS, called COUCH CO-OP before 0.127.0). Now: vpeer.c, netplay.c, hle_net.c.
       Needs: the wireless block.
 - [ ] L2 / R2 buttons, PLAYER CONFIG for four pads, pause BUTTON CONFIG rows. Now: playercfg.c,
       exsetting.c. Needs: fighter input.
@@ -325,7 +325,13 @@ decompiled.
         BUTTON CONFIG (0.42.0)
 - [x] EX. SETTING screen, OPTION MODE sixth item: exsetting.c (and tiles.c), wrapped around the
       decompiled OPTION MODE (0.42.0)
-- [ ] Silent saves, AUTO SAVE always on, everything unlocked. Now: sysdata.c, savestore.c, settings.c.
+  - [x] Pages (0.127.0; five since 0.128.0) with the side arrows and page number, per-page DEFAULT, row
+        descriptions, greyed rows in font colours of our own (0.128.1)
+- [x] Cheats and Unlocks (0.127.0 - 0.128.0, the `cheats_unlocks` feature: cheats_unlocks.c): the unlocks
+      one by one (forced ones never saved; the shared Arcade bit gated in cursor.c, battle_select.c,
+      mode_menu.c), HEALTH / GUARD / SUPER per fighter slot, World Tour and EDIT MODE EXP with Lv 32
+  - [ ] 4P's rows, once there is a fourth fighter
+- [ ] Silent saves, AUTO SAVE always on. Now: sysdata.c, savestore.c, settings.c.
       Needs: the save task.
   - [x] Silent when a save fails too: no "continue without auto-saving?" (0.24.0; the list of save
         messages is in [SAVES.md](SAVES.md#save-messages-kept-off-screen))
@@ -469,9 +475,9 @@ Can start once phase 4's join-in item is native code; the rule itself is in [PLA
       CPU's fighter: YES / NO"), agree it, and implement it, with the saved setting carried over
 - [ ] A parity scenario per changed row: with every row at its default, every mode still plays as on a PSP
 
-## Phase 11: Virtual PSPs (was couch co-op) architecture review
+## Phase 11: Virtual PSPs architecture review
 
-VIRTUAL PSPS (was COUCH CO-OP) plays the game's network modes on one PC: the other PSPs are virtual players in the same
+VIRTUAL PSPS (COUCH CO-OP before 0.127.0) plays the game's network modes on one PC: the other PSPs are virtual players in the same
 process (`vpeer.c`, `netplay.c`, `hle_net.c`), and pads 2 and 3 drive network players 2 and 3. Local
 play therefore depends on emulating the wireless layer. Needs: phase 4's network item.
 

@@ -6,7 +6,7 @@ Below define the project structure
 | `src/core/` | the decompiled game: hand-written C replacing translated functions ([docs/DECOMPILING.md](docs/DECOMPILING.md)) |
 | `src/platform/` | the PC side: memory, threads, files, graphics, sound, input, the PSP's OS functions |
 | `src/launcher/` | the launcher: ISO, options, Run / Build and the console (SDL3 + Dear ImGui; no game code) |
-| `src/extensions/` | the extensions from the static recomp (EX. SETTING, PLAYER CONFIG, join-in, widescreen, saves, ...) |
+| `src/extensions/` | the extensions (EX. SETTING and its Cheats and Unlocks pages, PLAYER CONFIG, join-in, widescreen, saves, ...), each a feature in `src/platform/ext_features.h` |
 | `tools/` | `extract_assets.py`, `pac.py` (archives), `progress.py`, `show_func.py`; `recomp/` the program analysis and translator; `data/hooks.txt` |
 | `tests/` | `parity.py` and its scenarios |
 | `assets/` | extracted assets (git-ignored; [assets/README.md](assets/README.md)), except `extensions/`: new art, such as WIDE NATIVE's stage edges ([stage extensions](docs/STAGE_EXTENSIONS.md)); the layout's rules: [assets/LAYOUT.md](assets/LAYOUT.md) |

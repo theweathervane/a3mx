@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.128.2
+### For players
+- **The documents brought up to date with EX. SETTING's pages:** PLAYERS.md (every page and row, the unlocks and how the game earns them), SAVES.md (forced unlocks are never saved; `[cheats and unlocks]` and `[progress]` in a3mx.cfg; DELETE resets every page), BUILDING.md, KNOWN_ISSUES.md (N8: NETWORK with VIRTUAL PSPS off, worked round), ARCHITECTURE.md, LAYOUT.MD and ROADMAP.md.
+
+### Technical
+- Docs only; nothing in the program changed.
+
 ## 0.128.1
 ### For players
 - **EX. SETTING's greyed rows (4P) in a new grey:** solid grey with a dark outline, and under the cursor a lighter grey with a dark red outline. No gradient. The cursor can now land on them; their values can't be changed.

@@ -14,6 +14,7 @@ says what changed).
 | N4 | possible | LEAGUE and TOURNAMENT (VS and Team) are untested; two virtual players are started for them. | netplay.c `on_group`. |
 | N5 | possible | VARIABLE BATTLE's host / guest choice is not picked automatically (the cursor starts on HOST). | Only Dramatic Battle's 0x088D8790 menu is automated. |
 | N6 | possible | The virtual players' "sync when the host goes quiet" rule is a heuristic; a stray sync word could arrive at a bad moment. | vpeer.c. The game skips words it does not expect; no problem seen yet. |
+| N8 | known | With EX. SETTING > VIRTUAL PSPS OFF the network is a stub, and going into NETWORK crashed the game. | Worked round (0.128.0): the MODE MENU's NETWORK tile is greyed and can't be chosen while it is OFF (exsetting.c `exsetting_mode_menu`). The stub itself is not fixed. |
 | N7 | possible | The game's "wait for other PSPs" counter (0x09523984) is cut short in the lobby and the battle group; other uses of that counter are not known. | vpeer.c `shorten_waits`. |
 
 ## Menus and presentation

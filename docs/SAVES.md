@@ -25,7 +25,7 @@ The two files that matter:
 
 | File | What |
 |---|---|
-| `a3mx.cfg` | every setting, by name: EX. SETTING, GAME OPTION, SCREEN SETTING (with VSYNC and FRAME TIMING: [DISPLAY.md](DISPLAY.md)), each player's buttons (PLAYER CONFIG, with L2 / R2 and player 4), unlocks |
+| `a3mx.cfg` | every setting, by name: EX. SETTING (`[ex setting]`, and `[cheats and unlocks]` for its Cheats and Unlocks pages), GAME OPTION, SCREEN SETTING (with VSYNC and FRAME TIMING: [DISPLAY.md](DISPLAY.md)), each player's buttons (PLAYER CONFIG, with L2 / R2 and player 4), and `[progress]`: the unlocks your save has earned |
 | `a3mx.dat` | everything else the game saves (rankings, records, Entry and Edit characters, World Tour), as blocks of hex |
 
 The settings in `a3mx.cfg` win over the same bytes in `a3mx.dat`, so `a3mx.cfg` can be edited by
@@ -56,7 +56,8 @@ the log says so.
 
 - With `a3mx.dat` missing, a save on the memory stick of an earlier version
   (`saves/ms0/PSP/SAVEDATA`) is imported once.
-- With nothing at all, the game's defaults are used (with MODE SELECT on and everything unlocked).
+- With nothing at all, the game's defaults are used (with MODE SELECT on). With the Cheats and Unlocks
+  extension on (the default) everything is unlocked while you play, from EX. SETTING page 1.
 - A `a3mx.cfg` on its own (no `a3mx.dat`) is applied on top of the defaults.
 
 ## OPTION MODE > SAVE LOAD
@@ -64,7 +65,7 @@ the log says so.
 | Row | What it does |
 |---|---|
 | SAVE / LOAD | save or load at once (no questions, no screens): SYSTEM DATA SAVED / LOADED shows at the bottom |
-| DELETE | puts the system data (options, button configs, rankings, Entry characters ...) and the project's own settings back to the defaults; the World Tour data is kept. The old `a3mx.dat` / `a3mx.cfg` are copied to `.bak` first. SYSTEM DATA DELETED shows at the bottom |
+| DELETE | puts the system data (options, button configs, rankings, Entry characters ...) and the project's own settings (EX. SETTING's every page too) back to the defaults; the World Tour data is kept. The old `a3mx.dat` / `a3mx.cfg` are copied to `.bak` first. SYSTEM DATA DELETED shows at the bottom |
 | IMPORT | reads the PSP saves in `saves/import` and uses them from now on. The current `a3mx.dat` and `a3mx.cfg` are copied to `a3mx.dat.bak` / `a3mx.cfg.bak` first |
 | EXPORT | writes the saves to `saves/export`, as a PSP keeps them |
 
@@ -81,6 +82,15 @@ Imports read encrypted saves (from a PSP or PPSSPP) and the unencrypted ones of 
 
 the project's own settings (EX. SETTING, L2 / R2, player 4) are not part of a PSP save: IMPORT keeps them as
 they are, EXPORT leaves them out.
+
+## Unlocks are saved as earned
+
+EX. SETTING's page 1 (the Cheats and Unlocks extension, [PLAYERS.md](PLAYERS.md#cheats-and-unlocks-ex-setting-pages-15---45))
+turns unlocks on while you play, but a forced unlock is never written into a save: not into `a3mx.dat`,
+`a3mx.cfg`'s `[progress]`, an EXPORT, or a memory-stick save. What the game earns while you play (a
+mode cleared, an ISM-Plus) is saved as usual, even for an unlock that is already forced. So turning a row
+OFF, or the extension off, always goes back to what the save has really earned, and an exported save
+is the one a PSP would have.
 
 ## Save messages kept off screen
 

@@ -64,9 +64,11 @@ typed interfaces here instead.
 
 ## 4. Extensions (`src/extensions/`)
 
-The static recomp's extensions, unchanged: EX. SETTING, PLAYER CONFIG and L2 / R2, join-in and JOIN /
-WAIT on select screens, network modes on one PC (virtual players), pad icons, silent saves and
-IMPORT / EXPORT, WIDE NATIVE, F2 back to the MODE MENU. Each hooks game functions listed in
+The static recomp's extensions, and the project's own since: EX. SETTING (its pages, and the Cheats and
+Unlocks pages: cheats_unlocks.c), PLAYER CONFIG and L2 / R2, join-in and JOIN / WAIT on select screens,
+network modes on one PC (VIRTUAL PSPS), MODE MENU icons, silent saves and IMPORT / EXPORT, WIDE NATIVE,
+F2 back to the MODE MENU, the I-ISM extras, scaled endings. Each belongs to one feature that the
+launcher's Extensions tab switches (`src/platform/ext_features.h`). Each hooks game functions listed in
 `tools/data/hooks.txt`: the original is translated as `orig_f_XXXXXXXX`, the extension's replacement is
 `hook_f_XXXXXXXX`, and the generated `f_XXXXXXXX` runs the hook, or the original when the extensions are
 off (`--no-extensions`, or a build with `-DA3MX_EXTENSIONS=OFF`, which leaves `src/extensions/` out and

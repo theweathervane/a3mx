@@ -27,7 +27,7 @@ There are two separate ways a pad gets a fighter, and they don't depend on each 
 With **1P / 2P / 3P PRIORITY all on COM** (the default), every mode plays as on a PSP, except that
 pads 2 and 3 can still join wherever the mode allows it.
 
-## The EX. SETTING rows
+## EX. SETTING: PRIORITY and VIRTUAL PSPS (page 5/5)
 
 The PRIORITY rows say who has first claim on a fighter nobody started with or joined: the player on
 that pad (PLAYER) or the computer (COM). Before 0.86.0 they were called JOIN-IN, with HUMAN / CPU;
@@ -38,7 +38,7 @@ that pad (PLAYER) or the computer (COM). Before 0.86.0 they were called JOIN-IN,
 | 1P PRIORITY | COM / PLAYER | Pad 1 (and the keyboard) takes over a computer fighter when it **didn't** start the mode (player 2 started it) |
 | 2P PRIORITY | COM / PLAYER | Pad 2 takes over a computer fighter when it didn't start or join |
 | 3P PRIORITY | COM / PLAYER | Pad 3 takes over a computer fighter when it didn't join |
-| VIRTUAL PSPS | ON / OFF | The network modes: ON, NETWORK finds pads 2 and 3 (or the computer) as other PSPs on its wireless link, all on this PC; OFF leaves the network stubbed, as if no other PSP were found. Called COUCH CO-OP before 0.127.0 (`a3mx.cfg`: `virtual_psps`) |
+| VIRTUAL PSPS | ON / OFF | The network modes: ON, NETWORK finds pads 2 and 3 (or the computer) as other PSPs on its wireless link, all on this PC; OFF leaves the network stubbed, as if no other PSP were found. Called COUCH CO-OP before 0.127.0 (`a3mx.cfg`: `virtual_psps`; the old `couch_coop` line is no longer read) |
 
 A pad set to PLAYER that isn't plugged in changes nothing: the computer keeps the fighter. DEFAULT puts
 the three PRIORITY rows back to COM and VIRTUAL PSPS to ON.
