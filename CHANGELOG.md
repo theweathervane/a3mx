@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.128.0
+### For players
+- **EX. SETTING has five pages with Cheats and Unlocks:** 1/5 the unlocks, 2/5 1P and 2P HEALTH / GUARD / SUPER, 3/5 3P's (4P shown greyed out: there is no fourth fighter yet), 4/5 World Tour and EDIT MODE, 5/5 PRIORITY and VIRTUAL PSPS.
+- **The unlocks one by one** (page 1/5, all ON by default): SHIN AKUMA, FINAL M.BISON and EX BALROG (SELECT held when choosing them), SHIN AKUMA BATTLE (L + R on FINAL BATTLE), BATTLE VARIANTS (L + R on DRAMATIC, VARIABLE and R.DRAMATIC), EDIT MODE POINTS (9999) and ISM-PLUS (all 26). UNLOCK ALL is gone. A forced unlock is no longer written into your save: OFF goes back to what your save has really earned.
+- **EDIT MODE EXP, X-ISM, A-ISM and V-ISM EXP** (page 4/5): MAX gives the character EDIT MODE is making full EXP and Lv 32 (that ISM's Lv 32, MASTER).
+- **VIRTUAL PSPS OFF:** the MODE MENU's NETWORK tile is grey and can't be chosen (going in with the network stubbed crashed the game).
+- Every row is kept in a3mx.cfg (`[cheats and unlocks]`: `shin_akuma`, `final_m_bison`, `ex_balrog`, `shin_akuma_battle`, `battle_variants`, `edit_mode_points`, `ism_plus`, `edit_exp` ...); `unlock_all` is no longer read.
+
+### Technical
+- The unlock bits found (docs/PSP_PROGRAM_MAP.md): the system data's +0x52 bits by mode cleared (0x0882AE20) and Arcade (0x089DE194), their readers (SELECT's extras, the MODE MENU's L + R variants, EDIT MODE's points at 0x088D43BC), +0x50 bits 0 - 2, the ISM-Pluses (+0x200, 0x0883B800). No character is hidden in MAX (the random box's pool has none).
+- `cheats_unlocks.c`: the unlock rows force bits each frame from the moment the save is in; the bits the game earns are followed (hooks on 0x0882AE20 and 0x0883B800, a wrapper on 0x089DE194: the forced bits are off while they run), and `cheats_unlocks_unforce` puts the options piece back to the earned bits wherever it is saved (savestore.c's image, a3mx.dat / a3mx.cfg, and hle_sys.c's memory-stick save). A load takes the forced bits off until it is in. The one Arcade bit serves four rows: `src/platform/unlocks.h`'s `rt_unlock_blocked` (0 without the extensions) is asked by cursor.c, battle_select.c and mode_menu.c for the ones that are OFF and not earned.
+- EDIT MODE (mode 14) edits the entry record 0x09358528 + 0x354 n: the EDIT MODE rows set its EXP and levels there (not its STATUS).
+- `exsetting.c`: five pages; rows can be greyed (colour 8) and passed by the cursor; `exsetting_mode_menu` (from padicons_mode_menu, before 0x0888C5B0) greys texture page 0x30's NETWORK tile (176 x 31 at y 192; kept and put back when VIRTUAL PSPS is on again) and drops Cross / START on it.
+- Checked: SELECT on Akuma gives Shin Akuma with SHIN AKUMA ON and Akuma with it OFF while FINAL M.BISON keeps the bit forced; with the defaults the memory has every bit and a3mx.cfg's `[progress]` keeps the earned 0000 / 00011B2F; all rows OFF leaves the memory as the save; EDIT MODE EXP and A-ISM EXP MAX set the record's EXP and Lv 32; NETWORK greyed, bright under the cursor, Cross and START do nothing; EX. SETTING's five pages in WIDE NATIVE. Parity (lazy renderer) for attract_mode, arcade_fight, option_tour, arcade_ending, mode_tour, save_load, select_choices, free_battle_rows and no_extensions.
+
 ## 0.127.2
 ### For players
 - **WIDE NATIVE, M. Bison's stages, corrected:** the trees at the screen's sides now sway with the rest of the background at both walls, with no seam and no flicker. 0.121.1 fixed only the left side, and with the wrong picture.

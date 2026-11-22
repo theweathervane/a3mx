@@ -44,24 +44,52 @@ A pad set to PLAYER that isn't plugged in changes nothing: the computer keeps th
 the three PRIORITY rows back to COM and VIRTUAL PSPS to ON.
 
 These rows are EX. SETTING's last page. With the **Cheats and Unlocks** extension on (the launcher's
-Extensions tab, Extra; on by default) there are two pages before it, so this one is 3/3; without it,
+Extensions tab, Extra; on by default) there are four pages before it, so this one is 5/5; without it,
 1/1. L / R turn the page anywhere, and left / right on DEFAULT or EXIT; DEFAULT puts back only the page
 on screen. Under the rows, a line or two says what the row under the cursor does.
 
-## Cheats and Unlocks (EX. SETTING pages 1/3 and 2/3)
+When VIRTUAL PSPS is OFF, the MODE MENU's NETWORK tile is grey and can't be chosen (the network is a
+stub then, and going in crashed the game).
 
-1P, 2P and 3P are the fighter slots, whoever plays them: in Arcade 2P is the computer's fighter, in
-Dramatic Battle 3P is the boss. The cheats act while a round is on, in every mode but the network
-battles, and never in the attract mode's demos. In `a3mx.cfg` they are `[cheats and unlocks]`.
+## Cheats and Unlocks (EX. SETTING pages 1/5 - 4/5)
+
+In `a3mx.cfg` they are `[cheats and unlocks]`; every row is kept there.
+
+**Page 1/5, the unlocks.** Every character is on the select screen from the start in MAX; these are the
+rest. ON: unlocked now. OFF: as your save earned it. A forced unlock is never written into your save, so
+OFF always goes back to what you really earned. All ON by default.
+
+| Row | What it unlocks | Earned in the game by |
+|---|---|---|
+| SHIN AKUMA | SELECT held when choosing Akuma | beating Arcade |
+| FINAL M.BISON | SELECT held when choosing M. Bison (Arcade, VS, Final Battle and two more) | beating Arcade |
+| EX BALROG | SELECT held when choosing Balrog | beating Arcade |
+| SHIN AKUMA BATTLE | L + R held when choosing FINAL BATTLE: Shin Akuma | beating Arcade |
+| BATTLE VARIANTS | L + R held when choosing DRAMATIC, VARIABLE or R.DRAMATIC BATTLE | 100 wins in VS 100 KUMITE |
+| EDIT MODE POINTS | 9999 points in EDIT MODE | the points add up from modes cleared (Survival's kinds, World Tour, Kumite, the variants ...) |
+| ISM-PLUS | all 26 ISM-Pluses in EDIT MODE | the mode rewards |
+
+(The first four are one flag in the game's save; the game is told to bar the ones that are OFF.)
+
+**Pages 2/5 and 3/5, the fighters.** 1P, 2P and 3P are the fighter slots, whoever plays them: in Arcade
+2P is the computer's fighter, in Dramatic Battle 3P is the boss. 4P is shown greyed out: there is no
+fourth fighter yet. They act while a round is on, in every mode but the network battles, and never in
+the attract mode's demos.
 
 | Row | Values (default first) | What it does |
 |---|---|---|
 | 1P / 2P / 3P HEALTH | NORMAL, INFINITE, HALF, NONE | INFINITE back to full every frame; HALF never above half the round's full health; NONE never above 1, so one hit knocks out |
 | 1P / 2P / 3P GUARD | NORMAL, INFINITE, HALF, NONE | the guard gauge: never damaged; at least half damaged; NONE one short of a crush, so the next guarded hit crushes |
 | 1P / 2P / 3P SUPER | NORMAL, INFINITE, LV1, LV2, LV3, NONE | the super gauge: full; held at that level; empty |
-| WORLD TOUR EXP | NORMAL, MAX | World Tour: the total experience at its most (9,999,999), the character at Lv 32 and every STATUS value at its limit. SAVE the World Tour data to keep it |
+
+**Page 4/5, World Tour and EDIT MODE.**
+
+| Row | Values | What it does |
+|---|---|---|
+| WORLD TOUR EXP | NORMAL, MAX | the World Tour character's experience at its most (9,999,999), Lv 32 and every STATUS value at its limit. SAVE the World Tour data to keep it |
 | WORLD TOUR X- / A- / V-ISM EXP | NORMAL, MAX | that ISM's experience at its most and its level at 32 (MASTER) |
-| UNLOCK ALL | ON, OFF | every mode, fighter and ISM-Plus from the start (what the `unlocks` extension did before 0.127.0); OFF, they are unlocked by playing, and what your save has unlocked stays |
+| EDIT MODE EXP | NORMAL, MAX | the character EDIT MODE is making: experience at its most and Lv 32 (its STATUS is still EDIT MODE's, set with its points) |
+| EDIT MODE X- / A- / V-ISM EXP | NORMAL, MAX | that ISM's experience and Lv 32 (MASTER), for the character being made |
 
 ## Mode by mode
 

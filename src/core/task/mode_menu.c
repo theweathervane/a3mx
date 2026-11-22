@@ -18,6 +18,7 @@
  */
 #include "../decomp.h"
 #include "task.h"
+#include "unlocks.h"   /* the Cheats and Unlocks extension's rows (0 without it) */
 
 #define GAME           0x08E75910u
 #define STAGE_NUMBER   0x092E1228u     /* s16 (docs/STAGES.md) */
@@ -462,7 +463,7 @@ static void choose_sound(Cpu *c, gaddr g) {
             *B(g + G_VARIANT) = 1;
             return;
         }
-        if (which == 0x0888CF0Cu && ((int32_t)(int16_t)*H(UNLOCKS) & 1)) {
+        if (which == 0x0888CF0Cu && ((int32_t)(int16_t)*H(UNLOCKS) & 1) && !UNLOCK_BLOCKED(UNLOCK_SHIN_BATTLE)) {
             *B(g + G_VARIANT) = 1;
             CALL3(f_0887C4CC, 0, 0x3A, 0xC0);
             return;

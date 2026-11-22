@@ -244,22 +244,29 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
 
-/* EX. SETTING: the project's options, on pages (0.127.0). With the Cheats and Unlocks extension three:
- *   1/3  1P - 3P HEALTH, GUARD and SUPER (cheats_unlocks.c)
- *   2/3  WORLD TOUR EXP, its X-, A- and V-ISM EXP, UNLOCK ALL
- *   3/3  1P - 3P PRIORITY and VIRTUAL PSPS (the options EX. SETTING always had)
+/* EX. SETTING: the project's options, on pages (0.127.0; five since 0.128.0). With the Cheats and Unlocks
+ * extension (cheats_unlocks.c):
+ *   1/5  the unlocks: SHIN AKUMA, FINAL M.BISON, EX BALROG, SHIN AKUMA BATTLE, BATTLE VARIANTS, EDIT
+ *        MODE POINTS, ISM-PLUS (ON forced, OFF as the save earned them)
+ *   2/5  1P and 2P HEALTH, GUARD and SUPER
+ *   3/5  3P's, and 4P's greyed out (there is no fourth fighter: the cursor passes them)
+ *   4/5  WORLD TOUR EXP and its X-, A- and V-ISM EXP; the same four for EDIT MODE
+ *   5/5  1P - 3P PRIORITY and VIRTUAL PSPS (the options EX. SETTING always had)
  * and without it only the last, as 1/1. Each page ends with DEFAULT (that page's rows back to their
  * defaults) and EXIT. As on SCORE RANKING, an arrow on each side and the page number (font 2, colour 9,
  * above the version) show there are more pages: L / R turn the page, and so do left / right on DEFAULT
- * and EXIT (on a row with a value they change it). With one page it is 1/1, with no arrows. Under the rows, the row's description in the small
- * font, as SAVE LOAD's messages. Rows 14 apart from y 0x1C (eleven fit above the description). */
-extern int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3], rt_cheat_wt[4], rt_unlock_all;   /* cheats_unlocks.c */
+ * and EXIT (on a row with a value they change it). With one page it is 1/1, with no arrows. Under the
+ * rows, the row's description in the small font, as SAVE LOAD's messages. Rows 14 apart from y 0x1C
+ * (eleven fit above the description). */
+#include "unlocks.h"
+extern int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3], rt_cheat_wt[4], rt_cheat_edit[4], rt_unlock[UNLOCK_COUNT];   /* cheats_unlocks.c */
 extern const char *const cheat_health_names[], *const cheat_guard_names[], *const cheat_super_names[], *const cheat_wt_names[];
-void cheats_unlocks_default_fighters(void);
-void cheats_unlocks_default_world_tour(void);
+void cheats_unlocks_default_unlocks(void);
+void cheats_unlocks_default_fighters(int from, int to);
+void cheats_unlocks_default_entries(void);
 static const char *const v_priority[] = { "COM", "PLAYER", NULL };
 static const char *const v_off_on[] = { "OFF", "ON", NULL };
-static const char *const v_on_off[] = { "ON", "OFF", NULL };   /* UNLOCK ALL, shown ON first: its value is 1 - index */
+static int no_fighter;              /* 4P's rows: shown, not used */
 
 /* Strings drawn by the text queue must stay in guest memory until the text pass: each host string gets a
    slot of its own, once, in a pool of ours (the same string, the same slot, every frame) */
@@ -284,51 +291,69 @@ typedef struct {
     int *value;                     /* NULL: DEFAULT or EXIT */
     const char *const *names;
     const char *what[2];            /* the description, two lines of at most 32: clear of the page number */
+    int greyed;                     /* shown, but the cursor passes it (4P) */
 } Row;
-#define R_DEFAULT_ROW(w) { "DEFAULT", NULL, NULL, { "THIS PAGE BACK TO ITS DEFAULTS.", w } }
-#define R_EXIT_ROW { "EXIT", NULL, NULL, { "SAVE AND BACK TO OPTION MODE.", "" } }
-static int unlock_shown;            /* UNLOCK ALL's row: the index into v_on_off */
-static const Row page_fighters[] = {
-    { "1P HEALTH", &rt_cheat_health[0], cheat_health_names, { "THE 1P FIGHTER HEALTH.", "NONE - ONE HIT KNOCKS OUT." } },
-    { "1P GUARD", &rt_cheat_guard[0], cheat_guard_names, { "THE 1P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." } },
-    { "1P SUPER", &rt_cheat_super[0], cheat_super_names, { "THE 1P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." } },
-    { "2P HEALTH", &rt_cheat_health[1], cheat_health_names, { "THE 2P FIGHTER HEALTH - CPU TOO.", "NONE - ONE HIT KNOCKS OUT." } },
-    { "2P GUARD", &rt_cheat_guard[1], cheat_guard_names, { "THE 2P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." } },
-    { "2P SUPER", &rt_cheat_super[1], cheat_super_names, { "THE 2P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." } },
-    { "3P HEALTH", &rt_cheat_health[2], cheat_health_names, { "THE 3P FIGHTER HEALTH.", "NONE - ONE HIT KNOCKS OUT." } },
-    { "3P GUARD", &rt_cheat_guard[2], cheat_guard_names, { "THE 3P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." } },
-    { "3P SUPER", &rt_cheat_super[2], cheat_super_names, { "THE 3P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." } },
+#define R_DEFAULT_ROW(w) { "DEFAULT", NULL, NULL, { "THIS PAGE BACK TO ITS DEFAULTS.", w }, 0 }
+#define R_EXIT_ROW { "EXIT", NULL, NULL, { "SAVE AND BACK TO OPTION MODE.", "" }, 0 }
+#define EARNED_ARCADE "OFF - EARNED BY BEATING ARCADE."
+static const Row page_unlocks[] = {
+    { "SHIN AKUMA", &rt_unlock[UNLOCK_SHIN_AKUMA], v_off_on, { "SELECT ON AKUMA - SHIN AKUMA.", EARNED_ARCADE }, 0 },
+    { "FINAL M.BISON", &rt_unlock[UNLOCK_FINAL_BISON], v_off_on, { "SELECT ON M.BISON - FINAL BISON.", EARNED_ARCADE }, 0 },
+    { "EX BALROG", &rt_unlock[UNLOCK_EX_BALROG], v_off_on, { "SELECT ON BALROG - EX BALROG.", EARNED_ARCADE }, 0 },
+    { "SHIN AKUMA BATTLE", &rt_unlock[UNLOCK_SHIN_BATTLE], v_off_on, { "FIGHT SHIN AKUMA IN FINAL BATTLE", "HOLD L AND R. OFF - BEAT ARCADE." }, 0 },
+    { "BATTLE VARIANTS", &rt_unlock[UNLOCK_VARIANTS], v_off_on, { "L AND R - DRAMATIC VARIABLE AND", "R.DRAMATIC. OFF - KUMITE 100." }, 0 },
+    { "EDIT MODE POINTS", &rt_unlock[UNLOCK_EDIT_POINTS], v_off_on, { "EDIT MODE HAS 9999 POINTS.", "OFF - EARNED BY CLEARING MODES." }, 0 },
+    { "ISM-PLUS", &rt_unlock[UNLOCK_ISM_PLUS], v_off_on, { "ALL 26 ISM-PLUSES IN EDIT MODE.", "OFF - EARNED BY CLEARING MODES." }, 0 },
+    R_DEFAULT_ROW("ALL ON."), R_EXIT_ROW,
+};
+#define FIGHTER_ROWS(n, k, who) \
+    { n "P HEALTH", &rt_cheat_health[k], cheat_health_names, { "THE " n "P FIGHTER HEALTH" who, "NONE - ONE HIT KNOCKS OUT." }, 0 }, \
+    { n "P GUARD", &rt_cheat_guard[k], cheat_guard_names, { "THE " n "P FIGHTER GUARD GAUGE.", "NONE - THE NEXT GUARD CRUSHES." }, 0 }, \
+    { n "P SUPER", &rt_cheat_super[k], cheat_super_names, { "THE " n "P FIGHTER SUPER GAUGE.", "LV1 - LV3 - HELD AT THAT LEVEL." }, 0 }
+static const Row page_fighters12[] = {
+    FIGHTER_ROWS("1", 0, "."), FIGHTER_ROWS("2", 1, " - CPU TOO."),
     R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
 };
-static const Row page_world_tour[] = {
-    { "WORLD TOUR EXP", &rt_cheat_wt[0], cheat_wt_names, { "WORLD TOUR EXP. MAX - FULL AND", "LV 32 WITH EVERY STATUS AT MOST." } },
-    { "WORLD TOUR X-ISM EXP", &rt_cheat_wt[1], cheat_wt_names, { "WORLD TOUR X-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." } },
-    { "WORLD TOUR A-ISM EXP", &rt_cheat_wt[2], cheat_wt_names, { "WORLD TOUR A-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." } },
-    { "WORLD TOUR V-ISM EXP", &rt_cheat_wt[3], cheat_wt_names, { "WORLD TOUR V-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." } },
-    { "UNLOCK ALL", &unlock_shown, v_on_off, { "EVERY MODE FIGHTER AND ISM-PLUS.", "OFF - UNLOCKED BY PLAYING." } },
-    R_DEFAULT_ROW("NORMAL AND UNLOCK ALL ON."), R_EXIT_ROW,
+static const Row page_fighters34[] = {
+    FIGHTER_ROWS("3", 2, "."),
+    { "4P HEALTH", &no_fighter, cheat_health_names, { "NO 4TH FIGHTER YET.", "" }, 1 },
+    { "4P GUARD", &no_fighter, cheat_guard_names, { "NO 4TH FIGHTER YET.", "" }, 1 },
+    { "4P SUPER", &no_fighter, cheat_super_names, { "NO 4TH FIGHTER YET.", "" }, 1 },
+    R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
+};
+static const Row page_entries[] = {
+    { "WORLD TOUR EXP", &rt_cheat_wt[0], cheat_wt_names, { "WORLD TOUR EXP. MAX - FULL AND", "LV 32 WITH EVERY STATUS AT MOST." }, 0 },
+    { "WORLD TOUR X-ISM EXP", &rt_cheat_wt[1], cheat_wt_names, { "WORLD TOUR X-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
+    { "WORLD TOUR A-ISM EXP", &rt_cheat_wt[2], cheat_wt_names, { "WORLD TOUR A-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
+    { "WORLD TOUR V-ISM EXP", &rt_cheat_wt[3], cheat_wt_names, { "WORLD TOUR V-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
+    { "EDIT MODE EXP", &rt_cheat_edit[0], cheat_wt_names, { "THE CHARACTER EDIT MODE MAKES.", "MAX - FULL EXP AND LV 32." }, 0 },
+    { "EDIT MODE X-ISM EXP", &rt_cheat_edit[1], cheat_wt_names, { "EDIT MODE X-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
+    { "EDIT MODE A-ISM EXP", &rt_cheat_edit[2], cheat_wt_names, { "EDIT MODE A-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
+    { "EDIT MODE V-ISM EXP", &rt_cheat_edit[3], cheat_wt_names, { "EDIT MODE V-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
+    R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
 };
 static const Row page_options[] = {
-    { "1P PRIORITY", &rt_join_in[0], v_priority, { "PLAYER - PAD 1 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." } },
-    { "2P PRIORITY", &rt_join_in[1], v_priority, { "PLAYER - PAD 2 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." } },
-    { "3P PRIORITY", &rt_join_in[2], v_priority, { "PLAYER - PAD 3 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." } },
-    { "VIRTUAL PSPS", &rt_virtual_psps, v_off_on, { "NETWORK FINDS PADS 2 AND 3 OR", "THE CPU AS OTHER PSPS HERE." } },
+    { "1P PRIORITY", &rt_join_in[0], v_priority, { "PLAYER - PAD 1 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
+    { "2P PRIORITY", &rt_join_in[1], v_priority, { "PLAYER - PAD 2 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
+    { "3P PRIORITY", &rt_join_in[2], v_priority, { "PLAYER - PAD 3 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
+    { "VIRTUAL PSPS", &rt_virtual_psps, v_off_on, { "NETWORK FINDS PADS 2 AND 3 OR", "THE CPU AS OTHER PSPS HERE." }, 0 },
     R_DEFAULT_ROW("COM AND VIRTUAL PSPS ON."), R_EXIT_ROW,
 };
-enum { PG_FIGHTERS, PG_WORLD_TOUR, PG_OPTIONS, N_PAGES };
+enum { PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, PG_OPTIONS, N_PAGES };
+#define PAGE(r, x) { r, (int)(sizeof r / sizeof *r), x }
 static const struct { const Row *rows; int n, value_x; } pages[N_PAGES] = {
-    { page_fighters, (int)(sizeof page_fighters / sizeof *page_fighters), 0xA0 },
-    { page_world_tour, (int)(sizeof page_world_tour / sizeof *page_world_tour), 0xE0 },
-    { page_options, (int)(sizeof page_options / sizeof *page_options), 0xA0 },
+    PAGE(page_unlocks, 0xD8), PAGE(page_fighters12, 0xA0), PAGE(page_fighters34, 0xA0), PAGE(page_entries, 0xE0), PAGE(page_options, 0xA0),
 };
 static int page;                    /* PG_* */
-static int first_page(void) { return FEATURE(CHEATS_UNLOCKS) ? PG_FIGHTERS : PG_OPTIONS; }
+static int first_page(void) { return FEATURE(CHEATS_UNLOCKS) ? PG_UNLOCKS : PG_OPTIONS; }
 static int page_count(void) { return N_PAGES - first_page(); }
 static int count_names(const char *const *n) { int k = 0; while (n[k]) k++; return k; }
 static int ex_row_y(int r) { return 0x1C + 14 * r; }
 static void page_defaults(int pg) {
-    if (pg == PG_FIGHTERS) cheats_unlocks_default_fighters();
-    else if (pg == PG_WORLD_TOUR) cheats_unlocks_default_world_tour();
+    if (pg == PG_UNLOCKS) cheats_unlocks_default_unlocks();
+    else if (pg == PG_FIGHTERS12) cheats_unlocks_default_fighters(0, 1);
+    else if (pg == PG_FIGHTERS34) cheats_unlocks_default_fighters(2, 2);
+    else if (pg == PG_ENTRIES) cheats_unlocks_default_entries();
     else { rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
 }
 
@@ -381,6 +406,7 @@ static void ex_close(Cpu *c, int snd) { mode = M_MENU; WB(OPT + 5, 0); WB(OPT + 
 #define VERSION_X (0x178 - 8 * (int)(sizeof A3MX_VERSION_SCREEN - 1))
 #define PAGE_Y    0xB6
 #define WHAT_Y    0xBC
+#define GREYED    8                   /* a text colour: light grey to slate (0x08A03D04) */
 #define B_L       0x40u
 #define B_R       0x200u
 static void turn_page(Cpu *c, int step) {
@@ -393,38 +419,88 @@ static void turn_page(Cpu *c, int step) {
 static void ex_screen(Cpu *c) {
     uint32_t p = pressed();
     if (page < first_page()) page = first_page();
-    unlock_shown = !rt_unlock_all;
     const Row *rows = pages[page].rows; int n = pages[page].n;
     const Row *r = &rows[row];
     int step = (p & 1) ? 1 : (p & 2) ? -1 : 0;                /* right / left */
     int more = page_count() > 1;
-    if (p & 8) { row = (row + n - 1) % n; sound(c, 0x38); }
-    else if (p & 4) { row = (row + 1) % n; sound(c, 0x38); }
+    if (p & 8) { do row = (row + n - 1) % n; while (rows[row].greyed); sound(c, 0x38); }
+    else if (p & 4) { do row = (row + 1) % n; while (rows[row].greyed); sound(c, 0x38); }
     else if (more && (p & (B_L | B_R))) turn_page(c, (p & B_R) ? 1 : -1);
     else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; sound(c, 0x38); }
     else if (step && more) turn_page(c, step);
     else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; sound(c, 0x39); }
-    else if ((p & B_CONFIRM) && row == n - 2) { page_defaults(page); unlock_shown = !rt_unlock_all; sound(c, 0x39); }   /* DEFAULT: this page */
+    else if ((p & B_CONFIRM) && row == n - 2) { page_defaults(page); sound(c, 0x39); }   /* DEFAULT: this page */
     else if ((p & B_CONFIRM) && row == n - 1) { ex_close(c, 0x39); return; }   /* EXIT chosen: a confirm */
     else if (p & B_BACK) { ex_close(c, 0x2F); return; }
-    if (page == PG_WORLD_TOUR) rt_unlock_all = !unlock_shown;
     rows = pages[page].rows; n = pages[page].n; r = &rows[row];
     WB(OPT + 7, (uint32_t)row); bar_y = 239 - ex_row_y(row);
     title(c, S_TITLE);
     for (int i = 0; i < n; i++) {
-        int y = ex_row_y(i), colour = i == row ? 0xB : 0xA;
+        int y = ex_row_y(i), colour = rows[i].greyed ? GREYED : i == row ? 0xB : 0xA;
         text(c, gstr(rows[i].label), 1, 0x30, y, colour);
         if (rows[i].value) {
             int k = count_names(rows[i].names), v = *rows[i].value;
-            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, 0xB);   /* values: always yellow, as GAME OPTION */
+            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, rows[i].greyed ? GREYED : 0xB);   /* values: always yellow, as GAME OPTION */
         }
     }
     for (int k = 0; k < 2; k++) if (r->what[k][0]) text(c, gstr(r->what[k]), 0, 0x30, WHAT_Y + 10 * k, 9);
     {                                                         /* the page number, 1/1 too (the user, 0.127.0) */
-        static const char *const numbers[3][3] = { { "1/1" }, { "1/2", "2/2" }, { "1/3", "2/3", "3/3" } };
+        static const char *const numbers[N_PAGES][N_PAGES] = { { "1/1" }, { "1/2", "2/2" }, { "1/3", "2/3", "3/3" },
+            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" } };
         text(c, gstr(numbers[page_count() - 1][page - first_page()]), 2, 0x178 - 48, PAGE_Y, 9);
     }
     text(c, STR(S_VERSION), 0, VERSION_X, VERSION_Y, 0xA);   /* The project's version, bottom right in the small font: just shown */
+}
+
+/* VIRTUAL PSPS OFF: the network is a stub (hle_net.c), and going into NETWORK with it crashes the game.
+ * So, once a frame while the MODE MENU runs (padicons_mode_menu, before 0x0888C5B0), its NETWORK tile is
+ * greyed and can't be chosen: the cursor can still land on it (bright, as any tile under the cursor; dim
+ * otherwise), but Cross / START there only gives the back sound. The tile is a picture in texture page
+ * 0x30 (176 x 31 at y 192, tiles.c's source list): its texels are turned to their lightness, kept as they
+ * were, and put back when VIRTUAL PSPS is on again. A page loaded afresh is greyed again. */
+#define NET_PAGE   0x30
+#define NET_V      192
+#define NET_W      176
+#define NET_H      31
+#define MODE_NETWORK 12
+#define MENU_PADS  0x08E75BA0u            /* slot 0 +12, slot 1 +56: new presses (the MODE MENU reads these two) */
+static uint16_t net_kept[NET_H][NET_W];
+static uint32_t net_kept_at;            /* the page's texels the copy is of (0: none) */
+static uint32_t net_texel(uint32_t t, int x, int y) { return t + (uint32_t)(((NET_V + y) * 256 + x) * 2); }
+static int grey15(uint16_t p) { int r = p & 31, g = (p >> 5) & 31, b = (p >> 10) & 31; return (r * 77 + g * 150 + b * 29) >> 8; }
+void exsetting_mode_menu(Cpu *c, uint32_t g) {
+    uint32_t e = PAGES + 0x18u * NET_PAGE, t = RW(e + 4), t0 = RW(e);
+    if (!t) return;
+    if (rt_virtual_psps) {
+        if (net_kept_at == t) {
+            for (int y = 0; y < NET_H; y++) for (int x = 0; x < NET_W; x++) {
+                WH(net_texel(t, x, y), net_kept[y][x]); if (t0 && t0 != t) WH(net_texel(t0, x, y), net_kept[y][x]);
+            }
+            net_kept_at = 0;
+        }
+        return;
+    }
+    int fresh = net_kept_at != t;
+    for (int y = 0; y < NET_H && !fresh; y++) for (int x = 0; x < NET_W && !fresh; x++) {   /* any colour: loaded afresh */
+        uint16_t p = (uint16_t)RH(net_texel(t, x, y));
+        fresh = (p & 31) != ((p >> 5) & 31) || ((p >> 5) & 31) != ((p >> 10) & 31);
+    }
+    if (fresh) {
+        for (int y = 0; y < NET_H; y++) for (int x = 0; x < NET_W; x++) {
+            uint16_t p = (uint16_t)RH(net_texel(t, x, y)); int l = grey15(p);
+            net_kept[y][x] = p;
+            uint16_t q = (uint16_t)((p & 0x8000) | l | l << 5 | l << 10);
+            WH(net_texel(t, x, y), q); if (t0 && t0 != t) WH(net_texel(t0, x, y), q);
+        }
+        net_kept_at = t;
+    }
+    if ((int8_t)RB(g + 0x72) == MODE_NETWORK) {
+        uint32_t m = RW(MENU_PADS + 12) | RW(MENU_PADS + 56);
+        if (m & B_CONFIRM) {
+            WW(MENU_PADS + 12, RW(MENU_PADS + 12) & ~B_CONFIRM); WW(MENU_PADS + 56, RW(MENU_PADS + 56) & ~B_CONFIRM);
+            sound(c, 0x2F);
+        }
+    }
 }
 
 /* PLAYER CONFIG: P1 - P4 CONFIG and EXIT on the menu's buttons */

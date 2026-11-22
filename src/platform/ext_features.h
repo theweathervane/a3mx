@@ -94,11 +94,11 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "Off: the picture is shown as it is drawn, and FILTER can't be chosen.", 1, -1, SECTION_DISPLAY },
     /* ---- Extra ---- */
     { "cheats_unlocks", "Cheats and Unlocks",
-      "Two more pages in OPTION MODE > EX. SETTING: each fighter's HEALTH, GUARD and SUPER (infinite,\n"
-      "half, none, a fixed level), World Tour EXP at its most, and UNLOCK ALL (every mode, fighter and\n"
-      "ISM-Plus from the start, on unless you turn it off there). Not in network battles.\n"
-      "Off: EX. SETTING has only its own page, nothing is forced, and modes and fighters are unlocked by\n"
-      "playing, as on the PSP (what your save has already unlocked stays).", 1, -1, SECTION_EXTRA },
+      "Four more pages in OPTION MODE > EX. SETTING: the unlocks one by one (Shin Akuma, Final M. Bison,\n"
+      "EX Balrog, the Shin Akuma battle, the battle variants, EDIT MODE's points, the ISM-Pluses: all on,\n"
+      "never written into your save), each fighter's HEALTH, GUARD and SUPER, and World Tour / EDIT MODE\n"
+      "EXP at its most with Lv 32. Not in network battles.\n"
+      "Off: EX. SETTING has only its own page, nothing is forced: what your save has earned.", 1, -1, SECTION_EXTRA },
     { "local_multiplayer", "Local multiplayer",
       "Two and three players on one PC: join-in on the select screens, the network modes played\n"
       "locally (EX. SETTING > VIRTUAL PSPS), Variable Battle tagging for two players.\n"

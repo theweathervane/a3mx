@@ -12,6 +12,7 @@
  * once everyone has chosen. selectscreen.c wraps the SPEED: line (0x088A1548): WAIT on the boxes.
  */
 #include "select.h"
+#include "unlocks.h"   /* the Cheats and Unlocks extension's rows (0 without it) */
 
 void rt_call_indirect(Cpu *c, uint32_t addr);
 
@@ -1114,9 +1115,9 @@ static void as_himself(Cpu *c, gaddr me) {
     int extras = 1;
     if (CALL0(f_088D5E44) == 0) extras = S16(SYS + SYS_UNLOCKS) & 1;
     if (!(held & 0x4000) || !extras) return;
-    if (ch == 2)    { ch = 0x24; *B(me + F_CHARACTER) = 0x24; }
-    if (ch == 0x25) { ch = 0x15; *B(me + F_CHARACTER) = 0x15; }
-    if (ch == 0xA)  CALL1(f_088A2CCC, me);
+    if (ch == 2 && !UNLOCK_BLOCKED(UNLOCK_SHIN_AKUMA))    { ch = 0x24; *B(me + F_CHARACTER) = 0x24; }
+    if (ch == 0x25 && !UNLOCK_BLOCKED(UNLOCK_EX_BALROG))  { ch = 0x15; *B(me + F_CHARACTER) = 0x15; }
+    if (ch == 0xA && !UNLOCK_BLOCKED(UNLOCK_FINAL_BISON)) CALL1(f_088A2CCC, me);
 }
 
 /* Chosen (0x088A2FDC, a2 the button): as an entry or as himself; a new character clears + 400 / 404

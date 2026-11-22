@@ -1,6 +1,8 @@
 /* The game's save data, made friendlier: a save is always there, AUTO SAVE is always on and
  * everything is unlocked.
  *
+ * (The unlocks: cheats_unlocks.c, EX. SETTING page 1.)
+ *
  * Saves: STFALPH3.SYS (system data, 0x3600 bytes) and STFALPH3.WTR (World Tour, 0x1A00 bytes), kept in
  * a3mx.dat / a3mx.cfg (savestore.c, settings.c), not on the memory stick. Both carry 0x3399 at +0x280; there is no
  * checksum. Loading (0x08816FC4) copies the file in pieces into the game's working copy:
@@ -38,10 +40,6 @@
 #define SYS_OPTS   0x08A058A0u
 #define AUTOSAVE   (SYS_OPTS + 0x4F)
 #define AUTOSAVE_S 0x08A077CCu
-#define CLEARED    (SYS_OPTS + 0x50)
-#define UNLOCKS    (SYS_OPTS + 0x52)
-#define ISM_PLUS   (SYS_OPTS + 0x200)          /* ISM-Pluses earned, one bit each */
-#define ALL_ISM_PLUS 0x0FFFFFFFu                /* bits 0-27: the mode rewards (0x0883B884) use up to bit 27 */
 #define MAGIC      0x3399u
 #define SYS_MODE_SELECT 0x488u              /* in the file; 0x08A05AA4 in memory: GAME OPTION > MODE SELECT (1 on) */
 
@@ -121,13 +119,11 @@ static void boot_load_done(void) {
     if ((long)rt_vblank_count() > loaded_at + 10) boot_loads = 2;
 }
 void widescreen_frame(void);               /* widescreen.c */
-void cheats_unlocks_frame(void);           /* cheats_unlocks.c */
-extern int rt_unlock_all;                  /* cheats_unlocks.c: EX. SETTING's UNLOCK ALL */
+void cheats_unlocks_frame(int ready);      /* cheats_unlocks.c: the cheats, and the unlocks once READY */
 void sysdata_frame(void) {              /* once a frame, while any feature is on: each part by its own (ext_features.h) */
     extern int rt_widescreen;
     if (FEATURE(WIDESCREEN)) widescreen_frame(); else rt_widescreen = 0;   /* (a saved WIDE NATIVE is not used) */
     if (FEATURE(MENUS)) exsetting_frame();
-    if (FEATURE(CHEATS_UNLOCKS)) cheats_unlocks_frame();
     if (FEATURE(SAVES)) { boot_load_done(); hide_load_save(); }
     /* from a moment after the system data is in. Unlocks without Silent saves: the game may have no
        save to load at all (an empty memory stick), so then from 15 seconds in */
@@ -136,10 +132,7 @@ void sysdata_frame(void) {              /* once a frame, while any feature is on
         if (RB(AUTOSAVE) != 1) WB(AUTOSAVE, 1);
         if (RB(AUTOSAVE_S) != 1) WB(AUTOSAVE_S, 1);
     }
-    if (!FEATURE(CHEATS_UNLOCKS) || !rt_unlock_all || !(ready || (!FEATURE(SAVES) && rt_vblank_count() > 900))) return;
-    if (RH(UNLOCKS) != 0xFFFF) WH(UNLOCKS, 0xFFFF);
-    if ((RB(CLEARED) & 7) != 7) WB(CLEARED, RB(CLEARED) | 7);
-    if ((RW(ISM_PLUS) & ALL_ISM_PLUS) != ALL_ISM_PLUS) WW(ISM_PLUS, RW(ISM_PLUS) | ALL_ISM_PLUS);
+    if (FEATURE(CHEATS_UNLOCKS)) cheats_unlocks_frame(ready || (!FEATURE(SAVES) && loaded_at < 0 && rt_vblank_count() > 900));
 }
 
 /* The game's Yes / No question (0x08818BA4, a0 = its context: +4 message, +9 cursor 1 Yes / -1 No;

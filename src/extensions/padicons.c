@@ -13,6 +13,7 @@
  * (selectscreen.c calls padicons_draw), as textured quads through the game's 2D library like JOIN /
  * WAIT: our 16-bit texture on page 0x3D only while drawing, layer 22. */
 #include "rt.h"
+#include "ext_features.h"
 #include <string.h>
 #include "padicon_art.h"                    /* the bubbles' pixels, shared with the launcher's Controllers tab */
 
@@ -157,8 +158,8 @@ static uint64_t menu_frame = ~0ull;
 /* around the MODE MENU running state (0x0888C5B0, src/core/task/mode_menu.c: SFA_FUNC_WRAPPED) */
 void pacing_decide(const char *where);      /* pacing.c: FRAME TIMING AUTO chooses only here and on leaving SCREEN SETTING */
 int padicons_mode_menu(Cpu *c, uint32_t a0, int after) {
-    (void)c; (void)a0;
     if (after) return 0;
+    { void exsetting_mode_menu(Cpu *c, uint32_t g); if (FEATURE(MENUS)) exsetting_mode_menu(c, a0); }   /* VIRTUAL PSPS off: NETWORK greyed, not chosen */
     uint64_t now = rt_vblank_count();
     if (menu_frame == ~0ull || now - menu_frame > 2) pacing_decide("the MODE MENU");   /* it has just opened (the first time, or coming back) */
     menu_frame = now;

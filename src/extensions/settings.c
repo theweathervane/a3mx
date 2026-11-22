@@ -7,7 +7,7 @@
  *   [screen setting] OPTION MODE > SCREEN SETTING
  *   [p1 config] .. [p4 config]   OPTION MODE > PLAYER CONFIG: each button's attack (names as on the
  *                    screen, or 0-54), COMMAND, TYPE and RAPID. L2 / R2 and player 4 are the project's own
- *   [progress]       unlock bits (held on by sysdata.c while UNLOCK ALL is)
+ *   [progress]       unlock bits as the save earned them (cheats_unlocks.c forces more without saving them)
  *
  * The game keeps the settings in its options block (0x08A058A0, the system data's first piece:
  * savestore.c); here each one is a byte (or two) in it:
@@ -31,7 +31,13 @@ int rt_frame_timing = 2;                      /* [screen setting] frame_timing: 
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
 extern int rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
-extern int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3], rt_cheat_wt[4], rt_unlock_all;   /* cheats_unlocks.c */
+extern int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3], rt_cheat_wt[4], rt_cheat_edit[4];   /* cheats_unlocks.c */
+#include "unlocks.h"
+extern int rt_unlock[UNLOCK_COUNT];
+static const char *const unlock_keys[UNLOCK_COUNT] = { "shin_akuma", "final_m_bison", "ex_balrog", "shin_akuma_battle", "battle_variants", "edit_mode_points", "ism_plus" };
+static const char *const unlock_notes[UNLOCK_COUNT] = { "SELECT on Akuma", "SELECT on M. Bison", "SELECT on Balrog", "L + R on FINAL BATTLE",
+    "L + R on DRAMATIC, VARIABLE, R.DRAMATIC", "every mode clear's points (9999)", "all 26 ISM-Pluses" };
+static const char *const cheat_edit_keys[4] = { "edit_exp", "edit_x_ism_exp", "edit_a_ism_exp", "edit_v_ism_exp" };
 extern const char *const cheat_health_names[], *const cheat_guard_names[], *const cheat_super_names[], *const cheat_wt_names[];
 static const char *const cheat_wt_keys[4] = { "wt_exp", "wt_x_ism_exp", "wt_a_ism_exp", "wt_v_ism_exp" };
 
@@ -99,8 +105,8 @@ static const Field fields[] = {
     { "game option", "se_volume", 0x1FD, -1, K_NUM, NULL, 15, "0 - 15" },
     { "screen setting", "screen_size", 0x58, 0x62, K_SIZE, v_size, 0, "NORMAL, WIDE or WIDE NATIVE (16:9, 4:3 play area)" },
     { "screen setting", "wallpaper", 0x1FE, -1, K_ENUM, v_wall, 0, "NONE or 01 - 10" },
-    { "progress", "unlocks", 0x52, -1, K_HEX16, NULL, 0, "modes cleared (hex); all held on" },
-    { "progress", "ism_pluses", 0x200, -1, K_HEX32, NULL, 0, "ISM-Pluses earned, a bit each (hex); all held on" },
+    { "progress", "unlocks", 0x52, -1, K_HEX16, NULL, 0, "modes cleared (hex), as earned: Cheats and Unlocks forces more without saving them" },
+    { "progress", "ism_pluses", 0x200, -1, K_HEX32, NULL, 0, "ISM-Pluses earned, a bit each (hex), as earned" },
 };
 #define N_FIELDS (sizeof fields / sizeof *fields)
 static const char *const button_key[9] = { "square", "triangle", "l", "cross", "circle", "r", "select", "l2", "r2" };
@@ -226,8 +232,9 @@ void settings_load(void) {
             }
             { int done_wt = 0;
               for (int i = 0; i < 4; i++) if (!strcmp(key, cheat_wt_keys[i])) { int x = lookup(val, cheat_wt_names, 2); if (x >= 0) rt_cheat_wt[i] = x; done_wt = 1; }
+              for (int i = 0; i < 4; i++) if (!strcmp(key, cheat_edit_keys[i])) { int x = lookup(val, cheat_wt_names, 2); if (x >= 0) rt_cheat_edit[i] = x; done_wt = 1; }
+              for (int i = 0; i < UNLOCK_COUNT; i++) if (!strcmp(key, unlock_keys[i])) { rt_unlock[i] = is_on(val); done_wt = 1; }
               if (done_wt) continue; }
-            if (!strcmp(key, "unlock_all")) { rt_unlock_all = is_on(val); continue; }
             if (!strcmp(key, "vsync")) { rt_vsync = is_on(val); continue; }
             if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER, by name (shader.h); unknown: OFF */
                 rt_filter = 0;
@@ -303,14 +310,16 @@ static void cfg_body(FILE *f) {
     fprintf(f, "\n[ex setting]\n");
     for (int k = 0; k < 3; k++) { char l[48]; snprintf(l, sizeof l, "p%d_priority=%s", k + 1, v_human[!!rt_join_in[k]]); fprintf(f, "%-24s # PLAYER: pad %d plays a fighter nobody started with; COM: the computer does\n", l, k + 1); }
     { char l[48]; snprintf(l, sizeof l, "virtual_psps=%s", off_on[!!rt_virtual_psps]); fprintf(f, "%-24s # ON: NETWORK finds pads 2 and 3 (or the computer) as other PSPs, on this PC; OFF: no other PSPs\n", l); }
-    fprintf(f, "\n[cheats and unlocks]      # with the Cheats and Unlocks extension: fighter slots 1 - 3, every mode but network battles\n");
+    fprintf(f, "\n[cheats and unlocks]      # with the Cheats and Unlocks extension. Unlocks: ON forced, OFF as your save earned them (forced ones are never saved)\n");
+    for (int i = 0; i < UNLOCK_COUNT; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", unlock_keys[i], off_on[!!rt_unlock[i]]); fprintf(f, "%-24s # %s\n", l, unlock_notes[i]); }
+    fprintf(f, "%-24s # the fighter slots 1 - 3, every mode but network battles\n", "");
     for (int k = 0; k < 3; k++) {
         fprintf(f, "p%d_health=%-14s # NORMAL, INFINITE, HALF or NONE (one hit knocks out)\n", k + 1, cheat_health_names[rt_cheat_health[k] & 3]);
         fprintf(f, "p%d_guard=%-15s # NORMAL, INFINITE, HALF or NONE (the next guard crushes)\n", k + 1, cheat_guard_names[rt_cheat_guard[k] & 3]);
         fprintf(f, "p%d_super=%-15s # NORMAL, INFINITE, LV1, LV2, LV3 or NONE\n", k + 1, cheat_super_names[rt_cheat_super[k] >= 0 && rt_cheat_super[k] < 6 ? rt_cheat_super[k] : 0]);
     }
-    for (int i = 0; i < 4; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", cheat_wt_keys[i], cheat_wt_names[!!rt_cheat_wt[i]]); fprintf(f, "%-24s # NORMAL or MAX (World Tour)\n", l); }
-    fprintf(f, "unlock_all=%-13s # ON: every mode, fighter and ISM-Plus; OFF: unlocked by playing\n", off_on[!!rt_unlock_all]);
+    for (int i = 0; i < 4; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", cheat_wt_keys[i], cheat_wt_names[!!rt_cheat_wt[i]]); fprintf(f, "%-24s # NORMAL or MAX (World Tour: EXP and Lv 32)\n", l); }
+    for (int i = 0; i < 4; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", cheat_edit_keys[i], cheat_wt_names[!!rt_cheat_edit[i]]); fprintf(f, "%-24s # NORMAL or MAX (EDIT MODE: EXP and Lv 32)\n", l); }
     write_fields(f, o, "progress", 1);         /* ends with [screen setting] */
     { char l[48]; snprintf(l, sizeof l, "vsync=%s", off_on[!!rt_vsync]); fprintf(f, "%-24s # ON: wait for the monitor, no tearing; OFF: never wait\n", l); }
     { static const char *const ft[] = { "ORIGINAL", "SMOOTH", "AUTO" };

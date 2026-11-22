@@ -17,3 +17,5 @@
 08812520     text pass (the other one): JOIN / WAIT drawn after it (selectscreen.c)
 088A8404     select screen, one kind of display task (a0 = task, +0x5C player): Dramatic Battle, each player on its own side (selectscreen.c)
 08833DDC     a player not playing presses Start (join / new challenger): not in R.DRAMATIC BATTLE (hooks.c)
+0882AE20     a mode cleared, its unlock bits set: run without the forced ones, so what it earns is seen (cheats_unlocks.c)
+0883B800     an entry's ISM-Pluses added to the system data: run without the forced ones (cheats_unlocks.c)

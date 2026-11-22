@@ -273,8 +273,9 @@ int store_import(const char *dir) {                  /* IMPORT: read and keep (t
 
 /* ---------------------------------------------------------------- start up, and the settings in the options piece */
 uint8_t *store_options(void) { return store_have_sys ? store_sys + sys_pieces[0].off : NULL; }
+void cheats_unlocks_unforce(uint8_t *options);     /* cheats_unlocks.c: the unlocks as earned, not as forced */
 void store_sync_live(void) {                         /* the game's current options into our image */
-    if (live && store_have_sys) memcpy(store_sys + sys_pieces[0].off, HOST(sys_pieces[0].mem), sys_pieces[0].len);
+    if (live && store_have_sys) { memcpy(store_sys + sys_pieces[0].off, HOST(sys_pieces[0].mem), sys_pieces[0].len); cheats_unlocks_unforce(store_sys + sys_pieces[0].off); }
 }
 int store_is_live(void) { return live; }
 
@@ -329,6 +330,7 @@ int store_save(const char *file, uint32_t buf, uint32_t n) {
     uint32_t size = sys ? SYS_SIZE : WTR_SIZE;
     if (n != size || buf < USER_LO || buf + size > USER_HI) { rt_log("store: %s of %u bytes not saved", file, n); return 0; }
     memcpy(sys ? store_sys : store_wtr, HOST(buf), size);
+    if (sys) cheats_unlocks_unforce(store_sys + sys_pieces[0].off);
     if (sys) store_have_sys = 1; else store_have_wtr = 1;
     int ok = dat_write();
     if (sys) settings_write();
@@ -353,8 +355,8 @@ int store_delete_sys(void) {
     if (!have_default) return 0;
     memcpy(store_sys, default_sys, SYS_SIZE); store_have_sys = 1;
     rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1;
-    { void cheats_unlocks_default_fighters(void), cheats_unlocks_default_world_tour(void);
-      cheats_unlocks_default_fighters(); cheats_unlocks_default_world_tour(); }
+    { void cheats_unlocks_default_unlocks(void), cheats_unlocks_default_fighters(int from, int to), cheats_unlocks_default_entries(void);
+      cheats_unlocks_default_unlocks(); cheats_unlocks_default_fighters(0, 2); cheats_unlocks_default_entries(); }
     for (int p = 0; p < 4; p++) { rt_l2[p] = 6; rt_r2[p] = 7; }
     memcpy(rt_p4_config, pcfg_default, sizeof rt_p4_config);
     int ok = dat_write();

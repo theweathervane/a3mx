@@ -17,6 +17,7 @@
  * entry's, a random box's, CLASSICAL's) is applied by 0x08895564.
  */
 #include "select.h"
+#include "unlocks.h"   /* the Cheats and Unlocks extension's rows (0 without it) */
 
 #define GRID           0x08A26F60u   /* s8 [7 rows][7 columns]: each box's character, or -1 for none;
                                         bit 0x40: a random box (kind in the low nibble) for side bit 0;
@@ -307,6 +308,7 @@ static uint8_t colour_of(uint32_t buttons) {
    modes 9, 0x11, 0x12 (in a network session, if allowed and decided by this side). */
 static uint32_t select_extras(Cpu *c, gaddr me, uint32_t ch) {
     if (ch == CH_AKUMA || ch == CH_BALROG_2) {
+        if (UNLOCK_BLOCKED(ch == CH_AKUMA ? UNLOCK_SHIN_AKUMA : UNLOCK_EX_BALROG)) return ch;   /* (not the game's: unlocks.h) */
         uint32_t to = ch == CH_AKUMA ? CH_SHIN_AKUMA : CH_BALROG;
         if (S8(GAME + G_NET) == 0 || CALL1(f_0889472C, to) == 0) {
             *B(me + F_CHARACTER) = (uint8_t)to;
@@ -314,7 +316,7 @@ static uint32_t select_extras(Cpu *c, gaddr me, uint32_t ch) {
         }
         return ch;
     }
-    if (ch != CH_BISON) return ch;
+    if (ch != CH_BISON || UNLOCK_BLOCKED(UNLOCK_FINAL_BISON)) return ch;
     int8_t mode = S8(GAME + G_MODE);
     if (mode != 1 && mode != 0 && mode != 0x12 && mode != 0x11 && mode != 9) return ch;
     if (S8(GAME + G_NET) != 0) {

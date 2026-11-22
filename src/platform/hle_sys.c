@@ -3,6 +3,7 @@
 #include "rt.h"
 #include "host.h"
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
 #ifdef _WIN32
@@ -218,6 +219,7 @@ static const char *sd_pick_name(uint32_t prm, int loading, char *buf) {
     }
     return buf;
 }
+void cheats_unlocks_unforce(uint8_t *options);   /* extensions/cheats_unlocks.c (extensions_off.c: nothing) */
 void hle_sceUtilitySavedataInitStart(Cpu *c) {
     uint32_t prm = sd_param = ARG(0);
     uint32_t mode = RW(prm + 0x30), result = 0;
@@ -241,7 +243,12 @@ void hle_sceUtilitySavedataInitStart(Cpu *c) {
         sd_dir(prm, sd_pick_name(prm, 0, name), dir, sizeof dir);
         snprintf(path, sizeof path, "%s/%s", dir, file);
         mkdirs(path);
-        if (!sd_write(path, RW(prm + 0x74), RW(prm + 0x7C))) result = 0x80110385;
+        if (!strcmp(file, "STFALPH3.SYS") && RW(prm + 0x7C) >= 0x284 + 0x208 && FEATURE(CHEATS_UNLOCKS)) {   /* the unlocks as earned (cheats_unlocks.c) */
+            uint32_t n = RW(prm + 0x7C); uint8_t *copy = (uint8_t *)malloc(n);
+            if (copy) { memcpy(copy, HOST(RW(prm + 0x74)), n); cheats_unlocks_unforce(copy + 0x284);
+                        FILE *sf = fopen(path, "wb"); if (!sf || fwrite(copy, 1, n, sf) != n) result = 0x80110385; if (sf) fclose(sf); free(copy); }
+            else if (!sd_write(path, RW(prm + 0x74), RW(prm + 0x7C))) result = 0x80110385;
+        } else if (!sd_write(path, RW(prm + 0x74), RW(prm + 0x7C))) result = 0x80110385;
         static const char *extra[4] = { "ICON0.PNG", "ICON1.PMF", "PIC1.PNG", "SND0.AT3" };
         for (int k = 0; k < 4; k++) {
             uint32_t fd = prm + 0x584 + 16u * (uint32_t)k, b = RW(fd), sz = RW(fd + 8);

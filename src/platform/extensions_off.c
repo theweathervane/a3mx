@@ -14,7 +14,8 @@ int rt_widescreen;                       /* WIDE NATIVE stays off */
 int rt_vsync = 1;                        /* host_sdl.c */
 int rt_frame_timing = 2;                 /* pacing.c: AUTO */
 int rt_filter;                           /* shader_gl.c: OFF */
-int rt_virtual_psps = 1;                   /* hle_net.c: the network modes as a PSP has them */
+int rt_virtual_psps = 1;                 /* hle_net.c: the network modes as a PSP has them */
+int rt_unlock_blocked;                   /* unlocks.h: nothing barred beyond the save */
 int rt_human[3] = { 1, -1, -1 };         /* --p2 / --p3: no effect */
 int rt_pads_forced;                      /* --pads: no effect */
 int store_save_fails;                    /* --save-fails: no effect */
@@ -25,6 +26,7 @@ void store_shutdown(void) {}
 void netplay_init(void) {}
 void netplay_frame(void) {}
 void sysdata_frame(void) {}
+void cheats_unlocks_unforce(uint8_t *options) { (void)options; }
 void quitkey_request(void) {}
 uint32_t pcfg_pad_to_psp(int pad, uint32_t raw) { (void)pad; return raw & ~0xC0000000u; }
 const char *netplay_name(int node) { (void)node; return "PLAYER1"; }

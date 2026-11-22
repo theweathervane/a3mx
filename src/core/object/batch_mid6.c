@@ -362,8 +362,9 @@ SFA_FUNC(0896A424, copy_parent_look) {
 }
 
 /* (screen, record): the next round's flags: +0 on, the four fighters' +1 / +336 / +424 cleared and
-   +373 set, and 0x08A058A0 +82's bit 0 unless the record's +69 or the screen's +114. */
-SFA_FUNC(089DE194, next_round_flags) {
+   +373 set, and 0x08A058A0 +82's bit 0 unless the record's +69 or the screen's +114 (Arcade cleared:
+   wrapped by extensions/cheats_unlocks.c, which follows what is earned). */
+SFA_FUNC_WRAPPED(089DE194, next_round_flags, cheats_unlocks_next_round) {
     (void)c;
     gaddr a = ARG(0), b = ARG(1);
     *H(a) = (uint16_t)(*H(a) + 1);
