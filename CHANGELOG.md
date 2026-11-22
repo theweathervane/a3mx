@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.121.0
+### For players
+- **More of the game decompiled:** 25 more functions, among them the CPU choosing a throw or an attack against its opponent, the start of the CPU's scripts, the fight's objects reset before each fight, the camera lines' starts, and particles and panels set up. Nothing plays differently.
+- **I-ISM, checked:** player 2 can already pick an entry character on Arcade's select screen (after joining with Start) and play it; no change was needed.
+
+### Technical
+- `src/core/object/batch_mid12.c` (new): the 25 ready functions of 11 - 76 instructions (`ready.py 9 80`): 0x089CFFC4, 0x088B4C40, 0x089E0144, 0x088AAD0C, 0x088ADEF0, 0x0892EEE8, 0x08869A88, 0x0887E420, 0x08821F58, 0x0885EE74, 0x088B4F2C, 0x088790C4, 0x088BD180, 0x089DEC88, 0x088788D4, 0x0887B7FC, 0x089CF6A8, 0x089E0054, 0x089E00CC, 0x089E3400, 0x08877448, 0x088B40E0, 0x08822040, 0x088ABC3C, 0x088B5074. Tables in docs/PSP_PROGRAM_MAP.md.
+- Checked: the coverage pass maps all 25 to scenarios (attract_mode, arcade_ending and arcade_other_fighter run them all); parity (memory hashes, lazy renderer) passed for attract_mode, arcade_other_fighter, arcade_ending, arcade_fight, boot_to_select, arcade_match, network_match, super_finish, free_battle, free_battle_team, mode_tour, arcade_join_select, no_extensions, option_tour, stage_objects_10_guy and free_battle_dramatic.
+
 ## 0.120.0
 ### For players
 - **WIDE NATIVE, endings: the new Scaled endings extension** (on by default; launcher **Extensions** tab, `--features ...,-scaled_endings` to turn it off). A scene with its own art past the 4:3 sides (scrolling skies, stages) shows it; any other is drawn 1.25 times larger, layers and pictures together, as the super finish's backdrops are, so it fills the 16:9 screen. Profile pictures move to the screen's edges.
