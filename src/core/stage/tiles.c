@@ -23,9 +23,12 @@
  * too since 0.99.1). Not for the maps whose wrap is something else: the animated kinds 0xDA / 0xEE
  * (their wrap distance isn't set), 0x0881B268's strips (0x90, the next strip) and animated 0x85.
  *
- * Animated layers (0.121.1): their frame 0 leaves map columns 0 - 7 of each row empty, which the 4:3
- * screen never shows but WIDE NATIVE's extra columns can (M. Bison's first stage at the left wall: the
- * trees blinked out for 6 frames in 66); an empty extra tile there is taken from the frame before.
+ * Animated layers (0.121.1, corrected 0.127.1): 0xDA / 0xEE (M. Bison's two stages) keep each map row
+ * as one strip of pictures; a frame's window starts 24 columns on from the last's, and its own picture
+ * is the window's columns 8 - 31 (0 - 7 hold the previous frame's end, 32 on the next frame's start: the
+ * 4:3 screen shows 8 - 32). WIDE NATIVE's extra columns wrap round within the frame's own picture (its
+ * art meets itself there as at any tile edge), so they animate with the rest; 0.121.1 took frame 10's
+ * columns for frame 0 only, which left a seam and the right side as it was.
  *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
  * differently from the PSP.
@@ -244,15 +247,15 @@ static int wide_wraps_left(gaddr st, const Grid *g) {
 gaddr stage_strip_before;
 #define STRIP_W 16
 
-/* WIDE NATIVE: 0x0881AB28's animated kinds (0xDA / 0xEE: 11 frames, 24 map words apart in each row) */
+/* WIDE NATIVE: 0x0881AB28's animated kinds (0xDA / 0xEE). Each map row is one strip of pictures: the
+   frame's window starts 24 columns further on each frame (GRID_LINE has the frame's offset), and the
+   frame's own picture is the window's columns 8 - 31; columns 0 - 7 are the previous frame's end (frame
+   0's are empty) and 32 on the next frame's start. */
+#define ANIM_FIRST 8
+#define ANIM_W     24
 static int animated_kind(gaddr st, const Grid *g) {
     int32_t kind = S16(st + GRID_KIND);
-    return !g->b268 && (kind == 0xDA || kind == 0xEE) && *W(st + GRID_LAYER) != 0;
-}
-/* frame 0: how many frames on the one before it is (10); others 0 (no change) */
-static int32_t anim_frame_before(gaddr st) {
-    int32_t frame = (int8_t)*B(*W(st + GRID_LAYER) + 131);
-    return frame == 0 ? 10 : 0;   /* only frame 0 has the gap */
+    return !g->b268 && (kind == 0xDA || kind == 0xEE);
 }
 
 /* The grid, row by row: the map wraps down at GRID_ROW_WRAP rows and across at GRID_COL_WRAP columns. */
@@ -287,6 +290,7 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
         *W(st + GRID_COL) = 0;
         gaddr strip = st;
         int strip_left = rt_widescreen && g->b268 && S16(st + GRID_KIND) == 0x90 && stage_strip_before != 0;
+        int anim_wrap = rt_widescreen && animated_kind(st, g);
         int32_t col = 0;
         do {
             if (scene_mirror) {   /* the scene's own column, round within its 12 past its sides */
@@ -294,6 +298,10 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
                 r = (r % SCENE_W + SCENE_W) % SCENE_W;
                 int32_t col0 = S16(st + GRID_MAP_COL), mc = (col0 + r) % scene_map_w;
                 *W(st + GRID_TILE) = *W(st + GRID_LINE) + (uint32_t)((mc - col0) * 4);
+            } else if (anim_wrap) {   /* within the frame's own picture, map columns 8 - 31 */
+                int32_t col0 = S16(st + GRID_MAP_COL), mc = col - g->wide_tiles + col0;
+                int32_t w = mc < ANIM_FIRST ? mc + ANIM_W : mc >= ANIM_FIRST + ANIM_W ? mc - ANIM_W : mc;
+                *W(st + GRID_TILE) = *W(st + GRID_LINE) + (uint32_t)((w - col0) * 4);
             } else if (col == S16(st + GRID_COL_WRAP)) {
                 if (g->b268 && S16(st + GRID_KIND) == 0x90) next_strip(st, &strip);
                 else *W(st + GRID_TILE) -= (uint32_t)(S16(st + GRID_COL_BACK) << 2);
@@ -307,14 +315,7 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
                 *W(st + GRID_TILE) = at;
                 if ((int32_t)*W(at) < 0) draw_tile(c, st, g);
                 *W(st + GRID_TILE) = tile;
-            } else if ((int32_t)*W(tile) < 0) {
-                draw_tile(c, st, g);
-            } else if (rt_widescreen && col < g->wide_tiles && animated_kind(st, g)) {
-                /* WIDE NATIVE: an animated layer's frame 0 leaves map columns 0 - 7 empty (the 4:3
-                   screen never reaches them); there the tile comes from the frame before */
-                gaddr before = tile + (uint32_t)(int32_t)(anim_frame_before(st) * 96);
-                if ((int32_t)*W(before) < 0) { *W(st + GRID_TILE) = before; draw_tile(c, st, g); *W(st + GRID_TILE) = tile; }
-            }
+            } else if ((int32_t)*W(tile) < 0) draw_tile(c, st, g);
             col++;
             SET16(st + GRID_X, S16(st + GRID_X) + S16(st + GRID_STEP_X));
             *W(st + GRID_COL) = (uint32_t)col;

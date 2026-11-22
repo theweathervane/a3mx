@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.127.1
+### For players
+- **WIDE NATIVE, M. Bison's stages, corrected:** the trees at the screen's sides now sway with the rest of the background at both walls, with no seam and no flicker. 0.121.1 fixed only the left side, and with the wrong picture.
+
+### Technical
+- `core/stage/tiles.c`: the animated 32-pixel layers (kinds 0xDA / 0xEE, stages 0x0A / 0x1E) keep each map row as one strip of pictures; a frame's window starts 24 columns on from the last's and its own picture is the window's columns 8 - 31 (0 - 7 are the previous frame's end, frame 0's empty; 32 on the next frame's start). In WIDE NATIVE their columns now wrap round within the frame's own picture (`anim_wrap` in draw_grid), on both sides; 0.121.1's frame-10 tiles for frame 0 are gone. NORMAL and WIDE draw as before.
+- Checked: the map's tile words logged for every frame; stage_objects_29_bison1 drawn in WIDE NATIVE over twelve frames at each wall (fighters held at the right wall with --poke), the joins' colour step (16:9 x 39 at the left wall, x 442 at the right) no bigger than the art's own tile edges; parity passed for stage_objects_29_bison1, stage_objects_30_bison2 and wide_fight.
+
 ## 0.127.0
 ### For players
 - **Cheats and Unlocks:** OPTION MODE > EX. SETTING now has pages. Page 1/3: 1P, 2P and 3P HEALTH (NORMAL, INFINITE, HALF, NONE: one hit knocks out), GUARD (NORMAL, INFINITE, HALF, NONE: the next guard crushes) and SUPER (NORMAL, INFINITE, LV1 - LV3, NONE), for each fighter slot, the computer's too, in every mode but network battles. Page 2/3: World Tour EXP and its X-, A- and V-ISM EXP at MAX, and UNLOCK ALL (what the launcher's *Everything unlocked* did, on by default). Page 3/3: the options EX. SETTING always had.
