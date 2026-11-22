@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.121.1
+### For players
+- **WIDE NATIVE, M. Bison's stages:** the trees and the ground's dark band at the screen's left side no longer blink out for a moment every second or so near the left wall (M. Bison's first stage, as in Final Battle, and his second).
+
+### Technical
+- `core/stage/tiles.c`: the animated 32-pixel layers (kinds 0xDA / 0xEE, stages 0x0A / 0x1E: 11 frames 24 map words apart in each 0x110-word row) leave map columns 0 - 7 empty in frame 0, columns the 4:3 screen never reaches; WIDE NATIVE's two extra columns on the left did, for 6 frames in every 66. An empty extra tile there now comes from frame 10, the frame before. NORMAL and WIDE draw as before.
+- Checked: frame 0 of both layers logged (columns 0 - 7 empty, the other ten frames full); stage_objects_29_bison1 drawn in WIDE NATIVE before and after; parity passed for stage_objects_29_bison1, stage_objects_30_bison2 and wide_fight.
+
 ## 0.121.0
 ### For players
 - **More of the game decompiled:** 25 more functions, among them the CPU choosing a throw or an attack against its opponent, the start of the CPU's scripts, the fight's objects reset before each fight, the camera lines' starts, and particles and panels set up. Nothing plays differently.

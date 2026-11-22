@@ -23,6 +23,10 @@
  * too since 0.99.1). Not for the maps whose wrap is something else: the animated kinds 0xDA / 0xEE
  * (their wrap distance isn't set), 0x0881B268's strips (0x90, the next strip) and animated 0x85.
  *
+ * Animated layers (0.121.1): their frame 0 leaves map columns 0 - 7 of each row empty, which the 4:3
+ * screen never shows but WIDE NATIVE's extra columns can (M. Bison's first stage at the left wall: the
+ * trees blinked out for 6 frames in 66); an empty extra tile there is taken from the frame before.
+ *
  * Every float multiply and add is its own statement, so the compiler can't fuse them (FMA) and round
  * differently from the PSP.
  */
@@ -240,6 +244,17 @@ static int wide_wraps_left(gaddr st, const Grid *g) {
 gaddr stage_strip_before;
 #define STRIP_W 16
 
+/* WIDE NATIVE: 0x0881AB28's animated kinds (0xDA / 0xEE: 11 frames, 24 map words apart in each row) */
+static int animated_kind(gaddr st, const Grid *g) {
+    int32_t kind = S16(st + GRID_KIND);
+    return !g->b268 && (kind == 0xDA || kind == 0xEE) && *W(st + GRID_LAYER) != 0;
+}
+/* frame 0: how many frames on the one before it is (10); others 0 (no change) */
+static int32_t anim_frame_before(gaddr st) {
+    int32_t frame = (int8_t)*B(*W(st + GRID_LAYER) + 131);
+    return frame == 0 ? 10 : 0;   /* only frame 0 has the gap */
+}
+
 /* The grid, row by row: the map wraps down at GRID_ROW_WRAP rows and across at GRID_COL_WRAP columns. */
 static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
     *W(st + GRID_ROW) = 0;
@@ -292,7 +307,14 @@ static void draw_grid(Cpu *c, gaddr st, const Grid *g) {
                 *W(st + GRID_TILE) = at;
                 if ((int32_t)*W(at) < 0) draw_tile(c, st, g);
                 *W(st + GRID_TILE) = tile;
-            } else if ((int32_t)*W(tile) < 0) draw_tile(c, st, g);
+            } else if ((int32_t)*W(tile) < 0) {
+                draw_tile(c, st, g);
+            } else if (rt_widescreen && col < g->wide_tiles && animated_kind(st, g)) {
+                /* WIDE NATIVE: an animated layer's frame 0 leaves map columns 0 - 7 empty (the 4:3
+                   screen never reaches them); there the tile comes from the frame before */
+                gaddr before = tile + (uint32_t)(int32_t)(anim_frame_before(st) * 96);
+                if ((int32_t)*W(before) < 0) { *W(st + GRID_TILE) = before; draw_tile(c, st, g); *W(st + GRID_TILE) = tile; }
+            }
             col++;
             SET16(st + GRID_X, S16(st + GRID_X) + S16(st + GRID_STEP_X));
             *W(st + GRID_COL) = (uint32_t)col;
