@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.130.2
+### For players
+- **WIDE NATIVE endings: no pop-in when the camera pans.** A character carried into view by a pan (Ryu lying on the ground, Sagat behind M. Bison in Sagat's ending) is drawn whole as soon as it is on the screen, and stays whole when the pan stops at the old 4:3 edge. Someone waiting off the picture to walk in still stays hidden until they move.
+- **Final Battle's pre-fight dialogue in WIDE NATIVE:** the lines at the bottom of the screen are now placed as Arcade's are. Final Battle shows both portraits at the top, so these lines weren't recognised as dialogue and stayed where the 4:3 screen had them.
+
+### Technical
+- `core/object/sprite.c`: an ending's sprite is "seen" once its anchor moves on the screen (walking, or with the camera: `DS_POS_X` after the anchor, so a pan counts though the sprite's own x stays) or its cells reach 32 px into the 4:3 picture; from then on it is drawn across the 16:9 screen for the rest of the scene (an entry resets when the sprite isn't drawn for 2 frames or its kind / type changes). Replaces 0.130.1's "still for 30 frames" test, which cut sprites carried in by a pan.
+- `extensions/widescreen.c` `widescreen_text_shift`: with no dialogue portrait (kind 14 type 6) in a line's half of the screen, any portrait shown makes it dialogue.
+- Checked: Sagat's Final Battle ending through the pan (frames 4560 - 5000); Cody's partner still hidden until he walks in; E. Honda's ending; Final Battle's dialogue (Sagat) beside Arcade's (arcade_rival_dialogue). Parity (lazy renderer): arcade_ending, arcade_ending_full, arcade_rival_dialogue, attract_mode, no_extensions; WIDE NATIVE check: wide_fight, wide_walls.
+
 ## 0.130.1
 ### For players
 - **WIDE NATIVE endings: characters and scenery standing at the old 4:3 edge are drawn whole.** Sagat walking in behind M. Bison in his ending, E. Honda reaching in from the left, Ryu lying at the edge in Sakura's ending, and the temple and hill on the left of Ryu's sunset stage (Ryu's, Sagat's and Sakura's endings) were still cut at the old edge: they were placed just past it and stood still, so they were taken for someone waiting off-screen. Someone wholly off the picture still stays hidden until they move.

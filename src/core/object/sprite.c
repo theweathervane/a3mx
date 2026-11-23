@@ -75,11 +75,9 @@ static int edge_shift, edge_depth;
 /* WIDE NATIVE, an ending's frame (extensions/widescreen.c, scaled_endings.c): with the scaled endings its
    sprites are drawn across the whole 16:9 screen (a character walking in or out is seen whole, as in the
    fights), a picture of a scaled scene drawn 1.25 times larger (sprite_drawers.c) and a profile picture
-   moved out to the 16:9 edge. A sprite waiting wholly past a 4:3 side (placed outside the picture, not
-   moved for PARKED frames, and its cells reaching less than INTO pixels into the picture last frame:
-   someone about to walk in)
-   is still cut there, so it isn't seen standing in the margin; one standing at the edge with part of it
-   in the picture is drawn whole. With the scaled endings off every sprite is cut at the 4:3 picture's sides and nothing moves. */
+   moved out to the 16:9 edge. A sprite not yet seen in the scene (it hasn't moved on the screen, walking
+   or with the camera, and its cells haven't reached INTO pixels into the picture: someone waiting to walk
+   in) is still cut at the 4:3 sides, so it isn't seen standing in the margin. With the scaled endings off every sprite is cut at the 4:3 picture's sides and nothing moves. */
 int widescreen_in_ending(void);
 int scaled_endings_oversize(gaddr sp);
 int scaled_endings_profile_shift(gaddr sp);
@@ -92,16 +90,20 @@ extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 static float fl(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c): 1 over-sized,
                                  2 character art not yet measured, 3 character art at its size */
-#define PARKED 30
 #define INTO   32            /* how far into the 4:3 picture a sprite's cells must reach to count as in it */
-static struct { gaddr sp; int16_t x; long moved, last; int reach; int32_t lo, hi; } seen[64];   /* by sprite: its x, when it
-                                     last moved, when last drawn, and how far its cells reached then (reach: known) */
+/* By sprite: what it is (kind, type), when it was last drawn, where on the screen its anchor was then (pos,
+   after the camera: a pan moves it there though its own x stays), how far its cells reached (reach: known),
+   and whether it has been seen in this scene (moved on the screen, or reached INTO into the picture): from
+   then on it is drawn whole, so it doesn't pop at the 4:3 side when the camera pans or it stops. */
+static struct { gaddr sp; uint16_t what; long last; int has_pos, reach, shown; int16_t pos; int32_t lo, hi; } seen[64];
 static int seen_now = -1;            /* the entry of the sprite being drawn */
+static int16_t pos_now; static int pos_got;   /* its anchor on the screen this frame (draw_sprite) */
 extern int sprite_grid_extent_on;
 extern int32_t sprite_grid_extent_lo, sprite_grid_extent_hi;
-static int parked(gaddr sp, float lo43, float hi43) {
-    int16_t x = (int16_t)S16(sp + SP_X);
+/* a sprite still waiting off the picture: never seen in it in this scene */
+static int parked(gaddr sp) {
     long now = (long)rt_vblank_count();
+    uint16_t what = (uint16_t)(*B(sp + 2) << 8 | *B(sp + 3));
     int i, free_ = -1, oldest = 0;
     for (i = 0; i < 64; i++) {
         if (seen[i].sp == sp) break;
@@ -109,13 +111,25 @@ static int parked(gaddr sp, float lo43, float hi43) {
         if (seen[i].last < seen[oldest].last) oldest = i;
     }
     if (i == 64) { i = free_ >= 0 ? free_ : oldest; seen[i].sp = sp; seen[i].last = -10; }
-    if (now - seen[i].last > 2) { seen[i].x = x; seen[i].moved = now - PARKED - 1; seen[i].reach = 0; }   /* new here: as if it had waited */
+    if (now - seen[i].last > 2 || seen[i].what != what) {    /* new here, or the slot holds another sprite now */
+        seen[i].what = what; seen[i].has_pos = seen[i].reach = seen[i].shown = 0;
+    }
     seen[i].last = now;
-    if (seen[i].x != x) { seen[i].x = x; seen[i].moved = now; }
     seen_now = i;
-    if (!((x < 0 || x >= 384) && now - seen[i].moved > PARKED)) return 0;
-    /* none of it in the picture: its cells' edge less than a cell past the side (a cell's edge is often transparent) */
-    return !seen[i].reach || seen[i].hi <= (int32_t)lo43 + INTO || seen[i].lo >= (int32_t)hi43 - INTO;
+    return !seen[i].shown;
+}
+/* after the sprite is drawn: what it showed this frame */
+static void parked_after(float lo43, float hi43) {
+    if (seen_now < 0) return;
+    int i = seen_now;
+    if (pos_got) {
+        if (seen[i].has_pos && seen[i].pos != pos_now) seen[i].shown = 1;   /* moved on the screen */
+        seen[i].pos = pos_now; seen[i].has_pos = 1;
+    }
+    seen[i].reach = sprite_grid_extent_lo <= sprite_grid_extent_hi;
+    seen[i].lo = sprite_grid_extent_lo; seen[i].hi = sprite_grid_extent_hi;
+    /* reaching INTO into the picture (a cell's edge is often transparent) */
+    if (seen[i].reach && seen[i].hi > (int32_t)lo43 + INTO && seen[i].lo < (int32_t)hi43 - INTO) seen[i].shown = 1;
 }
 static int ending_sides(gaddr sp, int *shift) {
     *shift = 0;
@@ -124,9 +138,7 @@ static int ending_sides(gaddr sp, int *shift) {
     if (ov) { sprite_ending_oversize = ov; return 0; }
     int px = scaled_endings_profile_shift(sp);
     float sx = fl(SCALE_X), ox = fl(OFFSET_X);
-    float lo43 = 0.0f * sx, hi43 = 384.0f * sx;
-    lo43 = lo43 + ox; hi43 = hi43 + ox;
-    int whole = scaled_endings_on() && (px != 0 || !parked(sp, lo43, hi43));
+    int whole = scaled_endings_on() && (px != 0 || !parked(sp));
     float lo = whole ? -48.0f : 0.0f, hi = whole ? 432.0f : 384.0f;
     lo = lo * sx; lo = lo + ox;
     hi = hi * sx; hi = hi + ox;
@@ -146,7 +158,7 @@ static void draw_sprite_wide(Cpu *c, gaddr sp) {
     else edge_shift += widescreen_linked_shift(sp);
     if (top) { int shift; seen_now = -1; ending = ending_sides(sp, &shift); if (ending) { sprite_grid_clip_x = 1; edge_shift += shift; } }
     int measuring = top && ending && seen_now >= 0;
-    if (measuring) { sprite_grid_extent_on = 1; sprite_grid_extent_lo = INT32_MAX; sprite_grid_extent_hi = INT32_MIN; }
+    if (measuring) { sprite_grid_extent_on = 1; sprite_grid_extent_lo = INT32_MAX; sprite_grid_extent_hi = INT32_MIN; pos_got = 0; }
     edge_depth++;
     for (int n = 0; top && n < 2; n++) {
         int copy = widescreen_edge_copy(sp, n);
@@ -158,8 +170,9 @@ static void draw_sprite_wide(Cpu *c, gaddr sp) {
     if (ending) sprite_grid_clip_x = clip_keep;
     if (measuring) {
         sprite_grid_extent_on = 0;
-        seen[seen_now].reach = sprite_grid_extent_lo <= sprite_grid_extent_hi;
-        seen[seen_now].lo = sprite_grid_extent_lo; seen[seen_now].hi = sprite_grid_extent_hi;
+        float sx = fl(SCALE_X), ox = fl(OFFSET_X), lo43 = 0.0f * sx, hi43 = 384.0f * sx;
+        lo43 = lo43 + ox; hi43 = hi43 + ox;
+        parked_after(lo43, hi43);
     }
     if (top) sprite_ending_oversize = 0;
 }
@@ -173,6 +186,7 @@ static void draw_sprite(Cpu *c, gaddr sp) {
     *H(ds + DS_POS_X) = (uint16_t)S16(sp + SP_X);
     *H(ds + DS_POS_Y) = (uint16_t)(0xF0 - S16(sp + SP_Y));
     CALL2(f_0880E6E8, ds, sp);
+    if (sprite_grid_extent_on && edge_depth == 1 && !pos_got) { pos_now = S16(ds + DS_POS_X); pos_got = 1; }   /* WIDE NATIVE, an ending (above) */
     if (edge_shift) *H(ds + DS_POS_X) = (uint16_t)(S16(ds + DS_POS_X) + edge_shift);
     *H(ds + DS_X) = *H(ds + DS_POS_X);
     *H(ds + DS_Y) = *H(ds + DS_POS_Y);
