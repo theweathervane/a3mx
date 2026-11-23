@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.130.3
+### For players
+- **WIDE NATIVE, Sakura's ending:** Ryu lying at the left edge is drawn whole.
+- **Final Battle's watch scenario no longer shows a pre-fight dialogue the game never has.** `ending_final` forced the fight's number to 9 (Arcade's last fight), which made Final Battle start Arcade's M. Bison dialogue with both portraits left at the top. Final Battle in real play has no dialogue, so nothing in the game needed fixing; 0.130.2's change for those lines is taken back.
+
+### Technical
+- `core/object/sprite.c`: `INTO` 16 (was 32): Ryu's hand reaches 29 px into the picture in Sakura's ending; Cody's waiting partner 8.
+- `extensions/widescreen.c`: `widescreen_text_shift` back as in 0.130.1.
+- `tests/watch/ending_final.txt`: the `092E123C=9` poke removed (Chun-Li's two-fight Final Battle still reaches M. Bison and her ending without it).
+- Checked: Sakura's Final Battle ending (Ryu at the left edge), Cody's (partner hidden until he walks in), Chun-Li's and Sakura's Final Battle without the poke (no dialogue, ending reached); Arcade's last fight forced to 9 before the map shows the opponent's portrait bottom-right, as the rival fight. Parity (lazy renderer): arcade_ending, arcade_ending_full, arcade_rival_dialogue, attract_mode, no_extensions; WIDE NATIVE check: wide_fight, wide_walls.
+
 ## 0.130.2
 ### For players
 - **WIDE NATIVE endings: no pop-in when the camera pans.** A character carried into view by a pan (Ryu lying on the ground, Sagat behind M. Bison in Sagat's ending) is drawn whole as soon as it is on the screen, and stays whole when the pan stops at the old 4:3 edge. Someone waiting off the picture to walk in still stays hidden until they move.

@@ -381,18 +381,15 @@ int widescreen_plain_halves(uint32_t ob) {
 }
 
 /* ... and the dialogue's lines (core/object/text_boxes.c): moved with the portrait (kind 14 type 6, in
-   the 32-pool) in their half of the screen, top or bottom (screen y = 0xF0 - the sprite's y); with no
-   portrait in their half (Final Battle has both at the top) with any portrait shown. */
+   the 32-pool) in their half of the screen, top or bottom (screen y = 0xF0 - the sprite's y). */
 int widescreen_text_shift(uint32_t rec) {
     if (RB(GAME + 2) != 2 || RH(GAME + 4) != 3) return 0;
-    int top = (int16_t)RH(rec + 30) < 112, other = 0;
+    int top = (int16_t)RH(rec + 30) < 112;
     for (uint32_t o = 0x09512770u; o < 0x09512770u + 32u * 0xC0u; o += 0xC0u) {
         if (!RB(o) || !RB(o + 1) || RB(o + 2) != 14 || RB(o + 3) != 6) continue;
-        int shift = away_from_middle(o, dialogue_units());
-        if ((0xF0 - (int16_t)RH(o + 22) < 112) == top) return shift;
-        if (!other) other = shift;
+        if ((0xF0 - (int16_t)RH(o + 22) < 112) == top) return away_from_middle(o, dialogue_units());
     }
-    return other;   /* Final Battle: both portraits at the top, a line at the bottom is dialogue all the same */
+    return 0;
 }
 
 /* ---- The endings (core/task/ending.c) ----

@@ -116,7 +116,7 @@ works, what doesn't, and the rules for refining it.
     The profile pictures (kind 74) move out to the 16:9 edges. Sprites are drawn across the whole 16:9
     screen, so a character walking in or out of a scene is seen whole (0.129.0; before, they were cut at
     the 4:3 sides); one not yet seen in the scene (it hasn't moved on the screen, walking or with the
-    camera, nor reached 32 pixels into the picture: someone waiting to walk in) is still cut there (0.130.2), so it isn't seen standing in the margin before it walks in. The fade after a
+    camera, nor reached 16 pixels into the picture: someone waiting to walk in) is still cut there (0.130.2), so it isn't seen standing in the margin before it walks in. The fade after a
     button press keeps the scene as it was (0.129.0: the ending's draw-only step, 0x089DE390, runs its
     frames inside one call, and each now counts as an ending's frame). A scene shown wide that the ending
     cut from a stage (its own copy holds only the 24 columns of the 4:3 picture: Ryu's stage behind Ryu,

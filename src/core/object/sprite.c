@@ -90,7 +90,7 @@ extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 static float fl(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c): 1 over-sized,
                                  2 character art not yet measured, 3 character art at its size */
-#define INTO   32            /* how far into the 4:3 picture a sprite's cells must reach to count as in it */
+#define INTO   16            /* how far into the 4:3 picture a sprite's cells must reach to count as in it */
 /* By sprite: what it is (kind, type), when it was last drawn, where on the screen its anchor was then (pos,
    after the camera: a pan moves it there though its own x stays), how far its cells reached (reach: known),
    and whether it has been seen in this scene (moved on the screen, or reached INTO into the picture): from
