@@ -155,3 +155,11 @@ static inline int32_t os_wait_sema(Cpu *c, int32_t sema, int32_t count, uint32_t
 static inline int32_t os_signal_sema(Cpu *c, int32_t sema, int32_t count) {
     c->r[4] = (uint32_t)sema; c->r[5] = (uint32_t)count; hle_sceKernelSignalSema(c); return (int32_t)c->r[2];
 }
+
+void hle_sceNetAdhocctlDisconnect(Cpu *c);
+void hle_sceNetAdhocctlGetParameter(Cpu *c);
+
+/* Leaves the ad-hoc group. */
+static inline int32_t os_net_adhocctl_disconnect(Cpu *c) { hle_sceNetAdhocctlDisconnect(c); return (int32_t)c->r[2]; }
+/* The ad-hoc group's parameters (channel, group name, BSSID, nickname) into `buf`. */
+static inline int32_t os_net_adhocctl_get_parameter(Cpu *c, uint32_t buf) { c->r[4] = buf; hle_sceNetAdhocctlGetParameter(c); return (int32_t)c->r[2]; }

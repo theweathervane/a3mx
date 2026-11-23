@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.134.0
+### For players
+- **More of the game decompiled:** 25 more small functions, among them objects stepping while the screen allows it and appearing at the intro's stages, the text records, a fighter's choice of target and the side ahead on rounds, and the network link's close and the network's error results. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps6.c` (new): 25 of the ready functions of 25 - 40 instructions. `src/core/psp_os.h`: wrappers for sceNetAdhocctlDisconnect and sceNetAdhocctlGetParameter.
+- Checked: the coverage pass maps all 25 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_match, arcade_ending_full, stage_objects_15_sakura, pause_config_original, free_battle_dramatic, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions, free_battle, arcade_rival_dialogue, super_finish, stage_objects_19_gen and free_battle_rdramatic.
+
 ## 0.133.4
 ### For players
 - **WIDE NATIVE, E. Honda's ending:** the floor past the dojo's right side is now E. Honda's own stage floor, so the ring's boards curve on as they do in a fight, instead of the dojo's last column of floor stretched out.
