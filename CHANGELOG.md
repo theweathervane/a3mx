@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.135.0
+### For players
+- **More of the game decompiled:** 26 more small functions, among them objects stepping in time with an ending's scenes, set from their owner and shown by a level, box settings, fighters' script branches and a CPU's special opponents, and the network link's events, thread end and pairing. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps7.c` (new): 26 of the ready functions of 25 - 40 instructions. `src/core/psp_os.h`: wrappers for sceNetFreeThreadinfo, sceKernelWaitThreadEnd, sceKernelTerminateThread, sceKernelDeleteThread and sceNetAdhocMatchingSelectTarget.
+- Checked: the coverage pass maps all 26 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, pause_config_players, arcade_match, arcade_ending_full, free_battle_rows, pause_config_original, arcade_rival_dialogue, stage_objects_34_hawk, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions, free_battle, super_finish and stage_objects_15_sakura.
+
 ## 0.134.0
 ### For players
 - **More of the game decompiled:** 25 more small functions, among them objects stepping while the screen allows it and appearing at the intro's stages, the text records, a fighter's choice of target and the side ahead on rounds, and the network link's close and the network's error results. Nothing plays differently.

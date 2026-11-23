@@ -163,3 +163,19 @@ void hle_sceNetAdhocctlGetParameter(Cpu *c);
 static inline int32_t os_net_adhocctl_disconnect(Cpu *c) { hle_sceNetAdhocctlDisconnect(c); return (int32_t)c->r[2]; }
 /* The ad-hoc group's parameters (channel, group name, BSSID, nickname) into `buf`. */
 static inline int32_t os_net_adhocctl_get_parameter(Cpu *c, uint32_t buf) { c->r[4] = buf; hle_sceNetAdhocctlGetParameter(c); return (int32_t)c->r[2]; }
+
+void hle_sceNetFreeThreadinfo(Cpu *c);
+void hle_sceKernelWaitThreadEnd(Cpu *c);
+void hle_sceKernelTerminateThread(Cpu *c);
+void hle_sceKernelDeleteThread(Cpu *c);
+void hle_sceNetAdhocMatchingSelectTarget(Cpu *c);
+
+static inline int32_t os_net_free_threadinfo(Cpu *c, int32_t thread) { c->r[4] = (uint32_t)thread; hle_sceNetFreeThreadinfo(c); return (int32_t)c->r[2]; }
+/* Waits for a thread to end (timeout: a guest pointer, 0 for none). */
+static inline int32_t os_wait_thread_end(Cpu *c, int32_t thread, uint32_t timeout) { c->r[4] = (uint32_t)thread; c->r[5] = timeout; hle_sceKernelWaitThreadEnd(c); return (int32_t)c->r[2]; }
+static inline int32_t os_terminate_thread(Cpu *c, int32_t thread) { c->r[4] = (uint32_t)thread; hle_sceKernelTerminateThread(c); return (int32_t)c->r[2]; }
+static inline int32_t os_delete_thread(Cpu *c, int32_t thread) { c->r[4] = (uint32_t)thread; hle_sceKernelDeleteThread(c); return (int32_t)c->r[2]; }
+/* Asks the matching context `id` to pair with the PSP at `mac`, sending `len` bytes of `data`. */
+static inline int32_t os_net_adhoc_matching_select_target(Cpu *c, int32_t id, uint32_t mac, int32_t len, uint32_t data) {
+    c->r[4] = (uint32_t)id; c->r[5] = mac; c->r[6] = (uint32_t)len; c->r[7] = data; hle_sceNetAdhocMatchingSelectTarget(c); return (int32_t)c->r[2];
+}
