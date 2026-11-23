@@ -275,6 +275,7 @@ SFA_FUNC(088CF564, step_088CF564) { run_step(c, *B(ARG(0) + 128), 0x08A3CA6Cu, 5
 SFA_FUNC(088D067C, step_088D067C) { run_step(c, *B(ARG(0) + 4), 0x08A3CB10u, 5, 0x088D06A4u); }
 SFA_FUNC(088D0974, step_088D0974) { run_step(c, *B(ARG(0) + 4), 0x08A3CD38u, 5, 0x088D099Cu); }
 SFA_FUNC(088D42BC, step_088D42BC) { run_step(c, *H(ARG(0) + 2), 0x08A3E890u, 6, 0x088D42E4u); }
+SFA_FUNC(088E2F48, step_088E2F48) { run_step(c, *H(ARG(1) + 0xD6), 0x08A3EBACu, 6, 0x088E2F74u); }
 SFA_FUNC(088EAF0C, step_088EAF0C) { run_step(c, *B(ARG(0) + 128), 0x08A3F4C0u, 5, 0x088EAF34u); }
 SFA_FUNC(088EB304, step_088EB304) { run_step(c, *B(ARG(0) + 128), 0x08A3F4E4u, 5, 0x088EB32Cu); }
 SFA_FUNC(088EB67C, step_088EB67C) { run_step(c, *B(ARG(0) + 128), 0x08A3F6B4u, 5, 0x088EB6A4u); }
@@ -286,9 +287,11 @@ SFA_FUNC(088EF3D0, step_088EF3D0) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08
 SFA_FUNC(088EF4B8, step_088EF4B8) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A43A68u, 5, 0x088EF4E0u); }
 SFA_FUNC(088EF818, step_088EF818) { run_step(c, *B(ARG(0) + 7), 0x08A43AC8u, 5, 0x088EF840u); }
 SFA_FUNC(088EF988, step_088EF988) { run_step(c, *B(ARG(0) + 7), 0x08A43AD4u, 5, 0x088EF9B0u); }
+SFA_FUNC(088EFF88, step_088EFF88) { run_step(c, *B(ARG(0) + 7), 0x08A43B20u, 5, 0x088EFFB0u); }
 SFA_FUNC(088F0890, step_088F0890) { run_step(c, *B(ARG(0) + 7), 0x08A43B74u, 5, 0x088F08B8u); }
 SFA_FUNC(088F1308, step_088F1308) { run_step(c, *B(ARG(0) + 4), 0x08A43BC8u, 5, 0x088F1330u); }
 SFA_FUNC(088F14D8, step_088F14D8) { run_step(c, *B(ARG(0) + 5), 0x08A43C30u, 5, 0x088F1500u); }
+SFA_FUNC(088F5B18, step_088F5B18) { run_step_with(c, *B(ARG(0) + 4), 0x08A45628u, *W(ARG(0) + 88), 0x088F5B44u); }
 SFA_FUNC(088F7E38, step_088F7E38) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A49640u, 5, 0x088F7E60u); }
 SFA_FUNC(088F802C, step_088F802C) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A49680u, 5, 0x088F8054u); }
 SFA_FUNC(088F8348, step_088F8348) { run_step(c, *B(ARG(0) + 7), 0x08A496F0u, 5, 0x088F8370u); }
@@ -297,6 +300,7 @@ SFA_FUNC(088FBE18, step_088FBE18) { run_step(c, *B(ARG(0) + 4), 0x08A4990Cu, 5, 
 SFA_FUNC(088FC490, step_088FC490) { run_step_with(c, *B(ARG(0) + 4), 0x08A4994Cu, *W(ARG(0) + 88), 0x088FC4BCu); }
 SFA_FUNC(089056E4, step_089056E4) { run_step(c, *B(ARG(0) + 7), 0x08A53828u, 5, 0x0890570Cu); }
 SFA_FUNC(08905B90, step_08905B90) { run_step(c, (uint32_t)S8(ARG(0) + 192), 0x08A5386Cu, 5, 0x08905BB8u); }
+SFA_FUNC(08905E14, step_08905E14) { *B(ARG(0) + 696) = 1; run_step(c, *B(ARG(0) + 7), 0x08A53890u, 5, 0x08905E44u); }
 SFA_FUNC(08906824, step_08906824) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A538DCu, 5, 0x0890684Cu); }
 SFA_FUNC(089068DC, step_089068DC) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A53904u, 5, 0x08906904u); }
 SFA_FUNC(08906910, step_08906910) { run_step(c, *B(ARG(0) + 7), 0x08A5392Cu, 5, 0x08906938u); }
@@ -327,6 +331,15 @@ SFA_FUNC(0892ECD0, step_0892ECD0) { run_step(c, *B(ARG(0) + 5), 0x08A6BF64u, 5, 
 SFA_FUNC(0892EF80, step_0892EF80) { run_step_with(c, *B(ARG(0) + 4), 0x08A6BF78u, *W(ARG(0) + 88), 0x0892EFACu); }
 SFA_FUNC(0892F580, step_0892F580) { run_step(c, *B(ARG(0) + 7), 0x08A6DA54u, 5, 0x0892F5A8u); }
 SFA_FUNC(0893339C, step_0893339C) { run_step_with(c, *B(ARG(0) + 4), 0x08A6DD2Cu, *W(ARG(0) + 88), 0x089333C8u); }
+SFA_FUNC(0895CD24, step_0895CD24) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A85984u, 5, 0x0895CD4Cu); }
+SFA_FUNC(0895CE40, step_0895CE40) { run_step(c, (uint32_t)S8(ARG(0) + 236), 0x08A859B8u, 5, 0x0895CE68u); }
+SFA_FUNC(0895D8A0, step_0895D8A0) { run_step(c, *B(ARG(0) + 7), 0x08A85A60u, 5, 0x0895D8C8u); }
+SFA_FUNC(0895DAAC, step_0895DAAC) { run_step(c, *B(ARG(0) + 7), 0x08A85AA0u, 5, 0x0895DAD4u); }
+SFA_FUNC(0895E42C, step_0895E42C) { run_step(c, (uint32_t)S8(ARG(0) + 196), 0x08A85B4Cu, 5, 0x0895E454u); }
+SFA_FUNC(089610B0, step_089610B0) { run_step(c, (uint32_t)S8(ARG(0) + 692), 0x08A85E74u, 5, 0x089610D8u); }
+SFA_FUNC(08961154, step_08961154) { run_step(c, *B(ARG(0) + 7), 0x08A85EC0u, 5, 0x0896117Cu); }
+SFA_FUNC(089615F8, step_089615F8) { run_step(c, *B(ARG(0) + 4), 0x08A85EECu, 5, 0x08961620u); }
+SFA_FUNC(08961778, step_08961778) { run_step(c, *B(ARG(0) + 5), 0x08A85EFCu, 5, 0x089617A0u); }
 SFA_FUNC(08966C60, step_08966C60) { run_step(c, (uint32_t)S8(ARG(0) + 194), 0x08A8B784u, 5, 0x08966C88u); }
 SFA_FUNC(089690E4, step_089690E4) { run_step(c, *B(ARG(0) + 7), 0x08A8B950u, 5, 0x0896910Cu); }
 SFA_FUNC(0896A3F0, step_0896A3F0) { run_step(c, *B(ARG(0) + 4), 0x08A8B9E4u, 5, 0x0896A418u); }
@@ -346,7 +359,21 @@ SFA_FUNC(089A3E28, step_089A3E28) { run_step(c, *B(ARG(0) + 7), 0x08A9D5D0u, 5, 
 SFA_FUNC(089A41A4, step_089A41A4) { run_step(c, *B(ARG(0) + 7), 0x08A9D61Cu, 5, 0x089A41CCu); }
 SFA_FUNC(089A5374, step_089A5374) { run_step(c, *B(ARG(0) + 4), 0x08A9D760u, 5, 0x089A539Cu); }
 SFA_FUNC(089A5490, step_089A5490) { run_step(c, *B(ARG(0) + 5), 0x08A9D77Cu, 5, 0x089A54B8u); }
+/* The ending's steps: the handler gets the ending's state (0x09358BE0) as its second argument, in a1, and
+   is left in a2 (the table is not kept). */
+SFA_FUNC(089CF384, step_089CF384) {
+    gaddr handler = *W(0x08AB632Cu + *B(ARG(0) + 4) * 4u);
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = c->r[31];
+    c->r[5] = 0x09358BE0u; c->r[6] = handler;
+    c->r[31] = 0x089CF3B0u;
+    rt_call_indirect(c, handler);
+    c->r[31] = *W(c->r[29] + 16);
+    c->r[29] += 0x20;
+}
 SFA_FUNC(089CF674, step_089CF674) { run_step(c, *B(ARG(0) + 3), 0x08AB6358u, 6, 0x089CF69Cu); }
+SFA_FUNC(089DA5DC, step_089DA5DC) { run_step(c, *B(ARG(0) + 3), 0x08AB6AA8u, 6, 0x089DA604u); }
+SFA_FUNC(089DDE90, step_089DDE90) { run_step(c, *B(ARG(0) + 4), 0x08AB749Cu, 5, 0x089DDEB8u); }
 SFA_FUNC(089DE28C, step_089DE28C) { run_step(c, *H(ARG(0) + 2), 0x08AB7694u, 7, 0x089DE2B4u); }
 SFA_FUNC(089DE650, step_089DE650) { run_step(c, (uint32_t)S8(ARG(0) + 32), 0x08AB76A4u, 5, 0x089DE678u); }
 SFA_FUNC(089DE6BC, step_089DE6BC) { run_step(c, (uint32_t)S8(ARG(0) + 36), 0x08AB76ACu, 5, 0x089DE6E4u); }

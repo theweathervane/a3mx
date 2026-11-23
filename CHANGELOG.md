@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.131.0
+### For players
+- **More of the game decompiled:** 44 more small functions, among them 16 step dispatchers, objects moving by their speeds and counting down, fighters' script starts, the network session's list and group scan, and this PSP's address and nickname. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps3.c` (new): the other 28 ready functions of 9 - 16 instructions (with 0x088DE8F0, left out of 0.126.0). `src/core/object/steps.c`: 16 more step dispatchers (0x088E2F48, 0x088EFF88, 0x088F5B18, 0x08905E14, 0x0895CD24, 0x0895CE40, 0x0895D8A0, 0x0895DAAC, 0x0895E42C, 0x089610B0, 0x08961154, 0x089615F8, 0x08961778, 0x089CF384, 0x089DA5DC, 0x089DDE90). `src/core/psp_os.h`: wrappers for sceNetGetLocalEtherAddr, sceUtilityGetSystemParamString and sceNetAdhocctlScan.
+- Checked: the coverage pass maps all 44 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_ending_full, arcade_match, free_battle_rows, super_finish, pause_config_original, stage_objects_03_ken, stage_objects_19_gen, arcade_join_select, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions, free_battle and arcade_rival_dialogue.
+
 ## 0.130.4
 ### For players
 - **The ending watch scenarios go straight to the fight:** in `ending_arcade`, `ending_final`, `ending_rdramatic` and `ending_variable` the confirm presses no longer run on into the fight (they landed as a string of attacks before anyone met). From the moment the fight can be played both characters walk towards each other, then player 1 jabs; the first hit wins.

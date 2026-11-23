@@ -119,3 +119,16 @@ static inline int32_t os_create_sema(Cpu *c, uint32_t name, uint32_t attr, int32
     hle_sceKernelCreateSema(c);
     return (int32_t)c->r[2];
 }
+
+void hle_sceNetGetLocalEtherAddr(Cpu *c);
+void hle_sceUtilityGetSystemParamString(Cpu *c);
+void hle_sceNetAdhocctlScan(Cpu *c);
+
+/* This PSP's MAC address (6 bytes) into `buf`. */
+static inline int32_t os_net_get_local_ether_addr(Cpu *c, uint32_t buf) { c->r[4] = buf; hle_sceNetGetLocalEtherAddr(c); return (int32_t)c->r[2]; }
+/* A system parameter's string (1: the nickname) into `buf`, at most `len` bytes. */
+static inline int32_t os_utility_get_system_param_string(Cpu *c, int32_t id, uint32_t buf, int32_t len) {
+    c->r[4] = (uint32_t)id; c->r[5] = buf; c->r[6] = (uint32_t)len; hle_sceUtilityGetSystemParamString(c); return (int32_t)c->r[2];
+}
+/* Starts a scan for ad-hoc groups. */
+static inline int32_t os_net_adhocctl_scan(Cpu *c) { hle_sceNetAdhocctlScan(c); return (int32_t)c->r[2]; }
