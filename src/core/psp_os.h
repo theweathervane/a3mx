@@ -132,3 +132,15 @@ static inline int32_t os_utility_get_system_param_string(Cpu *c, int32_t id, uin
 }
 /* Starts a scan for ad-hoc groups. */
 static inline int32_t os_net_adhocctl_scan(Cpu *c) { hle_sceNetAdhocctlScan(c); return (int32_t)c->r[2]; }
+
+void hle_sceNetAdhocctlConnect(Cpu *c);
+void hle_sceNetAdhocMatchingStop(Cpu *c);
+void hle_sceNetAdhocMatchingDelete(Cpu *c);
+void hle_sceNetAdhocMatchingTerm(Cpu *c);
+
+/* Joins (or makes) the ad-hoc group named by the guest string `name`. */
+static inline int32_t os_net_adhocctl_connect(Cpu *c, uint32_t name) { c->r[4] = name; hle_sceNetAdhocctlConnect(c); return (int32_t)c->r[2]; }
+/* Stops / deletes the matching context `id`; ends the matching library. */
+static inline int32_t os_net_adhoc_matching_stop(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocMatchingStop(c); return (int32_t)c->r[2]; }
+static inline int32_t os_net_adhoc_matching_delete(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocMatchingDelete(c); return (int32_t)c->r[2]; }
+static inline int32_t os_net_adhoc_matching_term(Cpu *c) { hle_sceNetAdhocMatchingTerm(c); return (int32_t)c->r[2]; }
