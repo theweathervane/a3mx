@@ -235,6 +235,9 @@ Done:
 - [x] Thirty-five more (`object/batch_steps5.c`): the last 15 of 17 - 24 instructions and the first 20 of
       25 - 40: objects bouncing, rising, sliding and starting animations, fades for a side, script branches
       by health, the CPU's random choices, the session's members by address, its lock and error codes (0.133.0)
+- [x] Twenty-five more of 25 - 40 instructions (`object/batch_steps6.c`): objects stepping while the screen
+      allows, made at intro stages, framed until a record's count; the text records; a fighter's target
+      and the side ahead on rounds; the ad-hoc link's close and parameters, the network's result (0.134.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
