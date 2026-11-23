@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Build an art pack for painting the Stage Extensions (WIDE NATIVE), from your own disc.
 
-EXPERIMENTAL: the references are only screenshots at each wall (the 480 x 272 screen, whole and one layer at a time), not each layer whole as its own PNG. Still to do (docs/ROADMAP.md): each layer whole, by panning the camera
-with the layer drawn alone and stitching by its scroll, and rebuilding from the stage's layout data the
-layers wider than their tile map (the game keeps only the tiles it shows).
+EXPERIMENTAL. Each layer whole comes from the disc (tools/stage_layers.py: the stage's own tile maps and
+textures, one PNG per layer numbered as the game numbers them), the wall screenshots from short runs.
 
 An artist needs the stage art to trace from and the placeholders to paint over. This puts both in one
 folder (and a zip of it), one folder per stage:
 
   art-pack/<region>/README.txt
+  art-pack/<region>/<nn>_<name>/layers/      each layer whole, from the disc: layer0.png, layer1.png (the
+                                             fighters'), layer2.png, layer3.png (the floor band, flat) ...,
+                                             and layers.json (where each sits, how the game draws it)
   art-pack/<region>/<nn>_<name>/reference/   the stage at each wall in WIDE NATIVE, on the ground and in the
                                              air: the whole screen and each layer alone (transparent where it
                                              draws nothing); from tools/dump_stage_references.py
@@ -54,6 +56,12 @@ at the sides of each stage, where the original 4:3 art runs out. Not for publish
 game's art.
 
 Each stage folder has:
+  layers/     each of the stage's layers whole, as its tile map holds it (most are 1024 x 512, more than
+              the 768 x 272 the camera ever shows), straight from the disc: layer<n>.png, numbered as the
+              game numbers them (0 the back, 1 the fighters', 2; 3 the floor band, drawn flat; CHARLIE has a
+              4). Animated layers are one PNG a frame (layer<n>_frame<ff>.png). Transparent where the layer
+              has nothing. layers.json says where each sits and what's left out (BISON's sky is drawn
+              without its ripple, the floor without its lean). Stage objects (sprites) are not layers.
   reference/  what the stage looks like at its left and right walls, with the camera on the ground and
               16 px up (air), 480 x 272: <side>_<height>.png is the whole screen, <side>_<height>_layer<n>.png
               one layer on its own (transparent where it draws nothing).
@@ -95,6 +103,12 @@ def main():
                (['--stages', a.stages] if a.stages else [])
     dsr.main()
 
+    import json, stage_layers
+    disc = os.path.join(a.work, 'iso', 'PSP_GAME', 'USRDIR', 'usa', 'data')
+    pairs = json.load(open(os.path.join(ROOT, 'tools', 'data', 'palette_pairs.json')))['textures']
+    img = os.path.join(a.work, 'analysis.image.bin')
+    image = open(img, 'rb').read() if os.path.exists(img) else None
+
     out = os.path.join(a.out, a.region)
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
@@ -110,6 +124,8 @@ def main():
         if os.path.isdir(dest): continue               # two stage numbers sharing one folder
         if os.path.isdir(ref): shutil.copytree(ref, os.path.join(dest, 'reference'))
         if os.path.isdir(paint): shutil.copytree(paint, os.path.join(dest, 'paint'))
+        if os.path.exists(os.path.join(disc, 'st%02x.pac' % stage)):
+            stage_layers.write_stage(disc, stage, os.path.join(dest, 'layers'), pairs, image)
         n += 1
     print('Art pack: %d stages in %s' % (n, os.path.relpath(out, ROOT)))
     if not a.no_zip:
