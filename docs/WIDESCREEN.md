@@ -102,17 +102,24 @@ works, what doesn't, and the rules for refining it.
     red kanji are drawn whole 1.25 times over-sized about the screen's middle, as the super finish's
     swirl and burst are (`widescreen_oversize`);
   - the endings (0.120.0; the ending's task and layers decompiled in `src/core/task/ending.c`): the
-    black sides that narrow a scene to a panel reach the screen's sides (0.99.22); sprites are cut at
-    the 4:3 sides, so what the 4:3 screen kept off it (the next scene's pieces, props waiting to come
-    in) stays hidden; nothing is mirrored any more. With the **Scaled endings** extension (`scaled_endings`,
+    black sides that narrow a scene to a panel reach the screen's sides (0.99.22); nothing is mirrored
+    any more. With the **Scaled endings** extension (`scaled_endings`,
     on by default, `src/extensions/scaled_endings.c`) a scene fills the 16:9 screen: one whose layers
     have art of their own past both 4:3 sides (scrolling skies, stages) shows it; any other (a layer
     standing still on one of its map's 4:3 pictures, the ones beside it being other scenes; layers bare
-    past the sides) is drawn 1.25 times larger about the picture's middle (192, 72), its layers and its
-    pictures (sprites of kinds 73, 77, 78: close-ups, statues, bursts, speed lines) alike, as the super
-    finish's backdrops are; the profile pictures (kind 74) move out to the 16:9 edges. With it off the
-    endings keep black sides: the layers' tiles and the sprites are cut at the 4:3 sides and nothing
-    moves. The ending's lines (`src/core/object/text_boxes.c`): while the staff credits roll they go 40
+    past the sides) is drawn 1.25 times larger about the picture's middle (192, 72), as the super
+    finish's backdrops are. In the endings' own scenes (ending kind 2, the 24-tile-wide map) its pictures
+    (sprites of kinds 73, 77, 78: close-ups, statues, bursts, speed lines) grow with it, being parts of
+    the scene; over a stage's layers (kinds 0 and 1: Sagat under the setting sun, the last portrait
+    before THANK YOU FOR PLAYING) a picture is a character's art on its own and keeps its size, unless it reaches a 4:3 side (its
+    straight edge would show in the margin), when it grows with the scene (0.129.0).
+    The profile pictures (kind 74) move out to the 16:9 edges. Sprites are drawn across the whole 16:9
+    screen, so a character walking in or out of a scene is seen whole (0.129.0; before, they were cut at
+    the 4:3 sides); one waiting outside the 4:3 picture (placed past a side and not moved for 30 frames)
+    is still cut there, so it isn't seen standing in the margin before it walks in. The fade after a
+    button press keeps the scene as it was (0.129.0: the ending's draw-only step, 0x089DE390, runs its
+    frames inside one call, and each now counts as an ending's frame). With it off the endings keep
+    black sides: the layers' tiles and the sprites are cut at the 4:3 sides and nothing moves. The ending's lines (`src/core/object/text_boxes.c`): while the staff credits roll they go 40
     further left, into the left margin, leaving the credits room; before the credits they are laid out
     again across the screen, centred, wrapped at 44 characters;
   - the map screen (0.99.12): the ladder moves to the edge away from the middle; the beam, where its

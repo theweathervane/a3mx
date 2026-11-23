@@ -97,7 +97,10 @@ SFA_FUNC_WRAPPED(089DE2C0, ending_step, widescreen_ending_frame) {
     c->r[16] = s16; c->r[17] = s17;
 }
 
-/* ---- 0x089DE390: draws until GAME + 93 is cleared ---- */
+/* ---- 0x089DE390: draws until GAME + 93 is cleared ----
+   Its loop runs many frames in one call (the fade out after a button press), so WIDE NATIVE is told of
+   each of them (widescreen_ending_more), not only of the call. */
+void widescreen_ending_more(void);   /* extensions/widescreen.c */
 SFA_FUNC_WRAPPED(089DE390, ending_draw_wait, widescreen_ending_frame) {
     gaddr task = ARG(0), s16 = c->r[16];
     c->r[29] -= 0x20;
@@ -106,6 +109,7 @@ SFA_FUNC_WRAPPED(089DE390, ending_draw_wait, widescreen_ending_frame) {
     *B(GAME + 93) = 0;
     f_0880AA74(c);
     do {
+        widescreen_ending_more();
         f_08837690(c);
         f_0880B6CC(c);
         f_0881A2C8(c);

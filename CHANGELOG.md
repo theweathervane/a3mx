@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.129.0
+### For players
+- **WIDE NATIVE endings, fading out after a button press:** pressing a button during an ending no longer flashes the scene back to 4:3 with black sides while it fades; it fades as it was shown.
+- **Characters walking in or out of an ending's scene are drawn whole:** Guile, M. Bison, Chun-Li, Charlie's plane and the rest are no longer cut off at the old 4:3 edge as they cross it. Someone waiting off-screen to walk in still stays out of sight until they move.
+- **Character art over a stage background keeps its size:** the last portrait before THANK YOU FOR PLAYING and scenes such as Sagat and Ryu under the setting sun now scale only the background to fill the screen; the character is drawn at its own size, so heads and shoulders are no longer cut off. Art drawn right to the old 4:3 edges (Evil Ryu, Rose) still grows with the background, so its straight edge stays off-screen. The endings' own drawn scenes (close-ups, statues, bursts, Charlie in his cockpit) still fill the screen as one picture.
+
+### Technical
+- `core/task/ending.c`: 0x089DE390 (the draw-only step after a button press) loops over many frames in one call; `widescreen_ending_more()` (widescreen.c; stand-in in extensions_off.c) marks each of them as an ending's frame, so `widescreen_in_ending` stays true through the fade.
+- `core/object/sprite.c` `ending_sides`: with the scaled endings on, an ending's sprites are clipped to the 16:9 screen, not the 4:3 picture; a sprite whose x is outside 0 - 384 and hasn't moved for 30 frames (`parked`, tracked by sprite address) is still clipped at 4:3.
+- `extensions/scaled_endings.c` `scaled_endings_oversize`: pictures (kinds 73 / 77 / 78) grow with a scaled scene only in ending kind 2 (0x09358BE0 + 308: the endings' 24-tile map); over kinds 0 / 1 (a stage's layers) the picture is measured first (`sprite_grid_measure`: its cells' leftmost and rightmost x, nothing drawn) and kept at its size unless it reaches a 4:3 side (`sprite_ending_oversize` 2 -> 1 or 3, decided once for the sprite and what is linked to it).
+- Checked: every character's Arcade ending (ending_arcade, 37 characters) drawn in WIDE NATIVE with the old and new builds every 50 frames, the differing frames listed and a sample of each character's looked at; the button-press fade (Guile, frame 11000). Parity (lazy renderer): arcade_ending, arcade_ending_full, attract_mode, no_extensions; WIDE NATIVE check: wide_fight, wide_walls.
+
 ## 0.128.2
 ### For players
 - **The documents brought up to date with EX. SETTING's pages:** PLAYERS.md (every page and row, the unlocks and how the game earns them), SAVES.md (forced unlocks are never saved; `[cheats and unlocks]` and `[progress]` in a3mx.cfg; DELETE resets every page), BUILDING.md, KNOWN_ISSUES.md (N8: NETWORK with VIRTUAL PSPS off, worked round), ARCHITECTURE.md, LAYOUT.MD and ROADMAP.md.

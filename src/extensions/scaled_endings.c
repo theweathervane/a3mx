@@ -9,11 +9,12 @@
  *   - otherwise (the map standing still on one half, the other half being another scene; layers whose
  *     columns past the sides are bare) the scene is drawn 1.25 times larger about the picture's middle,
  *     as the super finish's backdrops are, so its 384 fill the 480 (core/task/ending.c decides, each
- *     frame); its pictures (sprites of kinds 73, 77 and 78: the close-ups, skulls and statues, the bursts
- *     and speed lines, built of pieces side by side) with it, and what is linked to them;
+ *     frame); in the endings' own scenes its pictures (sprites of kinds 73, 77 and 78: the close-ups,
+ *     skulls and statues, the bursts and speed lines, built of pieces side by side) with it, and what is
+ *     linked to them; over a stage's layers a picture is a character's art and keeps its size;
  *   - the profile pictures at the 4:3 sides (kind 74, at x 64 or 320) move out to the 16:9 edges;
- *   - everything else (characters, props) is cut at the 4:3 sides, so what the 4:3 screen kept off it
- *     stays hidden.
+ *   - everything else (characters, props) is drawn across the 16:9 screen, except a sprite waiting past
+ *     a 4:3 side to come in, which is cut there (core/object/sprite.c).
  * With this feature off the ending keeps black sides: the map's columns and every sprite are cut at the
  * 4:3 sides and nothing moves (widescreen.c, tiles.c, sprite.c). Only the drawing changes.
  */
@@ -35,9 +36,17 @@ int scaled_endings_on(void) { return FEATURE(SCALED_ENDINGS) && widescreen_in_en
 static int scene_scaled;
 void scaled_endings_scene(int scaled) { scene_scaled = scaled; }
 
-/* a picture of a scaled scene, drawn 1.25 times larger with the sprites linked to it (core/object/sprite.c) */
+/* a picture of a scaled scene (core/object/sprite.c): 1 drawn 1.25 times larger with the sprites linked
+   to it: in the endings' own scenes (ending kind 2: the 24-tile-wide map), whose pictures are parts of
+   the scene (a statue's face on its body, a burst behind a fighter). 2 over a stage's layers (kinds 0
+   and 1: the sunset behind Sagat, the stage behind the last portrait), where a picture is a character's
+   art standing on its own: the layers are scaled and it keeps its size, unless it reaches a 4:3 side
+   (art cut straight there, sprite_drawers.c measures it), when it grows with them as before. 0 not one. */
+#define ENDING_KIND (0x09358BE0u + 308)   /* u32: 0 / 1 a stage's layers, 2 the endings' map (core/task/ending.c) */
 int scaled_endings_oversize(uint32_t sp) {
-    return scaled_endings_on() && scene_scaled && (RB(sp + 2) == KIND_PICTURE || RB(sp + 2) == KIND_PICTURE_2 || RB(sp + 2) == KIND_PICTURE_3);
+    if (!scaled_endings_on() || !scene_scaled) return 0;
+    if (RB(sp + 2) != KIND_PICTURE && RB(sp + 2) != KIND_PICTURE_2 && RB(sp + 2) != KIND_PICTURE_3) return 0;
+    return RW(ENDING_KIND) == 2 ? 1 : 2;
 }
 
 /* a profile picture at a 4:3 side: moved out by the margin, to the edge it stands at (0: not one) */

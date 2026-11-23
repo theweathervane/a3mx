@@ -245,7 +245,19 @@ static int clip_cell_x(gaddr v) {
     SET16(v + 6, nua); SET16(v + 22, nua); SET16(v + 38, nub); SET16(v + 54, nub);
     return 1;
 }
+/* WIDE NATIVE: a pass that only measures a picture (sprite_drawers.c, an ending's character art): the
+   leftmost and rightmost x its cells reach, nothing drawn */
+int sprite_grid_measure;
+int32_t sprite_grid_measure_lo, sprite_grid_measure_hi;
 static void emit_cell(Cpu *c, gaddr ds, gaddr v, int32_t cols, uint32_t flags, uint32_t blend, uint32_t effect) {
+    if (sprite_grid_measure) {
+        for (int i = 0; i < 4; i++) {
+            int32_t x = S16(v + 16 * i);
+            if (x < sprite_grid_measure_lo) sprite_grid_measure_lo = x;
+            if (x > sprite_grid_measure_hi) sprite_grid_measure_hi = x;
+        }
+        return;
+    }
     if (sprite_grid_margins_only) return;
     if (sprite_grid_clip_x) {
         int16_t keep[4][2];

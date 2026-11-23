@@ -72,26 +72,50 @@ int widescreen_edge_copy(gaddr sp, int n);   /* the nth extra drawing, moved by 
 int widescreen_linked_shift(gaddr sp);       /* a linked sprite's own move, added to its parent's */
 static int edge_shift, edge_depth;
 
-/* WIDE NATIVE, an ending's frame (extensions/widescreen.c, scaled_endings.c): its sprites are cut at the
-   4:3 picture's sides (what the 4:3 screen kept off it stays hidden), except a picture across the scene
-   drawn 1.25 times larger (sprite_drawers.c) and, with the scaled endings, a profile picture moved out to
-   the 16:9 edge, which is cut there instead. With the scaled endings off nothing moves. */
+/* WIDE NATIVE, an ending's frame (extensions/widescreen.c, scaled_endings.c): with the scaled endings its
+   sprites are drawn across the whole 16:9 screen (a character walking in or out is seen whole, as in the
+   fights), a picture of a scaled scene drawn 1.25 times larger (sprite_drawers.c) and a profile picture
+   moved out to the 16:9 edge. A sprite waiting past a 4:3 side (placed outside the picture and not moved
+   for PARKED frames: someone about to walk in) is still cut there, so it isn't seen standing in the
+   margin. With the scaled endings off every sprite is cut at the 4:3 picture's sides and nothing moves. */
 int widescreen_in_ending(void);
 int scaled_endings_oversize(gaddr sp);
 int scaled_endings_profile_shift(gaddr sp);
+int scaled_endings_on(void);
+uint64_t rt_vblank_count(void);
 extern int sprite_grid_clip_x;                  /* sprite_grid.c */
 extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 #define SCALE_X  0x08E759E8u
 #define OFFSET_X 0x08E75A04u
 static float fl(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
-int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c) */
+int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c): 1 over-sized,
+                                 2 character art not yet measured, 3 character art at its size */
+#define PARKED 30
+static struct { gaddr sp; int16_t x; long moved, last; } seen[64];   /* by sprite: its x, when it last moved, when last drawn */
+static int parked(gaddr sp) {
+    int16_t x = (int16_t)S16(sp + SP_X);
+    long now = (long)rt_vblank_count();
+    int i, free_ = -1, oldest = 0;
+    for (i = 0; i < 64; i++) {
+        if (seen[i].sp == sp) break;
+        if (!seen[i].sp && free_ < 0) free_ = i;
+        if (seen[i].last < seen[oldest].last) oldest = i;
+    }
+    if (i == 64) { i = free_ >= 0 ? free_ : oldest; seen[i].sp = sp; seen[i].last = -10; }
+    if (now - seen[i].last > 2) { seen[i].x = x; seen[i].moved = now - PARKED - 1; }   /* new here: as if it had waited */
+    seen[i].last = now;
+    if (seen[i].x != x) { seen[i].x = x; seen[i].moved = now; }
+    return (x < 0 || x >= 384) && now - seen[i].moved > PARKED;
+}
 static int ending_sides(gaddr sp, int *shift) {
     *shift = 0;
     if (!widescreen_in_ending()) return 0;
-    if (scaled_endings_oversize(sp)) { sprite_ending_oversize = 1; return 0; }
+    int ov = scaled_endings_oversize(sp);
+    if (ov) { sprite_ending_oversize = ov; return 0; }
     int px = scaled_endings_profile_shift(sp);
     float sx = fl(SCALE_X), ox = fl(OFFSET_X);
-    float lo = px < 0 ? -48.0f : 0.0f, hi = px > 0 ? 432.0f : 384.0f;
+    int whole = scaled_endings_on() && (px != 0 || !parked(sp));
+    float lo = whole ? -48.0f : 0.0f, hi = whole ? 432.0f : 384.0f;
     lo = lo * sx; lo = lo + ox;
     hi = hi * sx; hi = hi + ox;
     sprite_grid_clip_lo = lo; sprite_grid_clip_hi = hi;

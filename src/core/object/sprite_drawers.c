@@ -154,13 +154,33 @@ static void wide_beam(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
     c->r[29] += (need + 15u) & ~15u;
 }
 
+/* An ending's character art over a scaled stage (sprite_ending_oversize 2, scaled_endings.c): kept at its
+   size unless it reaches a 4:3 side, where its straight cut edge would show in the margin; then it grows
+   with the scene as before. Measured once for the sprite and what is linked to it. */
+extern int sprite_grid_measure;
+extern int32_t sprite_grid_measure_lo, sprite_grid_measure_hi;
+static int reaches_sides(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
+    uint16_t keep_x = *H(ds + DS_X), keep_y = *H(ds + DS_Y);
+    sprite_grid_measure = 1; sprite_grid_measure_lo = INT32_MAX; sprite_grid_measure_hi = INT32_MIN;
+    draw_picture(c, ds, sp, pic, list, 0);
+    sprite_grid_measure = 0;
+    *H(ds + DS_X) = keep_x; *H(ds + DS_Y) = keep_y;
+    if (sprite_grid_measure_lo > sprite_grid_measure_hi) return 0;
+    float lo = F(SCALE_X), hi = F(SCALE_X);
+    lo = lo * 0.0f; lo = lo + F(OFFSET_X);
+    hi = hi * 384.0f; hi = hi + F(OFFSET_X);
+    return sprite_grid_measure_lo <= (int32_t)lo + 1 || sprite_grid_measure_hi >= (int32_t)hi - 1;
+}
+
 static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     gaddr list = sprite_list(sp);
     uint32_t frame = sprite_frame(sp);
     if (frame & 0x8000) return;
     copy_effects(ds, sp);
     if (rt_widescreen && widescreen_beam(sp)) wide_beam(c, ds, sp, list + frame * 12u, list);
-    int ending_pic = rt_widescreen && sprite_ending_oversize;
+    if (rt_widescreen && sprite_ending_oversize == 2)
+        sprite_ending_oversize = reaches_sides(c, ds, sp, list + frame * 12u, list) ? 1 : 3;
+    int ending_pic = rt_widescreen && sprite_ending_oversize == 1;
     if (rt_widescreen && (widescreen_oversize(sp) || ending_pic)) {
         /* WIDE NATIVE: a backdrop across the whole 4:3 picture drawn whole, 1.25 times over-sized about
            the 4:3 screen's middle (192, 112), as the super finish's swirl and burst are

@@ -46,6 +46,7 @@ void widescreen_plain_adjust(uint32_t ob, int *left, int *right) { (void)ob; *le
 int widescreen_plain_halves(uint32_t ob) { (void)ob; return 0; }
 int widescreen_oversize(uint32_t sp) { (void)sp; return 0; }
 int widescreen_in_ending(void) { return 0; }
+void widescreen_ending_more(void) {}
 int widescreen_ending_credits(void) { return 0; }
 void widescreen_text_asked(int y) { (void)y; }
 int scaled_endings_on(void) { return 0; }

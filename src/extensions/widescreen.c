@@ -410,6 +410,8 @@ int widescreen_ending_frame(Cpu *c, uint32_t a0, int after) {
     }
     return 0;
 }
+/* a further frame of the same ending drawn inside one call (core/task/ending.c, 0x089DE390's loop) */
+void widescreen_ending_more(void) { ending_frame = (long)rt_vblank_count(); }
 int widescreen_in_ending(void) { return rt_widescreen && (long)rt_vblank_count() - ending_frame <= 1; }
 int widescreen_ending_credits(void) { return widescreen_in_ending() && ending_credits; }
 void widescreen_text_asked(int y) { if (y < 240 && widescreen_in_ending()) ending_credits = 1; }
