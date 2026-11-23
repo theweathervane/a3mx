@@ -271,6 +271,9 @@ Done:
 - [x] Four more (`object/batch_steps17.c`): the 1 of 9 - 100 made ready and the first 3 of 101 - 200: the
       camera edges of fighters 1 - 3, the hit checks between the two hit lists, the network matching started by
       mode, a banner's fade (0.146.0)
+- [x] Four more (`object/batch_steps18.c`): the 2 of 9 - 100 made ready and the next 2 of 101 - 200: a row
+      object's step by type, the network matching for a thread's record, the pause menu's texts, a text
+      scroller (0.147.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
