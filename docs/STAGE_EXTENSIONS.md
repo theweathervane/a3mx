@@ -113,10 +113,13 @@ committed. **The art pack (experimental)** puts those references and the placeho
 one folder per stage plus a README and a zip, in `art-pack/` (git-ignored): the launcher's **Build art
 pack** (Build section, advanced settings), `python tools/build.py --art-pack`, or `python tools/art_pack.py`
 on a built game. It is made from your disc's art, so it's for you and your artist, not for publishing.
-It is experimental because its references are only screenshots at each wall (the 480 x 272 screen, whole and one layer at a time), not each layer whole as its own PNG. Each layer whole is still to do: the stage code is all
-native and a layer can already be drawn on its own (`A3MX_STRIP_MEASURE`), so it needs a capture that pans
-the camera across the layer and stitches the frames by the layer's scroll, plus rebuilding, from the
-stage's layout data, the layers wider than their tile map (the game keeps only the tiles it shows).
+Each stage's folder also has `layers/`: every layer whole, straight from the disc (`tools/stage_layers.py`,
+which the art pack runs): the stage's own tile maps and textures drawn out in full, one PNG per layer,
+numbered as the game numbers them (`layer0.png` the back, `layer1.png` the fighters', `layer2.png`,
+`layer3.png` the floor band drawn flat, CHARLIE's `layer4.png` the picture his floor routine adds), one PNG a
+frame for animated layers, and `layers.json` with where each sits and how the game draws it. Most layers are
+1024 x 512, more than any camera shows. It stays experimental: BISON's sky is drawn without its ripple and
+the floor without its lean, and the stage objects (sprites) are not layers, so they aren't in it.
 
 
 1. Take a WIDE NATIVE screenshot at the wall you're painting: walk both fighters into that corner.

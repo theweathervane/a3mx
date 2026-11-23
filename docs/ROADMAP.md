@@ -430,9 +430,8 @@ timings or balance; parity with it on matches it off, frame for frame, in every 
         (`tools/measure_stage_layers.py`) (0.50.0)
 - [ ] Akuma's, E. Ryu's and S. Akuma's caves: the orange placeholders don't meet the black strips in the last
       background layer (check whether that black is the layer's own art, and the strips' placement)
-- [ ] Art pack (experimental): each stage layer whole as its own PNG, not only screenshots at the walls
-      (pan the camera with the layer drawn alone and stitch by its scroll; rebuild the layers wider than
-      their tile map from the stage's layout data)
+- [x] Art pack: each stage layer whole as its own PNG, from the disc's tile maps (tools/stage_layers.py),
+      beside the screenshots at the walls
 - [ ] WIDE NATIVE outside the fight (the maintainer's screenshots, 2026-11-18): MODE MENU and FREE BATTLE
       MODE menu backdrops in the left margin; the attract sequence's green band and bars; the wipe into
       the VS screen (margins covered, the stray "F" frame hidden); the VS screen's side bars in the

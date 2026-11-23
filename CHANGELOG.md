@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.138.0
+### For players
+- **Art pack: every stage layer whole.** The art pack (launcher: Build art pack, or `python tools/build.py --art-pack`) now has a `layers/` folder per stage: each of the stage's layers drawn out in full from your disc, one PNG per layer numbered as the game numbers them (`layer0` the back, `layer1` the fighters', `layer2`, `layer3` the floor band, Charlie's `layer4`), one PNG a frame for animated layers. Most are 1024 x 512, more than the camera ever shows, so whoever paints the Stage Extensions has the whole layer to trace from, not just screenshots at the walls.
+
+### Technical
+- `tools/stage_layers.py` (new): renders each stage's tile maps (stNN.pac entry 0) with its page 0xC textures, choosing the drawer per layer as core/stage/background.c and camera_frame.c do (16- or 32-pixel tiles, Balrog's and Guile's own maps, Guile's strips, Bison's pictures and animated layer 2), plus the floor band flat (floor.c: slot 0, height from the lean table 0x08A09268) and Charlie's floor picture; writes `layers.json` per stage. Standard library only; all 38 stages in about 11 s.
+- `tools/art_pack.py`: writes `layers/` beside `reference/` and `paint/`. Docs: STAGE_EXTENSIONS.md, ROADMAP (art pack item done).
+- Left out: Bison's sky ripple and the floor's perspective lean (drawn flat); stage objects (sprites) are not layers.
+
 ## 0.137.0
 ### For players
 - **More of the game decompiled:** 18 more small functions, among them fade levels, the fighters' trails, objects scrolling with the camera, ending scenes moving the camera layers, and the network menu's head row and message panel. Nothing plays differently.
