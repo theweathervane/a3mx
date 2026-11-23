@@ -259,6 +259,9 @@ Done:
 - [x] Eleven more (`object/batch_steps13.c`): the 3 of 9 - 60 made ready and the next 8 of 61 - 100: the
       gauge's digits object, followers stepping their owner's records, objects moving to a target, round markers,
       a row's shades, the network thread's starts and entry, a name from the MAC address (0.142.0)
+- [x] Seven more (`object/batch_steps14.c`): the 1 of 9 - 60 made ready and 6 of 61 - 100: the network
+      thread's outer entry, the heap's allocation, a screen's banner by kind, a picture by slot, CPU levels for a
+      versus fight, a round's end by record, 17 objects by layout (0.143.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
