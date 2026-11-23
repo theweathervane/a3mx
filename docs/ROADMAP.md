@@ -253,6 +253,9 @@ Done:
 - [x] Twenty-one more (`object/batch_steps11.c`): the last 3 of 9 - 40 and the other 18 of 41 - 60: objects
       following a fighter, fighters' tables and followers, CPU levels by layout, turning toward the nearest
       fighter, the frame's run by screen, the session's members, records, thread and message box (0.140.0)
+- [x] Thirteen more (`object/batch_steps12.c`): the 5 of 9 - 60 made ready and the first 8 of 61 - 100: a
+      fighter's reset when free or past its gauge, a CPU script's special by ISM, two boxes overlapping, the gauge's
+      digits, the fight frame's objects, the network members advanced and the network thread's loop (0.141.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

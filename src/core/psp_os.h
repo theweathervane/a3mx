@@ -163,6 +163,9 @@ void hle_sceNetAdhocctlGetParameter(Cpu *c);
 static inline int32_t os_net_adhocctl_disconnect(Cpu *c) { hle_sceNetAdhocctlDisconnect(c); return (int32_t)c->r[2]; }
 /* The ad-hoc group's parameters (channel, group name, BSSID, nickname) into `buf`. */
 static inline int32_t os_net_adhocctl_get_parameter(Cpu *c, uint32_t buf) { c->r[4] = buf; hle_sceNetAdhocctlGetParameter(c); return (int32_t)c->r[2]; }
+void hle_sceNetAdhocctlGetState(Cpu *c);
+/* The ad hoc control state into the guest word at `out`. */
+static inline int32_t os_net_adhocctl_get_state(Cpu *c, uint32_t out) { c->r[4] = out; hle_sceNetAdhocctlGetState(c); return (int32_t)c->r[2]; }
 
 void hle_sceNetFreeThreadinfo(Cpu *c);
 void hle_sceKernelWaitThreadEnd(Cpu *c);
