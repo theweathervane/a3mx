@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.132.0
+### For players
+- **More of the game decompiled:** 56 more small functions, among them objects sliding, rising and counting down, the ending's next animation, fighters' script branches by ISM, and the network link's flags, group connect and matching end. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps4.c` (new): 54 of the 70 ready functions of 17 - 24 instructions. `src/core/object/steps.c`: 2 more step dispatchers (0x088884FC, 0x08961910). `src/core/psp_os.h`: wrappers for sceNetAdhocctlConnect and sceNetAdhocMatchingStop / Delete / Term.
+- Checked: the coverage pass maps all 56 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_match, arcade_ending_full, super_finish, stage_objects_19_gen, pause_config_original, free_battle_rdramatic, stage_objects_15_sakura, arcade_rival_dialogue, stage_objects_34_hawk, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions and free_battle.
+
 ## 0.131.0
 ### For players
 - **More of the game decompiled:** 44 more small functions, among them 16 step dispatchers, objects moving by their speeds and counting down, fighters' script starts, the network session's list and group scan, and this PSP's address and nickname. Nothing plays differently.
