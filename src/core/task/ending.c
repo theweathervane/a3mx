@@ -210,10 +210,19 @@ static int still(gaddr layer, int i) {
     int32_t h = S16(layer + 18), dh = h - last_h[i];
     return (h % 384 + 384) % 384 == 0 && (dh == 0 || dh > 64 || dh < -64);
 }
+/* a layer not moving across, as the frame before or just cut to */
+static int held(gaddr layer, int i) {
+    int32_t dh = S16(layer + 18) - last_h[i];
+    return dh == 0 || dh > 64 || dh < -64;
+}
 static int scene_scaled(Cpu *c, uint32_t kind, gaddr maps) {
     int l0 = *B(LAYER_0 + 7) && *B(CAMERA_LAYERS), l1 = *B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98);
     int l2 = *B(LAYER_2 + 7) && *B(CAMERA_LAYERS + 0x130);
     if ((l2 && still(LAYER_2, 2)) || (l1 && kind != 0 && still(LAYER_1, 1)) || (l0 && kind != 0 && still(LAYER_0, 0))) return 1;
+    /* the endings' own map (kind 2): a picture standing still anywhere on it with nothing past its 4:3 sides
+       (Charlie's cockpit, at x 128 in Ken's ending), whatever scrolls behind it: scaled, as where it stands
+       on a picture's place (Chun-Li's) */
+    if (kind == 2 && l1 && held(LAYER_1, 1) && !layer_wide(c, f_08819300, LAYER_1, *W(maps + 4))) return 1;
     if (l2 && layer_wide(c, kind == 2 ? f_0881B7C8 : inner_f_0881AB28, LAYER_2, *W(maps + 8))) return 0;
     if (l1 && layer_wide(c, kind != 0 ? f_08819300 : f_0881A8E0, LAYER_1, *W(maps + 4))) return 0;
     if (l0 && kind != 0 && layer_wide(c, f_0881A8E0, LAYER_0, *W(maps))) return 0;

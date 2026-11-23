@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.133.1
+### For players
+- **WIDE NATIVE, Ken's ending:** Charlie in his cockpit now fills the screen as he does in Chun-Li's ending (it is the same picture). In Ken's ending it stands at another place in the ending's map, with the clouds scrolling past behind it, so it was shown at the 4:3 size with the clouds carried on at the sides.
+
+### Technical
+- `core/task/ending.c` `scene_scaled`: in the endings' own map (ending kind 2), layer 1 not moving across (`held`: as the frame before, or just cut to) with no art past its 4:3 sides (`layer_wide` false) makes the scene scaled, whatever scrolls behind it. The other rules are as before.
+- Checked: every character's Final Battle ending (ending_final) against 0.133.0 every 50 frames: only Ken's cockpit frames (6300 - 6700) change. Parity (lazy renderer): arcade_ending, arcade_ending_full, attract_mode, no_extensions; WIDE NATIVE check: wide_fight, wide_walls.
+
 ## 0.133.0
 ### For players
 - **More of the game decompiled:** 35 more small functions, among them objects bouncing, sliding and starting their animations, the screen fades for one side, fighters' script branches on health, the CPU's random choices, and the network session's members, lock and error codes. Nothing plays differently.
