@@ -166,6 +166,14 @@ static inline int32_t os_net_adhocctl_get_parameter(Cpu *c, uint32_t buf) { c->r
 void hle_sceNetAdhocctlGetState(Cpu *c);
 /* The ad hoc control state into the guest word at `out`. */
 static inline int32_t os_net_adhocctl_get_state(Cpu *c, uint32_t out) { c->r[4] = out; hle_sceNetAdhocctlGetState(c); return (int32_t)c->r[2]; }
+void hle_sceNetAdhocctlDelHandler(Cpu *c);
+void hle_sceNetAdhocctlTerm(Cpu *c);
+void hle_sceNetAdhocTerm(Cpu *c);
+void hle_sceNetTerm(Cpu *c);
+static inline int32_t os_net_adhocctl_del_handler(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocctlDelHandler(c); return (int32_t)c->r[2]; }
+static inline int32_t os_net_adhocctl_term(Cpu *c) { hle_sceNetAdhocctlTerm(c); return (int32_t)c->r[2]; }
+static inline int32_t os_net_adhoc_term(Cpu *c) { hle_sceNetAdhocTerm(c); return (int32_t)c->r[2]; }
+static inline int32_t os_net_term(Cpu *c) { hle_sceNetTerm(c); return (int32_t)c->r[2]; }
 
 void hle_sceNetFreeThreadinfo(Cpu *c);
 void hle_sceKernelWaitThreadEnd(Cpu *c);
