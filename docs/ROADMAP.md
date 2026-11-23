@@ -226,9 +226,12 @@ Done:
       rankings, the name panel's count (0.125.0)
 - [x] Forty-four small ones (`object/batch_steps2.c`, 14 step dispatchers in `steps.c`), from the profile
       refreshed at 0.125.0: moves and count-downs, the network session's list and checksum (0.126.0)
+- [x] Forty-four more (`object/batch_steps3.c`, 16 step dispatchers in `steps.c`): the rest of 9 - 16
+      instructions: moves and count-downs, fighters' script starts and a button check, the network
+      session's list, place and scan, this PSP's address and nickname (0.131.0)
 
 To do, in rough order:
-- [ ] The other 982 step dispatchers (891 plain, 70 whole-frame, 21 with an owner), as scenarios reach them (each is one line in `steps.c`; the
+- [ ] The other 966 step dispatchers (876 plain, 70 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
       modes no scenario plays yet hold most of them)
 - [ ] Object kinds 3 (0x0880F820, a many-polygon shape) and 4 (0x08810128, a shaded rectangle). Need a
       scenario that draws one.
