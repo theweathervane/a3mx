@@ -268,6 +268,9 @@ Done:
 - [x] Five more (`object/batch_steps16.c`): the last of 61 - 100: each fighter's pause check, the fighters'
       flag fading the fight, the edges of three fighters for the camera, a network menu item placed, four flying
       objects by row (0.145.0)
+- [x] Four more (`object/batch_steps17.c`): the 1 of 9 - 100 made ready and the first 3 of 101 - 200: the
+      camera edges of fighters 1 - 3, the hit checks between the two hit lists, the network matching started by
+      mode, a banner's fade (0.146.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -144,6 +144,23 @@ static inline int32_t os_net_adhocctl_connect(Cpu *c, uint32_t name) { c->r[4] =
 static inline int32_t os_net_adhoc_matching_stop(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocMatchingStop(c); return (int32_t)c->r[2]; }
 static inline int32_t os_net_adhoc_matching_delete(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocMatchingDelete(c); return (int32_t)c->r[2]; }
 static inline int32_t os_net_adhoc_matching_term(Cpu *c) { hle_sceNetAdhocMatchingTerm(c); return (int32_t)c->r[2]; }
+void hle_sceNetAdhocMatchingInit(Cpu *c);
+void hle_sceNetAdhocMatchingCreate(Cpu *c);
+void hle_sceNetAdhocMatchingStart(Cpu *c);
+static inline int32_t os_net_adhoc_matching_init(Cpu *c, uint32_t pool) { c->r[4] = pool; hle_sceNetAdhocMatchingInit(c); return (int32_t)c->r[2]; }
+/* The ninth argument, the handler, goes in the guest stack's first word (sp + 0) as the PSP passes it. */
+static inline int32_t os_net_adhoc_matching_create(Cpu *c, int32_t mode, int32_t max_peers, uint32_t port, int32_t buf_size,
+                                                   uint32_t hello_us, uint32_t ping_us, int32_t retries, uint32_t msg_us, uint32_t handler) {
+    c->r[4] = (uint32_t)mode; c->r[5] = (uint32_t)max_peers; c->r[6] = port; c->r[7] = (uint32_t)buf_size;
+    c->r[8] = hello_us; c->r[9] = ping_us; c->r[10] = (uint32_t)retries; c->r[11] = msg_us;
+    WW(c->r[29], handler);
+    hle_sceNetAdhocMatchingCreate(c); return (int32_t)c->r[2];
+}
+static inline int32_t os_net_adhoc_matching_start(Cpu *c, int32_t id, int32_t stack, int32_t prio, int32_t stack2, int32_t prio2, int32_t opt_len, uint32_t opt) {
+    c->r[4] = (uint32_t)id; c->r[5] = (uint32_t)stack; c->r[6] = (uint32_t)prio; c->r[7] = (uint32_t)stack2;
+    c->r[8] = (uint32_t)prio2; c->r[9] = (uint32_t)opt_len; c->r[10] = opt;
+    hle_sceNetAdhocMatchingStart(c); return (int32_t)c->r[2];
+}
 
 void hle_sceKernelWaitSema(Cpu *c);
 void hle_sceKernelSignalSema(Cpu *c);
