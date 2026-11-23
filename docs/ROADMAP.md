@@ -247,6 +247,9 @@ Done:
 - [x] Eighteen more (`object/batch_steps9.c`): the 12 of 9 - 40 made ready by the batches before and the
       first 6 of 41 - 60: fade levels, fighters' trails in turn, objects scrolling with the camera, ending
       objects moving the camera layers, the network menu's head row and message panel, the session's lists (0.137.0)
+- [x] Thirty more (`object/batch_steps10.c`): the last 4 of 9 - 40 and 26 of 41 - 60: objects queued by
+      layer and following a fighter's picture, slides and timers, effects at a fighter's side, targets by
+      layout, the check that lets a fighter start a move, the session's lists under its lock (0.139.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
