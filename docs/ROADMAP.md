@@ -250,6 +250,9 @@ Done:
 - [x] Thirty more (`object/batch_steps10.c`): the last 4 of 9 - 40 and 26 of 41 - 60: objects queued by
       layer and following a fighter's picture, slides and timers, effects at a fighter's side, targets by
       layout, the check that lets a fighter start a move, the session's lists under its lock (0.139.0)
+- [x] Twenty-one more (`object/batch_steps11.c`): the last 3 of 9 - 40 and the other 18 of 41 - 60: objects
+      following a fighter, fighters' tables and followers, CPU levels by layout, turning toward the nearest
+      fighter, the frame's run by screen, the session's members, records, thread and message box (0.140.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
