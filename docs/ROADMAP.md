@@ -265,6 +265,9 @@ Done:
 - [x] Eight more (`object/batch_steps15.c`): the 4 of 9 - 60 made ready and 4 of 61 - 100: pictures by
       type and slot, CPU levels for a fight, the network scan's results and a record added to a network list,
       characters' colours made to differ, a CPU's character swapped, a hold counter with its text (0.144.0)
+- [x] Five more (`object/batch_steps16.c`): the last of 61 - 100: each fighter's pause check, the fighters'
+      flag fading the fight, the edges of three fighters for the camera, a network menu item placed, four flying
+      objects by row (0.145.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
