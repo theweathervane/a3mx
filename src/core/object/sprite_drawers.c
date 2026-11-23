@@ -45,7 +45,8 @@ extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;   /* sprite_grid
 extern int sprite_grid_scale_all;                                  /* sprite_grid.c */
 int widescreen_oversize(gaddr sp);                                 /* extensions/widescreen.c */
 extern int sprite_ending_oversize;                                 /* sprite.c: an ending's scene picture (scaled_endings.c) */
-#define ENDING_MID_Y 72.0f   /* an ending's scene, rows 8 - 136 above its text band */
+extern int sprite_grid_clip_x;                                     /* sprite_grid.c: cut at the sides (sprite.c sets it) */
+#define ENDING_TOP_Y 8.0f   /* an ending's scene: its top row (8; rows 8 - 136 above its text band) */
 int widescreen_column_copies(gaddr sp, int dx[2]);                 /* extensions/widescreen.c */
 int widescreen_bar_ends(gaddr sp);                                 /* extensions/widescreen.c */
 int widescreen_piece_shift(gaddr sp, int dx);                      /* extensions/widescreen.c */
@@ -154,22 +155,72 @@ static void wide_beam(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
     c->r[29] += (need + 15u) & ~15u;
 }
 
-/* An ending's character art over a scaled stage (sprite_ending_oversize 2, scaled_endings.c): kept at its
-   size unless it reaches a 4:3 side, where its straight cut edge would show in the margin; then it grows
-   with the scene as before. Measured once for the sprite and what is linked to it. */
+/* WIDE NATIVE, an ending's backdrop picture (sprite_ending_oversize, extensions/scaled_endings.c): how far it
+   reaches across, in the sprite's units (the 4:3 picture is 0 - 384), measured with what is linked to it
+   before any cut. 0 when it draws nothing. */
 extern int sprite_grid_measure;
 extern int32_t sprite_grid_measure_lo, sprite_grid_measure_hi;
-static int reaches_sides(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list) {
+static int measure_across(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list, float *lo, float *hi) {
     uint16_t keep_x = *H(ds + DS_X), keep_y = *H(ds + DS_Y);
     sprite_grid_measure = 1; sprite_grid_measure_lo = INT32_MAX; sprite_grid_measure_hi = INT32_MIN;
     draw_picture(c, ds, sp, pic, list, 0);
     sprite_grid_measure = 0;
     *H(ds + DS_X) = keep_x; *H(ds + DS_Y) = keep_y;
-    if (sprite_grid_measure_lo > sprite_grid_measure_hi) return 0;
-    float lo = F(SCALE_X), hi = F(SCALE_X);
-    lo = lo * 0.0f; lo = lo + F(OFFSET_X);
-    hi = hi * 384.0f; hi = hi + F(OFFSET_X);
-    return sprite_grid_measure_lo <= (int32_t)lo + 1 || sprite_grid_measure_hi >= (int32_t)hi - 1;
+    if (sprite_grid_measure_lo > sprite_grid_measure_hi || F(SCALE_X) <= 0.0f) return 0;
+    *lo = ((float)sprite_grid_measure_lo - F(OFFSET_X)) / F(SCALE_X);
+    *hi = ((float)sprite_grid_measure_hi - F(OFFSET_X)) / F(SCALE_X);
+    return 1;
+}
+/* over a scaled stage (2): a picture grows with the layers when it covers the whole 4:3 picture (the cave
+   behind Evil Ryu, Adon's and Blanka's last portraits), and so does a backdrop (kind 73 type 0) reaching a
+   4:3 side that is a piece of the scenery (less than 3/4 of the picture across: the truck at the right of
+   Karin's market) or of a whole one growing beside it (this frame or the last: it may be drawn first; the
+   cave's second picture, 32 - 384). Anything else keeps its size, standing on the stage behind it: a
+   character sliding in past a side (Evil Ryu), a last portrait reaching past one (Eagle's, 32 - 416), a
+   backdrop that is nearly the whole picture on its own (Balrog's last picture, 16 - 384). Over a stage drawn
+   as it is (4): only when it covers the whole picture (Juni) and doesn't already reach both 16:9 sides
+   (-48 and 432: Eagle's tank, -64 - 448). */
+uint64_t rt_vblank_count(void);
+static long whole_grown = -10;   /* the last frame a whole backdrop grew */
+static int reaches_side(float lo, float hi) { return lo <= 1.0f || hi >= 383.0f; }
+static int covers_picture(float lo, float hi) { return lo <= 1.0f && hi >= 383.0f; }
+static int backdrop_grows(float lo, float hi, int backdrop) {
+    long now = (long)rt_vblank_count();
+    if (covers_picture(lo, hi)) { whole_grown = now; return 1; }
+    return backdrop && reaches_side(lo, hi) && (hi - lo < 288.0f || now - whole_grown <= 1);
+}
+
+/* WIDE NATIVE, Dee Jay's green speed lines behind him (an ending's scaled backdrop, 112 - 272, alone on a
+   scene with no layer shown, black around it): drawn again mirrored on each side, then plain, then
+   mirrored, ..., edge to edge, until the 4:3 picture's 384 are covered (they fill the 16:9 screen once
+   scaled). Matched by its place, the bare scene and being the frame's only scaled backdrop (the frame
+   before: it is drawn first): other narrow backdrops are parts of their scene (the Psycho Drive's beam,
+   the skull's glow, the speed lines behind M. Bison in Charlie's ending). A picture flipped across turns about its anchor (DS_X). */
+#define FLIP_X 56   /* the draw state's u32: flipped across */
+int scaled_endings_scene_bare(void);   /* extensions/scaled_endings.c */
+static long backdrops_frame = -10; static int backdrops_now, backdrops_last;   /* scaled backdrops drawn a frame */
+static void count_backdrop(void) {
+    long now = (long)rt_vblank_count();
+    if (now != backdrops_frame) { backdrops_last = now - backdrops_frame == 1 ? backdrops_now : 0; backdrops_now = 0; backdrops_frame = now; }
+    backdrops_now++;
+}
+static void mirrored_out(Cpu *c, gaddr ds, gaddr sp, gaddr pic, gaddr list, float lo, float hi) {
+    if (!scaled_endings_scene_bare() || backdrops_last != 1 || lo < 111.0f || lo > 113.0f || hi < 271.0f || hi > 273.0f) return;
+    int16_t x = (int16_t)*H(ds + DS_X), y = (int16_t)*H(ds + DS_Y);
+    uint32_t flip = *W(ds + FLIP_X);
+    int32_t l = (int32_t)(lo + 0.5f), r = (int32_t)(hi + 0.5f), w = r - l;
+    if (w < 16) return;
+    for (int side = -1; side <= 1; side += 2)
+        for (int k = side; l + k * w < 384 && r + k * w > 0; k += side) {
+            int odd = k & 1;
+            /* plain: moved k widths; mirrored: its far edge (r - x from the anchor) now on the near side */
+            int32_t to = odd ? l + k * w + (r - x) : x + k * w;
+            *H(ds + DS_X) = (uint16_t)to; *H(ds + DS_Y) = (uint16_t)y;
+            *W(ds + FLIP_X) = flip ^ (uint32_t)odd;
+            draw_picture(c, ds, sp, pic, list, 0);
+        }
+    *H(ds + DS_X) = (uint16_t)x; *H(ds + DS_Y) = (uint16_t)y;
+    *W(ds + FLIP_X) = flip;
 }
 
 static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
@@ -178,17 +229,28 @@ static void draw_one(Cpu *c, gaddr ds, gaddr sp) {
     if (frame & 0x8000) return;
     copy_effects(ds, sp);
     if (rt_widescreen && widescreen_beam(sp)) wide_beam(c, ds, sp, list + frame * 12u, list);
+    float lo = 0.0f, hi = 0.0f;
+    int measured = 0, keep_clip = sprite_grid_clip_x;
+    if (rt_widescreen && sprite_ending_oversize >= 1 && sprite_ending_oversize != 3 && sprite_ending_oversize != 5)
+        measured = measure_across(c, ds, sp, list + frame * 12u, list, &lo, &hi);
     if (rt_widescreen && sprite_ending_oversize == 2)
-        sprite_ending_oversize = reaches_sides(c, ds, sp, list + frame * 12u, list) ? 1 : 3;
-    int ending_pic = rt_widescreen && sprite_ending_oversize == 1;
+        sprite_ending_oversize = measured && backdrop_grows(lo, hi, RB(sp + 2) == 73 && RB(sp + 3) == 0) ? 1 : 3;
+    else if (rt_widescreen && sprite_ending_oversize == 4)
+        sprite_ending_oversize = measured && covers_picture(lo, hi) && (lo > -47.0f || hi < 431.0f) ? 5 : 0;
+    int ending_pic = rt_widescreen && (sprite_ending_oversize == 1 || sprite_ending_oversize == 5);
     if (rt_widescreen && (widescreen_oversize(sp) || ending_pic)) {
         /* WIDE NATIVE: a backdrop across the whole 4:3 picture drawn whole, 1.25 times over-sized about
            the 4:3 screen's middle (192, 112), as the super finish's swirl and burst are
            (super_backdrop.c): its 384 fill the 480 and its rings and rays go on unbroken. An ending's
-           picture across its scene (extensions/scaled_endings.c) about the scene's middle (192, ENDING_MID_Y) */
-        sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = ending_pic ? ENDING_MID_Y : 112.0f; sprite_grid_scale_all = 1;
+           picture across its scene (extensions/scaled_endings.c) about the middle of the scene's top
+           (192, ENDING_TOP_Y): its top stays, its bottom goes under the text band */
+        if (sprite_ending_oversize == 5) sprite_grid_clip_x = 0;   /* over the stage: whole from its first frame */
+        sprite_grid_scale = 1.25f; sprite_grid_ax = 192.0f; sprite_grid_ay = ending_pic ? ENDING_TOP_Y : 112.0f; sprite_grid_scale_all = 1;
         draw_picture(c, ds, sp, list + frame * 12u, list, 0);
+        if (ending_pic && measured && RB(sp + 2) == 73 && RB(sp + 3) == 0) count_backdrop();
+        if (ending_pic && measured && sprite_ending_oversize == 1 && RB(sp + 2) == 73 && RB(sp + 3) == 0) mirrored_out(c, ds, sp, list + frame * 12u, list, lo, hi);
         sprite_grid_scale = 0.0f; sprite_grid_scale_all = 0;
+        sprite_grid_clip_x = keep_clip;
         return;
     }
     draw_picture(c, ds, sp, list + frame * 12u, list, EDGES_SOLID);

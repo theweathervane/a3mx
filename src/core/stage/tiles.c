@@ -125,12 +125,12 @@ static int32_t oversize(int32_t p, int32_t mid) { int32_t d = (p - mid) * 5; ret
    picture layer of the ending draws through tiles_ending_quad):
      1  the scaled endings off: each quad cut at the 4:3 picture's sides, its texels across cut with it,
         so the sides stay black;
-     2  the scene drawn 1.25 times larger about its middle (192, 72: its rows 8 - 136 above the text band).
+     2  the scene drawn 1.25 times larger about the middle of its top (192, 8: its rows 8 - 136 above the
+        text band): its top stays, its bottom 32 rows go under the text band.
    And tiles_counting: the tile layers' columns counted instead of drawn, in and past each side of the
    4:3 picture (rows 8 - 136), the ones with a tile and all of them (ending.c: does the scene have art past its sides?) */
 int tiles_ending_mode, tiles_counting;
 int32_t tiles_count_in, tiles_count_in_art, tiles_count_out[2], tiles_count_out_art[2];   /* past the left side, the right */
-#define ENDING_MID_Y 72
 #define SCENE_TOP    8
 #define SCENE_BOTTOM 136
 static void picture_sides(int32_t *lo, int32_t *hi) {
@@ -145,7 +145,7 @@ int tiles_ending_quad(void) {
     if (tiles_ending_mode == 2) {
         for (uint32_t i = 0; i < 4; i++) {
             SET16(QUAD_XY + i * 4, oversize(S16(QUAD_XY + i * 4), 192));
-            SET16(QUAD_XY + i * 4 + 2, oversize(S16(QUAD_XY + i * 4 + 2), ENDING_MID_Y));
+            SET16(QUAD_XY + i * 4 + 2, oversize(S16(QUAD_XY + i * 4 + 2), SCENE_TOP));
         }
         return 1;
     }

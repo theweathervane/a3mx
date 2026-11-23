@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.133.2
+### For players
+- **WIDE NATIVE endings, from the review of all of them:**
+  - **Juni (Chun-Li's ending):** her picture over the last fight's stage now fills the screen as it does later in the ending. Scaled scenes now keep their top and lose their bottom under the text band (before, they were scaled about their middle, cutting heads at the top): Juni's legs go, T. Hawk is seen whole on the cliff.
+  - **E. Honda's dojo:** no longer jumps to a smaller size as the camera pans, and no black edge at the left when it stops.
+  - **Evil Ryu, Eagle, Balrog:** the character art and last pictures standing on the stage keep their size (Evil Ryu no longer grows while he slides in). So do the other last pictures that reach a 4:3 side but don't fill it: Adon, Blanka, R. Mika, Rose and Sodom.
+  - **Dee Jay:** the blue burst beside his punch is gone (the black sides now reach the screen's edges: a square picture), and the green speed lines behind him reach the screen's sides.
+
+### Technical
+- `core/object/sprite_drawers.c`: an ending's scaled pictures about (192, `ENDING_TOP_Y` 8); `core/stage/tiles.c` mode 2 about (192, `SCENE_TOP`). Pictures over a scaled stage (`scaled_endings_oversize` 2) measured each frame (`measure_across`): grow when they cover 0 - 384, or as a kind 73 type 0 backdrop reaching a side that is under 288 across (Karin's truck) or beside a whole one growing (Evil Ryu's cave); else 1:1 (was: grow when reaching a side). Over a stage drawn as it is, a kind 73 type 0 backdrop (4) covering 0 - 384 but not already -48 - 432 is scaled (5). `mirrored_out`: Dee Jay's 112 - 272 backdrop on a scene with no layer shown, the frame's only scaled backdrop, drawn mirrored / plain out to 0 - 384.
+- `core/task/ending.c` `scene_kept`: a scene scaled for bare columns (`scene_scaled` 2) stays scaled until a cut (kind or shown layers change, a layer jumps over 64, a gap in the ending's frames); a scene drawn as it is may still turn scaled. `scaled_endings_bare`: no layer shown.
+- `extensions/widescreen.c` `widescreen_plain_adjust`: an ending's type 1 black side of any width under 384 at a 4:3 side reaches the 16:9 side (was 96 only).
+- Checked: every character's Final Battle ending against 0.133.1 every 50 frames, with the new rules on the old middle anchor (only the endings above and the last pictures listed change), then by eye with the top anchor. 4:3 (arcade_ending_full hashes) and the scaled endings off unchanged. Parity: arcade_ending, wide_fight.
+
 ## 0.133.1
 ### For players
 - **WIDE NATIVE, Ken's ending:** Charlie in his cockpit now fills the screen as he does in Chun-Li's ending (it is the same picture). In Ken's ending it stands at another place in the ending's map, with the clouds scrolling past behind it, so it was shown at the 4:3 size with the clouds carried on at the sides.

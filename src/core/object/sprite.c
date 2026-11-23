@@ -88,8 +88,9 @@ extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 #define SCALE_X  0x08E759E8u
 #define OFFSET_X 0x08E75A04u
 static float fl(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
-int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c): 1 over-sized,
-                                 2 character art not yet measured, 3 character art at its size */
+int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (scaled_endings_oversize,
+                                 sprite_drawers.c): 1 over-sized, 2 / 4 a backdrop not yet measured, 3 at its size,
+                                 5 a backdrop over a stage drawn as it is, over-sized */
 #define INTO   16            /* how far into the 4:3 picture a sprite's cells must reach to count as in it */
 /* By sprite: what it is (kind, type), when it was last drawn, where on the screen its anchor was then (pos,
    after the camera: a pan moves it there though its own x stays), how far its cells reached (reach: known),
@@ -135,7 +136,8 @@ static int ending_sides(gaddr sp, int *shift) {
     *shift = 0;
     if (!widescreen_in_ending()) return 0;
     int ov = scaled_endings_oversize(sp);
-    if (ov) { sprite_ending_oversize = ov; return 0; }
+    if (ov) sprite_ending_oversize = ov;
+    if (ov && ov != 4) return 0;      /* 4: maybe scaled (sprite_drawers.c), else cut as any sprite here */
     int px = scaled_endings_profile_shift(sp);
     float sx = fl(SCALE_X), ox = fl(OFFSET_X);
     int whole = scaled_endings_on() && (px != 0 || !parked(sp));

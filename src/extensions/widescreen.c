@@ -338,12 +338,14 @@ int widescreen_widen(uint32_t sp) {
    the attract mode's score ranking, the box behind the first place's portrait (48 out each side). */
 void widescreen_plain_adjust(uint32_t ob, int *left, int *right) {
     *left = *right = 0;
-    /* the endings (screen 1): the black sides that narrow a scene to a panel (type 1, 96 wide, at x 0
-       and 288, or past) go on to the 16:9 screen's sides, so the scene's tiles past them stay hidden */
-    if (RB(GAME + 2) == 1 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 && (int16_t)RH(ob + 14) == 96) {
+    /* the endings (screen 1): the black sides that narrow a scene to a panel (type 1, at a 4:3 side or past
+       it: 96 wide at x 0 and 288 in Ryu's ending, 64 at 0 and 320 around Dee Jay's punch) go on to the 16:9
+       screen's sides, so the scene's tiles and backdrop past them stay hidden */
+    int16_t pw = (int16_t)RH(ob + 14);
+    if (RB(GAME + 2) == 1 && (RB(ob + 88) & 0x3F) == 0 && RB(ob + 92) == 1 && pw > 0 && pw < 384) {
         int16_t x = (int16_t)RH(ob + 6);
         if (x <= 0) *left = -48;
-        if (x + 96 >= 384) *right = 48;
+        if (x + pw >= 384) *right = 48;
         return;
     }
     /* the attract mode's score ranking (GAME + 0 = 4): the translucent box behind the first place's

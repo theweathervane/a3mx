@@ -51,6 +51,8 @@ int widescreen_ending_credits(void) { return 0; }
 void widescreen_text_asked(int y) { (void)y; }
 int scaled_endings_on(void) { return 0; }
 void scaled_endings_scene(int scaled) { (void)scaled; }
+void scaled_endings_bare(int bare) { (void)bare; }
+int scaled_endings_scene_bare(void) { return 0; }
 int scaled_endings_oversize(uint32_t sp) { (void)sp; return 0; }
 int scaled_endings_profile_shift(uint32_t sp) { (void)sp; return 0; }
 int widescreen_column_copies(uint32_t sp, int dx[2]) { (void)sp; (void)dx; return 0; }

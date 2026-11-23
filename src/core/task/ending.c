@@ -190,6 +190,7 @@ extern int32_t tiles_count_in, tiles_count_in_art, tiles_count_out[2], tiles_cou
 int widescreen_in_ending(void);                 /* extensions/widescreen.c */
 int scaled_endings_on(void);                    /* extensions/scaled_endings.c */
 void scaled_endings_scene(int scaled);
+void scaled_endings_bare(int bare);
 extern int rt_widescreen;
 void inner_f_0881AB28(Cpu *c);
 
@@ -215,6 +216,8 @@ static int held(gaddr layer, int i) {
     int32_t dh = S16(layer + 18) - last_h[i];
     return dh == 0 || dh > 64 || dh < -64;
 }
+/* 0 drawn as it is; 1 scaled, standing on a picture's place (or a picture held there); 2 scaled, no layer
+   with art past both 4:3 sides */
 static int scene_scaled(Cpu *c, uint32_t kind, gaddr maps) {
     int l0 = *B(LAYER_0 + 7) && *B(CAMERA_LAYERS), l1 = *B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98);
     int l2 = *B(LAYER_2 + 7) && *B(CAMERA_LAYERS + 0x130);
@@ -226,7 +229,39 @@ static int scene_scaled(Cpu *c, uint32_t kind, gaddr maps) {
     if (l2 && layer_wide(c, kind == 2 ? f_0881B7C8 : inner_f_0881AB28, LAYER_2, *W(maps + 8))) return 0;
     if (l1 && layer_wide(c, kind != 0 ? f_08819300 : f_0881A8E0, LAYER_1, *W(maps + 4))) return 0;
     if (l0 && kind != 0 && layer_wide(c, f_0881A8E0, LAYER_0, *W(maps))) return 0;
-    return 1;
+    return 2;   /* no layer with art past both sides */
+}
+
+/* The decision is the scene's, made when it is cut to: while its camera pans, a scaled scene stays scaled.
+   E. Honda's dojo stands still at h 448 with bare columns past its right side (scaled), then pans to h 320,
+   where its art would have reached both sides from h 424 on (drawn as it is): the scene jumped mid-pan and
+   ended with 16 bare pixels at the left. Kept scaled, it shows only its 4:3 picture's columns, which have
+   art all the way. Only a scene scaled for its bare columns is kept so; a scene drawn as it is still turns
+   scaled when bare columns come in (Ryu's sunset). A cut: the ending's kind or its shown layers change, a
+   layer jumps (more than 64), or the ending wasn't drawn for a while. */
+static int kept_scaled = -1;
+static uint32_t kept_kind, kept_layers;
+static long kept_frame = -10;
+uint64_t rt_vblank_count(void);
+static int scene_kept(uint32_t kind, int scaled) {
+    long now = (long)rt_vblank_count();
+    if (now - kept_frame > 2) kept_scaled = -1;   /* a new ending (or a gap): decided afresh */
+    kept_frame = now;
+    uint32_t layers = (uint32_t)(*B(LAYER_0 + 7) && *B(CAMERA_LAYERS)) | (uint32_t)(*B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98)) << 1
+                    | (uint32_t)(*B(LAYER_2 + 7) && *B(CAMERA_LAYERS + 0x130)) << 2;
+    int cut = kept_scaled < 0 || kind != kept_kind || layers != kept_layers;
+    static const gaddr layer[3] = { LAYER_0, LAYER_1, LAYER_2 };
+    for (int i = 0; i < 3 && !cut; i++) {
+        if (!(layers >> i & 1)) continue;
+        int32_t dh = S16(layer[i] + 18) - last_h[i];
+        if (dh > 64 || dh < -64) cut = 1;
+    }
+    /* kept only when scaled for bare columns at the cut; scaled as it stood on a picture's place, a scene
+       that then scrolls is decided frame by frame (the clouds under Chun-Li's jet); and mid-pan it can
+       still turn scaled when bare columns come in (Ryu's sunset) */
+    if (cut || kept_scaled != 2 || scaled) kept_scaled = scaled;
+    kept_kind = kind; kept_layers = layers;
+    return kept_scaled != 0;
 }
 
 static void layer_scroll_word(gaddr l) { *W(l + 96) = (uint32_t)(-(int32_t)*W(l + 20)) - ((uint32_t)*H(l + 90) << 16); }
@@ -248,9 +283,12 @@ static void ending_layers(Cpu *c) {
     uint32_t kind = *W(ENDING_KIND);
     gaddr maps = LAYER_MAPS + kind * 12u;
     if (rt_widescreen && widescreen_in_ending()) {
-        int scaled = scaled_endings_on() && scene_scaled(c, kind, maps);
+        int scaled = scaled_endings_on() ? scene_scaled(c, kind, maps) : 0;
+        if (scaled_endings_on()) scaled = scene_kept(kind, scaled);
         tiles_ending_mode = !scaled_endings_on() ? 1 : scaled ? 2 : 0;
         scaled_endings_scene(scaled);
+        scaled_endings_bare(!(*B(LAYER_0 + 7) && *B(CAMERA_LAYERS)) && !(*B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98))
+                            && !(*B(LAYER_2 + 7) && *B(CAMERA_LAYERS + 0x130)));
         last_h[0] = S16(LAYER_0 + 18); last_h[1] = S16(LAYER_1 + 18); last_h[2] = S16(LAYER_2 + 18);
     }
 
