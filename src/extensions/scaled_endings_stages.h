@@ -9,7 +9,7 @@ typedef struct {
     const char *stage;                                /* the stage's archive */
     uint8_t nsources; StageSource sources[4];         /* drawn in this order, the first at the back */
     uint8_t nclut; struct { uint8_t slot, entry; uint16_t offset; } cluts[12];   /* the 4-bit textures' colours */
-    uint8_t wide; int8_t shift; uint8_t floor_row;    /* SCENE_VIEW: drawn as it is, not scaled; its view moved right (pixels); from this row down the strips carry on the scene's edge column */
+    uint8_t wide; int8_t shift; uint8_t floor_row;    /* SCENE_VIEW: drawn as it is, not scaled; its view moved right (pixels); from this row down the strips take the stage's floor band */
 } EndingStageBand;
 
 static const EndingStageBand ENDING_STAGE_BANDS[] = {

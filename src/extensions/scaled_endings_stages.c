@@ -20,8 +20,8 @@
  * Most bands are drawn this way only when their scene isn't scaled anyway. A band marked `wide` (the user's
  * choice: E. Honda's dojo) makes its scene drawn as it is, with the stage's art past its sides; its view
  * starts `shift` pixels further right (tiles.c), so its pan ends on its own art (core/task/ending.c); and
- * from `floor_row` down the strips carry on the scene's own edge column (the ring floor's boards), the
- * stage's floor being drawn apart from its layers (core/stage/floor.c).
+ * from `floor_row` down the strips take the stage's floor band (drawn apart from its layers in a fight,
+ * core/stage/floor.c), laid out as stage_floor lays it out (floor_texel).
  *
  * Only the drawing changes; the game's memory is not touched outside our texture.
  */
@@ -162,6 +162,24 @@ static uint16_t stage_texel(const EndingStageBand *e, const uint8_t *maps, size_
     return 0;
 }
 
+/* The stage's floor band as core/stage/floor.c's stage_floor (0x0881C5A8) draws it in a fight, with no
+   shake: its floor texture (page 0xC slot 0, the game's floor texture 0xA0) as four strips side by side,
+   each 256 pixels wide, the first at the layer's x 128; strip i from texture row 64 i + 16 at the band's
+   top (map y `top`, the shake's height 0x092E5F78 + 130: 208) to 64 i + 64 at y 256, one texel a pixel.
+   Its texel for the layer's pixel (x, y); 0 past the band. */
+#define FLOOR_SLOT   0
+#define FLOOR_LEFT   128
+#define FLOOR_BOTTOM 256
+static uint16_t floor_texel(const Entry *es, int n, int x, int y, int top) {
+    int fx = x - FLOOR_LEFT;
+    if (fx < 0 || fx >= 4 * 256 || y < top || y >= FLOOR_BOTTOM) return 0;
+    int i = fx / 256, u = fx % 256, v = 64 * i + 64 - (FLOOR_BOTTOM - y);
+    Page pg;
+    if (!find_page(es, n, FLOOR_SLOT, &pg) || pg.bits != 16 || u >= pg.w || v < 0 || v >= pg.w) return 0;
+    uint16_t c; memcpy(&c, pg.px + ((size_t)v * pg.w + u) * 2, 2);
+    return to5551(c, pg.pf);
+}
+
 static int alloc_texture(void) {
     if (tex) return 1;
     uint32_t m = rt_alloc(TEX_W * TEX_H * 2 + 0x100, 1, 256, "ending stages");
@@ -194,15 +212,6 @@ static int build(int b) {
         memcpy(cluts[nclut], es[ent].data + e->cluts[k].offset, 32);
         clut_slot[nclut++] = e->cluts[k].slot;
     }
-    /* from floor_row down, the scene's own edge column carried on (its layer 1, from its archive) */
-    size_t en = 0; uint8_t *ef = NULL; Entry ees[64]; int nee = 0;
-    if (e->floor_row) {
-        char name[32]; snprintf(name, sizeof name, "end%02x_u.pac", e->ending);
-        ef = rt_archive_read(name, &en);
-        if (ef) nee = pac_entries(ef, en, ees, 64);
-        if (nee < 1) rt_log("scaled endings: %s could not be read, ending %02X's floor past its sides left bare", name, e->ending);
-    }
-    const StageSource own = { 1, 16, 0, 0 };
     uint16_t *out = (uint16_t *)HOST(tex);
     memset(out, 0, TEX_W * TEX_H * 2);
     for (int side = 0; side < 2; side++) {
@@ -211,10 +220,8 @@ static int build(int b) {
             for (int x = 0; x < STRIP * 16; x++) {
                 int sx = c0 * 16 + x, sy = e->row0 * 16 + y;
                 uint16_t px = 0;
-                if (e->floor_row && sy >= e->floor_row * 16) {
-                    int edge = side ? e->col1 * 16 + 15 : e->col0 * 16;
-                    if (nee > 0) px = stage_texel(e, ees[0].data, ees[0].size, ees, nee, NULL, NULL, 0, own, edge, sy);
-                    out[y * TEX_W + side * 128 + x] = px;
+                if (e->floor_row && sy >= e->floor_row * 16) {   /* the stage's floor band, not its layers */
+                    out[y * TEX_W + side * 128 + x] = floor_texel(es, ne, sx, sy, e->floor_row * 16);
                     continue;
                 }
                 for (int k = 0; k < e->nsources; k++) {
@@ -224,7 +231,7 @@ static int build(int b) {
                 out[y * TEX_W + side * 128 + x] = px;
             }
     }
-    free(f); free(ef);
+    free(f);
     rt_log("scaled endings: ending %02X's scene drawn on past its sides from %s", e->ending, e->stage);
     return 1;
 }

@@ -113,7 +113,8 @@ works, what doesn't, and the rules for refining it.
     layers are bare past the sides stays scaled while its camera pans (0.133.2). E. Honda's dojo
     (0.133.3) is drawn as it is instead, wide: it is his stage repainted, so past its right side his
     stage's own art carries on (`scaled_endings_stages.c`, a band given by hand in
-    `tools/ending_stages.py`, its ring floor's boards continued from its edge), and its view starts 16
+    `tools/ending_stages.py`; its floor from his stage's floor band, laid out as `core/stage/floor.c`
+    draws it, 0.133.4), and its view starts 16
     pixels further right so its pan ends on its own art. In the
     endings' own scenes (ending kind 2, the 24-tile-wide map) its pictures (sprites of kinds 73, 77, 78:
     close-ups, statues, bursts, speed lines) grow with it, being parts of the scene; over a stage's layers

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.133.4
+### For players
+- **WIDE NATIVE, E. Honda's ending:** the floor past the dojo's right side is now E. Honda's own stage floor, so the ring's boards curve on as they do in a fight, instead of the dojo's last column of floor stretched out.
+
+### Technical
+- `extensions/scaled_endings_stages.c` `floor_texel`: from `floor_row` down, the strips take the stage's floor band as `core/stage/floor.c`'s stage_floor (0x0881C5A8) lays it out with no shake: page 0xC slot 0 of the stage's archive (the game's floor texture 0xA0) in four strips 256 pixels wide from the layer's x 128, strip i from texture row 64 i + 16 at y 208 to 64 i + 64 at y 256. Measured in a fight on E. Honda's stage (stage_objects_22_honda): band height 208 (0x092E5F78 + 130), layer 1's scroll. The 0.133.3 edge-column fill is gone. `tools/ending_stages.py`: SCENE_VIEW's third value now means this.
+- Found: the dojo's ring floor isn't a repaint: it is E. Honda's stage floor (slot 0 holds the ring).
+- Checked: Final Battle endings against 0.133.2 for E. Honda and the other stage-band endings (Ryu, Ken, Sagat, Sakura, Guy, Maki, Dan): only E. Honda's changes; the ring continues across the join by eye.
+
 ## 0.133.3
 ### For players
 - **WIDE NATIVE, E. Honda's ending:** the dojo is no longer scaled. It is E. Honda's stage repainted, so past its right side his stage carries on (the shop and the sign beyond the post box, the floor's boards continuing), and the camera starts a little further right, so its pan ends on the dojo's own art with no black edge. His last picture over the dojo shows it the same way.

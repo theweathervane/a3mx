@@ -32,11 +32,11 @@ MIN_SHARE = 0.6        # a band is kept when its stage's layers give back this s
 # building, the post box and the sign beside it line up), but only a third of its blocks match one alone.
 FORCED = {(0x18, 1, 0): ('st18', [((0, 32), 0, 0), ((2, 32), 0, 0), ((2, 16), 0, 0), ((1, 16), 0, 0)])}
 # Bands whose scene is drawn as it is, the stage's art past its sides, rather than scaled (the user's
-# choice), how far right its view starts (pixels) and from which row down the strips carry on the
-# scene's own edge column instead of the stage (the stage's floor is drawn apart, not in its layers).
-# E. Honda's dojo pans 128 pixels left from the 4:3 picture's place; its own art reaches 160 left of it,
-# so the view starts 16 further right and the pan ends on it; the stage gives its right side, the ring
-# floor's boards (row 13 down) go on. {ending: (wide, shift, floor_row)}
+# choice), how far right its view starts (pixels) and from which row down the strips take the stage's
+# floor band (drawn apart from its layers, core/stage/floor.c: rows 13 - 15, y 208 - 256) instead of its
+# layers. E. Honda's dojo pans 128 pixels left from the 4:3 picture's place; its own art reaches 160 left
+# of it, so the view starts 16 further right and the pan ends on it; the stage gives its right side, his
+# stage's floor (the ring) goes on under it. {ending: (wide, shift, floor_row)}
 SCENE_VIEW = {0x18: (1, 16, 13)}
 MIN_VOTES = 8
 ENDING_LAYERS = {0: (0x0000, 0x2000), 1: (0x2000, 0x2000)}            # map offset, bytes: 16-pixel, 64 columns
@@ -239,7 +239,7 @@ def main():
            '    const char *stage;                                /* the stage\'s archive */',
            '    uint8_t nsources; StageSource sources[4];         /* drawn in this order, the first at the back */',
            '    uint8_t nclut; struct { uint8_t slot, entry; uint16_t offset; } cluts[12];   /* the 4-bit textures\' colours */',
-           '    uint8_t wide; int8_t shift; uint8_t floor_row;    /* SCENE_VIEW: drawn as it is, not scaled; its view moved right (pixels); from this row down the strips carry on the scene\'s edge column */',
+           '    uint8_t wide; int8_t shift; uint8_t floor_row;    /* SCENE_VIEW: drawn as it is, not scaled; its view moved right (pixels); from this row down the strips take the stage\'s floor band */',
            '} EndingStageBand;', '', 'static const EndingStageBand ENDING_STAGE_BANDS[] = {']
     pairs_by = {}
     for (ending, elayer, r0, r1, c0, c1, crc, st, src) in bands_out:
