@@ -144,3 +144,14 @@ static inline int32_t os_net_adhocctl_connect(Cpu *c, uint32_t name) { c->r[4] =
 static inline int32_t os_net_adhoc_matching_stop(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocMatchingStop(c); return (int32_t)c->r[2]; }
 static inline int32_t os_net_adhoc_matching_delete(Cpu *c, int32_t id) { c->r[4] = (uint32_t)id; hle_sceNetAdhocMatchingDelete(c); return (int32_t)c->r[2]; }
 static inline int32_t os_net_adhoc_matching_term(Cpu *c) { hle_sceNetAdhocMatchingTerm(c); return (int32_t)c->r[2]; }
+
+void hle_sceKernelWaitSema(Cpu *c);
+void hle_sceKernelSignalSema(Cpu *c);
+
+/* Waits for `count` of semaphore `sema` (timeout: a guest pointer, 0 for none). */
+static inline int32_t os_wait_sema(Cpu *c, int32_t sema, int32_t count, uint32_t timeout) {
+    c->r[4] = (uint32_t)sema; c->r[5] = (uint32_t)count; c->r[6] = timeout; hle_sceKernelWaitSema(c); return (int32_t)c->r[2];
+}
+static inline int32_t os_signal_sema(Cpu *c, int32_t sema, int32_t count) {
+    c->r[4] = (uint32_t)sema; c->r[5] = (uint32_t)count; hle_sceKernelSignalSema(c); return (int32_t)c->r[2];
+}

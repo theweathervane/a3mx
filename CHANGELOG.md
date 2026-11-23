@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.133.0
+### For players
+- **More of the game decompiled:** 35 more small functions, among them objects bouncing, sliding and starting their animations, the screen fades for one side, fighters' script branches on health, the CPU's random choices, and the network session's members, lock and error codes. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps5.c` (new): the last 15 ready functions of 17 - 24 instructions and the first 20 of 25 - 40. `src/core/psp_os.h`: wrappers for sceKernelWaitSema and sceKernelSignalSema.
+- Checked: the coverage pass maps all 35 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_match, stage_objects_19_gen, free_battle_rows, arcade_ending_full, pause_config_original, super_finish, stage_objects_34_hawk, arcade_other_fighter, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, option_tour, no_extensions, free_battle, arcade_rival_dialogue and free_battle_rdramatic.
+
 ## 0.132.0
 ### For players
 - **More of the game decompiled:** 56 more small functions, among them objects sliding, rising and counting down, the ending's next animation, fighters' script branches by ISM, and the network link's flags, group connect and matching end. Nothing plays differently.

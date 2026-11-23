@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.97% decompiled
+Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  17.14% decompiled
 
-Functions                                [█░░░░░░░░░]  15.25%  2,270 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  16.97%  82,148 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  15.49%  2,305 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  17.14%  83,015 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  36.55%  74,531 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  36.83%  75,100 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   5.91%  220 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   2.45%  6,297 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   2.57%  6,595 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -232,6 +232,9 @@ Done:
 - [x] Fifty-six more (`object/batch_steps4.c`, 2 step dispatchers in `steps.c`), 56 of the 70 ready of 17 - 24
       instructions: objects sliding, rising and swinging, the ending's next animation, fighters' script
       branches by ISM, the ad-hoc link's flags, connect and matching end, the session's members (0.132.0)
+- [x] Thirty-five more (`object/batch_steps5.c`): the last 15 of 17 - 24 instructions and the first 20 of
+      25 - 40: objects bouncing, rising, sliding and starting animations, fades for a side, script branches
+      by health, the CPU's random choices, the session's members by address, its lock and error codes (0.133.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
