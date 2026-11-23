@@ -241,6 +241,9 @@ Done:
 - [x] Twenty-six more of 25 - 40 instructions (`object/batch_steps7.c`): objects stepping by a record's
       count, set from their owner, animated by a level; box settings; fighters' script counts and branches,
       a CPU's special opponents; the ad-hoc link's events, thread end and target, the session's agreement (0.135.0)
+- [x] The last 23 of 25 - 40 instructions (`object/batch_steps8.c`): pool 7's objects run, objects placed by
+      the camera and sliding to a stop, box settings, the pause values, a layout's fade levels; fighters'
+      button strength, target pairs and trails; the ad-hoc link's thread end and members, the network texts (0.136.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -179,3 +179,7 @@ static inline int32_t os_delete_thread(Cpu *c, int32_t thread) { c->r[4] = (uint
 static inline int32_t os_net_adhoc_matching_select_target(Cpu *c, int32_t id, uint32_t mac, int32_t len, uint32_t data) {
     c->r[4] = (uint32_t)id; c->r[5] = mac; c->r[6] = (uint32_t)len; c->r[7] = data; hle_sceNetAdhocMatchingSelectTarget(c); return (int32_t)c->r[2];
 }
+
+void hle_sceKernelGetThreadId(Cpu *c);
+/* The calling thread's id. */
+static inline int32_t os_get_thread_id(Cpu *c) { hle_sceKernelGetThreadId(c); return (int32_t)c->r[2]; }
