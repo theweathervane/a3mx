@@ -174,6 +174,9 @@ static inline int32_t os_net_adhocctl_del_handler(Cpu *c, int32_t id) { c->r[4] 
 static inline int32_t os_net_adhocctl_term(Cpu *c) { hle_sceNetAdhocctlTerm(c); return (int32_t)c->r[2]; }
 static inline int32_t os_net_adhoc_term(Cpu *c) { hle_sceNetAdhocTerm(c); return (int32_t)c->r[2]; }
 static inline int32_t os_net_term(Cpu *c) { hle_sceNetTerm(c); return (int32_t)c->r[2]; }
+void hle_sceNetAdhocctlGetScanInfo(Cpu *c);
+/* The scan results: *len bytes into buf (buf 0 asks only for the length). */
+static inline int32_t os_net_adhocctl_get_scan_info(Cpu *c, uint32_t len, uint32_t buf) { c->r[4] = len; c->r[5] = buf; hle_sceNetAdhocctlGetScanInfo(c); return (int32_t)c->r[2]; }
 
 void hle_sceNetFreeThreadinfo(Cpu *c);
 void hle_sceKernelWaitThreadEnd(Cpu *c);

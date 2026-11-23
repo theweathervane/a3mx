@@ -262,6 +262,9 @@ Done:
 - [x] Seven more (`object/batch_steps14.c`): the 1 of 9 - 60 made ready and 6 of 61 - 100: the network
       thread's outer entry, the heap's allocation, a screen's banner by kind, a picture by slot, CPU levels for a
       versus fight, a round's end by record, 17 objects by layout (0.143.0)
+- [x] Eight more (`object/batch_steps15.c`): the 4 of 9 - 60 made ready and 4 of 61 - 100: pictures by
+      type and slot, CPU levels for a fight, the network scan's results and a record added to a network list,
+      characters' colours made to differ, a CPU's character swapped, a hold counter with its text (0.144.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
