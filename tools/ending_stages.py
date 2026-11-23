@@ -26,6 +26,18 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import pac  # noqa: E402
 
 MIN_SHARE = 0.6        # a band is kept when its stage's layers give back this share of its blocks
+# Bands given by hand where the block match can't tell (ending, its layer, first row) -> (stage, its layers):
+# E. Honda's dojo (end18, layer 1 rows 0 - 15) is his stage repainted (the curtain, the ring floor), its
+# front layer flattened onto its 32-pixel back one; the stage's layers stand at the same columns (the
+# building, the post box and the sign beside it line up), but only a third of its blocks match one alone.
+FORCED = {(0x18, 1, 0): ('st18', [((0, 32), 0, 0), ((2, 32), 0, 0), ((2, 16), 0, 0), ((1, 16), 0, 0)])}
+# Bands whose scene is drawn as it is, the stage's art past its sides, rather than scaled (the user's
+# choice), how far right its view starts (pixels) and from which row down the strips carry on the
+# scene's own edge column instead of the stage (the stage's floor is drawn apart, not in its layers).
+# E. Honda's dojo pans 128 pixels left from the 4:3 picture's place; its own art reaches 160 left of it,
+# so the view starts 16 further right and the pan ends on it; the stage gives its right side, the ring
+# floor's boards (row 13 down) go on. {ending: (wide, shift, floor_row)}
+SCENE_VIEW = {0x18: (1, 16, 13)}
 MIN_VOTES = 8
 ENDING_LAYERS = {0: (0x0000, 0x2000), 1: (0x2000, 0x2000)}            # map offset, bytes: 16-pixel, 64 columns
 STAGE_MAPS = [(0, 0x0000, 16), (0, 0x0000, 32), (1, 0x2000, 16), (2, 0x4000, 16), (2, 0x4000, 32)]   # layer, offset, tile
@@ -202,6 +214,8 @@ def main():
                             if n2 > got: got, pick = n2, src
                         if pick: use.append(pick)
                     if got > best[0]: best = (got, tuple(use), st)
+                forced = FORCED.get((ending, elayer, band[0]))
+                if forced: best = (len(pix), tuple(forced[1]), forced[0])   # given by hand (FORCED)
                 if not best[2]: continue
                 st = best[2]
                 share = best[0] / max(1, len(pix))
@@ -210,7 +224,7 @@ def main():
                 line = '%s layer %d rows %d-%d cols %d-%d: %s, layers (layer, tile size, dx, dy) %s, %d / %d blocks (%.0f %%)' % (
                     os.path.basename(path), elayer, band[0], band[-1], min(cols), max(cols), st,
                     [(L[0], L[1], dx, dy) for L, dx, dy in best[1]], best[0], len(pix), share * 100)
-                print(line + ('' if share >= MIN_SHARE else '  (left out)'))
+                print(line + ('  (given by hand)' if forced else '' if share >= MIN_SHARE else '  (left out)'))
                 if share >= MIN_SHARE:
                     bands_out.append((ending, elayer, band[0], band[-1], min(cols), max(cols), zlib.crc32(words), st, best[1]))
 
@@ -224,7 +238,8 @@ def main():
            '    uint32_t crc;                                     /* crc32 of the band\'s map words, its first block of each tile, in order */',
            '    const char *stage;                                /* the stage\'s archive */',
            '    uint8_t nsources; StageSource sources[4];         /* drawn in this order, the first at the back */',
-           '    uint8_t nclut; struct { uint8_t slot, entry; uint16_t offset; } cluts[4];   /* the 4-bit textures\' colours */',
+           '    uint8_t nclut; struct { uint8_t slot, entry; uint16_t offset; } cluts[12];   /* the 4-bit textures\' colours */',
+           '    uint8_t wide; int8_t shift; uint8_t floor_row;    /* SCENE_VIEW: drawn as it is, not scaled; its view moved right (pixels); from this row down the strips carry on the scene\'s edge column */',
            '} EndingStageBand;', '', 'static const EndingStageBand ENDING_STAGE_BANDS[] = {']
     pairs_by = {}
     for (ending, elayer, r0, r1, c0, c1, crc, st, src) in bands_out:
@@ -235,8 +250,9 @@ def main():
                 p = pairs.get('%s/%d' % (st, idx))
                 if p and p['archive'] == st: cl.append('{ 0x%02X, %d, 0x%04X }' % (slot, p['entry'], p['offset']))
         srcs = ', '.join('{ %d, %d, %d, %d }' % (L[0], L[1], dx, dy) for L, dx, dy in src)
-        out.append('    { 0x%02X, %d, %d, %d, %d, %d, 0x%08Xu, "%s.pac", %d, { %s }, %d, { %s } },' % (
-            ending, elayer, r0, r1, c0, c1, crc, st, len(src), srcs, len(cl), ', '.join(cl) or '{ 0, 0, 0 }'))   # (an empty {} is not C before C23)
+        wide, shift, floor_row = SCENE_VIEW.get(ending, (0, 0, 0))
+        out.append('    { 0x%02X, %d, %d, %d, %d, %d, 0x%08Xu, "%s.pac", %d, { %s }, %d, { %s }, %d, %d, %d },' % (
+            ending, elayer, r0, r1, c0, c1, crc, st, len(src), srcs, len(cl), ', '.join(cl) or '{ 0, 0, 0 }', wide, shift, floor_row))   # (an empty {} is not C before C23)
     out += ['};', '']
     dst = os.path.join(ROOT, 'src', 'extensions', 'scaled_endings_stages.h')
     open(dst, 'w', newline='\n').write('\n'.join(out))

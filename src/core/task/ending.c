@@ -186,6 +186,8 @@ SFA_FUNC(089DE7C0, ending_timed) {
    both 4:3 sides (a tile in at least half the columns past each, counted first: tiles_counting); a scene
    that scrolls across art wider than the screen is drawn as it is, wider. */
 extern int tiles_ending_mode, tiles_counting;   /* tiles.c */
+extern int tiles_ending_shift;
+int scaled_endings_stage_view(uint32_t map, int *shift);   /* extensions/scaled_endings_stages.c */
 extern int32_t tiles_count_in, tiles_count_in_art, tiles_count_out[2], tiles_count_out_art[2];
 int widescreen_in_ending(void);                 /* extensions/widescreen.c */
 int scaled_endings_on(void);                    /* extensions/scaled_endings.c */
@@ -220,6 +222,8 @@ static int held(gaddr layer, int i) {
    with art past both 4:3 sides */
 static int scene_scaled(Cpu *c, uint32_t kind, gaddr maps) {
     int l0 = *B(LAYER_0 + 7) && *B(CAMERA_LAYERS), l1 = *B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98);
+    int shift;   /* a stage's scene drawn as it is, the stage's art past its sides (E. Honda's dojo) */
+    if (l1 && kind != 0 && scaled_endings_stage_view(*W(maps + 4), &shift)) return 0;
     int l2 = *B(LAYER_2 + 7) && *B(CAMERA_LAYERS + 0x130);
     if ((l2 && still(LAYER_2, 2)) || (l1 && kind != 0 && still(LAYER_1, 1)) || (l0 && kind != 0 && still(LAYER_0, 0))) return 1;
     /* the endings' own map (kind 2): a picture standing still anywhere on it with nothing past its 4:3 sides
@@ -282,10 +286,14 @@ static void ending_layers(Cpu *c) {
     *W(SCROLL + 112) = 0;
     uint32_t kind = *W(ENDING_KIND);
     gaddr maps = LAYER_MAPS + kind * 12u;
+    tiles_ending_shift = 0;
     if (rt_widescreen && widescreen_in_ending()) {
         int scaled = scaled_endings_on() ? scene_scaled(c, kind, maps) : 0;
         if (scaled_endings_on()) scaled = scene_kept(kind, scaled);
         tiles_ending_mode = !scaled_endings_on() ? 1 : scaled ? 2 : 0;
+        int shift = 0;   /* its view moved right (scaled_endings_stages.c) */
+        if (tiles_ending_mode == 0 && kind != 0 && *B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98)) scaled_endings_stage_view(*W(maps + 4), &shift);
+        tiles_ending_shift = shift;
         scaled_endings_scene(scaled);
         scaled_endings_bare(!(*B(LAYER_0 + 7) && *B(CAMERA_LAYERS)) && !(*B(LAYER_1 + 7) && *B(CAMERA_LAYERS + 0x98))
                             && !(*B(LAYER_2 + 7) && *B(CAMERA_LAYERS + 0x130)));

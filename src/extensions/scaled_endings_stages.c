@@ -17,12 +17,19 @@
  * (5551, the 4-bit textures in the colours tools/data/palette_pairs.json gives them), and that is drawn
  * at the layer's depth, placed by its scroll, on the columns past the band's art.
  *
+ * Most bands are drawn this way only when their scene isn't scaled anyway. A band marked `wide` (the user's
+ * choice: E. Honda's dojo) makes its scene drawn as it is, with the stage's art past its sides; its view
+ * starts `shift` pixels further right (tiles.c), so its pan ends on its own art (core/task/ending.c); and
+ * from `floor_row` down the strips carry on the scene's own edge column (the ring floor's boards), the
+ * stage's floor being drawn apart from its layers (core/stage/floor.c).
+ *
  * Only the drawing changes; the game's memory is not touched outside our texture.
  */
 #include "rt.h"
 #include "ext_features.h"
 #include "scaled_endings_stages.h"
 #include <string.h>
+#include <stdio.h>
 
 int scaled_endings_on(void);                 /* scaled_endings.c */
 extern int tiles_ending_mode, tiles_counting; /* core/stage/tiles.c */
@@ -180,13 +187,22 @@ static int build(int b) {
     Entry es[64];
     int ne = pac_entries(f, n, es, 64);
     if (ne < 1) { free(f); return 0; }
-    uint16_t cluts[4][16]; int clut_slot[4], nclut = 0;
-    for (int k = 0; k < e->nclut && k < 4; k++) {
+    uint16_t cluts[12][16]; int clut_slot[12], nclut = 0;
+    for (int k = 0; k < e->nclut && k < 12; k++) {
         int ent = e->cluts[k].entry;
         if (ent >= ne || e->cluts[k].offset + 32u > es[ent].size) continue;
         memcpy(cluts[nclut], es[ent].data + e->cluts[k].offset, 32);
         clut_slot[nclut++] = e->cluts[k].slot;
     }
+    /* from floor_row down, the scene's own edge column carried on (its layer 1, from its archive) */
+    size_t en = 0; uint8_t *ef = NULL; Entry ees[64]; int nee = 0;
+    if (e->floor_row) {
+        char name[32]; snprintf(name, sizeof name, "end%02x_u.pac", e->ending);
+        ef = rt_archive_read(name, &en);
+        if (ef) nee = pac_entries(ef, en, ees, 64);
+        if (nee < 1) rt_log("scaled endings: %s could not be read, ending %02X's floor past its sides left bare", name, e->ending);
+    }
+    const StageSource own = { 1, 16, 0, 0 };
     uint16_t *out = (uint16_t *)HOST(tex);
     memset(out, 0, TEX_W * TEX_H * 2);
     for (int side = 0; side < 2; side++) {
@@ -195,6 +211,12 @@ static int build(int b) {
             for (int x = 0; x < STRIP * 16; x++) {
                 int sx = c0 * 16 + x, sy = e->row0 * 16 + y;
                 uint16_t px = 0;
+                if (e->floor_row && sy >= e->floor_row * 16) {
+                    int edge = side ? e->col1 * 16 + 15 : e->col0 * 16;
+                    if (nee > 0) px = stage_texel(e, ees[0].data, ees[0].size, ees, nee, NULL, NULL, 0, own, edge, sy);
+                    out[y * TEX_W + side * 128 + x] = px;
+                    continue;
+                }
                 for (int k = 0; k < e->nsources; k++) {
                     uint16_t t = stage_texel(e, es[0].data, es[0].size, es, ne, (const uint16_t (*)[16])cluts, clut_slot, nclut, e->sources[k], sx, sy);
                     if (t) px = t;
@@ -202,7 +224,7 @@ static int build(int b) {
                 out[y * TEX_W + side * 128 + x] = px;
             }
     }
-    free(f);
+    free(f); free(ef);
     rt_log("scaled endings: ending %02X's scene drawn on past its sides from %s", e->ending, e->stage);
     return 1;
 }
@@ -233,7 +255,7 @@ static void draw(Cpu *c, int b, uint32_t layer) {
     WW(pe, tex); WW(pe + 4, tex); WW(pe + 8, 0); WW(pe + 0xC, 0); WW(pe + 0x10, 0x80000000u); WW(pe + 0x14, desc);
     c->r[4] = list; c->r[31] = 0x08819300; f_089E0CF4(c);
 
-    int h = (int16_t)RH(layer + 18) & 0x3FF, s = (int16_t)RH(layer + 98) & 0x3FF;
+    int h = ((int16_t)RH(layer + 18) + e->shift) & 0x3FF, s = (int16_t)RH(layer + 98) & 0x3FF;   /* the view as tiles.c moves it */
     c->r[4] = 1; c->r[5] = RB(layer + 122); c->r[31] = 0x08819300; f_0880A3C4(c);
     float z = (float)(int32_t)c->r[2];
     int top = nearest(e->row0 * 16 - s, 0, 1024), height = (e->row1 - e->row0 + 1) * 16;
@@ -262,6 +284,17 @@ static void draw(Cpu *c, int b, uint32_t layer) {
     memcpy(HOST(TEX_STATE), keep_tex, sizeof keep_tex);
     WB(PAL_SELECTED, keep_pal);
     memcpy(c->r, keep_r, sizeof keep_r); c->f[12] = keep_f12;
+}
+
+/* a band drawn as it is rather than scaled (the table's `wide`: E. Honda's dojo) in this layer 1 map: 1, and
+   how far right its view starts (core/task/ending.c asks, deciding the scene; tiles.c moves the layers) */
+int scaled_endings_stage_view(uint32_t map, int *shift) {
+    *shift = 0;
+    if (!scaled_endings_on()) return 0;
+    int b = band_in(map);
+    if (b < 0 || !ENDING_STAGE_BANDS[b].wide) return 0;
+    *shift = ENDING_STAGE_BANDS[b].shift;
+    return 1;
 }
 
 /* wraps 0x08819300 (a0 the layer, a1 its map): after the layer, its band's stage strips */

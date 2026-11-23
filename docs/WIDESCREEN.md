@@ -110,7 +110,11 @@ works, what doesn't, and the rules for refining it.
     past the sides) is drawn 1.25 times larger about the middle of its top (192, 8: the top row stays,
     the bottom 32 rows go under the text band; 0.133.2, before about its middle), as the super finish's
     backdrops are. Whether a scene is scaled is decided when it is cut to; a scene scaled because its
-    layers are bare past the sides stays scaled while its camera pans (E. Honda's dojo, 0.133.2). In the
+    layers are bare past the sides stays scaled while its camera pans (0.133.2). E. Honda's dojo
+    (0.133.3) is drawn as it is instead, wide: it is his stage repainted, so past its right side his
+    stage's own art carries on (`scaled_endings_stages.c`, a band given by hand in
+    `tools/ending_stages.py`, its ring floor's boards continued from its edge), and its view starts 16
+    pixels further right so its pan ends on its own art. In the
     endings' own scenes (ending kind 2, the 24-tile-wide map) its pictures (sprites of kinds 73, 77, 78:
     close-ups, statues, bursts, speed lines) grow with it, being parts of the scene; over a stage's layers
     (kinds 0 and 1: Sagat under the setting sun, the last portrait before THANK YOU FOR PLAYING) a picture

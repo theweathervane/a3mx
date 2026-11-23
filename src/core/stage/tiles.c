@@ -130,6 +130,8 @@ static int32_t oversize(int32_t p, int32_t mid) { int32_t d = (p - mid) * 5; ret
    And tiles_counting: the tile layers' columns counted instead of drawn, in and past each side of the
    4:3 picture (rows 8 - 136), the ones with a tile and all of them (ending.c: does the scene have art past its sides?) */
 int tiles_ending_mode, tiles_counting;
+int widescreen_in_ending(void);   /* extensions/widescreen.c */
+int tiles_ending_shift;   /* mode 0: the scene's view moved right by this many pixels (ending.c: E. Honda's dojo) */
 int32_t tiles_count_in, tiles_count_in_art, tiles_count_out[2], tiles_count_out_art[2];   /* past the left side, the right */
 #define SCENE_TOP    8
 #define SCENE_BOTTOM 136
@@ -149,6 +151,8 @@ int tiles_ending_quad(void) {
         }
         return 1;
     }
+    if (tiles_ending_mode == 0 && tiles_ending_shift && widescreen_in_ending())   /* never past the ending */
+        for (uint32_t i = 0; i < 4; i++) SET16(QUAD_XY + i * 4, S16(QUAD_XY + i * 4) - tiles_ending_shift);
     if (tiles_ending_mode != 1) return 1;
     int32_t lo, hi;
     picture_sides(&lo, &hi);
@@ -205,7 +209,7 @@ static void draw_tile(Cpu *c, gaddr st, const Grid *g) {
     SET16(QUAD_UV + 2, v);  SET16(QUAD_UV + 6, v);
     SET16(QUAD_UV + 10, v + g->size); SET16(QUAD_UV + 14, v + g->size);
 
-    if (tiles_ending_mode && !tiles_ending_quad()) return;
+    if ((tiles_ending_mode || tiles_ending_shift) && !tiles_ending_quad()) return;
     uint32_t column = g->b268 ? (uint32_t)S16(st + GRID_DEPTH) : *B(*W(st + GRID_LAYER) + 122);
     uint32_t blend = *W(*W(st + GRID_TILE)) & 0x40000000u;
     uint32_t depth = CALL2(f_0880A3C4, 1, column);

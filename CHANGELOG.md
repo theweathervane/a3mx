@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.133.3
+### For players
+- **WIDE NATIVE, E. Honda's ending:** the dojo is no longer scaled. It is E. Honda's stage repainted, so past its right side his stage carries on (the shop and the sign beyond the post box, the floor's boards continuing), and the camera starts a little further right, so its pan ends on the dojo's own art with no black edge. His last picture over the dojo shows it the same way.
+
+### Technical
+- `tools/ending_stages.py`: `FORCED` bands given by hand where the 16-pixel block match can't tell (end18's dojo, layer 1 rows 0 - 15: st18's layers 0 / 2 (32) / 2 (16) / 1 at the same columns, its front layer flattened onto the back one, so only a third of its blocks match one layer); `SCENE_VIEW` per ending (wide, shift, floor_row) written into the table; up to 12 palettes a band (st18 has 9).
+- `extensions/scaled_endings_stages.c`: `scaled_endings_stage_view` (a `wide` band in this layer 1 map, and its shift); strips placed with the shift; from `floor_row` down, the strips carry on the scene's own edge column (read from endNN_u.pac). `core/task/ending.c`: such a scene is drawn as it is (`scene_scaled` 0) with `tiles_ending_shift`; `core/stage/tiles.c` moves the layers' quads left by it, only in an ending's frame (`background.c` / `tiles.c` call `tiles_ending_quad` when it is set).
+- Found: the dojo's map in memory is end18's (columns 18 - 51), not the first archive's layout guessed from the character list; the stage's floor (`core/stage/floor.c`) starts at row 16, below the scene.
+- Checked: every character's Final Battle ending against 0.133.2 every 50 frames: only E. Honda's (9100 - 9950, 10250 - 10400) changes; no bare column through the dojo's pan. Parity: arcade_ending.
+
 ## 0.133.2
 ### For players
 - **WIDE NATIVE endings, from the review of all of them:**
