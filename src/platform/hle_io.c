@@ -152,10 +152,36 @@ void rt_io_init(void) {
     if (rt_assets_root[0]) rt_log("assets: archives with a folder in %s (index.json) are loaded from it", rt_assets_root);
 }
 
+/* The folder of the last archive the game opened from the disc's data folder (disc0:/PSP_GAME/USRDIR/<r>/data),
+   for rt_archive_read */
+static char data_dir[256];
+
+/* An archive of the disc's data folder read whole for an extension (not through the game): from assets/
+   when the game's own opens would take it from there, else the disc. NULL if the game has opened no
+   archive yet or it can't be read. free() it. */
+uint8_t *rt_archive_read(const char *name, size_t *n) {
+    *n = 0;
+    if (!data_dir[0]) return NULL;
+    char psp[512], hp[1024];
+    snprintf(psp, sizeof psp, "%s/%s", data_dir, name);
+    if (!host_path(psp, hp, sizeof hp)) return NULL;
+    PacImage img;
+    if (asset_archive(psp, hp, &img)) {
+        uint8_t *b = malloc(img.size);
+        if (b) { memcpy(b, img.data, img.size); *n = img.size; }
+        pac_image_free(&img);
+        return b;
+    }
+    return read_whole(hp, n);
+}
+
 void hle_sceIoOpen(Cpu *c) {
     const char *p = rt_str(ARG(0)); uint32_t flags = ARG(1);
     char hp[1024];
     if (!p || !host_path(p, hp, sizeof hp)) { TRACE("sceIoOpen %s: unknown device", p ? p : "(null)"); RET(ERR_FILE_NOT_FOUND); }
+    { char stem[48];
+      if (data_archive(p, stem, sizeof stem)) { const char *slash = strrchr(p, '/'); size_t k = (size_t)(slash - p);
+          if (k < sizeof data_dir) { memcpy(data_dir, p, k); data_dir[k] = 0; } } }
     if (!(flags & 0x0002)) {                    /* read-only: an archive from assets/? */
         PacImage img;
         if (asset_archive(p, hp, &img)) {

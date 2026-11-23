@@ -52,6 +52,7 @@ void     rt_reserve(uint32_t lo, uint32_t hi, const char *name);
 static inline char *rt_str(uint32_t a) { return a ? (char *)HOST(a) : NULL; }
 
 /* ---- config ---- */
+uint8_t *rt_archive_read(const char *name, size_t *n);   /* hle_io.c: a data/ archive read whole (assets/ first), for extensions; free() it */
 extern char rt_disc_root[1024];      /* folder holding PSP_GAME/ (the extracted disc) */
 extern char rt_save_root[1024];      /* folder for ms0: (saves) */
 extern int  rt_realtime;             /* 1: pace to 59.94 Hz wall clock, 0: run as fast as possible */

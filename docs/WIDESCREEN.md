@@ -118,7 +118,11 @@ works, what doesn't, and the rules for refining it.
     the 4:3 sides); one waiting outside the 4:3 picture (placed past a side and not moved for 30 frames)
     is still cut there, so it isn't seen standing in the margin before it walks in. The fade after a
     button press keeps the scene as it was (0.129.0: the ending's draw-only step, 0x089DE390, runs its
-    frames inside one call, and each now counts as an ending's frame). With it off the endings keep
+    frames inside one call, and each now counts as an ending's frame). A scene shown wide that the ending
+    cut from a stage (its own copy holds only the 24 columns of the 4:3 picture: Ryu's stage behind Ryu,
+    Sagat and Sakura) gets the stage's own art past its sides, read from the stage's archive (0.130.0,
+    `src/extensions/scaled_endings_stages.c`; which scenes, and where in which stage, is found by
+    `tools/ending_stages.py` comparing pixels, into `scaled_endings_stages.h`). With it off the endings keep
     black sides: the layers' tiles and the sprites are cut at the 4:3 sides and nothing moves. The ending's lines (`src/core/object/text_boxes.c`): while the staff credits roll they go 40
     further left, into the left margin, leaving the credits room; before the credits they are laid out
     again across the screen, centred, wrapped at 44 characters;

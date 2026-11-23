@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.130.0
+### For players
+- **WIDE NATIVE endings on Ryu's stage show the whole stage:** in Ryu's, Sagat's and Sakura's endings the sunset stage no longer stops at the old 4:3 edges (the black block bottom left, the flat orange on the right): the rocks, trees and cliffs carry on to the screen's sides, taken from Ryu's stage itself.
+
+### Technical
+- Decompiled 0x08819300 (`core/stage/background.c`, `draw_layer_16_tall`): the endings' layer 1, a 16-pixel layer from a map of 64 x 64 tiles scrolled by its own +18 / +98. Wrapped for the scaled endings (`scaled_endings_stage_layer`).
+- The ending's own copy of a stage scene (endNN_u.pac's maps and textures) holds only the 24 columns of the 4:3 picture. `tools/ending_stages.py` compares every ending's layer bands with every stage's layers, 16 x 16 blocks as colours, and writes `src/extensions/scaled_endings_stages.h`: the band (checked by a crc32 of its map words), the stage, its offset and which of the stage's layers in which order make the ending's tiles (Ryu's: layer 2's 32-pixel tiles under layer 1). Kept only when they give back at least 60 % of the band's blocks: 7 bands (endings 00, 0B and 0D on st00; 07 and 27 on st07; 05 on st05; 28 on st21).
+- `src/extensions/scaled_endings_stages.c`: after 0x08819300 draws, in a scene shown wide (tiles_ending_mode 0), a band of the table found in the layer's map gets 8 columns each side drawn from the stage's archive into a texture of our own (5551; the 4-bit textures in tools/data/palette_pairs.json's colours) and drawn at the layer's depth, placed by its scroll. `rt_archive_read` (platform/hle_io.c) reads a data/ archive whole as the game's own opens would (assets/ first). Only the drawing changes.
+- Checked: Ryu's, Sagat's and Sakura's stage scenes drawn in WIDE NATIVE; every character's Arcade ending run and its log read: the fill is drawn for Ryu, Sagat, Sakura, Guy and Maki only (Guy's and Maki's columns fall off the screen). Parity (lazy renderer): arcade_ending, arcade_ending_full, attract_mode, no_extensions; WIDE NATIVE check: wide_fight, wide_walls.
+
 ## 0.129.0
 ### For players
 - **WIDE NATIVE endings, fading out after a button press:** pressing a button during an ending no longer flashes the scene back to 4:3 with black sides while it fades; it fades as it was shown.

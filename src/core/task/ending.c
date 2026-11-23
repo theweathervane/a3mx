@@ -59,7 +59,7 @@ void f_088054F0(Cpu *c);   /* task.c: wait for frames */
 void f_089E0CF4(Cpu *c);   /* a texture list made the one in use */
 void f_0881C0C8(Cpu *c);   /* the rippling sky (background.c) */
 void f_0881A8E0(Cpu *c);   /* a 16-pixel layer (background.c) */
-void f_08819300(Cpu *c);   /* a 16-pixel layer, the other drawer (still translated) */
+void f_08819300(Cpu *c);   /* a 16-pixel layer, 64 rows (background.c) */
 void f_08819498(Cpu *c);   /* a picture layer (background.c) */
 void f_0881AB28(Cpu *c);   /* a 32-pixel layer (tiles.c) */
 void f_0881B7C8(Cpu *c);   /* the endings' 24-tile-wide map (tiles.c) */

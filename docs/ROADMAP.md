@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.58% decompiled
+Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  16.60% decompiled
 
-Functions                                [█░░░░░░░░░]  14.58%  2,169 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  16.58%  80,296 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  14.58%  2,170 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  16.60%  80,398 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  36.04%  73,488 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  36.09%  73,590 / 203,929
   wireless (ad-hoc) VS                   [░░░░░░░░░░]   2.66%  99 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   2.18%  5,609 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -388,6 +388,9 @@ Details in [WIDESCREEN.md](WIDESCREEN.md), [STAGES.md](STAGES.md) and
 timings or balance; parity with it on matches it off, frame for frame, in every fighter's state.
 
 - [x] Draw body parts past the invisible walls (Blanka's shoulder vanishing at the wall), keeping the walls
+- [x] Endings: characters crossing the old 4:3 edge drawn whole, character art over a stage kept at its size
+      (0.129.0); stage scenes the ending cut to 4:3 drawn on from the stage's own archive (0.130.0,
+      `tools/ending_stages.py`)
 - [ ] Stop pop-in and flicker of assets and characters at the screen edges
 - [ ] Hide off-screen loading in the pre-battle sequences
 - [ ] Fill the MODE MENU background's missing left side

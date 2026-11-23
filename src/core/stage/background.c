@@ -154,6 +154,44 @@ SFA_FUNC(0881A8E0, stage_layer_16_wide) {
     draw_layer_16_wide(c, layer, map);
 }
 
+/* ---- 0x08819300: a 16-pixel layer, 64 tiles by 64 rows ----
+   The endings' layer 1 (core/task/ending.c, ending kinds 1 and 2): as 0x0881A8E0, scrolled by the layer's
+   own +18 and +98 only, from a map of 64 rows of 64 words that wraps both ways every 64 tiles.
+   Wrapped for WIDE NATIVE's scaled endings (extensions/scaled_endings_stages.c): a scene cut from a
+   stage gets that stage's own art drawn on past its sides. */
+static void draw_layer_16_tall(Cpu *c, gaddr layer, gaddr map) {
+    c->r[29] -= 0x80;
+    gaddr st = c->r[29] + 16;
+    grid_start(st, layer);
+    SET16(st + G_SCROLL, *H(layer + 98));
+    SET16(st + G_SCROLL, S16(st + G_SCROLL) & 0x3FF);
+    SET16(st + G_MAP_COL, *H(layer + 18));
+    int32_t s = S16(st + G_SCROLL);
+    SET16(st + G_MAP_COL, S16(st + G_MAP_COL) & 0x3FF);
+    int32_t h = S16(st + G_MAP_COL);
+    grid_parts(st, s, h);
+    *W(st + G_LINE) = map;
+    *W(st + G_BASE) = map;
+    gaddr line = map + (uint32_t)((s & 0xFFF0) << 4);           /* 0x40 words a row */
+    *W(st + G_LINE) = line;
+    SET16(st + G_MAP_COL, h >> 4);
+    int32_t col0 = S16(st + G_MAP_COL);
+    SET16(st + G_ROW_WRAP, 0x40 - (s >> 4));
+    SET16(st + G_ROWS_PER_WRAP, 0x40);
+    *W(st + G_LINE) = line + (uint32_t)(col0 << 2);
+    SET16(st + G_COLS_TO_WRAP, 0x40 - col0);
+    grid_screen(st);
+    SET16(st + G_ROWS, 0x10);
+    SET16(st + G_DEPTH, *B(layer + 122));
+    draw_record(c, st, map, 0x0881948C);
+    c->r[29] += 0x80;
+}
+
+SFA_FUNC_WRAPPED(08819300, stage_layer_16_tall, scaled_endings_stage_layer) {
+    gaddr layer = ARG(0), map = ARG(1);
+    draw_layer_16_tall(c, layer, map);
+}
+
 /* ---- 0x0881BD28: a 16-pixel layer whose top rows can lag behind ----
    The default for layer 1. Kinds 0xA0 and 0xA4 split it: the rows above a line (0x8F / 0xEF less the
    scroll and 0x40 / 0x70) move across with the screen shake's strength (+28) -- eight times it, or times
