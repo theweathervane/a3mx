@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.137.0
+### For players
+- **More of the game decompiled:** 18 more small functions, among them fade levels, the fighters' trails, objects scrolling with the camera, ending scenes moving the camera layers, and the network menu's head row and message panel. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps9.c` (new): the 12 functions of 9 - 40 instructions made ready by the earlier batches and the first 6 of 41 - 60.
+- Checked: the coverage pass maps all 18 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_ending_full, stage_objects_19_gen, free_battle_dramatic, free_battle_rdramatic, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions, free_battle, arcade_rival_dialogue, arcade_match, super_finish, pause_config_original and free_battle_rows.
+
 ## 0.136.0
 ### For players
 - **More of the game decompiled:** 23 more small functions, among them objects placed by the camera and sliding to a stop, the pause menu's values, the fade levels for a fight's layout, fighters' button strength, targets and trails, and the network menu's option texts. Nothing plays differently.
