@@ -337,7 +337,8 @@ for s in arcade kumite dramatic rdramatic variable final; do python3 tools/watch
 Each one plays a mode to its end in a few minutes. Menus and the character select go by at full speed;
 the last fight starts at normal speed. ROUNDS is set to 1, the game is told the fight is the last one,
 the opponents' computer control is switched off before the fight, and their health is kept at one
-point. Pad 2 walks them into your character, who walks up and jabs: a hit or two ends it. Then the ending plays out: the congratulations,
+point. From the moment the fight can be played, pad 2 walks them into your character, who walks up to
+meet them and then jabs: the first hit ends it (no presses land before then). Then the ending plays out: the congratulations,
 the story or the credits, GAME OVER and back to the MODE MENU, where the window closes.
 
 | Scenario | What you see | `--character` |
@@ -354,6 +355,13 @@ The quickest way to a character's ending is `ending_final`: Final Battle is one 
 
 ```
 python tools/watch_scenario.py ending_final --character SAGAT --screen native
+```
+
+`--no-scaled-endings` shows the endings with black sides, as with Scaled endings off in the launcher
+(the same as adding `-scaled_endings` to `--features`):
+
+```
+python tools/watch_scenario.py ending_final --character SAGAT --screen native --no-scaled-endings
 ```
 
 Survival has no ending of its own (it ends on a score screen when you lose), so it has no scenario

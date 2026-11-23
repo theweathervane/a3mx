@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.130.4
+### For players
+- **The ending watch scenarios go straight to the fight:** in `ending_arcade`, `ending_final`, `ending_rdramatic` and `ending_variable` the confirm presses no longer run on into the fight (they landed as a string of attacks before anyone met). From the moment the fight can be played both characters walk towards each other, then player 1 jabs; the first hit wins.
+- **`--no-scaled-endings`** for `tools/watch_scenario.py`: the endings with black sides, as with Scaled endings off (the same as `--features ...,-scaled_endings`).
+
+### Technical
+- The fight's first playable frame (GAME + 2 = 2, + 4 = 3, + 6 = 3) measured per scenario with RYU: arcade 3788, rdramatic 2800, variable 2891, final 2905. Inputs from 60 frames before it to the end of the old walk / jab cycle are replaced: right and pad 2 left at it, right released 60 frames on, then every 60 frames square, square 18 later, right for 24. `ending_kumite` and `ending_dramatic` already walked in from before the fight and are unchanged.
+- Checked: RYU and ZANGIEF in all four: the fight is won 60 - 70 frames after it can be played, the characters meeting first; Sagat's Final Battle ending with `-scaled_endings` (black sides).
+
 ## 0.130.3
 ### For players
 - **WIDE NATIVE, Sakura's ending:** Ryu lying at the left edge is drawn whole.

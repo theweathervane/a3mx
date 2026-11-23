@@ -23,6 +23,8 @@ tests use them; the game runs at its own speed in a window and closes after the 
   --assets        load assets/ (the stage strips); the parity tests run without them
   --my-save       play with a copy of your own save (your entries, rankings and unlocks); on by itself
                   when the character is an ENTRY. The copy is thrown away: your save is not changed
+  --no-scaled-endings  the endings with black sides, as with Scaled endings off in the launcher (the
+                  same as adding -scaled_endings to --features)
   --features L    the game's --features (default,-shaders,-boot_to_menu,i_ism_display by default, as
                   the tests; add -i_ism_display or -i_ism_select to see a part as the game had it)
 
@@ -228,8 +230,11 @@ def main():
     ap.add_argument('--my-save', action='store_true',
                     help='play with a copy of your own save (your entries, rankings, unlocks); on by itself for an ENTRY')
     ap.add_argument('--features', default=parity.TEST_FEATURES, help='the game\'s --features (default: %s)' % parity.TEST_FEATURES)
+    ap.add_argument('--no-scaled-endings', action='store_true',
+                    help='the endings as the 4:3 screen has them, with black sides (Scaled endings off)')
     ap.add_argument('--print-input', action='store_true', help=argparse.SUPPRESS)
     a = ap.parse_args()
+    if a.no_scaled_endings: a.features += ',-scaled_endings'
     if a.scenario and a.scenario.startswith('i_ism'): a.my_save = True     # these need your entries
     if (a.character or '').lower() == 'list':
         print('  '.join(sorted(GRIDS['arcade']))); return 0
