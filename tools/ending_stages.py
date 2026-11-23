@@ -174,60 +174,69 @@ def main():
                 own = {pos: v for pos, v in m.items() if pos[1] in band}
                 pix = {pos: texel_block(pg, w, 16, sx, sy, {}) for pos, (w, sx, sy) in own.items()}
                 votes = collections.Counter()
-                for pos, b in pix.items():
-                    if not b or len(set(b[i:i + 4] for i in range(0, len(b), 4))) < 8: continue
-                    hits = index.get(b, [])
+                for pos, bl in pix.items():
+                    if not bl or len(set(bl[i:i + 4] for i in range(0, len(bl), 4))) < 4: continue
+                    hits = index.get(bl, [])
                     for st, layer, tile, sp in hits:
-                        votes[(st, sp[0] - pos[0], sp[1] - pos[1])] += 1.0 / len(hits)
+                        votes[(st, (layer, tile), sp[0] - pos[0], sp[1] - pos[1])] += 1.0 / len(hits)
+                by_stage = collections.Counter()
+                for (st, L, dx, dy), n in votes.items(): by_stage[st] = max(by_stage[st], n)
                 best = (0, None, None)
-                for (st, dx, dy), n in votes.most_common(5):
+                for st, n in by_stage.most_common(3):
                     if n < MIN_VOTES / 2: continue
                     spg, scl, smaps = stages[st]
-                    def stage_block(L, c, r):
+                    cands = collections.defaultdict(list)       # a layer's likeliest offsets
+                    for (s2, L, dx, dy), v in votes.most_common():
+                        if s2 == st and v >= 3 and len(cands[L]) < 3: cands[L].append((dx, dy))
+                    def stage_block(src, c, r):
+                        L, dx, dy = src
                         e = smaps[L].get((c + dx, r + dy))
                         return texel_block(spg, e[0], L[1], e[1], e[2], scl) if e else None
                     use, got = [], 0
-                    for L in DRAW_ORDER:          # greedy: a layer is kept if it gives back more blocks
+                    for L in DRAW_ORDER:          # greedy, back to front: a layer (at its best offset) is kept if it gives back more blocks
                         if L not in smaps: continue
-                        n2 = sum(1 for (c, r), b in pix.items() if b and compose([stage_block(M, c, r) for M in use + [L]]) == b)
-                        if n2 > got: use, got = use + [L], n2
-                    if got > best[0]: best = (got, tuple(use), (st, dx, dy))
+                        pick = None
+                        for dx, dy in cands.get(L, []):
+                            src = (L, dx, dy)
+                            n2 = sum(1 for (c, r), bl in pix.items() if bl and compose([stage_block(M, c, r) for M in use + [src]]) == bl)
+                            if n2 > got: got, pick = n2, src
+                        if pick: use.append(pick)
+                    if got > best[0]: best = (got, tuple(use), st)
                 if not best[2]: continue
-                st, dx, dy = best[2]
+                st = best[2]
                 share = best[0] / max(1, len(pix))
                 cols = [c for c, _ in own]
                 words = b''.join(struct.pack('<I', own[p][0]) for p in sorted(own) if own[p][1:] == (0, 0))
-                line = '%s layer %d rows %d-%d cols %d-%d: %s at %+d, %+d, layers %s, %d / %d blocks (%.0f %%)' % (
-                    os.path.basename(path), elayer, band[0], band[-1], min(cols), max(cols), st, dx, dy,
-                    best[1], best[0], len(pix), share * 100)
+                line = '%s layer %d rows %d-%d cols %d-%d: %s, layers (layer, tile size, dx, dy) %s, %d / %d blocks (%.0f %%)' % (
+                    os.path.basename(path), elayer, band[0], band[-1], min(cols), max(cols), st,
+                    [(L[0], L[1], dx, dy) for L, dx, dy in best[1]], best[0], len(pix), share * 100)
                 print(line + ('' if share >= MIN_SHARE else '  (left out)'))
                 if share >= MIN_SHARE:
-                    bands_out.append((ending, elayer, band[0], band[-1], min(cols), max(cols), zlib.crc32(words), st, dx, dy, best[1]))
+                    bands_out.append((ending, elayer, band[0], band[-1], min(cols), max(cols), zlib.crc32(words), st, best[1]))
 
     if not a.write: return 0
     used = sorted({b[7] for b in bands_out})
     out = ['/* Written by tools/ending_stages.py: do not edit. The endings\' scenes cut from a stage (scaled_endings_stages.c). */',
            '#pragma once', '#include <stdint.h>', '',
-           'typedef struct { uint8_t layer, tile; } StageSource;          /* a stage layer: its number (map at +0x2000 * n) and tile size */',
+           'typedef struct { uint8_t layer, tile; int8_t dx, dy; } StageSource;   /* a stage layer (map at +0x2000 * n), its tile size, and its 16-pixel column / row for the ending\'s (0, 0) */',
            'typedef struct {',
            '    uint8_t ending, layer, row0, row1, col0, col1;   /* the ending (endNN_u.pac), its layer, the band\'s rows and art columns */',
            '    uint32_t crc;                                     /* crc32 of the band\'s map words, its first block of each tile, in order */',
            '    const char *stage;                                /* the stage\'s archive */',
-           '    int8_t dx, dy;                                    /* the stage map\'s 16-pixel column / row for the ending\'s (0, 0) */',
-           '    uint8_t nsources; StageSource sources[3];         /* drawn in this order, the first at the back */',
+           '    uint8_t nsources; StageSource sources[4];         /* drawn in this order, the first at the back */',
            '    uint8_t nclut; struct { uint8_t slot, entry; uint16_t offset; } cluts[4];   /* the 4-bit textures\' colours */',
            '} EndingStageBand;', '', 'static const EndingStageBand ENDING_STAGE_BANDS[] = {']
     pairs_by = {}
-    for (ending, elayer, r0, r1, c0, c1, crc, st, dx, dy, src) in bands_out:
+    for (ending, elayer, r0, r1, c0, c1, crc, st, src) in bands_out:
         spg, scl, _ = stages[st]
         cl = []
         for slot, (_, _, bits, _, idx) in sorted(spg.items()):
             if bits == 4:
                 p = pairs.get('%s/%d' % (st, idx))
                 if p and p['archive'] == st: cl.append('{ 0x%02X, %d, 0x%04X }' % (slot, p['entry'], p['offset']))
-        srcs = ', '.join('{ %d, %d }' % L for L in src)
-        out.append('    { 0x%02X, %d, %d, %d, %d, %d, 0x%08Xu, "%s.pac", %d, %d, %d, { %s }, %d, { %s } },' % (
-            ending, elayer, r0, r1, c0, c1, crc, st, dx, dy, len(src), srcs, len(cl), ', '.join(cl) or '{ 0, 0, 0 }'))   # (an empty {} is not C before C23)
+        srcs = ', '.join('{ %d, %d, %d, %d }' % (L[0], L[1], dx, dy) for L, dx, dy in src)
+        out.append('    { 0x%02X, %d, %d, %d, %d, %d, 0x%08Xu, "%s.pac", %d, { %s }, %d, { %s } },' % (
+            ending, elayer, r0, r1, c0, c1, crc, st, len(src), srcs, len(cl), ', '.join(cl) or '{ 0, 0, 0 }'))   # (an empty {} is not C before C23)
     out += ['};', '']
     dst = os.path.join(ROOT, 'src', 'extensions', 'scaled_endings_stages.h')
     open(dst, 'w', newline='\n').write('\n'.join(out))

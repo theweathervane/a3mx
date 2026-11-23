@@ -75,9 +75,11 @@ static int edge_shift, edge_depth;
 /* WIDE NATIVE, an ending's frame (extensions/widescreen.c, scaled_endings.c): with the scaled endings its
    sprites are drawn across the whole 16:9 screen (a character walking in or out is seen whole, as in the
    fights), a picture of a scaled scene drawn 1.25 times larger (sprite_drawers.c) and a profile picture
-   moved out to the 16:9 edge. A sprite waiting past a 4:3 side (placed outside the picture and not moved
-   for PARKED frames: someone about to walk in) is still cut there, so it isn't seen standing in the
-   margin. With the scaled endings off every sprite is cut at the 4:3 picture's sides and nothing moves. */
+   moved out to the 16:9 edge. A sprite waiting wholly past a 4:3 side (placed outside the picture, not
+   moved for PARKED frames, and its cells reaching less than INTO pixels into the picture last frame:
+   someone about to walk in)
+   is still cut there, so it isn't seen standing in the margin; one standing at the edge with part of it
+   in the picture is drawn whole. With the scaled endings off every sprite is cut at the 4:3 picture's sides and nothing moves. */
 int widescreen_in_ending(void);
 int scaled_endings_oversize(gaddr sp);
 int scaled_endings_profile_shift(gaddr sp);
@@ -91,8 +93,13 @@ static float fl(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 int sprite_ending_oversize;   /* set while a scene's picture and what is linked to it are drawn (sprite_drawers.c): 1 over-sized,
                                  2 character art not yet measured, 3 character art at its size */
 #define PARKED 30
-static struct { gaddr sp; int16_t x; long moved, last; } seen[64];   /* by sprite: its x, when it last moved, when last drawn */
-static int parked(gaddr sp) {
+#define INTO   32            /* how far into the 4:3 picture a sprite's cells must reach to count as in it */
+static struct { gaddr sp; int16_t x; long moved, last; int reach; int32_t lo, hi; } seen[64];   /* by sprite: its x, when it
+                                     last moved, when last drawn, and how far its cells reached then (reach: known) */
+static int seen_now = -1;            /* the entry of the sprite being drawn */
+extern int sprite_grid_extent_on;
+extern int32_t sprite_grid_extent_lo, sprite_grid_extent_hi;
+static int parked(gaddr sp, float lo43, float hi43) {
     int16_t x = (int16_t)S16(sp + SP_X);
     long now = (long)rt_vblank_count();
     int i, free_ = -1, oldest = 0;
@@ -102,10 +109,13 @@ static int parked(gaddr sp) {
         if (seen[i].last < seen[oldest].last) oldest = i;
     }
     if (i == 64) { i = free_ >= 0 ? free_ : oldest; seen[i].sp = sp; seen[i].last = -10; }
-    if (now - seen[i].last > 2) { seen[i].x = x; seen[i].moved = now - PARKED - 1; }   /* new here: as if it had waited */
+    if (now - seen[i].last > 2) { seen[i].x = x; seen[i].moved = now - PARKED - 1; seen[i].reach = 0; }   /* new here: as if it had waited */
     seen[i].last = now;
     if (seen[i].x != x) { seen[i].x = x; seen[i].moved = now; }
-    return (x < 0 || x >= 384) && now - seen[i].moved > PARKED;
+    seen_now = i;
+    if (!((x < 0 || x >= 384) && now - seen[i].moved > PARKED)) return 0;
+    /* none of it in the picture: its cells' edge less than a cell past the side (a cell's edge is often transparent) */
+    return !seen[i].reach || seen[i].hi <= (int32_t)lo43 + INTO || seen[i].lo >= (int32_t)hi43 - INTO;
 }
 static int ending_sides(gaddr sp, int *shift) {
     *shift = 0;
@@ -114,7 +124,9 @@ static int ending_sides(gaddr sp, int *shift) {
     if (ov) { sprite_ending_oversize = ov; return 0; }
     int px = scaled_endings_profile_shift(sp);
     float sx = fl(SCALE_X), ox = fl(OFFSET_X);
-    int whole = scaled_endings_on() && (px != 0 || !parked(sp));
+    float lo43 = 0.0f * sx, hi43 = 384.0f * sx;
+    lo43 = lo43 + ox; hi43 = hi43 + ox;
+    int whole = scaled_endings_on() && (px != 0 || !parked(sp, lo43, hi43));
     float lo = whole ? -48.0f : 0.0f, hi = whole ? 432.0f : 384.0f;
     lo = lo * sx; lo = lo + ox;
     hi = hi * sx; hi = hi + ox;
@@ -132,7 +144,9 @@ static void draw_sprite_wide(Cpu *c, gaddr sp) {
     int top = edge_depth == 0, clip_keep = sprite_grid_clip_x, ending = 0;
     if (top) edge_shift = widescreen_edge_shift(sp);
     else edge_shift += widescreen_linked_shift(sp);
-    if (top) { int shift; ending = ending_sides(sp, &shift); if (ending) { sprite_grid_clip_x = 1; edge_shift += shift; } }
+    if (top) { int shift; seen_now = -1; ending = ending_sides(sp, &shift); if (ending) { sprite_grid_clip_x = 1; edge_shift += shift; } }
+    int measuring = top && ending && seen_now >= 0;
+    if (measuring) { sprite_grid_extent_on = 1; sprite_grid_extent_lo = INT32_MAX; sprite_grid_extent_hi = INT32_MIN; }
     edge_depth++;
     for (int n = 0; top && n < 2; n++) {
         int copy = widescreen_edge_copy(sp, n);
@@ -142,6 +156,11 @@ static void draw_sprite_wide(Cpu *c, gaddr sp) {
     edge_depth--;
     edge_shift = keep;
     if (ending) sprite_grid_clip_x = clip_keep;
+    if (measuring) {
+        sprite_grid_extent_on = 0;
+        seen[seen_now].reach = sprite_grid_extent_lo <= sprite_grid_extent_hi;
+        seen[seen_now].lo = sprite_grid_extent_lo; seen[seen_now].hi = sprite_grid_extent_hi;
+    }
     if (top) sprite_ending_oversize = 0;
 }
 static void draw_sprite(Cpu *c, gaddr sp) {

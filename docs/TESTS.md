@@ -349,6 +349,13 @@ the story or the credits, GAME OVER and back to the MODE MENU, where the window 
 | `ending_variable` | Variable Battle: a tag team, ALL CLEAR and the credits | yes |
 | `ending_final` | Final Battle: M. Bison, then your character's ending and the credits | yes |
 
+The quickest way to a character's ending is `ending_final`: Final Battle is one fight against M. Bison
+(two for a few characters), so the ending starts a little sooner than Arcade's and goes the same way:
+
+```
+python tools/watch_scenario.py ending_final --character SAGAT --screen native
+```
+
 Survival has no ending of its own (it ends on a score screen when you lose), so it has no scenario
 here. World Tour, Training, Free Battle and the rest don't end.
 

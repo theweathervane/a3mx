@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.130.1
+### For players
+- **WIDE NATIVE endings: characters and scenery standing at the old 4:3 edge are drawn whole.** Sagat walking in behind M. Bison in his ending, E. Honda reaching in from the left, Ryu lying at the edge in Sakura's ending, and the temple and hill on the left of Ryu's sunset stage (Ryu's, Sagat's and Sakura's endings) were still cut at the old edge: they were placed just past it and stood still, so they were taken for someone waiting off-screen. Someone wholly off the picture still stays hidden until they move.
+
+### Technical
+- `core/object/sprite.c`: an ending's sprite placed outside 0 - 384 that hasn't moved for 30 frames is cut at 4:3 only if, as drawn last frame, its cells reached less than 32 pixels into the 4:3 picture (`INTO`: a cell's edge is often transparent: Cody's partner's reach 8). `sprite_grid.c` records the leftmost and rightmost x of a sprite's cells while it is drawn (`sprite_grid_extent_*`), before any cut. The temple and hill are an ending sprite (kind 79 type 18 at x -56), not part of the stage layers.
+- `tools/ending_stages.py`: each of the stage's layers in a band now has its own offset (`StageSource` dx / dy), and plain blocks (4 colours or more) count, so a sky band can be matched; one more band (ending 16 on st16). The table is otherwise as before.
+- `docs/TESTS.md`: `ending_final` as the quickest way to an ending.
+- Checked: every character's Final Battle ending (ending_final) in WIDE NATIVE against 0.130.0, every 50 frames; 6 endings differ (Ryu, Sagat, Sakura, E. Honda, Cody, Charlie) and each was looked at. Parity (lazy renderer): arcade_ending, arcade_ending_full, attract_mode, no_extensions; WIDE NATIVE check: wide_fight, wide_walls.
+
 ## 0.130.0
 ### For players
 - **WIDE NATIVE endings on Ryu's stage show the whole stage:** in Ryu's, Sagat's and Sakura's endings the sunset stage no longer stops at the old 4:3 edges (the black block bottom left, the flat orange on the right): the rocks, trees and cliffs carry on to the screen's sides, taken from Ryu's stage itself.

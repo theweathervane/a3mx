@@ -7,7 +7,7 @@
  *
  * tools/ending_stages.py finds those scenes (bands of rows of the ending's layer 1, 0x08819300) by
  * comparing their pixels with every stage's, and writes scaled_endings_stages.h: the band, a check of
- * its map words, the stage, where in the stage's maps it sits and which of the stage's layers, drawn in
+ * its map words, the stage, and which of the stage's layers, each at its own place in its map, drawn in
  * which order, make up the ending's tiles there (Ryu's: layer 2's 32-pixel tiles under layer 1's).
  *
  * Here, after the ending's layer 1 is drawn (0x08819300, wrapped in core/stage/background.c), in a
@@ -127,10 +127,11 @@ static uint16_t to5551(uint16_t v, int pf) {
     return a ? (uint16_t)(0x8000u | r | g << 5 | b << 10) : 0;
 }
 
-/* the stage's texel at (x, y) of map `layer` (16-pixel units of the ending's map moved by dx, dy) */
+/* the stage's texel for the ending's layer pixel (x, y), from source s (its map moved by its dx, dy) */
 static uint16_t stage_texel(const EndingStageBand *e, const uint8_t *maps, size_t maps_n, const Entry *es, int n,
                             const uint16_t cluts[][16], const int *clut_slot, int nclut, StageSource s, int x, int y) {
     int t = s.tile, cols = t == 16 ? 64 : 32;
+    x += s.dx * 16; y += s.dy * 16;
     int mx = x / t, my = y / t;
     mx = ((mx % cols) + cols) % cols;
     uint32_t off = 0x2000u * s.layer + (uint32_t)(my * cols + mx) * 4u;
@@ -192,7 +193,7 @@ static int build(int b) {
         int c0 = side ? e->col1 + 1 : e->col0 - STRIP;
         for (int y = 0; y < (e->row1 - e->row0 + 1) * 16; y++)
             for (int x = 0; x < STRIP * 16; x++) {
-                int sx = (c0 + e->dx) * 16 + x, sy = (e->row0 + e->dy) * 16 + y;
+                int sx = c0 * 16 + x, sy = e->row0 * 16 + y;
                 uint16_t px = 0;
                 for (int k = 0; k < e->nsources; k++) {
                     uint16_t t = stage_texel(e, es[0].data, es[0].size, es, ne, (const uint16_t (*)[16])cluts, clut_slot, nclut, e->sources[k], sx, sy);
