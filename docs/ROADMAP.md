@@ -244,6 +244,9 @@ Done:
 - [x] The last 23 of 25 - 40 instructions (`object/batch_steps8.c`): pool 7's objects run, objects placed by
       the camera and sliding to a stop, box settings, the pause values, a layout's fade levels; fighters'
       button strength, target pairs and trails; the ad-hoc link's thread end and members, the network texts (0.136.0)
+- [x] Eighteen more (`object/batch_steps9.c`): the 12 of 9 - 40 made ready by the batches before and the
+      first 6 of 41 - 60: fade levels, fighters' trails in turn, objects scrolling with the camera, ending
+      objects moving the camera layers, the network menu's head row and message panel, the session's lists (0.137.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
