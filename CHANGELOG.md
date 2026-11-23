@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.136.0
+### For players
+- **More of the game decompiled:** 23 more small functions, among them objects placed by the camera and sliding to a stop, the pause menu's values, the fade levels for a fight's layout, fighters' button strength, targets and trails, and the network menu's option texts. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps8.c` (new): the last 23 ready functions of 25 - 40 instructions. `src/core/psp_os.h`: a wrapper for sceKernelGetThreadId.
+- Checked: the coverage pass maps all 23 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, pause_config_original, free_battle_dramatic, super_finish, arcade_match, free_battle_rows, arcade_ending_full, free_battle_rdramatic, stage_objects_19_gen, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions, free_battle and arcade_rival_dialogue.
+
 ## 0.135.0
 ### For players
 - **More of the game decompiled:** 26 more small functions, among them objects stepping in time with an ending's scenes, set from their owner and shown by a level, box settings, fighters' script branches and a CPU's special opponents, and the network link's events, thread end and pairing. Nothing plays differently.

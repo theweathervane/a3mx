@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  17.47% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  17.64% decompiled
 
-Functions                                [█░░░░░░░░░]  15.83%  2,356 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  17.47%  84,585 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  15.99%  2,379 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  17.64%  85,431 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  37.22%  75,910 / 203,929
-  wireless (ad-hoc) VS                   [░░░░░░░░░░]   9.97%  371 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   2.80%  7,204 / 257,012
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  37.42%  76,316 / 203,929
+  wireless (ad-hoc) VS                   [█░░░░░░░░░]  11.93%  444 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   2.95%  7,571 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -241,6 +241,9 @@ Done:
 - [x] Twenty-six more of 25 - 40 instructions (`object/batch_steps7.c`): objects stepping by a record's
       count, set from their owner, animated by a level; box settings; fighters' script counts and branches,
       a CPU's special opponents; the ad-hoc link's events, thread end and target, the session's agreement (0.135.0)
+- [x] The last 23 of 25 - 40 instructions (`object/batch_steps8.c`): pool 7's objects run, objects placed by
+      the camera and sliding to a stop, box settings, the pause values, a layout's fade levels; fighters'
+      button strength, target pairs and trails; the ad-hoc link's thread end and members, the network texts (0.136.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
