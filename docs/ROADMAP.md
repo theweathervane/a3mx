@@ -280,6 +280,8 @@ Done:
       wandering a stage, the select grid's cells barred or shown with the entry rows (0.149.0)
 - [x] Two more (`object/batch_steps21.c`): the next of 101 - 200: a round's results scored (vital bonus, time,
       level, the highest combo) and a fighter's flag +772 by matchups (0.150.0)
+- [x] Three more (`object/batch_steps22.c`): the last ready of 101 - 200: a fighter's ranking records written
+      after the name entry, the fight's name plates made by layout, a name plate's start (0.151.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
