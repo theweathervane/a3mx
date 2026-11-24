@@ -113,6 +113,8 @@ committed. **The art pack (experimental)** puts those references and the placeho
 one folder per stage plus a README and a zip, in `art-pack/` (git-ignored): the launcher's **Build art
 pack** (Build section, advanced settings), `python tools/build.py --art-pack`, or `python tools/art_pack.py`
 on a built game. It is made from your disc's art, so it's for you and your artist, not for publishing.
+It also writes every fighter's sprites into `assets/us/characters/<nn>_<name>/fighter/sprites/` (not into
+the pack: [SPRITE_FORMAT.md](SPRITE_FORMAT.md)); `--no-sprites` / `--sprites-only` on `tools/art_pack.py`.
 Each stage's folder also has `layers/`: every layer whole, straight from the disc (`tools/stage_layers.py`,
 which the art pack runs): the stage's own tile maps and textures drawn out in full, one PNG per layer,
 numbered as the game numbers them (`layer0.png` the back, `layer1.png` the fighters', `layer2.png`,

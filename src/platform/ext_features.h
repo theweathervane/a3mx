@@ -61,7 +61,7 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "The game opens straight on the MODE MENU, with your settings and save loaded: the boot screens and\n"
       "the load run off screen at full speed, with no title, logos, story, attract demos or PRESS START.\n"
       "If the save can't be loaded, the game's own question is shown first.\n"
-      "Off: the title and attract mode first, as on the PSP.", 1, -1, SECTION_CORE },
+      "Off: the title and attract mode first, as on the PSP.", 0, -1, SECTION_CORE },
     { "mode_menu_icons", "MODE MENU icons",
       "The numbered bubble for each player's controller and the FRAME TIMING badge (SMOOTH / ORIGINAL)\n"
       "on the MODE MENU's bar.", 1, -1, SECTION_CORE },

@@ -70,8 +70,8 @@ def start(exe, work, sc, out, mode, extra):
            '--headless', '--fast', '--renderer', 'soft', '--frames', str(sc['frames']),
            '--hash-log', os.path.join(d, 'hashes.txt'), '--no-assets',
            # the scenarios' menu scripts count SCREEN SETTING's rows without FILTER (0.60.0): the shaders
-           # feature is off here; their inputs start from the title, so boot_to_menu is off (on by default
-           # since 0.127.0), and i_ism_display is on as it was before (a scenario's own --features or
+           # feature is off here; their inputs start from the title, so boot_to_menu is off (as by default
+           # again; on by default 0.127.0 - 0.163.x), and i_ism_display is on as it was before (a scenario's own --features or
            # --no-extensions, coming later, wins)
            '--features', TEST_FEATURES] + sc['args'] + extra
     if sc['input']: cmd += ['--input', sc['input']]

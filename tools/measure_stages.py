@@ -58,6 +58,28 @@ def read_png_rgb(path):
     return w, h, rows
 
 
+class RgbPng:
+    """A screenshot as RGB, for machines without Pillow (the Python build.cmd downloads has no pip): the
+    few things the art pack's tools ask of a Pillow image: .size, .getpixel((x, y)), .save(path)."""
+    def __init__(self, path=None, size=None, rows=None):
+        if path is not None:
+            w, h, rgba = read_png_rgb(path)
+            self.size, self.rows = (w, h), [bytes(r[i] for i in range(len(r)) if i % 4 != 3) for r in rgba]
+        else:
+            self.size, self.rows = size, rows
+
+    def getpixel(self, xy):
+        r = self.rows[xy[1]]; i = 3 * xy[0]
+        return (r[i], r[i + 1], r[i + 2])
+
+    def save(self, path, **_):
+        def chunk(tag, data): return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', zlib.crc32(tag + data) & 0xFFFFFFFF)
+        w, h = self.size
+        colour = 2 if len(self.rows[0]) == 3 * w else 6          # RGB, or RGBA rows
+        open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, colour, 0, 0, 0)) +
+                               chunk(b'IDAT', zlib.compress(b''.join(b'\0' + bytes(r) for r in self.rows), 6)) + chunk(b'IEND', b''))
+
+
 def black_margin(png, side, y0=60, y1=230):
     """(widest, narrowest) run of pure black columns at that edge over the play area's rows."""
     w, h, rows = read_png_rgb(png); widest, narrowest = 0, 999

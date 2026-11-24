@@ -327,7 +327,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 |---|---|
 | `--work DIR` | the work folder made by `extract_assets.py` |
 | `--no-extensions` | run without the extensions: the PSP program alone ([below](#without-the-extensions)) |
-| `--features LIST` | which extensions are on, comma separated. Core: `saves`, `boot_to_menu`, `mode_menu_icons`, `quit_key`, `menus`; Display: `widescreen`, `i_ism_display` (off by default), `scaled_endings`, `stage_extensions` (off by default), `shaders`; Extra: `cheats_unlocks`, `local_multiplayer`, `i_ism_select`; or `all`, `none`, `default`; `-NAME` turns one off (`default,-mode_menu_icons`). The launcher's **Extensions** tab writes this, under the same three headings |
+| `--features LIST` | which extensions are on, comma separated. Core: `saves`, `boot_to_menu` (off by default), `mode_menu_icons`, `quit_key`, `menus`; Display: `widescreen`, `i_ism_display` (off by default), `scaled_endings`, `stage_extensions` (off by default), `shaders`; Extra: `cheats_unlocks`, `local_multiplayer`, `i_ism_select`; or `all`, `none`, `default`; `-NAME` turns one off (`default,-mode_menu_icons`). The launcher's **Extensions** tab writes this, under the same three headings |
 | `--custom-assets` | before 0.60.0: the `stage_extensions` feature (the project's own art in `assets/extensions/`) |
 | `--assets DIR`, `--no-assets` | load each archive that `DIR/index.json` gives a folder from it (default: `assets/<region>` beside the work folder); or everything from the disc ([ASSET_LOADING.md](ASSET_LOADING.md)) |
 | `--renderer gl\|soft\|none\|lazy` | GPU renderer (default), software reference, nothing, or only dumped frames |

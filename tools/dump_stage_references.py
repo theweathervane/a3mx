@@ -12,7 +12,8 @@ stay in your assets folder, which git ignores, and are never committed or shared
 The runs are tools/measure_stage_layers.py's (the same frames it measures from).
 
 Usage: python tools/dump_stage_references.py [--exe build/a3mx] [--stages 1,6] [-j 2]
-US program only. Needs Pillow.
+US program only. Uses Pillow if it is installed; without it (the Python build.cmd downloads has no pip),
+measure_stages.RgbPng, slower.
 """
 import argparse, concurrent.futures, os, sys
 
@@ -26,6 +27,15 @@ ROOT = msl.ROOT
 
 def layer_alone(shot, none):
     """The layer's own pixels: transparent where the frame is the same as with no layer at all."""
+    if isinstance(shot, ms.RgbPng):
+        w, h = shot.size; rows = []
+        for y in range(h):
+            a, b, r = shot.rows[y], none.rows[y], bytearray(4 * w)
+            for x in range(w):
+                i = 3 * x
+                if a[i:i + 3] != b[i:i + 3]: r[4 * x:4 * x + 4] = a[i:i + 3] + b'\xff'
+            rows.append(r)
+        return ms.RgbPng(size=(w, h), rows=rows)
     from PIL import Image
     out = Image.new('RGBA', shot.size, (0, 0, 0, 0))
     ps, pn, po = shot.load(), none.load(), out.load()

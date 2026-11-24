@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.163.1
+### For players
+- **Boot to the MODE MENU is off by default again:** the game opens on the title, as on the PSP. A launcher that already saved its settings keeps your choice; press Defaults on the Extensions tab to take the new one.
+- **The fighters' sprites as pictures:** the art pack (launcher: Build art pack) now also writes every fighter's sprites as PNG, with their colours and animation frames, into your assets folder (`characters/<nn>_<name>/fighter/sprites/`). The game doesn't load edited sprites yet.
+- **The art pack works without Pillow,** as on a PC whose only Python is the one the build downloads.
+
+### Technical
+- `docs/SPRITE_FORMAT.md` (new): pictures, LZ-packed tiles, palettes and animation frames of the fighter archives; `tools/sprites.py` (new): `verify` against a RAM snapshot's picture cache, `picture`, `extract`; run by `tools/art_pack.py` (`--no-sprites`, `--sprites-only`) and `tools/extract_assets.py --sprites`.
+- `boot_to_menu` off by default (`ext_features.h`).
+- `tests/stage_strips_test.py` and the art pack no longer need Pillow (`measure_stages.RgbPng`).
+- Checked: `sprites.py verify` (52 cached pictures identical), assets_in_game, stage_strips (with Pillow hidden too), parity boot_to_menu and arcade_fight.
+
 ## 0.163.0
 ### For players
 - **More of the game decompiled:** how sprites, text and shapes are handed to the 2D library to be drawn. Nothing plays differently.
