@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.163.0
+### For players
+- **More of the game decompiled:** how sprites, text and shapes are handed to the 2D library to be drawn. Nothing plays differently.
+
+### Technical
+- `src/core/syslib/draw2d_draws.c` (new): 0x089E1950, 0x089E10D8, 0x089E1618; `src/core/syslib/draw2d.c`: 0x089E155C, 0x089E1234, 0x089E1464.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, attract_mode, arcade_ending, super_finish, mode_tour, free_battle_team, boot_to_select, save_load, network_match, free_battle_dramatic, arcade_rival_dialogue, no_extensions, stage_objects_22_honda, stage_objects_31_guile, stage_objects_29_bison1, wide_fight, arcade_match and option_tour; two paths no scenario takes forced with pokes, identical to the original.
+
 ## 0.162.0
 ### For players
 - **More of the game decompiled:** the rest of the sprite drawers (rows, pieces with their own palettes, scaled and turned pieces) and a fighter's extra picture. Nothing plays differently.

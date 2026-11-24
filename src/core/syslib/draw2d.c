@@ -110,3 +110,22 @@ SFA_FUNC(089E1254, palette_upload) {
     CALL3(f_089F3430, *W(PAL_BASE) + start * 2u, src, (uint32_t)bytes);
     c->r[29] += 0x20;
 }
+
+/* ---- textures by number: 24-byte records at 0x08B0C334 (+0 the pixels), and 68-byte ones at
+   0x08B12334 (+4 the palette they are drawn with) ---- */
+#define TEXTURES     0x08B0C334u
+#define TEX_PALETTES 0x08B12334u
+
+/* (texture): its pixels, to write into */
+SFA_FUNC(089E155C, tex_pixels) { RETURN(*W(TEXTURES + ARG(0) * 24u)); }
+
+/* (texture, palette): the palette it is drawn with */
+SFA_FUNC(089E1234, tex_set_palette) { *W(TEX_PALETTES + ARG(0) * 68u + 4) = ARG(1); }
+
+void f_089E1234(Cpu *c);
+/* (n, palette): descriptor n of the list in use, when it holds its texture's number itself
+   (D_DIRECT), drawn with that palette */
+SFA_FUNC(089E1464, tex_list_set_palette) {
+    gaddr d = *W(TEX_LIST) + ARG(0) * 12u;
+    if (*W(d + 4) & D_DIRECT) CALL2(f_089E1234, *W(d + 8), ARG(1));
+}
