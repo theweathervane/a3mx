@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.142.0
+### For players
+- **More of the game decompiled:** 11 more functions, among them the gauge's digits, followers stepping their owner's records, round markers, and the network threads' start and end. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps13.c` (new): 3 ready functions of 9 - 60 instructions and 8 of 61 - 100. `src/core/psp_os.h`: wrappers for sceNetAdhocctlDelHandler, sceNetAdhocctlTerm, sceNetAdhocTerm and sceNetTerm.
+- Checked: the coverage pass maps all 11 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, arcade_match, arcade_rival_dialogue, arcade_ending_full, super_finish, stage_objects_34_hawk, pause_config, pause_config_original, pause_config_players, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, no_extensions, arcade_other_fighter, free_battle_dramatic, free_battle_rows and option_tour.
+
 ## 0.141.0
 ### For players
 - **More of the game decompiled:** 13 more functions, among them a fighter's reset when free or past its gauge, a CPU script's specials by ISM, two hit boxes overlapping, the gauge's digits, the fight frame's objects and the network thread's loop. Nothing plays differently.
