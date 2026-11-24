@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.147.0
+### For players
+- **More of the game decompiled:** 4 more functions: a row object's step, the network matching for a thread, the pause menu's texts and a text scroller. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps18.c` (new): 2 ready functions of 9 - 100 instructions and 2 of 101 - 200.
+- Checked: all 4 reached in the parity runs; parity (memory hashes, lazy renderer) passed for network_match, arcade_match, pause_config_original, arcade_ending_full, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour, super_finish, arcade_rival_dialogue, pause_config, pause_config_players and free_battle_dramatic.
+
 ## 0.146.0
 ### For players
 - **More of the game decompiled:** 4 more functions: the camera's edges for three fighters, the hit checks between objects, the network matching's start and a banner's fade. Nothing plays differently.
