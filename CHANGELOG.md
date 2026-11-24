@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.159.0
+### For players
+- **More of the game decompiled:** the setup of the menus' row objects. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps30.c` (new): 0x088CFCCC.
+- Checked: parity (memory hashes, lazy renderer) passed for mode_tour, mode_menu, option_tour, boot_to_menu, save_load, select_choices, free_battle and arcade_fight; the kinds no scenario sets forced with pokes in mode_tour, identical to the original.
+
 ## 0.158.0
 ### For players
 - **More of the game decompiled:** the fight HUD's pop-up cells. Nothing plays differently.
