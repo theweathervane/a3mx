@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.94% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.00% decompiled
 
-Functions                                [█░░░░░░░░░]  16.80%  2,500 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  18.94%  91,712 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.82%  2,503 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.00%  91,986 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  39.24%  80,023 / 203,929
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  39.31%  80,155 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   3.62%  9,308 / 257,012
+  game (to be mapped)                    [░░░░░░░░░░]   3.68%  9,450 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -274,6 +274,8 @@ Done:
 - [x] Four more (`object/batch_steps18.c`): the 2 of 9 - 100 made ready and the next 2 of 101 - 200: a row
       object's step by type, the network matching for a thread's record, the pause menu's texts, a text
       scroller (0.147.0)
+- [x] Three more (`object/batch_steps19.c`): the 1 of 9 - 100 made ready and the next 2 of 101 - 200: a text
+      scroller's start, the fade for flagged fighters by layout, the network menu's status line (0.148.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

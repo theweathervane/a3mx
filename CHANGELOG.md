@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.148.0
+### For players
+- **More of the game decompiled:** 3 more functions: a text scroller's start, the fade for flagged fighters on unpausing and the network menu's status line. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps19.c` (new): 1 ready function of 9 - 100 instructions and 2 of 101 - 200.
+- Checked: all 3 reached in the parity runs; parity (memory hashes, lazy renderer) passed for network_match, super_finish, arcade_fight, arcade_ending_full, free_battle_dramatic, arcade_match, pause_config, pause_config_original, pause_config_players, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour and arcade_rival_dialogue.
+
 ## 0.147.0
 ### For players
 - **More of the game decompiled:** 4 more functions: a row object's step, the network matching for a thread, the pause menu's texts and a text scroller. Nothing plays differently.
