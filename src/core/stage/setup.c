@@ -21,11 +21,7 @@ void f_0881F1FC(Cpu *c); void f_08819A68(Cpu *c); void f_0881F308(Cpu *c); void 
 void f_0881F5D4(Cpu *c);
 void rt_call_indirect(Cpu *c, uint32_t addr);
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int32_t   S8(gaddr a) { return (int8_t)*B(a); }
-static inline int32_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 
 #define BATTLE      0x092E1228u
 #define LAYER_2     0x092E8940u

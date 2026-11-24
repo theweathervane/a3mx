@@ -30,11 +30,7 @@
 
 #define SLIDE_STEPS 0x08A190F7u  /* s8 per frame left: how far the fighter slides */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 /* Which side the opponent is on, noted only while the two are more than 24 apart (so it doesn't flip
    as they cross). */

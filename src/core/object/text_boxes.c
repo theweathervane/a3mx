@@ -20,10 +20,7 @@
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 int widescreen_text_shift(gaddr rec);
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 
 void f_089E1950(Cpu *c);   /* draws textured vertices: a0, a1 count, a2 flags, a3 blend, t0 effect */

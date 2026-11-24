@@ -16,9 +16,7 @@
 
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_089E0CF4(Cpu *c);   /* selects a texture page (a0 its descriptor) */
 void f_089E1464(Cpu *c);   /* a 2D library setting: a0 which, a1 its value */

@@ -11,11 +11,7 @@
 #define F_HEALTH   112
 #define F_CHARACTER 338
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 /* One of 48 flags of a fighter: bits 0 - 31 in the word +400, 32 on in the s16 +404. Answers the bit,
    not 0 or 1. */

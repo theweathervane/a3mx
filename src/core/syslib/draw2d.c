@@ -17,9 +17,7 @@
 #define D_DIRECT   0x800000u     /* +8 is the value */
 #define D_OWN_WORD 0x40000000u   /* +0 was given */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_089F3430(Cpu *c);   /* memcpy */
 

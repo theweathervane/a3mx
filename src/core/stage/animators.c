@@ -18,11 +18,7 @@ void f_08821368(Cpu *c);   /* game_random (fight.c) */
 void f_08819A68(Cpu *c); void f_0881F1FC(Cpu *c); void f_0881F308(Cpu *c); void f_0881F3E4(Cpu *c);
 void f_0881F48C(Cpu *c); void f_0881F5D4(Cpu *c);
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int32_t   S8(gaddr a) { return (int8_t)*B(a); }
-static inline int32_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 
 #define PALETTES  0x092DF980u   /* the game's palettes, 32 bytes each */
 #define PAL_DIRTY 0x092E0980u   /* u32: 1 = send the palettes */

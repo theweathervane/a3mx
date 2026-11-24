@@ -27,8 +27,7 @@
 #define COLOURS       0x08E75C48u     /* u16[4], then u16 at +8, +0xA, +0xC */
 #define TITLE_TASK    0x0888B398u     /* task 0's next entry: the title and attract mode */
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline int fade_task_running(void) { return (int8_t)*B(FADE_TASK) != 0; }
 
 void f_089F3470(Cpu *c);   /* memset (libc/string.c) */

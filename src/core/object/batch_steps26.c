@@ -5,9 +5,7 @@
  */
 #include "step.h"
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 #define GAME      0x08E75910u
 #define NET       0x09523980u

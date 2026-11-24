@@ -17,9 +17,7 @@ extern int rt_widescreen;          /* WIDE NATIVE: extensions/widescreen.c (exte
 extern int sprite_grid_wide_edges, sprite_grid_wide_strip, sprite_grid_scale_all;   /* sprite_grid.c */
 extern float sprite_grid_scale, sprite_grid_ax, sprite_grid_ay;
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_089E0CF4(Cpu *c);   /* selects a texture page (a0 its descriptor) */
 void f_08811BCC(Cpu *c);   /* a picture's 32-pixel cells (a0 draw state, a1 picture, a2 its list) */

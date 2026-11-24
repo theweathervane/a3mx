@@ -17,7 +17,7 @@
 
 #define SAVE_NAMES 0x08AD3D8Cu   /* four 13-byte names: STFALPH3.SYS, .WTR, .NET, .DWN */
 
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 /* The first record not in use, or 0. */
 static gaddr free_record(gaddr table, int count, uint32_t size) {

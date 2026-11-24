@@ -7,9 +7,7 @@
 #define RING         0x092D9EF0u     /* 64 entries of four u16 */
 #define RING_NEXT    0x092D9EEDu     /* u8: the entry the next call fills */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "guest_mem.h"
 
 /* Four values into the next entry of a 64-entry ring. */
 SFA_FUNC(08809A08, ring_put) {

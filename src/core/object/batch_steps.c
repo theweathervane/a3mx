@@ -8,11 +8,7 @@
 #define GAME    0x08E75910u
 #define BATTLE  0x092E1228u
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_0899939C(Cpu *c);   /* move_x_by_facing_b (small_steps.c) */
 void f_089993E4(Cpu *c);   /* fall_by_100 (small_steps.c) */

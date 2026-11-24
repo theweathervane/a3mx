@@ -71,9 +71,7 @@ enum { SCREEN_SETUP, SCREEN_PRESS_START, SCREEN_MENU, SCREEN_TO_TITLE, SCREEN_FR
 #define PAD_START      0x8000
 #define PAD_CONFIRM    0x8080
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline int fading(gaddr g) { return (int8_t)*B(g + G_FADE_TASK) != 0; }
 /* a 16-bit countdown: true when it reaches 0 */
 static int count_down(gaddr field) {

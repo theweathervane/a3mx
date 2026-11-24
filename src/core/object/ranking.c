@@ -16,10 +16,7 @@
  */
 #include "../decomp.h"
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_0880A39C(Cpu *c);   /* 0x2800 bytes at 0x092DCA40 set to 0xFF */
 void f_08821FEC(Cpu *c);   /* the object lists reset */

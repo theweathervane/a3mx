@@ -62,7 +62,7 @@ void f_089E2E28(Cpu *c);   /* sound library: buffer for a bank */
 void f_089E64BC(Cpu *c);
 void rt_call_indirect(Cpu *c, uint32_t addr);
 
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline uint8_t *U8(gaddr a) { return guest_ptr(a); }
 static inline int32_t s8(uint32_t v) { return (int8_t)v; }
 static inline gaddr request_name(void) { return REQUEST_NAMES + *U8(CURRENT_SLOT) * 36u + 4; }

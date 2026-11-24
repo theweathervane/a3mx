@@ -6,9 +6,7 @@
 #define FIGHTER_3 0x092E47D0u
 #define FIGHTER_4 0x092E4C68u
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "guest_mem.h"
 
 static void clear(gaddr a, uint32_t n) { for (uint32_t i = 0; i < n; i++) *B(a + i) = 0; }
 

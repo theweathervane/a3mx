@@ -8,11 +8,7 @@
 #define BATTLE 0x092E1228u
 #define BT_INTRO 44
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_088215C4(Cpu *c);   /* object_draw */
 void f_0882196C(Cpu *c);   /* object_set_animation */

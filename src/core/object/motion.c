@@ -34,11 +34,7 @@
 #define O_FLOOR   132
 #define O_FRAME_DATA 296   /* u32: the current frame's data (fighters) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 static void next_step(gaddr o) { *B(o + O_STEP) = (uint8_t)(*B(o + O_STEP) + 1); }
 static void next_substep(gaddr o) { *B(o + O_SUBSTEP) = (uint8_t)(*B(o + O_SUBSTEP) + 1); }

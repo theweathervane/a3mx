@@ -18,9 +18,7 @@
 #define BATTLE    0x092E1228u
 #define G_COUNTER 66     /* s8: the object loop's counter */
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_0880B7BC(Cpu *c); void f_0880EBF8(Cpu *c);   /* the text pass's two parts */
 void f_088224DC(Cpu *c);   /* sprites: finish the frame (0) */

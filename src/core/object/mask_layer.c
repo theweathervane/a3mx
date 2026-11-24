@@ -22,10 +22,7 @@
 
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 
 #define MASK_LAYER   0x092E22E4u   /* u32: the layer's first texel */
 #define MASK_TABLES  0x092D9D40u   /* u32[]: the masks by the sprite's picture list (+86) */

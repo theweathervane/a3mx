@@ -15,11 +15,7 @@
 #define P4      0x092E4C68u
 #define HIT     0x09358410u     /* the hit's working record (+24 the other fighter, +44 / +46 flags) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_0885ECE8(Cpu *c);   /* fighter_guard_choice */
 void f_0886B4D4(Cpu *c);   /* fighter_battle_word */

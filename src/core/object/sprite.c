@@ -7,9 +7,7 @@
 void rt_call_indirect(Cpu *c, uint32_t addr);
 void f_089E0C4C(Cpu *c);   /* switches a GE drawing mode on (1) or off (0) around a sprite that asks for it */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 #define DRAW_STATE     0x08AD9320u   /* where a sprite is set up for its drawer */
 #define DRAWERS        0x08A04B48u   /* u32[]: drawer by sprite kind (+148) */
@@ -32,7 +30,6 @@ enum {
 enum { DS_X = 0, DS_Y = 2, DS_ATTR = 44, DS_COLOUR = 48, DS_FLIP_X = 56, DS_FLIP_Y = 60,
        DS_POS_X = 80, DS_POS_Y = 82, DS_BLEND = 85 };
 
-static inline int16_t S16(gaddr a) { return (int16_t)*H(a); }
 
 /* Moves the sprite's position by its anchor: a scrolling anchor (kind 2) first adds its share of the
    scroll; then the anchor's own offset; then the screen shake if the sprite shakes. */

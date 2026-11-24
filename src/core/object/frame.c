@@ -13,8 +13,7 @@
 #define LAYER_COUNT_H  0x092E2690u     /* the same while GAME + 0x91 halts the fight */
 #define LAYER_SPRITES_H 0x092E2698u
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 /* the text pass's parts; those with an argument take a layer or kind number */
 void f_0880B928(Cpu *c); void f_0880C208(Cpu *c); void f_0880BFAC(Cpu *c); void f_0880D62C(Cpu *c);
@@ -198,7 +197,6 @@ SFA_FUNC(088215C4, object_draw) {
 
 /* ---- an object drawn when on the screen (0.72.0) ---- */
 
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
 void f_08821330(Cpu *c);   /* the camera an object is seen by */
 void f_088215C4(Cpu *c);   /* object_draw */
 #define LAST_CAMERA 0x08B01F28u   /* u32: the camera 0x08821424 asked for last */

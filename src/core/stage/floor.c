@@ -16,10 +16,7 @@ void f_0880A3C4(Cpu *c);   /* draw_depth (depth.c): a0 the table's row, a1 its c
 void f_0881C5A8(Cpu *c);   /* stage_floor, below */
 void f_089E1950(Cpu *c);   /* draws a quad list: a0 its vertices, a1 their count, a2 the texture, a3 / t0 0 */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int32_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 static inline void      SET16(gaddr a, int32_t v) { *H(a) = (uint16_t)v; }
 static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 

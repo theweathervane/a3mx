@@ -24,10 +24,7 @@ extern int tiles_ending_mode;   /* tiles.c: WIDE NATIVE, an ending's layers cut 
 extern int tiles_ending_shift;  /* tiles.c: ... or moved (E. Honda's dojo) */
 int tiles_ending_quad(void);
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int32_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 static inline void      SET16(gaddr a, int32_t v) { *H(a) = (uint16_t)v; }
 static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 

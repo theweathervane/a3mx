@@ -9,11 +9,7 @@
 #define SCROLL_A 0x08B027E0u
 #define SCROLL_B 0x08B02810u
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 SFA_FUNC(088A9328, director_clear) { for (uint32_t i = 0; i < 0x64u; i++) *B(DIRECTOR + i) = 0; }
 

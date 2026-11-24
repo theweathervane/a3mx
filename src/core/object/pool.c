@@ -1,9 +1,7 @@
 /* Making objects, and two helpers of the sprite drawing. */
 #include "../decomp.h"
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 #define OBJECT_SIZE 0xC0u
 

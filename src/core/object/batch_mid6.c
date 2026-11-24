@@ -14,11 +14,7 @@
 #define P3      0x092E47D0u
 #define P4      0x092E4C68u
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_08820A68(Cpu *c);   /* random_twist */
 void f_088D7EA0(Cpu *c);   /* net_count_264 */

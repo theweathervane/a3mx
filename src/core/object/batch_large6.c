@@ -13,11 +13,7 @@
 #define P3      0x092E47D0u
 #define P4      0x092E4C68u
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_08896190(Cpu *c);   /* screen_start_reset */
 void f_08892020(Cpu *c);   /* name_panel_texts */

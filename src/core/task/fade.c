@@ -24,9 +24,7 @@
 #define FADE_SETTING_A 0x08E75C60u
 #define FADE_SETTING_B 0x08E75C64u
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline int8_t fade_running(void) { return (int8_t)*B(FADE_RUNNING); }
 static inline float level(void) { float f; memcpy(&f, guest_ptr(FADE_LEVEL), 4); return f; }
 static inline void set_level(float f) { memcpy(guest_ptr(FADE_LEVEL), &f, 4); }

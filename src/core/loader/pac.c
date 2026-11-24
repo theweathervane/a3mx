@@ -47,7 +47,7 @@ void f_089E2AA0(Cpu *c);   /* sound library: buffer for a sequence */
 void f_089E2B60(Cpu *c);   /* sound library: register sample bank */
 void f_089E2E28(Cpu *c);   /* sound library: buffer for a bank */
 
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline int32_t s8(uint32_t v) { return (int8_t)v; }
 
 /* Where the bytes of the entry `type` go (and anything that must be set up before they arrive).

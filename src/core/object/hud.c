@@ -23,10 +23,7 @@ extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_
 extern int sprite_grid_clip_x;                     /* sprite_grid.c */
 extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 
 void f_089E0CF4(Cpu *c);   /* selects a texture page (a0 its descriptor) */

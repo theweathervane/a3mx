@@ -11,11 +11,7 @@
 #define BATTLE  0x092E1228u
 #define SCORE_MAX 9999999u
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_08822040(Cpu *c);   /* fight_reset */
 void f_08821F58(Cpu *c);   /* fight_reset_short */

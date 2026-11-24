@@ -9,11 +9,7 @@
 #define BATTLE  0x092E1228u
 #define DRAW    0x08AD9320u     /* the sprite drawer's state */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t  S8(gaddr a)  { return *(int8_t *)guest_ptr(a); }
-static inline int16_t S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_08855D80(Cpu *c);   /* intro_place */
 void f_0882196C(Cpu *c);   /* object_set_animation */

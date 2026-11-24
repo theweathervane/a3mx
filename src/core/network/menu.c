@@ -10,8 +10,7 @@
 
 extern int rt_widescreen;   /* WIDE NATIVE (extensions/widescreen.c; extensions_off.c: 0) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 void f_0880A6CC(Cpu *c);   /* draws a text: a0 the text, a1, a2 its size, a3 its row's number, t0 its look (0xA plain, 0xB lit) */
 void f_088D6D74(Cpu *c);   /* the cursor bar: a0, a1 the row's number, a2 its width, a3, t0 x, t1 */

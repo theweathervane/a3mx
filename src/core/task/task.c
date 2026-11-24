@@ -7,9 +7,7 @@
 #include "../psp_os.h"
 #include "task.h"
 
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline gaddr current_task_addr(void) { return *W(CURRENT_TASK); }
 
 #define TASK_THREAD_NAME   0x089FD0D8u   /* the name every task's thread gets */

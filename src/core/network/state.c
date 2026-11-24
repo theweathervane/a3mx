@@ -21,9 +21,7 @@
 #define NET_STEP    0x09523960u    /* the network step's state */
 #define NS_FLAG_25  25             /* u8 */
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline int8_t S8(gaddr a) { return (int8_t)*B(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 /* A network battle: the mode is NETWORK, or the state says one is on. */
 static int network_battle(void) { return S8(GAME + G_MODE) == MODE_NETWORK || *B(NET + N_BATTLE) != 0; }

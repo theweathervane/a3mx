@@ -15,7 +15,7 @@
 #define BTN_ATTACKS  0x3F0
 #define BTN_SELECT   0x4000
 
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 
 /* Left or right, but only while neither up nor down is held. */
 SFA_FUNC(08861D5C, fighter_sideways_only) {

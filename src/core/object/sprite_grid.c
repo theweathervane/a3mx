@@ -23,10 +23,7 @@ struct SpriteGridWedge { int on, dir, vside, sector; float ax, ay, k; };
 
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 static inline float     F(gaddr a) { float f; memcpy(&f, guest_ptr(a), 4); return f; }
 static inline void      SET16(gaddr a, int32_t v) { *H(a) = (uint16_t)v; }
 

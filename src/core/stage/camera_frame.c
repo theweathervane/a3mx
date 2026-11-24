@@ -30,11 +30,7 @@ void f_0881D4D8(Cpu *c); void f_0881D588(Cpu *c); void f_0881D5F4(Cpu *c); void 
 void f_0881D8A8(Cpu *c);
 void rt_call_indirect(Cpu *c, uint32_t addr);
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int32_t   S8(gaddr a) { return (int8_t)*B(a); }
-static inline int32_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 static inline void      SET16(gaddr a, int32_t v) { *H(a) = (uint16_t)v; }
 
 #define GAME      0x08E75910u   /* +0 screen, +2 its step, +32 a frame count, +89 / +145 halts */

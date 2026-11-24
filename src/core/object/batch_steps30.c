@@ -4,9 +4,7 @@
  */
 #include "step.h"
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline int16_t  S16(gaddr a) { return *(int16_t *)guest_ptr(a); }
+#include "../guest_mem.h"
 
 #define GAME      0x08E75910u
 #define ROW_X     0x08A3CA60u   /* kind 1's x by the game's +6 */

@@ -44,11 +44,7 @@ void f_0884D870(Cpu *c); void f_08852670(Cpu *c);   /* below */
 #define LAYER_2       0x092E8940u
 #define SCROLL        0x092E5F78u   /* +112: the screen shake's x (16.16) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int8_t    S8(gaddr a) { return (int8_t)*B(a); }
-static inline int16_t   S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 
 /* Stages whose objects are drawn with +86 = 15 and +148 = 0; the others' have 4 and 7. */
 static int bright_stage(int stage) {

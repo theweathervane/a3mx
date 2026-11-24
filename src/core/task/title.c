@@ -39,9 +39,7 @@
 #define G_DRAW_FLAGS    0x5F   /* u8 */
 #define G_TITLE_MUSIC   0xBD   /* u8 */
 
-static inline uint8_t *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
+#include "../guest_mem.h"
 static inline int fading(gaddr g) { return (int8_t)*B(g + G_FADE_TASK) != 0; }
 
 void f_088054F0(Cpu *c);   /* task.c: wait for frames */

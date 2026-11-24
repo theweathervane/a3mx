@@ -14,11 +14,7 @@
 
 extern int rt_widescreen;   /* WIDE NATIVE (extensions/widescreen.c; extensions_off.c: 0) */
 
-static inline uint8_t  *B(gaddr a) { return guest_ptr(a); }
-static inline uint16_t *H(gaddr a) { return guest_ptr(a); }
-static inline uint32_t *W(gaddr a) { return guest_ptr(a); }
-static inline int32_t S8(gaddr a) { return (int8_t)*B(a); }
-static inline int32_t S16(gaddr a) { return (int16_t)*H(a); }
+#include "../guest_mem.h"
 
 void f_0880E788(Cpu *c);   /* a flat rectangle: a0 x0, a1 y0, a2 x1, a3 y1 (game pixels), t0 colour, t1 depth */
 void f_088DD114(Cpu *c);   /* returns the network session's word at 0x0952390C (2 or more: a third player row) */
