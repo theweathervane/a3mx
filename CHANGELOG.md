@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.150.0
+### For players
+- **More of the game decompiled:** 2 more functions: a round's results being scored (vital bonus, time, level and best combo) and a fighter's matchup flag. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps21.c` (new): 2 ready functions of 101 - 200 instructions.
+- Checked: both reached in the parity runs; parity (memory hashes, lazy renderer) passed for arcade_fight, arcade_match, network_match, arcade_ending_full, free_battle_dramatic, free_battle_rdramatic, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour, arcade_rival_dialogue, super_finish, pause_config_original, arcade_join_select and free_battle.
+
 ## 0.149.0
 ### For players
 - **More of the game decompiled:** 3 more functions: a network menu row's step, a critter wandering a stage and the select grid's cells. Nothing plays differently.
