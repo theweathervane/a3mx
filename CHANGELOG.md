@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.139.0
+### For players
+- **More of the game decompiled:** 30 more small functions, among them objects queued by layer and following a fighter's picture, slides and timers, effects at a fighter's side, the check that lets a fighter start a move, and the network session's lists. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps10.c` (new): the last 4 ready functions of 9 - 40 instructions and 26 of 41 - 60.
+- Checked: the coverage pass maps all 30 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, super_finish, arcade_match, free_battle_dramatic, arcade_rival_dialogue, free_battle_rows, stage_objects_31_guile, stage_objects_19_gen, arcade_join_select, select_start_menu, arcade_fight, boot_to_select, attract_mode, arcade_ending, pause_config_players, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions and stage_objects_01_ryu_1.
+
 ## 0.138.0
 ### For players
 - **Art pack: every stage layer whole.** The art pack (launcher: Build art pack, or `python tools/build.py --art-pack`) now has a `layers/` folder per stage: each of the stage's layers drawn out in full from your disc, one PNG per layer numbered as the game numbers them (`layer0` the back, `layer1` the fighters', `layer2`, `layer3` the floor band, Charlie's `layer4`), one PNG a frame for animated layers. Most are 1024 x 512, more than the camera ever shows, so whoever paints the Stage Extensions has the whole layer to trace from, not just screenshots at the walls.
