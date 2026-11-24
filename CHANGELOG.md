@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.145.0
+### For players
+- **More of the game decompiled:** 5 more functions, among them each fighter's pause check, the camera's edges for three fighters and the flocks flying over a stage. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps16.c` (new): the last 5 ready functions of 61 - 100 instructions.
+- Checked: all 5 reached in the parity runs; parity (memory hashes, lazy renderer) passed for arcade_fight, network_match, stage_objects_31_guile, free_battle_dramatic, free_battle_rdramatic, arcade_match, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour, super_finish, arcade_rival_dialogue, pause_config_original, arcade_join_select, stage_objects_15_sakura and arcade_ending_full.
+
 ## 0.144.0
 ### For players
 - **More of the game decompiled:** 8 more functions, among them pictures by slot, CPU levels for a fight, a CPU's character swap, fighters' colours kept apart and the network scan. Nothing plays differently.
