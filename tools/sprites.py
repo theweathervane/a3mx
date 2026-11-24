@@ -358,6 +358,33 @@ def cmd_picture(a):
     print('picture %d: %d x %d cells, origin (%d, %d)%s -> %s' % (a.picture, cols, rows, ox, oy, ', goes on' if more else '', a.out))
 
 
+def fighter_archives(data_dir):
+    """The fighter archives on the disc (pl<nn>_u.pac, pl29r_u.pac) with their sprites folder's place
+    under assets/<region>/ (tools/asset_layout.py)."""
+    import glob, asset_layout
+    out = []
+    for p in sorted(glob.glob(os.path.join(data_dir, '*.pac'))):
+        rel = asset_layout.folder(os.path.splitext(os.path.basename(p))[0])
+        if rel.rsplit('/', 1)[-1].startswith('fighter'): out.append((p, rel + '/sprites'))
+    return out
+
+
+def extract_all(data_dir, assets, work, force=False, progress=None):
+    """Every fighter's sprites into assets/<region>/<its folder>/sprites/ (tools/extract_assets.py
+    --sprites, tools/art_pack.py). A folder whose metadata.json is newer than its archive and this file
+    is kept unless `force`. Answers (written, kept)."""
+    todo, written, kept = fighter_archives(data_dir), 0, 0
+    for n, (p, rel) in enumerate(todo):
+        dst = os.path.join(assets, *rel.split('/'))
+        meta = os.path.join(dst, 'metadata.json')
+        if not force and os.path.exists(meta) and os.path.getmtime(meta) > max(os.path.getmtime(p), os.path.getmtime(__file__)):
+            kept += 1
+        else:
+            extract(p, dst, work); written += 1
+        if progress: progress(n + 1, len(todo))
+    return written, kept
+
+
 def cmd_extract(a):
     print(extract(a.pac, a.out, a.work))
 

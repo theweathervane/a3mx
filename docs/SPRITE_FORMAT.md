@@ -128,8 +128,9 @@ so her pictures on their own show parts. The metadata's `continues` says which g
 
 ## Extracted files
 
-`tools/extract_assets.py` (US disc; `--no-sprites` to skip, a few minutes) runs `tools/sprites.py
-extract` for every fighter archive into `characters/<nn>_<name>/fighter/sprites/`:
+The art pack (`tools/art_pack.py`, the launcher's "Build art pack"; or `tools/extract_assets.py
+--sprites`; US disc, a few minutes) runs `tools/sprites.py extract` for every fighter archive into
+`characters/<nn>_<name>/fighter/sprites/`, keeping a fighter already written since its archive changed:
 
 | File | What |
 |---|---|

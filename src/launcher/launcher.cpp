@@ -2471,8 +2471,9 @@ struct App {
                 ImGui::Checkbox("Build art pack (experimental)", &set.art_pack);
                 ImGui::SetItemTooltip("--art-pack: for this Build only. Renders every stage at its walls from your disc and puts the\n"
                                       "pictures with the Stage Extensions' placeholders in art-pack/ (and a zip), for an artist\n"
-                                      "to paint from. A few minutes. The pictures are your disc's art: not for publishing.\n"
-                                      "Experimental: only screenshots at each wall so far, not each stage layer whole.");
+                                      "to paint from, each stage layer whole too. A few minutes. The pictures are your disc's art: not for\n"
+                                      "publishing. It also writes every fighter's sprites as PNG into assets/us/characters/.../fighter/sprites/\n"
+                                      "(kept for next time; the game doesn't load edited sprites yet). Experimental.");
                 ImGui::Checkbox("Run the tests after building", &set.tests);
                 ImGui::SetItemTooltip("--test: ctest (the parity tests take a long time; docs/TESTS.md says what each is for)");
                 bool run = repo ? set.run : true;

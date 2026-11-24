@@ -19,11 +19,15 @@ folder (and a zip of it), one folder per stage:
                                              widescreen.json)
   art-pack/a3mx-art-pack-<region>.zip
 
+It also writes every fighter's sprites into assets/<region>/characters/<nn>_<name>/fighter/sprites/
+(tools/sprites.py: pictures as indexed PNGs, a sheet per colour, metadata.json; docs/SPRITE_FORMAT.md),
+not into the zip: they are large. A fighter already written since its archive last changed is kept.
+
 The references are made from your disc's art: the pack is for you and whoever you ask to paint, not to
 publish. art-pack/ is git-ignored. Painted files go back into assets/extensions/stages/<nn>_<name>/ under
 the same names (docs/STAGE_EXTENSIONS.md).
 
-Usage: python tools/art_pack.py [--exe build/a3mx] [--stages 1,6] [-j 2]
+Usage: python tools/art_pack.py [--exe build/a3mx] [--stages 1,6] [-j 2] [--no-sprites | --sprites-only]
        python tools/build.py --art-pack        (after building; the launcher's "Build the art pack")
 US program only for now. Needs Pillow (installed with pip if missing).
 """
@@ -78,6 +82,10 @@ Each stage folder has:
 
 When painted, copy paint/ back into assets/extensions/stages/<same folder>/ and turn on Stage Extensions
 (launcher: Extensions) with WIDE NATIVE. docs/STAGE_EXTENSIONS.md has the details.
+
+The fighters' sprites are not in this pack: they are in your a3mx folder, under
+assets/{region_lower}/characters/<nn>_<name>/fighter/sprites/ (pictures/, a sheet per colour in colours/,
+metadata.json). docs/SPRITE_FORMAT.md describes them. The game doesn't load edited sprites yet.
 """
 
 
@@ -90,8 +98,18 @@ def main():
     ap.add_argument('--stages', help='menu numbers (1-38), comma-separated; default all')
     ap.add_argument('-j', type=int, default=2)
     ap.add_argument('--no-zip', action='store_true')
+    ap.add_argument('--no-sprites', action='store_true', help="don't write the fighters' sprites")
+    ap.add_argument('--sprites-only', action='store_true', help="only the fighters' sprites (no game needed)")
     a = ap.parse_args()
     if a.region != 'us': sys.exit('The art pack is US only for now.')
+    if not a.no_sprites:
+        import sprites
+        disc = os.path.join(a.work, 'iso', 'PSP_GAME', 'USRDIR', 'usa', 'data')
+        print("The fighters' sprites (into assets/%s/characters/.../fighter/sprites/) ..." % a.region, flush=True)
+        def step(n, total): print('  %d / %d fighters' % (n, total), flush=True)
+        written, kept = sprites.extract_all(disc, os.path.join(ROOT, 'assets', a.region), a.work, progress=step)
+        print("Sprites: %d fighters written, %d already up to date" % (written, kept), flush=True)
+    if a.sprites_only: return
     if not os.path.exists(a.exe): sys.exit('No game at %s: build it first (python tools/build.py).' % a.exe)
     need_pillow()
     import dump_stage_references as dsr
@@ -112,7 +130,7 @@ def main():
     out = os.path.join(a.out, a.region)
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
-    open(os.path.join(out, 'README.txt'), 'w', newline='\r\n').write(README.format(region=a.region.upper()))
+    open(os.path.join(out, 'README.txt'), 'w', newline='\r\n').write(README.format(region=a.region.upper(), region_lower=a.region))
     n = 0
     for stage in range(0x2A):
         try: rel = asset_layout.stage(stage)         # stages/<nn>_<name>
