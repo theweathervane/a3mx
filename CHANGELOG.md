@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.156.0
+### For players
+- **More of the game decompiled:** the fighters matched to a list of characters at a fight's start. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps27.c` (new): 0x088158A4.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, arcade_match, free_battle_dramatic, free_battle_rdramatic, free_battle_team, network_match, attract_mode, boot_to_select, arcade_ending, super_finish, no_extensions and arcade_other_fighter.
+
 ## 0.155.0
 ### For players
 - **More of the game decompiled:** the network menu's items (which show on the chosen row and run their option) are now readable code. Nothing plays differently.

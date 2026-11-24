@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.46% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.52% decompiled
 
-Functions                                [█░░░░░░░░░]  16.91%  2,517 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  19.46%  94,236 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.92%  2,518 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.52%  94,539 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [████░░░░░░]  40.20%  81,989 / 203,929
+  game (modes, menus, fighters, battle)  [████░░░░░░]  40.35%  82,292 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.84%  9,866 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -290,6 +290,8 @@ Done:
       by layout (0.154.0)
 - [x] One more (`object/batch_steps26.c`): the next of 201 - 400: a network menu item's step (status bytes,
       shown and run on the chosen row when its option is allowed) (0.155.0)
+- [x] One more (`object/batch_steps27.c`): the next of 201 - 400: the fighters matched to a list of three
+      characters, each match given its row of values (0.156.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
