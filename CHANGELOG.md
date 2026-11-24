@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.155.0
+### For players
+- **More of the game decompiled:** the network menu's items (which show on the chosen row and run their option) are now readable code. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps26.c` (new): 0x088ED1C8.
+- Checked: reached in network_match; parity (memory hashes, lazy renderer) passed for network_match, arcade_fight, attract_mode, boot_to_select, mode_tour, no_extensions, arcade_match, option_tour, arcade_ending and free_battle_team.
+
 ## 0.154.0
 ### For players
 - **More of the game decompiled:** the pairs of fighters pushed apart by the fight's layout, and the first ranking row's start. Nothing plays differently.
