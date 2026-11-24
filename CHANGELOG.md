@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.153.0
+### For players
+- **More of the game decompiled:** fighters pushing each other apart (at walls, in the air or half each) and a ranking row's start are now readable code. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps24.c` (new): 0x088BCDD8 and 0x08875FB8.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, attract_mode, wide_walls, wide_left_wall, wide_fight, free_battle_dramatic, free_battle_rdramatic, free_battle_team, arcade_match, network_match, super_finish, arcade_other_fighter, arcade_ending_full, arcade_rival_dialogue, free_battle, stage_objects_01_ryu_1, stage_objects_15_sakura, boot_to_select, arcade_ending, mode_tour, no_extensions and option_tour.
+
 ## 0.152.0
 ### For players
 - **More of the game decompiled:** the score ranking's rows (place, name, score) are now built by readable code. Nothing plays differently.
