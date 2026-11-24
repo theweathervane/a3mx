@@ -292,6 +292,8 @@ Done:
       shown and run on the chosen row when its option is allowed) (0.155.0)
 - [x] One more (`object/batch_steps27.c`): the next of 201 - 400: the fighters matched to a list of three
       characters, each match given its row of values (0.156.0)
+- [x] One more (`object/batch_steps28.c`): the next of 201 - 400: the fight HUD's stun gauges for fighters
+      1 and 2 (shades, lengths, flashing marks and palette) (0.157.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
