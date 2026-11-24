@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.154.0
+### For players
+- **More of the game decompiled:** the pairs of fighters pushed apart by the fight's layout, and the first ranking row's start. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps25.c` (new): 0x088BD158 and 0x08873D5C.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, attract_mode, free_battle_dramatic, free_battle_rdramatic, wide_walls, free_battle_team, arcade_match, network_match, super_finish, arcade_other_fighter, boot_to_select, arcade_ending, mode_tour, no_extensions and option_tour.
+
 ## 0.153.0
 ### For players
 - **More of the game decompiled:** fighters pushing each other apart (at walls, in the air or half each) and a ranking row's start are now readable code. Nothing plays differently.

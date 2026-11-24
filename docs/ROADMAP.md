@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.39% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.41% decompiled
 
-Functions                                [█░░░░░░░░░]  16.89%  2,514 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  19.39%  93,871 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.91%  2,516 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.41%  93,964 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [████░░░░░░]  40.16%  81,896 / 203,929
+  game (modes, menus, fighters, battle)  [████░░░░░░]  40.20%  81,989 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.73%  9,594 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -286,6 +286,8 @@ Done:
       its shadow, score or count) (0.152.0)
 - [x] Two more (`object/batch_steps24.c`): a ranking row's start and the next of 201 - 400: two fighters'
       bodies pushed apart (walls, in the air, half each) (0.153.0)
+- [x] Two more (`object/batch_steps25.c`): the first ranking row's start, the fighters pushed apart in pairs
+      by layout (0.154.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
