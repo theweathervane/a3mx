@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.160.1
+### For players
+- **Tests fixed:** two asset tests that had stopped reaching their fight. Nothing plays differently.
+
+### Technical
+- `assets_in_game` and `stage_strips` run with the parity tests' features (`TEST_FEATURES`): since 0.127.0 the game boots straight to the MODE MENU, so their inputs, which start from the title, ended in the attract mode's demo fights and the tests failed.
+
 ## 0.160.0
 ### For players
 - **More of the game decompiled:** the fight HUD's health bars. Nothing plays differently.
