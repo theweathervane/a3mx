@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.140.0
+### For players
+- **More of the game decompiled:** 21 more small functions, among them objects following a fighter, fighters' tables, CPU levels by the fight's layout, a fighter turning toward the nearest, the frame's run by screen, and the network session's members, thread and message box. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps11.c` (new): the last 3 ready functions of 9 - 40 instructions and the other 18 of 41 - 60.
+- Checked: the coverage pass maps all 21 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, free_battle_rows, free_battle_dramatic, arcade_join_select, arcade_match, stage_objects_15_sakura, pause_config_original, super_finish, free_battle_rdramatic, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, option_tour, no_extensions, arcade_rival_dialogue, free_battle and select_start_menu.
+
 ## 0.139.0
 ### For players
 - **More of the game decompiled:** 30 more small functions, among them objects queued by layer and following a fighter's picture, slides and timers, effects at a fighter's side, the check that lets a fighter start a move, and the network session's lists. Nothing plays differently.

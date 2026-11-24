@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.02% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.24% decompiled
 
-Functions                                [█░░░░░░░░░]  16.31%  2,427 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  18.02%  87,244 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.45%  2,448 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  18.24%  88,304 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  37.96%  77,407 / 203,929
-  wireless (ad-hoc) VS                   [█░░░░░░░░░]  17.60%  655 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   3.14%  8,082 / 257,012
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  38.15%  77,790 / 203,929
+  wireless (ad-hoc) VS                   [█░░░░░░░░░]  19.22%  715 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   3.38%  8,699 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -250,6 +250,9 @@ Done:
 - [x] Thirty more (`object/batch_steps10.c`): the last 4 of 9 - 40 and 26 of 41 - 60: objects queued by
       layer and following a fighter's picture, slides and timers, effects at a fighter's side, targets by
       layout, the check that lets a fighter start a move, the session's lists under its lock (0.139.0)
+- [x] Twenty-one more (`object/batch_steps11.c`): the last 3 of 9 - 40 and the other 18 of 41 - 60: objects
+      following a fighter, fighters' tables and followers, CPU levels by layout, turning toward the nearest
+      fighter, the frame's run by screen, the session's members, records, thread and message box (0.140.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
