@@ -274,6 +274,8 @@ Done:
 - [x] Four more (`object/batch_steps18.c`): the 2 of 9 - 100 made ready and the next 2 of 101 - 200: a row
       object's step by type, the network matching for a thread's record, the pause menu's texts, a text
       scroller (0.147.0)
+- [x] Three more (`object/batch_steps19.c`): the 1 of 9 - 100 made ready and the next 2 of 101 - 200: a text
+      scroller's start, the fade for flagged fighters by layout, the network menu's status line (0.148.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
