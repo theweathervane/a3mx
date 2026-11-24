@@ -298,6 +298,9 @@ Done:
       sides (set off by a fighter's +378 / +379 / +380, held by a timer, then coloured) (0.158.0)
 - [x] One more (`object/batch_steps30.c`): of 401 - 3000: a menu row object's setup by its kind (+92,
       17 kinds: place, size, shades, flags); every kind checked by forcing it in `mode_tour` (0.159.0)
+- [x] One more (`object/batch_steps31.c`): the last ready one of 401 - 3000: the fight HUD's health bars
+      (who each side shows by BATTLE +56, the red part catching up, lengths, colours, dimmed while halted)
+      (0.160.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
