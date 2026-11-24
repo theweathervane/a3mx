@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.141.0
+### For players
+- **More of the game decompiled:** 13 more functions, among them a fighter's reset when free or past its gauge, a CPU script's specials by ISM, two hit boxes overlapping, the gauge's digits, the fight frame's objects and the network thread's loop. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps12.c` (new): the 5 ready functions of 9 - 60 instructions and the first 8 of 61 - 100. `src/core/psp_os.h`: a wrapper for sceNetAdhocctlGetState.
+- Checked: the coverage pass maps all 13 to scenarios; parity (memory hashes, lazy renderer) passed for arcade_rival_dialogue, arcade_match, free_battle_dramatic, network_match, stage_objects_15_sakura, quit_to_menu, arcade_ending_full, super_finish, stage_objects_31_guile, select_start_menu, pause_config, pause_config_original, pause_config_players, arcade_fight, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter and no_extensions.
+
 ## 0.140.0
 ### For players
 - **More of the game decompiled:** 21 more small functions, among them objects following a fighter, fighters' tables, CPU levels by the fight's layout, a fighter turning toward the nearest, the frame's run by screen, and the network session's members, thread and message box. Nothing plays differently.
