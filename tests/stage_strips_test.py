@@ -48,7 +48,6 @@ def main():
     ap.add_argument('--assets', required=True)
     ap.add_argument('--out', default=os.path.join(ROOT, 'build', 'stage_strips_test'))
     a = ap.parse_args()
-    from PIL import Image
     import concurrent.futures
     with concurrent.futures.ThreadPoolExecutor(2) as pool:
         on = pool.submit(run, a, os.path.join(a.out, 'on'), True)
@@ -65,12 +64,12 @@ def main():
     for fr in before:
         pa, pb = (os.path.join(a.out, w, 'frame_%05d.png' % fr) for w in ('on', 'off'))
         if not (os.path.exists(pa) and os.path.exists(pb)): fails.append('frame %d not dumped' % fr); break
-        if Image.open(pa).convert('RGB').tobytes() != Image.open(pb).convert('RGB').tobytes(): shown.append(fr)
+        if ms.RgbPng(pa).rows != ms.RgbPng(pb).rows: shown.append(fr)
     print('frames before the fight compared: %d, with strips drawn: %d' % (len(before), len(shown)))
     if shown: fails.append('strips drawn before the fight (frames %s)' % ', '.join(map(str, shown[:5])))
     if not os.path.exists(shot): fails.append('no frame dumped')
     else:
-        im = Image.open(shot).convert('RGB')
+        im = ms.RgbPng(shot)                      # no Pillow needed (build.cmd's Python has no pip)
         blacks = sum(1 for y in range(60, 200) for x in range(34) if im.getpixel((x, y)) == (0, 0, 0))
         greens = sum(1 for y in range(60, 200) for x in range(34, 46)
                      if (lambda q: q[1] >= 100 and q[0] <= 60 and q[2] <= 60)(im.getpixel((x, y))))
