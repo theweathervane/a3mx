@@ -278,6 +278,8 @@ Done:
       scroller's start, the fade for flagged fighters by layout, the network menu's status line (0.148.0)
 - [x] Three more (`object/batch_steps20.c`): the next of 101 - 200: a network menu row's step, a critter
       wandering a stage, the select grid's cells barred or shown with the entry rows (0.149.0)
+- [x] Two more (`object/batch_steps21.c`): the next of 101 - 200: a round's results scored (vital bonus, time,
+      level, the highest combo) and a fighter's flag +772 by matchups (0.150.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
