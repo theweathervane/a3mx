@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.81% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.88% decompiled
 
-Functions                                [█░░░░░░░░░]  16.75%  2,492 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  18.81%  91,058 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.77%  2,496 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  18.88%  91,400 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  39.12%  79,779 / 203,929
-  wireless (ad-hoc) VS                   [███░░░░░░░]  30.61%  1,139 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   3.52%  9,040 / 257,012
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  39.18%  79,899 / 203,929
+  wireless (ad-hoc) VS                   [███░░░░░░░]  33.59%  1,250 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   3.56%  9,151 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -268,6 +268,9 @@ Done:
 - [x] Five more (`object/batch_steps16.c`): the last of 61 - 100: each fighter's pause check, the fighters'
       flag fading the fight, the edges of three fighters for the camera, a network menu item placed, four flying
       objects by row (0.145.0)
+- [x] Four more (`object/batch_steps17.c`): the 1 of 9 - 100 made ready and the first 3 of 101 - 200: the
+      camera edges of fighters 1 - 3, the hit checks between the two hit lists, the network matching started by
+      mode, a banner's fade (0.146.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

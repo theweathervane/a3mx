@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.146.0
+### For players
+- **More of the game decompiled:** 4 more functions: the camera's edges for three fighters, the hit checks between objects, the network matching's start and a banner's fade. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps17.c` (new): 1 ready function of 9 - 100 instructions and 3 of 101 - 200. `src/core/psp_os.h`: wrappers for sceNetAdhocMatchingInit, sceNetAdhocMatchingCreate and sceNetAdhocMatchingStart.
+- Checked: all 4 reached in the parity runs; parity (memory hashes, lazy renderer) passed for arcade_fight, network_match, free_battle_rdramatic, arcade_ending_full, free_battle_dramatic, arcade_match, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour, super_finish, arcade_rival_dialogue, pause_config_original, arcade_join_select and stage_objects_31_guile.
+
 ## 0.145.0
 ### For players
 - **More of the game decompiled:** 5 more functions, among them each fighter's pause check, the camera's edges for three fighters and the flocks flying over a stage. Nothing plays differently.
