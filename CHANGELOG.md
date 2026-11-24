@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.161.0
+### For players
+- **More of the game decompiled:** how sprites are unpacked into the picture cache and drawn from it. Nothing plays differently.
+
+### Technical
+- `src/core/object/sprite_cache.c` (new): 0x0880E150, 0x0880E9E0, 0x0880EE34, 0x0880EFB8, 0x088D2B64 (the tiles' LZ unpacker).
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, attract_mode, arcade_ending, super_finish, mode_tour, free_battle_team, boot_to_select, save_load, network_match, free_battle_dramatic, arcade_rival_dialogue, no_extensions, stage_objects_22_honda, stage_objects_31_guile, wide_fight and arcade_match; a full cache and the palette kinds no scenario uses forced with pokes, identical to the original.
+
 ## 0.160.1
 ### For players
 - **Tests fixed:** two asset tests that had stopped reaching their fight. Nothing plays differently.
