@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.51% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.61% decompiled
 
-Functions                                [█░░░░░░░░░]  16.61%  2,472 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  18.51%  89,623 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.66%  2,479 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  18.61%  90,102 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  38.56%  78,636 / 203,929
-  wireless (ad-hoc) VS                   [██░░░░░░░░]  27.01%  1,005 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   3.46%  8,882 / 257,012
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  38.75%  79,022 / 203,929
+  wireless (ad-hoc) VS                   [██░░░░░░░░]  27.52%  1,024 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   3.48%  8,956 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -259,6 +259,9 @@ Done:
 - [x] Eleven more (`object/batch_steps13.c`): the 3 of 9 - 60 made ready and the next 8 of 61 - 100: the
       gauge's digits object, followers stepping their owner's records, objects moving to a target, round markers,
       a row's shades, the network thread's starts and entry, a name from the MAC address (0.142.0)
+- [x] Seven more (`object/batch_steps14.c`): the 1 of 9 - 60 made ready and 6 of 61 - 100: the network
+      thread's outer entry, the heap's allocation, a screen's banner by kind, a picture by slot, CPU levels for a
+      versus fight, a round's end by record, 17 objects by layout (0.143.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

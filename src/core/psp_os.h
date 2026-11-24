@@ -194,3 +194,5 @@ static inline int32_t os_net_adhoc_matching_select_target(Cpu *c, int32_t id, ui
 void hle_sceKernelGetThreadId(Cpu *c);
 /* The calling thread's id. */
 static inline int32_t os_get_thread_id(Cpu *c) { hle_sceKernelGetThreadId(c); return (int32_t)c->r[2]; }
+void hle_sceKernelExitThread(Cpu *c);
+static inline void os_exit_thread(Cpu *c, int32_t status) { c->r[4] = (uint32_t)status; hle_sceKernelExitThread(c); }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.143.0
+### For players
+- **More of the game decompiled:** 7 more functions, among them the heap's allocation, a screen's banner, CPU levels for a versus fight, a round's end and the network thread's entry. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps14.c` (new): 1 ready function of 9 - 60 instructions and 6 of 61 - 100. `src/core/psp_os.h`: a wrapper for sceKernelExitThread.
+- Checked: the coverage pass maps all 7 to scenarios; parity (memory hashes, lazy renderer) passed for network_match, free_battle_dramatic, pause_config_players, arcade_ending_full, free_battle_rdramatic, arcade_join_select, arcade_rival_dialogue, arcade_match, super_finish, arcade_ending, arcade_fight, boot_to_select, attract_mode, mode_tour, free_battle_team, no_extensions, arcade_other_fighter, option_tour and pause_config.
+
 ## 0.142.0
 ### For players
 - **More of the game decompiled:** 11 more functions, among them the gauge's digits, followers stepping their owner's records, round markers, and the network threads' start and end. Nothing plays differently.
