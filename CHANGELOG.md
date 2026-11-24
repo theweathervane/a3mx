@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.157.0
+### For players
+- **More of the game decompiled:** the fight HUD's stun gauges. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps28.c` (new): 0x0888FF38.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, super_finish, wide_fight, free_battle, arcade_match, network_match, attract_mode, free_battle_team, arcade_rival_dialogue, boot_to_select, arcade_ending, no_extensions and free_battle_dramatic; the full-gauge path forced with a poke in arcade_fight, identical to the original.
+
 ## 0.156.0
 ### For players
 - **More of the game decompiled:** the fighters matched to a list of characters at a fight's start. Nothing plays differently.
