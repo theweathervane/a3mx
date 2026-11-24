@@ -21,6 +21,8 @@ assets/
     manifest.json                  what was extracted
     characters/<nn>_<name>/        one per character slot, 00 – 29, in the game's order
       fighter/                     pl<nn>  sprites and animation, palettes, moves, voices
+        sprites/                   the pictures as indexed PNGs, a sheet per colour, metadata.json
+                                   (tools/sprites.py, docs/SPRITE_FORMAT.md; written by extract_assets.py)
       fighter_r/                   pl29r   (INGRID only: a second fighter archive)
       intro/                       op<nn>  the pre-fight intro
       win/                         win<nn> the win screen and quotes

@@ -81,10 +81,11 @@ Colour 0 is transparent.
 
 ## Palettes (entry 2)
 
-Six colours (the buttons' choices) of 160 bytes: five palettes of 16 colours, each colour a u16
+Six colours (the buttons' choices) of 160 bytes (256 for character `0x29`, INGRID: eight palettes):
+five palettes of 16 colours, each colour a u16
 `ABGR1555` (bits 0 - 4 red, 5 - 9 green, 10 - 14 blue, 15 opaque). `0x0881F6A0` / `0x0881F794` load the
 fighter's colour into palette slots from the sprite's +13 (0 for the first fighter, 64 for the second)
-through `0x0880AEA8`; the game draws with them as they are. Character `0x29` has 256 bytes a colour.
+through `0x0880AEA8`; the game draws with them as they are.
 
 A cell's palette is its own (bits 0 - 4) plus a base, by the sprite's +12 (`0x0880E150`):
 
@@ -111,10 +112,30 @@ The data starts with the **frames**, 10 bytes each (Ryu: 931):
 | +6 | s16 | the step to the next frame, in frames: 1 the next; on a looping last frame the jump back (-5: back five frames); 0 on a frame that holds |
 | +8 | u16 | a record in the fighter's 12-byte table (+416's +16; entry 5 of `06_data`): boxes and the extra picture (`0x0880D68C`) |
 
-Entries 1 - 4 list, for four sets of animations, each animation's first frame (Ryu: 64, 50, 48 and 37
-animations). A fighter's +28 points at its frame; the game moves it by the step when the frame's time is
+The entries with a count of -1 list, for each set of animations, each animation's first frame; the
+frames end where the first list starts. Most fighters have four sets (entries 1 - 4; Ryu: 64, 50, 48
+and 37 animations), `pl18` five, `pl11` / `pl13` ten. **`pl28` (YUN) has none**: its `06_data` starts
+with hit boxes, so its frames are elsewhere; finding them needs its set-up (the callers of
+`0x0886EB48`). `sprites.py` writes YUN's pictures and palettes and leaves its frames out. A fighter's +28 points at its frame; the game moves it by the step when the frame's time is
 up, and points it at another animation's first frame when the fighter starts a new move. Checked by
 following Ryu's +28 through arcade_fight frame by frame.
+
+## Pictures in pieces
+
+A fighter can be drawn from several pictures at one place: a picture with +10 set goes on into the
+next. Most fighters' pictures are whole; INGRID's (`pl29`, `pl29r`) are pieces (legs, body, arms ...),
+so her pictures on their own show parts. The metadata's `continues` says which go together.
+
+## Extracted files
+
+`tools/extract_assets.py` (US disc; `--no-sprites` to skip, a few minutes) runs `tools/sprites.py
+extract` for every fighter archive into `characters/<nn>_<name>/fighter/sprites/`:
+
+| File | What |
+|---|---|
+| `pictures/NNNN.png` | picture NNNN as an 8-bit indexed PNG: index = palette × 16 + colour, 0 transparent; the PNG's own palette is colour 0's, for viewing |
+| `colours/colour_N.png` | every picture in colour N on a grid, for looking (a picture larger than 128 × 128 is cut) |
+| `metadata.json` | each picture's cells, origin and `continues`; the six colours' palettes (hex `ABGR1555`); the frames (picture, duration, `end`: loop / hold, step, record) and the animation sets (first frames) |
 
 ## Drawing past the 4:3 edge
 

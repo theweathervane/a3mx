@@ -16,7 +16,12 @@ Usage:
         (--snap of 0x08800000 - 0x0A000000) and compares them byte for byte
     sprites.py picture --pac PAC --picture N [--colour C] --out FILE.png
         one picture as a PNG (anchor at its origin, see the metadata)
+    sprites.py extract --pac PAC --out DIR
+        every picture as an indexed PNG (index = palette x 16 + colour, 0 transparent) in DIR/pictures,
+        a contact sheet per colour in DIR/colours, and DIR/metadata.json: pictures (origin, cells,
+        continues), the six colours' palettes, the animation frames and sets (docs/SPRITE_FORMAT.md)
 """
+import json
 import argparse, os, struct, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pac
@@ -47,6 +52,7 @@ class Fighter:
         by = {t & 0xFFFF0000: e for t, e in self.entries if t & 0xFFFF0000 in (KIND_PICTURES, KIND_TILES, KIND_PALETTES)}
         self.pictures, self.tiles, self.palettes = by[KIND_PICTURES], by[KIND_TILES], by.get(KIND_PALETTES, b'')
         self.step, self.back, self.places = program_tables(work)
+        self._tiles, self._cells = {}, {}
 
     # ---- tiles (0x088D2B64) ----
     def unpack_tile(self, n, out, at):
@@ -144,11 +150,157 @@ class Fighter:
                     if px[y][x]: img[cy + y][cx + x] = (flags & 0x1F, px[y][x])
         return img
 
+    # ---- fast path for extraction: rows of indices (palette x 16 + colour, 0 transparent) ----
+    def _tile_rows(self, t):
+        r = self._tiles.get(t)
+        if r is None:
+            buf = bytearray(PAGE + SPILL)
+            self.unpack_tile(t, buf, 0)
+            r = [bytes((buf[y * 32 + x // 2] >> (4 * (x & 1))) & 15 for x in range(16)) for y in range(16)]
+            self._tiles[t] = r
+        return r
+
+    def _cell_rows(self, tile, flips, big):
+        key = (tile, flips, big)
+        r = self._cells.get(key)
+        if r is None:
+            if big:
+                q = [self._tile_rows(tile * 4 + k) for k in range(4)]
+                r = [q[0][y] + q[2][y] for y in range(16)] + [q[1][y] + q[3][y] for y in range(16)]
+            else:
+                r = list(self._tile_rows(tile))
+            if flips & FLIP_X: r = [row[::-1] for row in r]
+            if flips & FLIP_Y: r = r[::-1]
+            self._cells[key] = r
+        return r
+
+    def picture_rows(self, n, big=True):
+        off, cols, rows = self.picture(n)[:3]
+        size = 32 if big else 16
+        out = [bytearray(cols * size) for _ in range(rows * size)]
+        for i, cell in enumerate(self.cells(n)):
+            if cell is None: continue
+            tile, flags = cell
+            lut = PALETTE_LUT[flags & 0x1F]
+            cx, cy = (i % cols) * size, (i // cols) * size
+            for y, row in enumerate(self._cell_rows(tile, flags & (FLIP_X | FLIP_Y), big)):
+                out[cy + y][cx:cx + size] = row.translate(lut)
+        return out
+
+    COLOURS = 6                      # the buttons' choices
+
+    def colour_size(self):
+        """Bytes a colour: 160 (5 palettes), 256 for character 0x29 (8)."""
+        return len(self.palettes) // self.COLOURS
+
     def colours(self, colour):
-        """The fighter's palettes for one colour choice: 5 lists of 16 RGBA tuples."""
-        base = colour * 160
+        """The fighter's palettes for one colour choice: lists of 16 RGBA tuples."""
+        size = self.colour_size(); base = colour * size
         return [[pac.rgba16(struct.unpack_from('<H', self.palettes, base + p * 32 + i * 2)[0], 0)
-                 for i in range(16)] for p in range(5)]
+                 for i in range(16)] for p in range(size // 32)]
+
+
+# colour c of palette p as an index: p x 16 + c, colour 0 staying 0 (transparent)
+PALETTE_LUT = [bytes(0 if c == 0 else (p * 16 + c) & 0xFF for c in range(256)) for p in range(32)]
+DATA_06 = 0x00000011               # the archive's 06_data entry
+END_LOOP, END_HOLD, NO_PICTURE = 0x8000, 0x4000, 0x8000
+
+
+def animations(entries):
+    """(frames, sets) from 06_data: frames as dicts, sets as lists of first-frame numbers."""
+    d = next((e for t, e in entries if t == DATA_06), None)
+    if d is None: return [], []
+    offs = struct.unpack_from('<64I', d, 8)
+    counts = struct.unpack_from('<64i', d, 0x108)
+    lists = [n for n in range(64) if counts[n] == -1]      # usually 1 - 4; pl18 1 - 5, pl11 / pl13 1 - 10
+    if not lists: return [], []                            # pl28 (Yun): no frame lists in its 06_data
+    data = 0x208
+    nframes = min(offs[n] for n in lists) // 10
+    frames = []
+    for i in range(nframes):
+        dur, x, pic, step, rec = struct.unpack_from('<HHHhH', d, data + i * 10)
+        frames.append({'picture': None if pic & NO_PICTURE else pic, 'duration': dur & 0xFF,
+                       'end': 'loop' if dur & END_LOOP else 'hold' if dur & END_HOLD else None,
+                       'step': step, 'flags': dur & 0x3F00, 'x2': x, 'record': rec})
+    sets = []
+    for n in lists:
+        q, firsts = data + offs[n], []
+        while q + 4 <= len(d):
+            w = struct.unpack_from('<I', d, q)[0]
+            if w == 0xFFFFFFFF: break
+            firsts.append(w); q += 4
+        sets.append(firsts)
+    return frames, sets
+
+
+def write_indexed(path, rows, colours):
+    """Rows of indices (palette x 16 + colour, 0 transparent) as an 8-bit indexed PNG, its palette from
+    `colours` (5 x 16 RGBA)."""
+    h = len(rows); w = len(rows[0]) if h else 0
+    rows = [bytes(r) for r in rows]
+    plte = bytearray(); trns = bytearray()
+    for i in range(256):
+        p, c = divmod(i, 16)
+        rgba = colours[p][c] if p < len(colours) else (0, 0, 0, 255)
+        plte += bytes(rgba[:3]); trns.append(0 if i == 0 else 255)
+    pac.png(path, w, h, rows, 3, bytes(plte), bytes(trns))
+
+
+def extract(pac_path, out, work):
+    """Everything above for one fighter archive into `out`; answers a one-line summary."""
+    f = Fighter(pac_path, work)
+    os.makedirs(os.path.join(out, 'pictures'), exist_ok=True)
+    os.makedirs(os.path.join(out, 'colours'), exist_ok=True)
+    ncolours = f.COLOURS if f.palettes else 0
+    colours = [f.colours(k) for k in range(ncolours)]
+    count = struct.unpack_from('<I', f.pictures, 0)[0] // 12
+    pictures, images = [], {}
+    for n in range(count):
+        off, cols, rows, ox, oy, more = f.picture(n)
+        entry = {'n': n, 'cells': [cols, rows], 'origin': [ox, oy], 'continues': more}
+        if cols and rows:
+            img = f.picture_rows(n, True)
+            name = 'pictures/%04d.png' % n
+            write_indexed(os.path.join(out, name), img, colours[0] if colours else [[(0, 0, 0, 255)] * 16] * 5)
+            entry['file'] = name; images[n] = img
+        pictures.append(entry)
+    frames, sets = animations(f.entries)
+    for k, pal in enumerate(colours):
+        contact_sheet(os.path.join(out, 'colours', 'colour_%d.png' % k), images, pal)
+    meta = {
+        'archive': os.path.basename(pac_path),
+        'format': 'docs/SPRITE_FORMAT.md',
+        'cell_size': 32,
+        'pixels': 'indexed PNGs: index = palette x 16 + colour, 0 transparent; the PNG palette is colour 0',
+        'origin': 'the sprite\'s place, in pixels from the picture\'s top left (x right, y down)',
+        'pictures': pictures,
+        'colours': [[['%04X' % struct.unpack_from('<H', f.palettes, k * f.colour_size() + p * 32 + i * 2)[0] for i in range(16)]
+                     for p in range(f.colour_size() // 32)] for k in range(ncolours)],
+        'frames': frames,
+        'animation_sets': sets,
+    }
+    if not frames:
+        meta['frames_note'] = 'not decoded: this archive\'s 06_data has no frame lists (docs/SPRITE_FORMAT.md)'
+    with open(os.path.join(out, 'metadata.json'), 'w', encoding='utf-8', newline='\n') as fp:
+        json.dump(meta, fp, indent=1)
+    return '%d pictures, %d frames, %d animations, %d colours' % (len(images), len(frames), sum(map(len, sets)), ncolours)
+
+
+def contact_sheet(path, images, colours, per_row=16, cell=128):
+    """Every picture of one colour on a grid (a picture larger than a grid cell is cut), for looking."""
+    ns = sorted(images)
+    if not ns: return
+    bg = b'\x28\x30\x40\xff'
+    lut = [bg if i % 16 == 0 else bytes(colours[(i // 16) % len(colours)][i % 16][:3] + (255,)) for i in range(256)]
+    rows_n = (len(ns) + per_row - 1) // per_row
+    W, H = per_row * cell, rows_n * cell
+    canvas = [bytearray(bg * W) for _ in range(H)]
+    for k, n in enumerate(ns):
+        gx, gy = (k % per_row) * cell, (k // per_row) * cell
+        for y, r in enumerate(images[n][:cell]):
+            r = r[:cell]
+            canvas[gy + y][gx * 4:(gx + len(r)) * 4] = b''.join(map(lut.__getitem__, r))
+    pac.png(path, W, H, [bytes(r) for r in canvas], 6)
 
 
 def write_png(path, img, colours):
@@ -206,6 +358,10 @@ def cmd_picture(a):
     print('picture %d: %d x %d cells, origin (%d, %d)%s -> %s' % (a.picture, cols, rows, ox, oy, ', goes on' if more else '', a.out))
 
 
+def cmd_extract(a):
+    print(extract(a.pac, a.out, a.work))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -215,8 +371,10 @@ def main():
     p = sub.add_parser('picture'); p.add_argument('--pac', required=True); p.add_argument('--picture', type=int, required=True)
     p.add_argument('--colour', type=int, default=0); p.add_argument('--small', action='store_true')
     p.add_argument('--out', required=True); p.add_argument('--work', default=os.path.join(ROOT, 'work'))
+    x = sub.add_parser('extract'); x.add_argument('--pac', required=True); x.add_argument('--out', required=True)
+    x.add_argument('--work', default=os.path.join(ROOT, 'work'))
     a = ap.parse_args()
-    return {'verify': cmd_verify, 'picture': cmd_picture}[a.cmd](a) or 0
+    return {'verify': cmd_verify, 'picture': cmd_picture, 'extract': cmd_extract}[a.cmd](a) or 0
 
 
 if __name__ == '__main__':

@@ -24,6 +24,9 @@ Writes (all git-ignored):
                                palettes, TXT text, in a subfolder per kind, and a manifest.json
                                (tools/pac.py packs it back; docs/PAC_FORMAT.md)
   assets/<region>/index.json   which folder holds which archive: what the game reads
+  .../fighter/sprites/         each fighter's pictures as indexed PNGs, a contact sheet per colour and a
+                               metadata.json (origins, palettes, animation frames; docs/SPRITE_FORMAT.md,
+                               tools/sprites.py); US only, skipped with --no-sprites
 Edits in folders from before 0.37.0 (assets/<region>/pac/<archive>/) are carried over into the new
 folders, and the old pac/ folder is renamed pac.before-0.37/ for you to delete.
 
@@ -228,7 +231,7 @@ def carry_over_edits(old, new, manifest):
     return carried
 
 
-def export_assets(region, disc_root, unpack_pacs=True):
+def export_assets(region, disc_root, unpack_pacs=True, sprites=True):
     """Copy out what is already in a standard format, and unpack each .pac archive into its folder
     under assets/<region>/ (tools/asset_layout.py; raw entries, textures and palettes as PNG, text as
     TXT, a subfolder per kind, a manifest each), then write index.json, which tells the game which
@@ -265,6 +268,15 @@ def export_assets(region, disc_root, unpack_pacs=True):
             archives[name] = kinds
             bar.update(n + 1)
         bar.finish()
+        fighters = [p for p in pacs if asset_layout.folder(os.path.splitext(os.path.basename(p))[0]).rsplit('/', 1)[-1].startswith('fighter')]
+        if sprites and region == 'us' and fighters:      # the LZ tables' addresses are the US program's
+            import sprites as sprite_tool
+            bar = Progress("Writing the fighters' sprites", len(fighters), 'fighters')
+            for n, p in enumerate(fighters):
+                dst = os.path.join(out, *asset_layout.folder(os.path.splitext(os.path.basename(p))[0]).split('/'), 'sprites')
+                sprite_tool.extract(p, dst, os.path.dirname(disc_root))
+                bar.update(n + 1)
+            bar.finish()
         json.dump({'about': 'Which folder holds which of the disc\'s archives. The game reads this to find '
                             'them (assets/LAYOUT.md); a folder can be moved if its line here is changed too.',
                    'archives': index}, open(os.path.join(out, 'index.json'), 'w'), indent=1)
@@ -300,6 +312,7 @@ def main():
     ap.add_argument('--work', help='output folder (default work/, or work-jp/ for --region jp)')
     ap.add_argument('--verify-only', action='store_true', help='check the disc and stop')
     ap.add_argument('--no-pac', action='store_true', help='do not unpack the .pac archives into assets/')
+    ap.add_argument('--no-sprites', action='store_true', help="do not write the fighters' sprites as PNG (a few minutes)")
     a = ap.parse_args()
     d = DISCS[a.region]
     iso = a.iso or os.environ.get('A3MX_ISO') or find_iso(a.region)
@@ -328,7 +341,7 @@ def main():
     shutil.rmtree(os.path.join(work, 'sfa3-PSP-widescreen'), ignore_errors=True)
     run(os.path.join(TOOLS, 'psp_imports.py'), elf, '--json', os.path.join(work, 'imports.json'))
     run(os.path.join(TOOLS, 'psp_analyze.py'), elf, os.path.join(work, 'analysis.json'))
-    export_assets(a.region, os.path.join(work, 'iso'), unpack_pacs=not a.no_pac)
+    export_assets(a.region, os.path.join(work, 'iso'), unpack_pacs=not a.no_pac, sprites=not a.no_sprites)
     json.dump({'region': a.region, 'serial': d['serial'], 'version': d['version'], 'title': d['title'],
                'iso': os.path.basename(iso), 'iso_sha1': iso_sha, 'boot_sha1': boot_sha,
                # tools/build.py: whether a given ISO is the one already extracted, without hashing it again

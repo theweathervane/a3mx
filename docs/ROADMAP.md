@@ -444,9 +444,11 @@ To do:
 - [ ] Music: ATRAC3+ (`bgm/*.at3`) to WAV / OGG
 - [ ] Sound banks (PPHD / VAG) to WAV
 - [ ] Decode the data kinds: layouts, sprite sets, fighter data
-- [ ] #53: each character's sprites and animation frames as PNG with a `metadata.json` (frames,
-      offsets, timings), in `characters/<nn>_<name>/fighter/sprites/`; then higher-resolution
-      replacements
+- [x] #53: each character's sprites and animation frames as PNG with a `metadata.json` (frames,
+      offsets, timings), in `characters/<nn>_<name>/fighter/sprites/` ([SPRITE_FORMAT.md](SPRITE_FORMAT.md);
+      YUN's frames still to find)
+- [ ] Sprites loaded from `characters/<nn>_<name>/fighter/sprites/` (edited PNGs in the game); then
+      higher-resolution replacements
 - [ ] Identify the variant slots 0x12 / 0x13 / 0x14 / 0x25 and the archives still under `other/`, and
       name them in `tools/asset_layout.py`
 - [ ] Name the music tracks
