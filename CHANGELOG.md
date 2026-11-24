@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.151.0
+### For players
+- **More of the game decompiled:** 3 more functions: the ranking records written after the name entry, the fight's name plates and a name plate's start. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps22.c` (new): the last 3 ready functions of 101 - 200 instructions.
+- Checked: all 3 reached in the parity runs; parity (memory hashes, lazy renderer) passed for arcade_match, network_match, arcade_fight, arcade_ending_full, free_battle_dramatic, free_battle_rdramatic, boot_to_select, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour, arcade_rival_dialogue, super_finish, pause_config_original, arcade_join_select and free_battle.
+
 ## 0.150.0
 ### For players
 - **More of the game decompiled:** 2 more functions: a round's results being scored (vital bonus, time, level and best combo) and a fighter's matchup flag. Nothing plays differently.
