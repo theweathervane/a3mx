@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.144.0
+### For players
+- **More of the game decompiled:** 8 more functions, among them pictures by slot, CPU levels for a fight, a CPU's character swap, fighters' colours kept apart and the network scan. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps15.c` (new): 4 ready functions of 9 - 60 instructions and 4 of 61 - 100. `src/core/psp_os.h`: a wrapper for sceNetAdhocctlGetScanInfo.
+- Checked: the coverage pass maps all 8 to scenarios; parity (memory hashes, lazy renderer) passed for arcade_rival_dialogue, network_match, arcade_match, free_battle_dramatic, free_battle_rdramatic, pause_config, pause_config_original, pause_config_players, arcade_ending, arcade_fight, arcade_join_select, arcade_other_fighter, boot_to_select, attract_mode, mode_tour, free_battle_team, no_extensions, option_tour, super_finish and arcade_ending_full.
+
 ## 0.143.0
 ### For players
 - **More of the game decompiled:** 7 more functions, among them the heap's allocation, a screen's banner, CPU levels for a versus fight, a round's end and the network thread's entry. Nothing plays differently.

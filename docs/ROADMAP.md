@@ -19,14 +19,14 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.61% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  18.71% decompiled
 
-Functions                                [█░░░░░░░░░]  16.66%  2,479 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  18.61%  90,102 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.71%  2,487 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  18.71%  90,612 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  38.75%  79,022 / 203,929
-  wireless (ad-hoc) VS                   [██░░░░░░░░]  27.52%  1,024 / 3,721
+  game (modes, menus, fighters, battle)  [███░░░░░░░]  38.94%  79,417 / 203,929
+  wireless (ad-hoc) VS                   [███░░░░░░░]  30.61%  1,139 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.48%  8,956 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
@@ -262,6 +262,9 @@ Done:
 - [x] Seven more (`object/batch_steps14.c`): the 1 of 9 - 60 made ready and 6 of 61 - 100: the network
       thread's outer entry, the heap's allocation, a screen's banner by kind, a picture by slot, CPU levels for a
       versus fight, a round's end by record, 17 objects by layout (0.143.0)
+- [x] Eight more (`object/batch_steps15.c`): the 4 of 9 - 60 made ready and 4 of 61 - 100: pictures by
+      type and slot, CPU levels for a fight, the network scan's results and a record added to a network list,
+      characters' colours made to differ, a CPU's character swapped, a hold counter with its text (0.144.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
