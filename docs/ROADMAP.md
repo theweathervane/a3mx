@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.59% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.66% decompiled
 
-Functions                                [█░░░░░░░░░]  16.93%  2,519 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  19.59%  94,861 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.93%  2,520 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.66%  95,206 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [████░░░░░░]  40.51%  82,614 / 203,929
+  game (modes, menus, fighters, battle)  [████░░░░░░]  40.68%  82,959 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.84%  9,866 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -294,6 +294,8 @@ Done:
       characters, each match given its row of values (0.156.0)
 - [x] One more (`object/batch_steps28.c`): the next of 201 - 400: the fight HUD's stun gauges for fighters
       1 and 2 (shades, lengths, flashing marks and palette) (0.157.0)
+- [x] One more (`object/batch_steps29.c`): the last of 201 - 400: the fight HUD's pop-up cells for both
+      sides (set off by a fighter's +378 / +379 / +380, held by a timer, then coloured) (0.158.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.158.0
+### For players
+- **More of the game decompiled:** the fight HUD's pop-up cells. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps29.c` (new): 0x0888F9D4.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, arcade_match, super_finish, network_match, free_battle, attract_mode, free_battle_team, arcade_rival_dialogue, boot_to_select, arcade_ending, no_extensions, free_battle_dramatic and wide_fight; one path forced with pokes in arcade_match, identical to the original.
+
 ## 0.157.0
 ### For players
 - **More of the game decompiled:** the fight HUD's stun gauges. Nothing plays differently.
