@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.149.0
+### For players
+- **More of the game decompiled:** 3 more functions: a network menu row's step, a critter wandering a stage and the select grid's cells. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps20.c` (new): 3 ready functions of 101 - 200 instructions.
+- Checked: all 3 reached in the parity runs; parity (memory hashes, lazy renderer) passed for network_match, stage_objects_15_sakura, boot_to_select, stage_objects_34_hawk, stage_objects_31_guile, arcade_join_select, arcade_fight, attract_mode, arcade_ending, mode_tour, free_battle_team, arcade_other_fighter, no_extensions, option_tour, arcade_rival_dialogue, arcade_match, super_finish, free_battle_dramatic and pause_config_original.
+
 ## 0.148.0
 ### For players
 - **More of the game decompiled:** 3 more functions: a text scroller's start, the fade for flagged fighters on unpausing and the network menu's status line. Nothing plays differently.
