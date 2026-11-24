@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.28% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.32% decompiled
 
-Functions                                [█░░░░░░░░░]  16.87%  2,511 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  19.28%  93,350 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.88%  2,512 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.32%  93,556 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  39.90%  81,375 / 203,929
+  game (modes, menus, fighters, battle)  [████░░░░░░]  40.00%  81,581 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.73%  9,594 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -282,6 +282,8 @@ Done:
       level, the highest combo) and a fighter's flag +772 by matchups (0.150.0)
 - [x] Three more (`object/batch_steps22.c`): the last ready of 101 - 200: a fighter's ranking records written
       after the name entry, the fight's name plates made by layout, a name plate's start (0.151.0)
+- [x] One more (`object/batch_steps23.c`): the first of 201 - 400: a ranking row's cells (place, name with
+      its shadow, score or count) (0.152.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

@@ -21,13 +21,13 @@ For more, see the roadmap: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.28% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.32% decompiled
 
-Functions                                [█░░░░░░░░░]  16.87%  2,511 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  19.28%  93,350 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.88%  2,512 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.32%  93,556 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [███░░░░░░░]  39.90%  81,375 / 203,929
+  game (modes, menus, fighters, battle)  [████░░░░░░]  40.00%  81,581 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.73%  9,594 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574

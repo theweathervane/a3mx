@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.152.0
+### For players
+- **More of the game decompiled:** the score ranking's rows (place, name, score) are now built by readable code. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps23.c` (new): the first ready function of 201 - 400 instructions (0x088BD4A0).
+- Checked: reached in attract_mode; parity (memory hashes, lazy renderer) passed for attract_mode, arcade_fight, network_match, arcade_match, boot_to_select, arcade_ending, mode_tour, free_battle_team, no_extensions, arcade_other_fighter, option_tour, super_finish, free_battle_dramatic and arcade_rival_dialogue.
+
 ## 0.151.0
 ### For players
 - **More of the game decompiled:** 3 more functions: the ranking records written after the name entry, the fight's name plates and a name plate's start. Nothing plays differently.
