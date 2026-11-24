@@ -29,7 +29,8 @@ the same names (docs/STAGE_EXTENSIONS.md).
 
 Usage: python tools/art_pack.py [--exe build/a3mx] [--stages 1,6] [-j 2] [--no-sprites | --sprites-only]
        python tools/build.py --art-pack        (after building; the launcher's "Build the art pack")
-US program only for now. Needs Pillow (installed with pip if missing).
+US program only for now. Uses Pillow if it can (installed with pip where there is one), otherwise its
+own PNG code: the Python build.cmd downloads has no pip.
 """
 import argparse, os, shutil, subprocess, sys, zipfile
 
@@ -38,16 +39,23 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 
-def need_pillow():
+def want_pillow():
+    """Pillow makes the screenshots quicker to read. Installed with pip where there is a pip; the Python that
+    build.cmd downloads has none, and then the tools' own PNG code does the work (slower, same result)."""
     try:
         import PIL  # noqa: F401
         return
     except ImportError:
         pass
-    print('Pillow is needed for the art pack; installing it with pip ...', flush=True)
-    r = subprocess.run([sys.executable, '-m', 'pip', 'install', '--user', 'pillow'])
-    if r.returncode != 0:
-        sys.exit('Could not install Pillow (python -m pip install pillow). Install it and try again.')
+    has_pip = subprocess.run([sys.executable, '-m', 'pip', '--version'], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL).returncode == 0
+    if has_pip:
+        print('Installing Pillow with pip (it makes the art pack quicker) ...', flush=True)
+        if subprocess.run([sys.executable, '-m', 'pip', 'install', '--user', 'pillow']).returncode == 0:
+            import site, importlib; importlib.invalidate_caches()
+            if site.getusersitepackages() not in sys.path: sys.path.append(site.getusersitepackages())
+            return
+    print('Pillow is not installed: the art pack uses its own PNG code (slower, the same pictures).', flush=True)
     import site, importlib
     importlib.reload(site)
 
@@ -111,7 +119,7 @@ def main():
         print("Sprites: %d fighters written, %d already up to date" % (written, kept), flush=True)
     if a.sprites_only: return
     if not os.path.exists(a.exe): sys.exit('No game at %s: build it first (python tools/build.py).' % a.exe)
-    need_pillow()
+    want_pillow()
     import dump_stage_references as dsr
     import asset_layout, measure_stages as ms
 

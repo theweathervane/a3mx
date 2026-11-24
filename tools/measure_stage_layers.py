@@ -38,7 +38,7 @@ where the hook didn't run (no layer depth in its log) now stops before writing a
 
 Usage: python tools/measure_stage_layers.py [--exe build/a3mx] [--work work] [-j 2] [--stages 1,6,12]
                                             [--dry-run]
-US program only (the addresses are ULUS-10062's). Needs Pillow.
+US program only (the addresses are ULUS-10062's). Pillow for its placeholders and drawing; run() and the measuring work without it (measure_stages.RgbPng).
 """
 import argparse, concurrent.futures, json, os, shutil, struct, subprocess, sys
 
@@ -89,8 +89,16 @@ def windows(e):
     return ','.join(w), dumps
 
 
+def open_rgb(path):
+    """A screenshot as RGB: through Pillow if it's here, otherwise measure_stages.RgbPng (no pip needed)."""
+    try:
+        from PIL import Image
+        return Image.open(path).convert('RGB')
+    except ImportError:
+        return ms.RgbPng(path)
+
+
 def run(exe, work, out, k, side, lifted):
-    from PIL import Image
     d = os.path.join(out, '%02d%s%s' % (k, side, 'u' if lifted else 'g'))
     shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
     open(os.path.join(d, 'a3mx.cfg'), 'w').write('[screen setting]\nscreen_size=WIDE NATIVE\n')
@@ -132,7 +140,7 @@ def run(exe, work, out, k, side, lifted):
     shots = {}
     for key, frame in dumps.items():
         path = os.path.join(d, 'frame_%05d.png' % frame)
-        if os.path.exists(path): shots[key] = Image.open(path).convert('RGB')
+        if os.path.exists(path): shots[key] = open_rgb(path)
     return {'stage': h(BATTLE), 'camx': h(FIGHTERS_LAYER + 34), 'camy': h(FIGHTERS_LAYER + 38),
             'left': h(FIGHTERS_LAYER + 68), 'right': h(FIGHTERS_LAYER + 70),
             'layers': layers, 'depth': depth, 'shots': shots}
