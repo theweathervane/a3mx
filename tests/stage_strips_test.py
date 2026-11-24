@@ -21,6 +21,7 @@ import argparse, os, re, shutil, subprocess, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import measure_stages as ms
+from parity import TEST_FEATURES   # the inputs start from the title: boot_to_menu off, as in the parity tests
 
 CHARLIE = 6                                   # its place in FREE BATTLE's stage row
 SELECT_FROM = 3000                            # the select screen, its STAGE row on the way
@@ -34,7 +35,7 @@ def run(a, d, custom):
     p, e = f + 1500, f + 1900
     cmd = [a.exe, '--work', a.work, '--assets', a.assets, '--save-dir', d, '--log', os.path.join(d, 'log'),
            '--headless', '--fast', '--renderer', 'soft', '--frames', str(e + 1), '--input', inp,
-           '--dump', d, '--dump-from', str(SELECT_FROM), '--dump-every', str(EVERY)] + (['--custom-assets'] if custom else [])
+           '--dump', d, '--dump-from', str(SELECT_FROM), '--dump-every', str(EVERY), '--features', TEST_FEATURES] + (['--custom-assets'] if custom else [])
     for addr in (ms.P1_X, ms.P2_X): cmd += ['--poke', '%d-%d:%08X=118/2' % (p, e, addr)]
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, check=True)
     return open(os.path.join(d, 'log'), errors='replace').read(), os.path.join(d, 'frame_%05d.png' % (e - e % EVERY))

@@ -17,6 +17,7 @@ Usage: assets_test.py --exe build/a3mx --work work --assets assets/us [--out DIR
 import argparse, json, os, shutil, subprocess, sys, time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools'))
 import pac
+from parity import TEST_FEATURES   # the inputs start from the title: boot_to_menu off, as in the parity tests
 
 FRAMES, SNAP = 4400, 4390
 USER_RAM = 0x08800000
@@ -37,7 +38,7 @@ def start(a, out, name, assets):
     d = os.path.join(out, name); shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
     cmd = [a.exe, '--work', a.work, '--save-dir', d, '--log', os.path.join(d, 'run.log'), '--headless', '--fast',
            '--renderer', 'soft', '--frames', str(FRAMES), '--hash-log', os.path.join(d, 'hashes.txt'),
-           '--snap', '%d:%s' % (SNAP, os.path.join(d, 'ram.bin')), '--input', a.input]
+           '--snap', '%d:%s' % (SNAP, os.path.join(d, 'ram.bin')), '--input', a.input, '--features', TEST_FEATURES]
     cmd += ['--assets', assets] if assets else ['--no-assets']
     return name, cmd, subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
