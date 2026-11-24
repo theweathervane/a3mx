@@ -19,13 +19,13 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.75% decompiled
+Overall  [███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  19.87% decompiled
 
-Functions                                [█░░░░░░░░░]  16.94%  2,521 / 14,881 functions
-Instructions                             [█░░░░░░░░░]  19.75%  95,624 / 484,213 instructions
+Functions                                [█░░░░░░░░░]  16.95%  2,522 / 14,881 functions
+Instructions                             [█░░░░░░░░░]  19.87%  96,194 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [████░░░░░░]  40.89%  83,377 / 203,929
+  game (modes, menus, fighters, battle)  [████░░░░░░]  41.16%  83,947 / 203,929
   wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
   game (to be mapped)                    [░░░░░░░░░░]   3.84%  9,866 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
@@ -298,6 +298,9 @@ Done:
       sides (set off by a fighter's +378 / +379 / +380, held by a timer, then coloured) (0.158.0)
 - [x] One more (`object/batch_steps30.c`): of 401 - 3000: a menu row object's setup by its kind (+92,
       17 kinds: place, size, shades, flags); every kind checked by forcing it in `mode_tour` (0.159.0)
+- [x] One more (`object/batch_steps31.c`): the last ready one of 401 - 3000: the fight HUD's health bars
+      (who each side shows by BATTLE +56, the red part catching up, lengths, colours, dimmed while halted)
+      (0.160.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the

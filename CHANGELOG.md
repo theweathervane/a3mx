@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.160.0
+### For players
+- **More of the game decompiled:** the fight HUD's health bars. Nothing plays differently.
+
+### Technical
+- `src/core/object/batch_steps31.c` (new): 0x0888F0EC.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, arcade_match, network_match, free_battle_team, pause_config, free_battle_dramatic, free_battle_rdramatic, super_finish, arcade_rival_dialogue, stage_objects_01_ryu_1, quit_to_menu and wide_fight; three paths forced with pokes, identical to the original.
+
 ## 0.159.0
 ### For players
 - **More of the game decompiled:** the setup of the menus' row objects. Nothing plays differently.
