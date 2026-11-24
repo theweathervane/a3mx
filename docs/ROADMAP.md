@@ -288,6 +288,8 @@ Done:
       bodies pushed apart (walls, in the air, half each) (0.153.0)
 - [x] Two more (`object/batch_steps25.c`): the first ranking row's start, the fighters pushed apart in pairs
       by layout (0.154.0)
+- [x] One more (`object/batch_steps26.c`): the next of 201 - 400: a network menu item's step (status bytes,
+      shown and run on the chosen row when its option is allowed) (0.155.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
