@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.162.0
+### For players
+- **More of the game decompiled:** the rest of the sprite drawers (rows, pieces with their own palettes, scaled and turned pieces) and a fighter's extra picture. Nothing plays differently.
+
+### Technical
+- `src/core/object/sprite_drawers_more.c` (new): sprite drawers 4, 5, 7, 8 / 9, 10, 12 (0x0880C7D8, 0x0880C930, 0x0880CC08, 0x0880CCEC, 0x0880CE74, 0x0880D0F4) and 0x0880D68C.
+- Checked: parity (memory hashes, lazy renderer) passed for arcade_fight, arcade_ending, super_finish, attract_mode, mode_tour, free_battle_team, boot_to_select, save_load, network_match, free_battle_dramatic, arcade_rival_dialogue, no_extensions, stage_objects_22_honda, stage_objects_31_guile, stage_objects_29_bison1, wide_fight and arcade_match; drawers 4, 8 / 9 and 10, which no scenario uses, forced with pokes, identical to the original.
+
 ## 0.161.0
 ### For players
 - **More of the game decompiled:** how sprites are unpacked into the picture cache and drawn from it. Nothing plays differently.
