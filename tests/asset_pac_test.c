@@ -84,7 +84,7 @@ static void archive_folder(const char *assets, const char *stem, char *out, size
 
 /* Copies an archive's folder (manifest.json and the subfolders by kind tools/pac.py writes), every
    file dated `when`. */
-static const char *const KIND_DIRS[] = { "", "textures", "palettes", "text", "sound", "voices", "fighter_data", "data" };
+static const char *const KIND_DIRS[] = { "", "textures", "palettes", "text", "sound", "voices", "fighter_data", "data", "sprites", "sprites/pictures" };
 static void copy_folder(const char *src, const char *dst, time_t when);
 
 static int failures;
@@ -257,6 +257,108 @@ static void indexed_nearest(const char *assets) {
     printf("indexed nearest: colours to the nearest palette index (%d), transparent to 0\n", k);
 }
 
+/* an 8-bit indexed PNG (colour type 3) of w x h indices, a grey palette, stored deflate blocks */
+static void write_indexed_png(const char *path, int w, int h, const uint8_t *idx) {
+    size_t row = (size_t)w + 1, rawn = row * h, zn = rawn + rawn / 65535 * 5 + 16;
+    uint8_t *raw = malloc(rawn), *z = malloc(zn), *q = z;
+    for (int y = 0; y < h; y++) { raw[y * row] = 0; memcpy(raw + y * row + 1, idx + (size_t)y * w, (size_t)w); }
+    *q++ = 0x78; *q++ = 0x01;
+    uint32_t a = 1, b = 0;
+    for (size_t off = 0; off < rawn; off += 65535) {
+        size_t n = rawn - off < 65535 ? rawn - off : 65535;
+        *q++ = off + n >= rawn; *q++ = (uint8_t)n; *q++ = (uint8_t)(n >> 8); *q++ = (uint8_t)~n; *q++ = (uint8_t)(~n >> 8);
+        memcpy(q, raw + off, n); q += n;
+        for (size_t i = 0; i < n; i++) { a = (a + raw[off + i]) % 65521; b = (b + a) % 65521; }
+    }
+    be(q, b << 16 | a); q += 4;
+    uint8_t plte[768]; for (int i = 0; i < 256; i++) plte[3 * i] = plte[3 * i + 1] = plte[3 * i + 2] = (uint8_t)i;
+    FILE *f = fopen(path, "wb");
+    static const uint8_t sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+    uint8_t ihdr[13]; be(ihdr, (uint32_t)w); be(ihdr + 4, (uint32_t)h); ihdr[8] = 8; ihdr[9] = 3; ihdr[10] = ihdr[11] = ihdr[12] = 0;
+    fwrite(sig, 1, 8, f); put_chunk(f, "IHDR", ihdr, 13); put_chunk(f, "PLTE", plte, 768); put_chunk(f, "IDAT", z, (uint32_t)(q - z)); put_chunk(f, "IEND", NULL, 0);
+    fclose(f); free(raw); free(z);
+}
+
+/* Edited sprites (docs/SPRITE_FORMAT.md): Ryu's pl00_u with sprites/ written by the art pack. A picture
+   repainted (every colour moved on one, one cell emptied) comes back exactly from the rebuilt picture
+   list and tile set while every other picture stays as it was; a cell mixing two palettes and a PNG of
+   the wrong size are refused with the reason; a colour changed in metadata.json reaches the palettes. */
+static void sprite_edits(const char *assets) {
+    char src[1024], dst[] = "asset_pac_spr.tmp", path[1200], err[512];
+    archive_folder(assets, "pl00_u", src, sizeof src);
+    snprintf(path, sizeof path, "%s/sprites/metadata.json", src);
+    FILE *f = fopen(path, "rb");
+    if (!f) { printf("sprite edits: skipped (no %s: build the art pack, or extract_assets.py --sprites)\n", path); return; }
+    fclose(f);
+    time_t now = time(NULL), old = now - 1000;
+    copy_folder(src, dst, old);
+    PacImage base, img;
+    CHECK(asset_pac_build(dst, &base, err, sizeof err) == 0 && !base.notes[0], "sprite edits: unedited copy: %s %s", err, base.notes);
+    uint32_t pn, tn, bp, bt;
+    const uint8_t *bpics = image_entry(&base, 0, &bp), *btiles = image_entry(&base, 1, &bt);
+    uint32_t count = (bpics[0] | bpics[1] << 8 | bpics[2] << 16 | (uint32_t)bpics[3] << 24) / 12;
+
+    /* picture 0: colours 1 - 15 moved on by one within their palettes, its first non-empty cell cleared */
+    uint8_t *pic; int w, h;
+    CHECK(asset_sprite_picture(bpics, bp, btiles, bt, 0, &pic, &w, &h) == 0, "sprite edits: picture 0 unreadable");
+    if (!pic) { pac_image_free(&base); return; }
+    int cleared = -1;
+    for (int c = 0; c < (w / 32) * (h / 32) && cleared < 0; c++) {
+        int cx = (c % (w / 32)) * 32, cy = (c / (w / 32)) * 32, any = 0;
+        for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++) any |= pic[(cy + y) * w + cx + x];
+        if (any) { cleared = c; for (int y = 0; y < 32; y++) memset(pic + (size_t)(cy + y) * w + cx, 0, 32); }
+    }
+    for (int i = 0; i < w * h; i++) if (pic[i]) pic[i] = (uint8_t)((pic[i] & 0xF0) | ((pic[i] & 15) % 15 + 1));
+    snprintf(path, sizeof path, "%s/sprites/pictures/0000.png", dst);
+    write_indexed_png(path, w, h, pic); set_mtime(path, now);
+    CHECK(asset_pac_build(dst, &img, err, sizeof err) == 0, "sprite edits: %s", err);
+    const uint8_t *pics = image_entry(&img, 0, &pn), *tiles = image_entry(&img, 1, &tn);
+    CHECK(strstr(img.notes, "sprite 0000 from its PNG") != NULL, "sprite edits: notes: %s", img.notes);
+    CHECK(pn > bp && tn > bt, "sprite edits: the picture list (%u -> %u) and tile set (%u -> %u) did not grow", bp, pn, bt, tn);
+    uint8_t *got; int gw, gh;
+    CHECK(asset_sprite_picture(pics, pn, tiles, tn, 0, &got, &gw, &gh) == 0 && gw == w && gh == h && !memcmp(got, pic, (size_t)w * h),
+          "sprite edits: picture 0 does not come back as painted");
+    free(got);
+    int others = 0;
+    for (uint32_t n = 1; n < count; n++) {
+        uint8_t *a, *b; int aw, ah, bw, bh;
+        int ra = asset_sprite_picture(bpics, bp, btiles, bt, n, &a, &aw, &ah), rb = asset_sprite_picture(pics, pn, tiles, tn, n, &b, &bw, &bh);
+        if (ra == 0 && rb == 0 && aw == bw && ah == bh && !memcmp(a, b, (size_t)aw * ah)) others++;
+        else CHECK(0, "sprite edits: picture %u changed", n);
+        free(a); free(b);
+    }
+    pac_image_free(&img);
+
+    /* refused: a cell with two palettes (the PNG keeps the old picture), and a PNG of the wrong size */
+    for (int i = 0; i < w * h; i++) if (pic[i]) { pic[i] = (uint8_t)((pic[i] + 16) & 0x7F); if (!(pic[i] & 15)) pic[i] |= 1; break; }
+    write_indexed_png(path, w, h, pic); set_mtime(path, now + 2);
+    CHECK(asset_pac_build(dst, &img, err, sizeof err) == 0, "sprite edits: %s", err);
+    CHECK(strstr(img.notes, "mixes palettes") != NULL, "sprite edits: two palettes in a cell: notes: %s", img.notes);
+    pac_image_free(&img);
+    write_indexed_png(path, w + 32, h, pic); set_mtime(path, now + 4);   /* (indices off by a column: the size is checked first) */
+    CHECK(asset_pac_build(dst, &img, err, sizeof err) == 0, "sprite edits: %s", err);
+    CHECK(strstr(img.notes, "the picture is") != NULL, "sprite edits: wrong size: notes: %s", img.notes);
+    CHECK(img.size == base.size && !memcmp(img.data, base.data, base.size), "sprite edits: a refused PNG changed the archive");
+    pac_image_free(&img);
+    set_mtime(path, old);
+
+    /* a colour of metadata.json: the first palette's colour 0 of colour choice 0 */
+    snprintf(path, sizeof path, "%s/sprites/metadata.json", dst);
+    size_t mn; char *m = (char *)slurp(path, &mn);
+    char *at = m ? strstr(m, "\"colours\"") : NULL;
+    if (at) at = strchr(at + 9, '"');
+    CHECK(at && at + 6 < m + mn && at[5] == '"', "sprite edits: no colours in metadata.json");
+    if (at && at[5] == '"') {
+        memcpy(at + 1, "801F", 4); spit(path, m, mn); set_mtime(path, now);
+        CHECK(asset_pac_build(dst, &img, err, sizeof err) == 0, "sprite edits: %s", err);
+        uint32_t s2; const uint8_t *pal = image_entry(&img, 2, &s2);
+        CHECK(pal[0] == 0x1F && pal[1] == 0x80 && strstr(img.notes, "palettes from"), "sprite edits: colour not taken: %02X%02X %s", pal[1], pal[0], img.notes);
+        pac_image_free(&img);
+    }
+    free(m); free(pic); pac_image_free(&base);
+    printf("sprite edits: picture 0 repainted and a cell emptied, back exactly (%d other pictures unchanged); mixed palettes and a wrong size refused; a colour from metadata.json\n", others);
+}
+
 int main(int argc, char **argv) {
     int png_only = argc == 3 && !strcmp(argv[1], "--png-only");
     if (png_only) { argv[3] = argv[2]; argc = 4; }
@@ -411,6 +513,7 @@ int main(int argc, char **argv) {
     free(disc);
     png_edits(assets);
     indexed_nearest(assets);
+    sprite_edits(assets);
     printf(failures ? "asset_pac_test: %d failures\n" : "asset_pac_test: all passed\n", failures);
     return failures ? 1 : 0;
 }

@@ -149,7 +149,7 @@ screen; it must never change the fight. What it draws is checked by eye.
 | Test | Checks | Why | Time |
 |---|---|---|---|
 | `difftest` | every decompiled function against its original on 20,000 random inputs each | covers code paths no scenario reaches | 1 to 3 min |
-| `asset_pac` | archives rebuilt from `assets/` are byte-identical to the disc's | unedited assets must change nothing | 1 to 2 min |
+| `asset_pac` | archives rebuilt from `assets/` are byte-identical to the disc's (also with every texture, palette and sprite PNG read back); edited PNGs, sprites included, come back exactly | unedited assets must change nothing, and edits must arrive | 1 to 2 min |
 | `pac_roundtrip` | every `.pac` unpacked and packed again is identical | the archive format is understood completely | 1 min |
 | `assets_in_game` | the game run from `assets/` matches the run from the disc, frame for frame | loading from folders must not change the game | 5 to 10 min |
 | `stage_strips` | with WIDE NATIVE and Stage Extensions on, the stage's edge is not black | the strips once silently stopped drawing after a merge | 4 min |
@@ -177,6 +177,7 @@ touches nothing the hashes cover.
 | `arcade_ending_full` | the final fight won and Ryu's ending played, not skipped | the ending task and its tile layers (0x0881B7C8) | 8 min |
 | `arcade_rival_dialogue` | the first fight met as the rival fight: the two portraits and their lines before it | the dialogue's text boxes (0x0880C1AC / 0x088108D8) | 7 min |
 | `super_finish` | Free Battle, both fighters players: a KO by Ryu's Shinku Hadoken | the super finish's backdrop (0x0880C208) | 3 min |
+| `fighters_01_ryu_ehonda` ... `fighters_19_ingrid_ryu` | Free Battle, both fighters players, two characters a scenario (all 37): each one's special moves 1 - 6 and super combos 1 - 3 from the one-button moves of PLAYER CONFIG, twice through, with health and gauges kept full (Cheats and Unlocks) and TIME INFINITE. Written by `tools/make_fighter_scenarios.py` (`--check` says if one is out of date) | each character's own move code, which the other scenarios (Ryu, E. Honda and the CPU's fighters) never run | 1 min each |
 | `arcade_join_select` | Arcade with 2P PRIORITY PLAYER: pad 2 joins with Start on the select screen, picks Ken and jumps in the fight | a pad that PRIORITY gave a fighter keeps it when it joins (issue #17) | 6 min |
 | `free_battle_join_in` | Free Battle with 2P PRIORITY PLAYER and pad 2 idle | PRIORITY leaves a box that can be joined with Start to the computer (issue #17) | 5 min |
 | `boot_to_menu` | the `boot_to_menu` feature: straight to the MODE MENU after the load, then into Arcade's select | the boot path skipping the title and PRESS START | 1 min |

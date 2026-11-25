@@ -138,6 +138,36 @@ The art pack (`tools/art_pack.py`, the launcher's "Build art pack"; or `tools/ex
 | `colours/colour_N.png` | every picture in colour N on a grid, for looking (a picture larger than 128 × 128 is cut) |
 | `metadata.json` | each picture's cells, origin and `continues`; the six colours' palettes (hex `ABGR1555`); the frames (picture, duration, `end`: loop / hold, step, record) and the animation sets (first frames) |
 
+## Edited sprites
+
+The game loads a fighter's sprites from these files: when its archive is opened, the builder in
+`src/platform/asset_pac.c` (docs/ASSET_LOADING.md) makes the picture list, tile set and palettes from
+them wherever they were edited. Nothing to run: edit, save, start the game.
+
+- **A picture:** paint `pictures/NNNN.png` in an editor that keeps it indexed (index = palette x 16 +
+  colour; colour 0 of any palette is transparent). A PNG saved after the pictures were written
+  (`pictures_written` in `metadata.json`, else that file's own time) is compared with the picture the
+  archive holds. If it differs, each of its 32 x 32 cells is made again: an empty cell stays empty, an
+  unchanged one keeps its tiles, a changed one gets four new tiles (LZ-packed as the game unpacks them)
+  added at the end of the tile set, and the picture's cells are added at the end of the picture list
+  with its offset moved there. Every other picture keeps its bytes. A cell keeps its blend bit; flips
+  are not used for new cells.
+- **An RGBA PNG** (an editor that dropped the palette) works too: each pixel takes the nearest of
+  colours 1 - 15 of the cell's palette in colour 0 (a new cell: palette 0); under half alpha is
+  transparent.
+- **Colours:** `colours` in `metadata.json` (hex `ABGR1555`) replace the palettes entry where they
+  differ.
+- **Refused** (the picture stays as it was, and the log says why): a PNG of another size than the
+  picture (columns x 32 by rows x 32), a cell with pixels of two palettes, a palette the fighter does
+  not have, a damaged file. A picture's size and origin are not read from `metadata.json` yet.
+- **Unedited files change nothing:** the archive is the disc's byte for byte (the `asset_pac` test
+  builds all 43 fighter archives that way, also with every picture PNG read and compared).
+- An edited picture makes the archive larger (new tiles are not shared), so it loads a few frames
+  later; the fighter heap takes it (all 471 of Ryu's pictures repainted: tile set 611 KB -> 1.4 MB,
+  checked in a fight).
+- The art pack writes the pictures again when `tools/sprites.py` has changed since: keep a copy of
+  edited PNGs.
+
 ## Drawing past the 4:3 edge
 
 The pictures are whole: nothing in the data is cut. NORMAL and WIDE skip a cell that starts left of

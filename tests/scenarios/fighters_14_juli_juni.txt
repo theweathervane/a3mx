@@ -1,0 +1,35 @@
+# Every special move and super combo of JULI (player 1) and JUNI (player 2): Free Battle with 2P
+# PRIORITY PLAYER (super_finish's menus), both with the one-button moves SPECIAL1 - 6 M and S.COMBO1 - 3
+# LV3 on their nine buttons, health and gauges kept full. Written by tools/make_fighter_scenarios.py.
+frames 7760
+args --p2 human
+config [ex setting]
+config p2_priority=PLAYER
+config [cheats and unlocks]
+config p1_health=INFINITE
+config p2_health=INFINITE
+config p1_super=INFINITE
+config p2_super=INFINITE
+config [game option]
+config time=INFINITE
+config [p1 config]
+config square=SPECIAL1 M
+config triangle=SPECIAL2 M
+config l=SPECIAL3 M
+config cross=SPECIAL4 M
+config circle=SPECIAL5 M
+config r=SPECIAL6 M
+config select=S.COMBO1 LV3
+config l2=S.COMBO2 LV3
+config r2=S.COMBO3 LV3
+config [p2 config]
+config square=SPECIAL1 M
+config triangle=SPECIAL2 M
+config l=SPECIAL3 M
+config cross=SPECIAL4 M
+config circle=SPECIAL5 M
+config r=SPECIAL6 M
+config select=S.COMBO1 LV3
+config l2=S.COMBO2 LV3
+config r2=S.COMBO3 LV3
+input 1200=start;1206=;1500=start;1506=;1600=down;1606=;1640=down;1646=;1680=down;1686=;1760=cross;1766=;2100=cross;2106=;2180=p2:start;2186=p2:;2230=right;2236=;2260=right;2266=;2290=right;2296=;2320=right;2326=;2350=right;2356=;2380=down;2386=;2410=down;2416=;2440=down;2446=;2510=p2:cross;2516=p2:;2570=cross;2576=;2630=p2:cross;2636=p2:;2690=cross;2696=;2750=p2:cross;2756=p2:;2810=cross;2816=;2840=p2:right;2846=p2:;2870=p2:right;2876=p2:;2900=p2:right;2906=p2:;2930=p2:right;2936=p2:;2960=p2:right;2966=p2:;2990=p2:right;2996=p2:;3020=p2:down;3026=p2:;3050=p2:down;3056=p2:;3080=p2:down;3086=p2:;3170=p2:cross;3176=p2:;3230=cross;3236=;3290=p2:cross;3296=p2:;3350=cross;3356=;3410=p2:cross;3416=p2:;3470=cross;3476=;3530=p2:cross;3536=p2:;3590=cross;3596=;3650=p2:cross;3656=p2:;3770=down;3770=p2:cross;3774=;3776=p2:;3854=cross;3860=;4370=square;4376=;4460=p2:square;4466=p2:;4550=triangle;4556=;4640=p2:triangle;4646=p2:;4730=l;4736=;4820=p2:l;4826=p2:;4910=cross;4916=;5000=p2:cross;5006=p2:;5090=circle;5096=;5180=p2:circle;5186=p2:;5270=r;5276=;5360=p2:r;5366=p2:;5450=select;5456=;5540=p2:select;5546=p2:;5630=l2;5636=;5720=p2:l2;5726=p2:;5810=r2;5816=;5900=p2:r2;5906=p2:;5990=right;5990=p2:left;6050=;6050=p2:;6080=square;6086=;6170=p2:square;6176=p2:;6260=triangle;6266=;6350=p2:triangle;6356=p2:;6440=l;6446=;6530=p2:l;6536=p2:;6620=cross;6626=;6710=p2:cross;6716=p2:;6800=circle;6806=;6890=p2:circle;6896=p2:;6980=r;6986=;7070=p2:r;7076=p2:;7160=select;7166=;7250=p2:select;7256=p2:;7340=l2;7346=;7430=p2:l2;7436=p2:;7520=r2;7526=;7610=p2:r2;7616=p2:

@@ -352,6 +352,325 @@ static void note(PacImage *img, const char *fmt, ...) {
     va_end(ap);
 }
 
+/* ---------------------------------------------------------------- fighter sprites from their PNGs
+   docs/SPRITE_FORMAT.md. A fighter archive's folder may hold sprites/ (tools/sprites.py extract):
+   pictures/NNNN.png, one indexed PNG a picture (index = palette x 16 + colour, 0 transparent), and
+   metadata.json (the six colours' palettes as hex ABGR1555). A picture PNG edited after the pictures
+   were written ("pictures_written" in metadata.json, else its own time) is compared with the picture
+   the archive holds; if it differs, its cells are made again: an empty cell is 0xFF, an unchanged one
+   keeps its tiles, a changed one gets four new tiles appended to the tile set (entry 0x00200000), and
+   the picture's new cells are appended to the picture list (entry 0x00100000) with its offset moved
+   there. Everything else keeps its bytes. The colours in metadata.json replace the palettes entry
+   (0x00400000) where they differ. */
+#define SPR_PICTURES 0x00100000u
+#define SPR_TILES    0x00200000u
+#define SPR_PALETTES 0x00400000u
+#define SPR_CELL     32
+#define SPR_EMPTY    0xFF
+#define SPR_BLEND    0x20u
+#define SPR_FLIP_X   0x40u
+#define SPR_FLIP_Y   0x80u
+
+/* Tile t of a set, unpacked (0x088D2B64): 128 bytes, row by row (8 bytes a row of 16 pixels, the left
+   one in the low nibble). In that order a copy token h:l takes l bytes from h back, as the game's
+   tables at 0x08A3E600 / 0x08A3E680 work out for a tile in a page. 0 on success. */
+static int tile_unpack(const uint8_t *set, size_t n, uint32_t t, uint8_t out[160]) {
+    if ((size_t)t * 4 + 4 > n) return -1;
+    size_t s = rd32(set + 4 * (size_t)t);
+    unsigned k = 0, flags = 0, bits = 0;
+    while (k < 128) {
+        if (s >= n) return -1;
+        unsigned tok = set[s++];
+        if (!bits) { flags = tok; if (s >= n) return -1; tok = set[s++]; bits = 8; }
+        if (!(flags & 1)) out[k++] = (uint8_t)tok;
+        else {
+            unsigned h = tok >> 4, l = tok & 15;
+            if (!h) { if (s >= n) return -1; uint8_t v = set[s++]; for (unsigned i = 0; i <= l; i++) out[k++] = v; }
+            else { if (h > k) return -1; for (unsigned i = 0; i < l; i++, k++) out[k] = out[k - h]; }
+        }
+        flags >>= 1; bits--;
+    }
+    return 0;
+}
+
+/* 128 tile bytes packed for tile_unpack: runs (3 - 16 bytes), copies (2 - 15 bytes, 1 - 15 back) and
+   literals, never writing past the tile. Answers the length (at most 144). */
+static size_t tile_pack(const uint8_t b[128], uint8_t out[160]) {
+    size_t o = 0, flag_at = 0;
+    unsigned k = 0, bits = 8;
+    while (k < 128) {
+        if (bits == 8) { flag_at = o++; out[flag_at] = 0; bits = 0; }
+        unsigned run = 1;
+        while (k + run < 128 && run < 16 && b[k + run] == b[k]) run++;
+        unsigned best = 0, back = 0;
+        for (unsigned d = 1; d <= 15 && d <= k; d++) {
+            unsigned len = 0;
+            while (len < 15 && k + len < 128 && b[k + len] == b[k + len - d]) len++;
+            if (len > best) { best = len; back = d; }
+        }
+        if (best >= 2 && best >= run) { out[flag_at] |= (uint8_t)(1u << bits); out[o++] = (uint8_t)(back << 4 | best); k += best; }
+        else if (run >= 3) { out[flag_at] |= (uint8_t)(1u << bits); out[o++] = (uint8_t)(run - 1); out[o++] = b[k]; k += run; }
+        else out[o++] = b[k++];
+        bits++;
+    }
+    return o;
+}
+
+typedef struct {
+    const uint8_t *pics, *tiles;
+    size_t picsn, tilesn;
+    uint32_t count;           /* pictures */
+} SpriteSet;
+
+/* Picture n's header: its cells' offset, columns and rows. 0 when it is in the list. */
+static int spr_picture(const SpriteSet *s, uint32_t n, uint32_t *off, unsigned *cols, unsigned *rows) {
+    if (n >= s->count || (size_t)n * 12 + 12 > s->picsn) return -1;
+    *off = rd32(s->pics + 12 * (size_t)n); *cols = s->pics[12 * (size_t)n + 4]; *rows = s->pics[12 * (size_t)n + 5];
+    return 0;
+}
+
+/* A cell (tile number, flags) drawn into a picture's indices at column cx, row cy. 0 on success. */
+static int spr_draw_cell(const SpriteSet *s, unsigned cell, unsigned flags, uint8_t *img, int w, int cx, int cy) {
+    for (unsigned q = 0; q < 4; q++) {            /* top left, bottom left, top right, bottom right */
+        uint8_t t[160];
+        if (tile_unpack(s->tiles, s->tilesn, cell * 4 + q, t)) return -1;
+        int qx = (q >> 1) * 16, qy = (q & 1) * 16;
+        for (int y = 0; y < 16; y++)
+            for (int x = 0; x < 16; x++) {
+                unsigned c = (t[y * 8 + x / 2] >> (4 * (x & 1))) & 15;
+                int px = qx + x, py = qy + y;
+                if (flags & SPR_FLIP_X) px = SPR_CELL - 1 - px;
+                if (flags & SPR_FLIP_Y) py = SPR_CELL - 1 - py;
+                img[(size_t)(cy * SPR_CELL + py) * w + cx * SPR_CELL + px] = c ? (uint8_t)(((flags & 0x1F) * 16 + c) & 0xFF) : 0;
+            }
+    }
+    return 0;
+}
+
+int asset_sprite_picture(const uint8_t *pics, size_t picsn, const uint8_t *tiles, size_t tilesn, uint32_t n,
+                         uint8_t **out, int *w, int *h) {
+    SpriteSet s = { pics, tiles, picsn, tilesn, picsn >= 4 ? rd32(pics) / 12 : 0 };
+    uint32_t off; unsigned cols, rows;
+    *out = NULL;
+    if (spr_picture(&s, n, &off, &cols, &rows)) return -1;
+    *w = (int)cols * SPR_CELL; *h = (int)rows * SPR_CELL;
+    uint8_t *img = calloc(1, (size_t)*w * *h + 1);
+    if (!img) return -1;
+    size_t p = off;
+    for (unsigned i = 0; i < cols * rows; i++) {
+        if (p >= picsn) { free(img); return -1; }
+        if (pics[p] == SPR_EMPTY) { p++; continue; }
+        if (p + 3 > picsn) { free(img); return -1; }
+        unsigned cell = (unsigned)pics[p] << 8 | pics[p + 1], flags = pics[p + 2];
+        p += 3;
+        if (spr_draw_cell(&s, cell, flags, img, *w, (int)(i % cols), (int)(i / cols))) { free(img); return -1; }
+    }
+    *out = img;
+    return 0;
+}
+
+typedef struct { uint8_t *b; size_t n, cap; } Buf;
+static int buf_add(Buf *b, const void *d, size_t n) {
+    if (b->n + n > b->cap) {
+        size_t cap = b->cap ? b->cap : 4096;
+        while (b->n + n > cap) cap *= 2;
+        uint8_t *t = realloc(b->b, cap);
+        if (!t) return -1;
+        b->b = t; b->cap = cap;
+    }
+    memcpy(b->b + b->n, d, n); b->n += n;
+    return 0;
+}
+
+/* RGBA to an index of palette p (colours 1 - 15 of colour choice 0, the PNGs' viewing palette): the
+   nearest; 0 below half alpha. */
+static uint8_t spr_rgba_index(const uint8_t *px, const uint8_t *palettes, size_t paln, unsigned p) {
+    if (px[3] < 128) return 0;
+    if (!palettes) return (uint8_t)(p * 16 + 1);
+    int best = 1; long bestd = -1;
+    for (int c = 1; c < 16; c++) {
+        size_t at = (size_t)p * 32 + (size_t)c * 2;
+        if (at + 2 > paln) break;
+        unsigned v = palettes[at] | palettes[at + 1] << 8;
+        int r = (v & 31) << 3 | (v & 31) >> 2, g = (v >> 5 & 31) << 3 | (v >> 5 & 31) >> 2, b = (v >> 10 & 31) << 3 | (v >> 10 & 31) >> 2;
+        long d = (long)(r - px[0]) * (r - px[0]) + (long)(g - px[1]) * (g - px[1]) + (long)(b - px[2]) * (b - px[2]);
+        if (bestd < 0 || d < bestd) { bestd = d; best = c; }
+    }
+    return (uint8_t)(p * 16 + best);
+}
+
+/* The palettes entry from metadata.json's "colours" (colours x palettes x 16 hex strings) into out
+   (paln bytes). 0 when it fills the entry exactly. */
+static int spr_colours(const JVal *colours, uint8_t *out, size_t paln) {
+    size_t at = 0;
+    if (!colours || colours->type != J_ARR) return -1;
+    for (const JVal *k = colours->child; k; k = k->next) {
+        if (k->type != J_ARR) return -1;
+        for (const JVal *p = k->child; p; p = p->next) {
+            if (p->type != J_ARR) return -1;
+            for (const JVal *c = p->child; c; c = c->next) {
+                if (c->type != J_STR || at + 2 > paln) return -1;
+                char *e; unsigned long v = strtoul(c->str, &e, 16);
+                if (*e || v > 0xFFFF) return -1;
+                out[at++] = (uint8_t)v; out[at++] = (uint8_t)(v >> 8);
+            }
+        }
+    }
+    return at == paln ? 0 : -1;
+}
+
+/* The sprites of one fighter archive's folder (above). On entry pics / tiles / pals hold the raw files;
+   any of them that changes is replaced (the old buffer freed). Notes say which pictures were taken from
+   their PNGs and which could not be, and why. */
+static void sprites_from_pngs(const char *folder, uint8_t **pics, size_t *picsn, uint8_t **tiles, size_t *tilesn,
+                              uint8_t *pals, size_t paln, int *pals_changed, PacImage *out) {
+    char path[1200], why[256];
+    snprintf(path, sizeof path, "%s/sprites/metadata.json", folder);
+    long long tmeta = mtime_of(path);
+    if (tmeta < 0) return;
+    JVal *meta = json_load(path);
+    if (!meta) { note(out, "sprites/metadata.json not used: not valid JSON"); return; }
+    JVal *pw = jmember(meta, "pictures_written");
+    long long since = pw && pw->type == J_NUM ? (long long)pw->num : tmeta;
+
+    /* the colours */
+    if (pals && paln) {
+        uint8_t *c = malloc(paln);
+        if (c && spr_colours(jmember(meta, "colours"), c, paln) == 0) {
+            if (memcmp(c, pals, paln)) { memcpy(pals, c, paln); *pals_changed = 1; note(out, "palettes from sprites/metadata.json"); }
+        } else if (c) note(out, "sprites/metadata.json: its colours do not fill the palettes entry (%zu bytes); not used", paln);
+        free(c);
+    }
+    jfree(meta);
+
+    SpriteSet s = { *pics, *tiles, *picsn, *tilesn, *picsn >= 4 ? rd32(*pics) / 12 : 0 };
+    uint32_t ntiles = *tilesn >= 4 ? rd32(*tiles) / 4 : 0;
+    uint32_t base_tiles = (ntiles + 3) & ~3u;     /* new cells start on a cell (4 tiles) */
+    Buf newpics = { 0 }, newtiles = { 0 }, extra = { 0 };   /* extra: the new tiles' streams */
+    uint32_t added = 0;                           /* tiles after base_tiles */
+    uint32_t *new_offs = NULL; size_t new_offs_cap = 0;
+    int changed = 0, refused = 0;
+    if (buf_add(&newpics, *pics, *picsn)) goto done;
+
+    for (uint32_t n = 0; n < s.count; n++) {
+        uint32_t off; unsigned cols, rows;
+        if (spr_picture(&s, n, &off, &cols, &rows) || !cols || !rows) continue;
+        snprintf(path, sizeof path, "%s/sprites/pictures/%04u.png", folder, n);
+        long long tp = mtime_of(path);
+        if (tp < 0 || (!(tp > since) && !(asset_pac_png_always && tp >= 0))) continue;
+        PngImage png;
+        if (png_decode_file(path, &png, why, sizeof why)) { if (refused++ < 4) note(out, "sprite %04u.png not used: %s", n, why); continue; }
+        int w, h; uint8_t *old;
+        if (asset_sprite_picture(*pics, *picsn, *tiles, *tilesn, n, &old, &w, &h)) { png_free(&png); if (refused++ < 4) note(out, "sprite %04u: the archive's picture cannot be read", n); continue; }
+        if (png.w != w || png.h != h) {
+            if (refused++ < 4) note(out, "sprite %04u.png not used: it is %dx%d; the picture is %dx%d", n, png.w, png.h, w, h);
+            png_free(&png); free(old); continue;
+        }
+        /* the old cells, for their palettes and blend bits */
+        unsigned ncells = cols * rows;
+        unsigned *ocell = calloc(ncells + 1, sizeof *ocell), *oflag = calloc(ncells + 1, sizeof *oflag);
+        uint8_t *idx = malloc((size_t)w * h + 1);
+        if (!ocell || !oflag || !idx) { free(ocell); free(oflag); free(idx); png_free(&png); free(old); goto done; }
+        size_t p = off;
+        for (unsigned i = 0; i < ncells; i++) {
+            if (s.pics[p] == SPR_EMPTY) { ocell[i] = 0xFFFFFFFFu; p++; }
+            else { ocell[i] = (unsigned)s.pics[p] << 8 | s.pics[p + 1]; oflag[i] = s.pics[p + 2]; p += 3; }
+        }
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++) {
+                size_t i = (size_t)y * w + x;
+                if (png.index) idx[i] = (png.index[i] & 15) ? png.index[i] : 0;   /* colour 0 of any palette: transparent */
+                else {
+                    unsigned c = (unsigned)(y / SPR_CELL) * cols + (unsigned)(x / SPR_CELL);
+                    idx[i] = spr_rgba_index(png.rgba + 4 * i, pals, paln / 6 ? paln / 6 : paln, ocell[c] == 0xFFFFFFFFu ? 0 : oflag[c] & 0x1F);
+                }
+            }
+        png_free(&png);
+        if (!memcmp(idx, old, (size_t)w * h)) { free(ocell); free(oflag); free(idx); free(old); continue; }
+
+        /* the cells again */
+        unsigned npal = paln / 6 / 32 ? (unsigned)(paln / 6 / 32) : 32;
+        Buf cells = { 0 };
+        int bad = 0;
+        for (unsigned i = 0; i < ncells && !bad; i++) {
+            int cx = (int)(i % cols) * SPR_CELL, cy = (int)(i / cols) * SPR_CELL;
+            int pal = -1, same = 1;
+            for (int y = 0; y < SPR_CELL; y++)
+                for (int x = 0; x < SPR_CELL; x++) {
+                    uint8_t v = idx[(size_t)(cy + y) * w + cx + x];
+                    if (v != old[(size_t)(cy + y) * w + cx + x]) same = 0;
+                    if (!v) continue;
+                    if (pal < 0) pal = v >> 4;
+                    else if (pal != v >> 4 && !bad) { bad = 1; snprintf(why, sizeof why, "cell %u, %u mixes palettes %d and %d (a cell has one)", i % cols, i / cols, pal, v >> 4); }
+                }
+            if (bad) break;
+            if (pal < 0) { uint8_t e = SPR_EMPTY; buf_add(&cells, &e, 1); continue; }
+            if ((unsigned)pal >= npal) { bad = 1; snprintf(why, sizeof why, "cell %u, %u uses palette %d; this fighter has %u", i % cols, i / cols, pal, npal); break; }
+            if (same && ocell[i] != 0xFFFFFFFFu) { uint8_t c3[3] = { (uint8_t)(ocell[i] >> 8), (uint8_t)ocell[i], (uint8_t)oflag[i] }; buf_add(&cells, c3, 3); continue; }
+            uint32_t cell = (base_tiles + added) / 4;
+            if (cell >= 0xFF00u) { bad = 1; snprintf(why, sizeof why, "more than 65,280 cells in the tile set"); break; }
+            for (unsigned q = 0; q < 4; q++) {
+                uint8_t t[128], packed[160], back[160];
+                int qx = (int)(q >> 1) * 16, qy = (int)(q & 1) * 16;
+                for (int y = 0; y < 16; y++)
+                    for (int x = 0; x < 16; x += 2) {
+                        uint8_t a = idx[(size_t)(cy + qy + y) * w + cx + qx + x] & 15, b = idx[(size_t)(cy + qy + y) * w + cx + qx + x + 1] & 15;
+                        t[y * 8 + x / 2] = (uint8_t)(a | b << 4);
+                    }
+                size_t len = tile_pack(t, packed);
+                /* check it unpacks to the same bytes */
+                uint8_t one[4 + 160]; wr32(one, 4); memcpy(one + 4, packed, len);
+                if (tile_unpack(one, 4 + len, 0, back) || memcmp(back, t, 128)) { bad = 1; snprintf(why, sizeof why, "a tile did not pack (cell %u, %u)", i % cols, i / cols); break; }
+                if (added >= new_offs_cap) {
+                    size_t cap = new_offs_cap ? new_offs_cap * 2 : 256;
+                    uint32_t *nt = realloc(new_offs, cap * sizeof *nt);
+                    if (!nt) { bad = 1; snprintf(why, sizeof why, "out of memory"); break; }
+                    new_offs = nt; new_offs_cap = cap;
+                }
+                new_offs[added++] = (uint32_t)extra.n;
+                buf_add(&extra, packed, len);
+            }
+            if (bad) break;
+            uint8_t c3[3] = { (uint8_t)(cell >> 8), (uint8_t)cell, (uint8_t)((unsigned)pal | (ocell[i] != 0xFFFFFFFFu ? oflag[i] & SPR_BLEND : 0)) };
+            buf_add(&cells, c3, 3);
+        }
+        if (bad) {
+            if (refused++ < 4) note(out, "sprite %04u.png not used: %s", n, why);
+            /* its tiles were appended already: they stay, unused */
+        } else {
+            wr32(newpics.b + 12 * (size_t)n, (uint32_t)newpics.n);
+            buf_add(&newpics, cells.b, cells.n);
+            if (changed++ < 8) note(out, "sprite %04u from its PNG", n);
+        }
+        free(cells.b); free(ocell); free(oflag); free(idx); free(old);
+    }
+    if (changed > 8) note(out, "%d sprites from their PNGs in all", changed);
+    if (refused > 4) note(out, "%d sprite PNGs not used in all", refused);
+    if (!changed) goto done;
+
+    /* the tile set: offsets (old ones moved by the longer table), the old streams, the new ones */
+    {
+        uint32_t total = base_tiles + added;
+        size_t table = 4 * (size_t)total, old_table = 4 * (size_t)ntiles;
+        newtiles.b = calloc(1, table + (*tilesn - old_table) + extra.n + 1);
+        if (!newtiles.b) goto done;
+        for (uint32_t t = 0; t < total; t++) {
+            uint32_t v;
+            if (t < ntiles) v = rd32(*tiles + 4 * (size_t)t) + (uint32_t)(table - old_table);
+            else if (t < base_tiles) v = rd32(*tiles) + (uint32_t)(table - old_table);   /* padding to a whole cell: tile 0's stream */
+            else v = (uint32_t)(table + (*tilesn - old_table) + new_offs[t - base_tiles]);
+            wr32(newtiles.b + 4 * (size_t)t, v);
+        }
+        memcpy(newtiles.b + table, *tiles + old_table, *tilesn - old_table);
+        memcpy(newtiles.b + table + (*tilesn - old_table), extra.b, extra.n);
+        newtiles.n = table + (*tilesn - old_table) + extra.n;
+    }
+    free(*pics); *pics = newpics.b; *picsn = newpics.n; newpics.b = NULL;
+    free(*tiles); *tiles = newtiles.b; *tilesn = newtiles.n; newtiles.b = NULL;
+done:
+    free(newpics.b); free(newtiles.b); free(extra.b); free(new_offs);
+}
+
 /* ---------------------------------------------------------------- building */
 void pac_image_free(PacImage *img) { free(img->data); img->data = NULL; img->size = 0; }
 
@@ -384,16 +703,55 @@ int asset_pac_build(const char *folder, PacImage *out, char *err, size_t errn) {
     uint8_t *img = calloc(1, cap);
     if (!img) { jfree(root); return fail(err, errn, "out of memory"); }
     uint32_t i = 0, data_size = 0;
+
+    /* a fighter archive with sprites/: its picture list, tile set and palettes from the PNGs first */
+    uint8_t *made[PAC_MAX_ENTRIES] = { 0 };
+    size_t made_n[PAC_MAX_ENTRIES] = { 0 };
+    {
+        int at[3] = { -1, -1, -1 };
+        static const uint32_t kinds[3] = { SPR_PICTURES, SPR_TILES, SPR_PALETTES };
+        uint32_t k = 0;
+        for (JVal *e = entries->child; e; e = e->next, k++) {
+            uint32_t type;
+            if (entry_type(jmember(e, "type"), &type) != 0) continue;
+            for (int q = 0; q < 3; q++) if (type == kinds[q] && at[q] < 0) at[q] = (int)k;
+        }
+        snprintf(path, sizeof path, "%s/sprites/metadata.json", folder);
+        if (at[0] >= 0 && at[1] >= 0 && mtime_of(path) >= 0) {
+            uint8_t *raw3[3] = { 0 }; size_t n3[3] = { 0 };
+            for (int q = 0; q < 3; q++) {
+                if (at[q] < 0) continue;
+                k = 0;
+                for (JVal *e = entries->child; e; e = e->next, k++) if ((int)k == at[q]) {
+                    JVal *raw = jmember(e, "raw");
+                    if (raw && raw->type == J_STR) { snprintf(path, sizeof path, "%s/%s", folder, raw->str); raw3[q] = read_file(path, &n3[q]); }
+                }
+            }
+            if (raw3[0] && raw3[1]) {
+                uint8_t *p0 = raw3[0], *p1 = raw3[1];
+                int pals_changed = 0;
+                sprites_from_pngs(folder, &raw3[0], &n3[0], &raw3[1], &n3[1], raw3[2], n3[2], &pals_changed, out);
+                if (raw3[0] != p0) { made[at[0]] = raw3[0]; made_n[at[0]] = n3[0]; raw3[0] = NULL; }
+                if (raw3[1] != p1) { made[at[1]] = raw3[1]; made_n[at[1]] = n3[1]; raw3[1] = NULL; }
+                if (pals_changed) { made[at[2]] = raw3[2]; made_n[at[2]] = n3[2]; raw3[2] = NULL; }
+            }
+            for (int q = 0; q < 3; q++) free(raw3[q]);
+        }
+    }
+#define FREE_MADE() do { for (uint32_t q_ = 0; q_ < count; q_++) free(made[q_]); } while (0)
+
     for (JVal *e = entries->child; e; e = e->next, i++) {
         uint32_t type;
         JVal *raw = jmember(e, "raw"), *pad = jmember(e, "padding");
-        if (entry_type(jmember(e, "type"), &type) != 0) { free(img); jfree(root); return fail(err, errn, "%s: entry %u: no valid \"type\"", path, i); }
-        if (!raw || raw->type != J_STR) { free(img); jfree(root); return fail(err, errn, "%s: entry %u: no \"raw\" file", path, i); }
+        if (entry_type(jmember(e, "type"), &type) != 0) { FREE_MADE(); free(img); jfree(root); return fail(err, errn, "%s: entry %u: no valid \"type\"", path, i); }
+        if (!raw || raw->type != J_STR) { FREE_MADE(); free(img); jfree(root); return fail(err, errn, "%s: entry %u: no \"raw\" file", path, i); }
 
         size_t dn, pn = 0;
         snprintf(path, sizeof path, "%s/%s", folder, raw->str);
-        uint8_t *d = read_file(path, &dn);
-        if (!d) { free(img); jfree(root); return fail(err, errn, "%s: not found", path); }
+        uint8_t *d = made[i];
+        if (d) { dn = made_n[i]; made[i] = NULL; }
+        else d = read_file(path, &dn);
+        if (!d) { FREE_MADE(); free(img); jfree(root); return fail(err, errn, "%s: not found", path); }
         JVal *png = jmember(e, "png");
         uint32_t kind = type & 0xFFFF0000u;
         if (png && png->type == J_STR && png->str[0] && (kind == 0x10000000u || kind == 0x00800000u || kind == 0x04000000u)) {
@@ -410,7 +768,7 @@ int asset_pac_build(const char *folder, PacImage *out, char *err, size_t errn) {
                 } else note(out, "entry %u: %s not used: %s", i, png->str, why);
             }
         }
-        if (dn > 0x7FFFFFFFu - PAC_SECTOR) { free(d); free(img); jfree(root); return fail(err, errn, "%s: too large", path); }
+        if (dn > 0x7FFFFFFFu - PAC_SECTOR) { FREE_MADE(); free(d); free(img); jfree(root); return fail(err, errn, "%s: too large", path); }
         uint8_t *p = NULL;
         if (pad && pad->type == J_STR && pad->str[0]) {
             snprintf(path, sizeof path, "%s/%s", folder, pad->str);
@@ -420,7 +778,7 @@ int asset_pac_build(const char *folder, PacImage *out, char *err, size_t errn) {
         if (size + aligned > cap) {
             while (size + aligned > cap) cap *= 2;
             uint8_t *t = realloc(img, cap);
-            if (!t) { free(d); free(p); free(img); jfree(root); return fail(err, errn, "out of memory"); }
+            if (!t) { FREE_MADE(); free(d); free(p); free(img); jfree(root); return fail(err, errn, "out of memory"); }
             img = t;
         }
         memcpy(img + size, d, dn);
@@ -434,6 +792,7 @@ int asset_pac_build(const char *folder, PacImage *out, char *err, size_t errn) {
         wr32(img + 12 + 8 * i, (uint32_t)dn);
         free(d); free(p);
     }
+#undef FREE_MADE
     wr32(img, count);
     wr32(img + 4, data_size);
     jfree(root);

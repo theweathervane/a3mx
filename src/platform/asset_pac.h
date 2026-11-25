@@ -28,6 +28,15 @@ typedef struct {
    damaged file) leaves the raw file in use, with the reason in notes. 0 on success; otherwise -1 and a
    reason in err. Free the image with pac_image_free. */
 int asset_pac_build(const char *folder, PacImage *out, char *err, size_t errn);
+/* (A fighter archive's folder with sprites/ also has its picture list, tile set and palettes made
+   from the pictures' PNGs and metadata.json's colours where those were edited: docs/SPRITE_FORMAT.md,
+   "Edited sprites".) */
+
+/* Fighter sprites: picture n of a picture list (entry 0x00100000) and tile set (0x00200000) as indices
+   (palette x 16 + colour, 0 transparent), w = columns x 32 by h = rows x 32, into *out (free it).
+   0 on success. */
+int asset_sprite_picture(const uint8_t *pics, size_t picsn, const uint8_t *tiles, size_t tilesn, uint32_t n,
+                         uint8_t **out, int *w, int *h);
 void pac_image_free(PacImage *img);
 /* Tests: take every PNG as newer than its raw file. */
 extern int asset_pac_png_always;

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.164.0
+### For players
+- **Edited fighter sprites are in the game:** repaint a picture in your assets folder (`characters/<nn>_<name>/fighter/sprites/pictures/`, from the art pack) or change a colour in its `metadata.json`, and the game uses it the next time it loads that fighter. Nothing to run. A picture that can't be used (another size, two palettes in one 32 x 32 cell) is left as it was, and the log says why.
+- **More of the game decompiled (1,151 functions):** the character select, VS and menu screens (portraits, name plates, the arcade route's opponents, the CPU's picks), the pads' auto-repeat, the super gauge, how each character's moves step from one stage to the next, and many small pieces of the fighters' moves, effects and objects. Nothing plays differently.
+
+### Technical
+- `src/platform/asset_pac.c`: a fighter archive's picture list, tile set and palettes built from edited sprite PNGs and colours as the archive opens (docs/SPRITE_FORMAT.md, "Edited sprites"); `asset_sprite_picture`. Unedited files still give the disc's archive byte for byte. `tools/sprites.py`: `metadata.json` records `pictures_written`. `tests/asset_pac_test.c`: sprite PNGs read back for all 43 fighter archives; `sprite_edits`.
+- `tests/scenarios/fighters_01_ryu_ehonda.txt` ... `fighters_19_ingrid_ryu.txt` (new, written by `tools/make_fighter_scenarios.py`): every character's special moves and super combos, two characters a Free Battle with PLAYER CONFIG's one-button moves, so the parity suite reaches each character's own code.
+- `src/core/object/steps_fighters.c` (new): 286 step dispatchers; `batch_tiny1.c` - `batch_tiny32.c` (new): 725 small functions; `batch_select1.c` - `batch_select32.c` (new): 140 functions of the select, VS and menu screens.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch, and each of the 1,151 new functions ran in at least one; asset_pac, assets_in_game, stage_strips.
 ## 0.163.1
 ### For players
 - **Boot to the MODE MENU is off by default again:** the game opens on the title, as on the PSP. A launcher that already saved its settings keeps your choice; press Defaults on the Extensions tab to take the new one.

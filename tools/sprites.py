@@ -254,7 +254,7 @@ def extract(pac_path, out, work):
     ncolours = f.COLOURS if f.palettes else 0
     colours = [f.colours(k) for k in range(ncolours)]
     count = struct.unpack_from('<I', f.pictures, 0)[0] // 12
-    pictures, images = [], {}
+    pictures, images, written = [], {}, 0
     for n in range(count):
         off, cols, rows, ox, oy, more = f.picture(n)
         entry = {'n': n, 'cells': [cols, rows], 'origin': [ox, oy], 'continues': more}
@@ -263,6 +263,7 @@ def extract(pac_path, out, work):
             name = 'pictures/%04d.png' % n
             write_indexed(os.path.join(out, name), img, colours[0] if colours else [[(0, 0, 0, 255)] * 16] * 5)
             entry['file'] = name; images[n] = img
+            written = max(written, int(os.path.getmtime(os.path.join(out, name))))
         pictures.append(entry)
     frames, sets = animations(f.entries)
     for k, pal in enumerate(colours):
@@ -273,7 +274,9 @@ def extract(pac_path, out, work):
         'cell_size': 32,
         'pixels': 'indexed PNGs: index = palette x 16 + colour, 0 transparent; the PNG palette is colour 0',
         'origin': 'the sprite\'s place, in pixels from the picture\'s top left (x right, y down)',
+        'editing': 'a picture PNG saved after pictures_written (seconds since 1970) is loaded by the game in place of the picture (docs/SPRITE_FORMAT.md, Edited sprites); colours edited here are loaded too',
         'pictures': pictures,
+        'pictures_written': written,
         'colours': [[['%04X' % struct.unpack_from('<H', f.palettes, k * f.colour_size() + p * 32 + i * 2)[0] for i in range(16)]
                      for p in range(f.colour_size() // 32)] for k in range(ncolours)],
         'frames': frames,

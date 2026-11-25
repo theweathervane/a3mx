@@ -75,6 +75,12 @@ The log line for an archive names the entries taken from PNGs:
 **Colours:** the PSP keeps red in the low bits of its 16-bit colours (ABGR1555, BGR565). The PNGs
 extracted before 0.5.0 had red and blue swapped; extract again (`python tools/extract_assets.py`).
 
+## Fighters' sprites
+
+A fighter archive's folder can hold `sprites/` (the art pack writes it): its pictures as PNGs and
+their colours. Edited ones are built into the archive's picture list, tile set and palettes the same
+way, as it is opened: [SPRITE_FORMAT.md](SPRITE_FORMAT.md), "Edited sprites".
+
 ## What can be changed
 
 - **Replace an entry** with a file of the same size: always safe.
@@ -107,6 +113,9 @@ extracted before 0.5.0 had red and blue swapped; extract again (`python tools/ex
     disc's, and again with every texture and palette taken from its PNG;
   - hand-made folders: a changed entry, a larger one (with the warning), an added one, a texture too
     large (refused), a broken manifest, a missing raw file;
+  - sprite edits (Ryu): a picture repainted with a cell emptied comes back exactly from the rebuilt
+    picture list and tile set, the 470 others unchanged; a cell of two palettes and a PNG of the wrong
+    size refused; a colour changed in `metadata.json` reaches the palettes;
   - PNG edits: a texture, an indexed texture and a palette repainted; a newer raw file winning; a PNG
     of the wrong size, a non-grey indexed one and a damaged one refused.
 - `assets_in_game` (`tests/assets_test.py`), on `arcade_fight` up to the fight (Ryu against Dan on

@@ -1,0 +1,35 @@
+# Every special move and super combo of SAKURA (player 1) and KARIN (player 2): Free Battle with 2P
+# PRIORITY PLAYER (super_finish's menus), both with the one-button moves SPECIAL1 - 6 M and S.COMBO1 - 3
+# LV3 on their nine buttons, health and gauges kept full. Written by tools/make_fighter_scenarios.py.
+frames 7520
+args --p2 human
+config [ex setting]
+config p2_priority=PLAYER
+config [cheats and unlocks]
+config p1_health=INFINITE
+config p2_health=INFINITE
+config p1_super=INFINITE
+config p2_super=INFINITE
+config [game option]
+config time=INFINITE
+config [p1 config]
+config square=SPECIAL1 M
+config triangle=SPECIAL2 M
+config l=SPECIAL3 M
+config cross=SPECIAL4 M
+config circle=SPECIAL5 M
+config r=SPECIAL6 M
+config select=S.COMBO1 LV3
+config l2=S.COMBO2 LV3
+config r2=S.COMBO3 LV3
+config [p2 config]
+config square=SPECIAL1 M
+config triangle=SPECIAL2 M
+config l=SPECIAL3 M
+config cross=SPECIAL4 M
+config circle=SPECIAL5 M
+config r=SPECIAL6 M
+config select=S.COMBO1 LV3
+config l2=S.COMBO2 LV3
+config r2=S.COMBO3 LV3
+input 1200=start;1206=;1500=start;1506=;1600=down;1606=;1640=down;1646=;1680=down;1686=;1760=cross;1766=;2100=cross;2106=;2180=p2:start;2186=p2:;2230=right;2236=;2260=down;2266=;2290=down;2296=;2320=down;2326=;2390=p2:cross;2396=p2:;2450=cross;2456=;2510=p2:cross;2516=p2:;2570=cross;2576=;2630=p2:cross;2636=p2:;2690=cross;2696=;2720=p2:right;2726=p2:;2750=p2:right;2756=p2:;2780=p2:down;2786=p2:;2810=p2:down;2816=p2:;2840=p2:down;2846=p2:;2930=p2:cross;2936=p2:;2990=cross;2996=;3050=p2:cross;3056=p2:;3110=cross;3116=;3170=p2:cross;3176=p2:;3230=cross;3236=;3290=p2:cross;3296=p2:;3350=cross;3356=;3410=p2:cross;3416=p2:;3530=down;3530=p2:cross;3534=;3536=p2:;3614=cross;3620=;4130=square;4136=;4220=p2:square;4226=p2:;4310=triangle;4316=;4400=p2:triangle;4406=p2:;4490=l;4496=;4580=p2:l;4586=p2:;4670=cross;4676=;4760=p2:cross;4766=p2:;4850=circle;4856=;4940=p2:circle;4946=p2:;5030=r;5036=;5120=p2:r;5126=p2:;5210=select;5216=;5300=p2:select;5306=p2:;5390=l2;5396=;5480=p2:l2;5486=p2:;5570=r2;5576=;5660=p2:r2;5666=p2:;5750=right;5750=p2:left;5810=;5810=p2:;5840=square;5846=;5930=p2:square;5936=p2:;6020=triangle;6026=;6110=p2:triangle;6116=p2:;6200=l;6206=;6290=p2:l;6296=p2:;6380=cross;6386=;6470=p2:cross;6476=p2:;6560=circle;6566=;6650=p2:circle;6656=p2:;6740=r;6746=;6830=p2:r;6836=p2:;6920=select;6926=;7010=p2:select;7016=p2:;7100=l2;7106=;7190=p2:l2;7196=p2:;7280=r2;7286=;7370=p2:r2;7376=p2:

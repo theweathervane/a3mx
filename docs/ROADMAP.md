@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  20.18% decompiled
+Overall  [██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]  25.07% decompiled
 
-Functions                                [█░░░░░░░░░]  17.07%  2,540 / 14,881 functions
-Instructions                             [██░░░░░░░░]  20.18%  97,720 / 484,213 instructions
+Functions                                [██░░░░░░░░]  24.80%  3,691 / 14,881 functions
+Instructions                             [██░░░░░░░░]  25.07%  121,399 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [████░░░░░░]  41.70%  85,048 / 203,929
-  wireless (ad-hoc) VS                   [███░░░░░░░]  34.43%  1,281 / 3,721
-  game (to be mapped)                    [░░░░░░░░░░]   4.00%  10,291 / 257,012
+  game (modes, menus, fighters, battle)  [████░░░░░░]  47.57%  97,017 / 203,929
+  wireless (ad-hoc) VS                   [███░░░░░░░]  37.81%  1,407 / 3,721
+  game (to be mapped)                    [░░░░░░░░░░]   8.51%  21,875 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
@@ -301,6 +301,10 @@ Done:
 - [x] One more (`object/batch_steps31.c`): the last ready one of 401 - 3000: the fight HUD's health bars
       (who each side shows by BATTLE +56, the red part catching up, lengths, colours, dimmed while halted)
       (0.160.0)
+- [x] The ready list refilled (`tests/scenarios/fighters_*.txt`: all 37 characters' specials and supers,
+      2,285 more translated functions reached, 950 ready); 328 of the smallest (2 - 12 instructions) in
+      `object/batch_tiny1.c` - `batch_tiny3.c` (0.164.0)
+- [x] 286 more step dispatchers, most of them characters' move steps (`object/steps_fighters.c`) (0.166.0)
 
 To do, in rough order:
 - [ ] The other 964 step dispatchers (875 plain, 69 whole-frame, 20 with an owner), as scenarios reach them (each is one line in `steps.c`; the
@@ -447,8 +451,11 @@ To do:
 - [x] #53: each character's sprites and animation frames as PNG with a `metadata.json` (frames,
       offsets, timings), in `characters/<nn>_<name>/fighter/sprites/` ([SPRITE_FORMAT.md](SPRITE_FORMAT.md);
       YUN's frames still to find)
-- [ ] Sprites loaded from `characters/<nn>_<name>/fighter/sprites/` (edited PNGs in the game); then
-      higher-resolution replacements
+- [x] Sprites loaded from `characters/<nn>_<name>/fighter/sprites/`: an edited picture PNG or colour in
+      `metadata.json` is in the game, built into the fighter's archive as it loads
+      ([SPRITE_FORMAT.md](SPRITE_FORMAT.md), "Edited sprites") (0.165.0)
+- [ ] Higher-resolution sprite replacements (need the drawers to take larger cells); sprites of other
+      sets (effects, screens); picture sizes and origins edited in `metadata.json`
 - [ ] Identify the variant slots 0x12 / 0x13 / 0x14 / 0x25 and the archives still under `other/`, and
       name them in `tools/asset_layout.py`
 - [ ] Name the music tracks
