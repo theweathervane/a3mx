@@ -191,7 +191,7 @@ SFA_FUNC(08995320, move_flags_hop_dash_land) {
    (0x8000) or confirm (0x80; +9 keeps the choice, +8 1 for choice 2, else 0) go on with sound 0x39,
    right (8) / left (4) cycle +8 through 0 - 2 with sound 0x38; drawn by 0x08834FF0 (not after a
    confirm). */
-SFA_FUNC(08834AC8, menu_options_row) {
+SFA_FUNC_WRAPPED(08834AC8, menu_options_row, pausefilter_options_row) {   /* the pause menu's FILTER row (extensions/pausefilter.c) */
     gaddr a = ARG(0), b = ARG(1), p = ARG(2);
     uint32_t ra = c->r[31], s0 = c->r[16], s1 = c->r[17], s2 = c->r[18];
     c->r[29] -= 0x50;

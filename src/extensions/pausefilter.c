@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdio.h>
 
-void orig_f_08834AC8(Cpu *c);
 void f_0887C4CC(Cpu *c);                    /* sound effect: a0 channel, a1 id, a2 0xC0 */
 void f_0880A6CC(Cpu *c);                    /* text: a0 string, a1 font, a2 x, a3 y, t0 colour */
 void settings_save(void);
@@ -66,15 +65,24 @@ static void set_filter(int f) {
     settings_save();
 }
 
-/* the pause menu, choosing (a0 the game, a2 the record) */
-void hook_f_08834AC8(Cpu *c) {
-    if (!on()) { orig_f_08834AC8(c); return; }
-    uint32_t g = c->r[4], rec = c->r[6];
+/* the pause menu, choosing (a0 the game, a2 the record): wraps the decompiled 0x08834AC8
+   (core/object/batch_moves201.c, menu_options_row; a hook until 0.165.0 decompiled it). Before it: our
+   row, the game's +8, and the presses we take out; after it: those presses put back. */
+static uint32_t taken_pad, taken_bits;
+int pausefilter_options_row(Cpu *c, uint32_t a0, int after) {
+    if (after) {
+        if (taken_pad) WW(taken_pad, RW(taken_pad) | taken_bits);
+        taken_pad = taken_bits = 0;
+        return 0;
+    }
+    taken_pad = taken_bits = 0;
+    if (!on()) return 0;
+    uint32_t g = a0, rec = c->r[6];
     long now = (long)rt_vblank_count();
     int game_row = RB(rec + 8) <= 2 ? RB(rec + 8) : 0;
     if (now - seen > 2 || row != R_FILTER) row = our_row_of[game_row];   /* opened, or back from BUTTON CONFIG */
     seen = now;
-    if (!RB(rec + 1)) { orig_f_08834AC8(c); return; }               /* (its first frame: no input) */
+    if (!RB(rec + 1)) return 0;                                      /* (its first frame: no input) */
     int pl = 0;
     while (pl < 3 && !((int8_t)RB(g + 89) & (1 << pl))) pl++;
     uint32_t pad = PADS + 44u * (uint32_t)(pl < 3 ? pl : 0), pressed = RW(pad + 12), taken = 0;
@@ -99,8 +107,8 @@ void hook_f_08834AC8(Cpu *c) {
     }
     WB(rec + 8, (uint32_t)game_row_of[row]);
     WW(pad + 12, pressed & ~taken);
-    orig_f_08834AC8(c);
-    WW(pad + 12, RW(pad + 12) | (pressed & taken));
+    taken_pad = pad + 12; taken_bits = pressed & taken;              /* put back after the game's menu (after) */
+    return 0;
 }
 
 /* its bar (0x088889A0, a0 the bar): after, on our row */

@@ -110,6 +110,7 @@ static const struct { const char *prefix; int feature; } BY_PREFIX[] = {
     { "padicons_mode_menu", FEAT_ANY },      /* also tells pacing.c the MODE MENU has opened; its drawing goes by FEAT_MODE_MENU_ICONS */
     { "padicons_", FEAT_MODE_MENU_ICONS },
     { "quitkey_task_wait", FEAT_ANY },      /* F2 (quit_key) and the FILTER preview (shaders): it asks each */
+    { "pausefilter_", FEAT_MENUS },
     { "quitkey_", FEAT_QUITKEY },
     { "bootmenu_", FEAT_BOOTMENU },
     { "widescreen_", FEAT_WIDESCREEN },
@@ -133,7 +134,7 @@ static const struct { unsigned addr; int feature; } BY_HOOK[] = {
     { 0x0880509C, FEAT_MULTIPLAYER }, { 0x088DD5D0, FEAT_MULTIPLAYER }, { 0x0883465C, FEAT_MULTIPLAYER },
     { 0x0882E380, FEAT_MULTIPLAYER }, { 0x08833DDC, FEAT_MULTIPLAYER }, { 0x088A8404, FEAT_MULTIPLAYER },
     { 0x08818BA4, FEAT_SAVES }, { 0x08817C10, FEAT_SAVES }, { 0x088335B8, FEAT_SAVES },
-    { 0x08888CC0, FEAT_MENUS }, { 0x08864DFC, FEAT_MENUS }, { 0x08867794, FEAT_MENUS }, { 0x08834AC8, FEAT_MENUS },
+    { 0x08888CC0, FEAT_MENUS }, { 0x08864DFC, FEAT_MENUS }, { 0x08867794, FEAT_MENUS },
     { 0x0882AE20, FEAT_CHEATS_UNLOCKS }, { 0x0883B800, FEAT_CHEATS_UNLOCKS },
     /* the two text passes draw for three features (JOIN / WAIT, the MODE MENU bar, the pause menu's
        pictures): selectscreen.c's hooks ask each */
