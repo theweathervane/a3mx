@@ -186,8 +186,9 @@ static void after_text(Cpu *c) {
     if (FEATURE(MODE_MENU_ICONS)) padicons_draw(c);
     if (FEATURE(MENUS)) pause_frame();
 }
-void hook_f_0880B098(Cpu *c) { orig_f_0880B098(c); after_text(c); }
-void hook_f_08812520(Cpu *c) { orig_f_08812520(c); after_text(c); }
+void widescreen_hud_text(int after);        /* widescreen.c: WIDE NATIVE, Survival's timer at the 16:9 edge while drawn */
+void hook_f_0880B098(Cpu *c) { widescreen_hud_text(0); orig_f_0880B098(c); widescreen_hud_text(1); after_text(c); }
+void hook_f_08812520(Cpu *c) { widescreen_hud_text(0); orig_f_08812520(c); widescreen_hud_text(1); after_text(c); }
 
 static int plugged(int k) { return k == 0 || (rt_human[k] >= 0 ? rt_human[k] : host_pad_connected(k)); }
 static int blink_on(void) { return (rt_vblank_count() / 30) % 2 == 0; }   /* half a second on, half off */

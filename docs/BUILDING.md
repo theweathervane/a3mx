@@ -73,7 +73,7 @@ shortcut unless you ask. Nothing compiled is committed to the repository.
 | **Dependencies** | **Check build dependencies** lists what the build needs on this system (from `tools/data/pins.json`) with a green tick for each one that is here (on Linux, also pkg-config and the window and sound
 libraries, which come from your package manager). Anything missing is listed with its address, its SHA-256 and the folder it goes into, and nothing is downloaded until you agree, with the button at the top (asked again only if the pinned list changes). **Consent**, at the bottom, says what has been agreed and holds the FILTER setting's shaders and library, each its own agreement, only if you want them. Run or Build with something missing sends you here first. ![Dependencies](images/launcher-dependencies.png) |
 | **Inputs** | Bring your own device: **Current** (the MODE MENU's bubbles now), then under **Configuration** for each of four players the pad icon, a **Control Type** (Keyboard, Controller, Keyboard/Controller, None, Automatic; player 1 Keyboard and the rest None to start), and **Configure**: a window, resizable, with **Test input** (**Test** shows the pad icon beside each button pressed and colours what pressed it) and **Configuration** (the keys and controller buttons, with **Default All** and **Unset All** under each column) ([INPUTS.md](INPUTS.md)). ![Inputs](images/launcher-inputs.png) ![Configure](images/launcher-inputs-configure.png) |
-| **Extensions** | Every extension on its own switch (`--features`, [below](#without-the-extensions)); all off is the PSP game as it was. Widescreen and Stage Extensions (Custom Assets before 0.60.0) are here. ![Extensions](images/launcher-extensions.png) |
+| **Extensions** | PSP original (no extension at all), Enhanced saves, Extra menus and Local multiplayer (`--features`, [below](#without-the-extensions)). Every other extension is switched in the game: OPTION MODE > EX. SETTING's EX. GAME and EX. DISPLAY pages, and SCREEN SETTING's SCREEN SIZE (WIDE NATIVE) and FILTER. ![Extensions](images/launcher-extensions.png) |
 | **Build / Run** | the preset (Release / Debug), Extract the disc again (`--extract`), Run the tests (`--test`), Run after building; Full screen, Logging (`--log-level`), Renderer, Resolution (`--scale`), GPU, extra options. **Run** builds what changed and starts the game (F5); unchecked **Run after building**, it says **Build**. **Stop** ends a build or a download. |
 | **About** | the version (`VERSION`, the one EX. SETTING shows), **Report a bug** (a new issue on GitLab, GitHub or Gitea, filled in: [below](#reporting-a-problem-from-the-launcher)), **Request a feature**, the project's pages and mirrors, and the licences. ![About](images/launcher-about.png) |
 | **Console** | in its own frame at the bottom on every tab: `build.py`'s and the game's output as it comes, whichever tab started it. Drag the orange bar above it to resize. Everything is also written to `logs/launcher.log` (the previous session's is `launcher.log.1`). **Log folder**, **Copy** and **Clear** are in the bottom right corner. |
@@ -158,7 +158,7 @@ with `--work work` and the Game options: a start for the download-and-run releas
 | `--launcher` | build the launcher (preset `launcher`) and open it; what `launcher.cmd` / `launcher.sh` do |
 | `--clean` | start from nothing, then carry on as usual. It deletes every `build` / `build-*` folder, what's in `.tools/` and what's in `work/` first. **Kept in `.tools/`**: `librashader/`, any `librashader-*` source folder and `slang-shaders/` (FILTER's library and shaders: slow to make again, and the library may be one you built yourself). Never touched: your a3mx folder and `saves/` ([SAVES.md](SAVES.md)), `imports/` (your ISOs), `assets/`, the code. With `--launcher` (`launcher.cmd` / `.sh`) it deletes `build-launcher/` too; without, it stays. Close the game and the launcher first. |
 | `--clean-all` | as `--clean`, and deletes those kept folders too: all of `.tools/` |
-| `--librashader` | only build FILTER's library from its pinned source (`tools/librashader.py`; needs Rust), then stop. `--install-rust` installs Rust first if it isn't there (rustup, for your user only). The launcher's **Dependencies > Build librashader...** does the same |
+| `--librashader` | only get FILTER's library, then stop (`tools/librashader.py`): downloaded as the pipeline published it (checked against its SHA-256), or built from its pinned source with Rust where none is published. `--install-rust` installs Rust first if it has to build (rustup, into `.tools/rust/`). The launcher's **Dependencies > Get librashader...** does the same |
 | `--tools-only` | only fetch / check the tools |
 
 ## CI and releases
@@ -215,14 +215,17 @@ keyed on `tools/data/pins.json` and the script that makes them:
 | What | Made by | Kept in |
 |---|---|---|
 | SDL3, compiled as a static library | `python tools/sdl3.py` | `.tools/sdl3/` |
-| librashader (FILTER's library), compiled with Rust | `python tools/librashader.py` | `.tools/librashader/` |
+| librashader (FILTER's library, OpenGL only), downloaded as published or compiled with Rust | `python tools/librashader.py` | `.tools/librashader/` |
 | FILTER's shaders, downloaded and checked | `python tools/shaders.py` | `.tools/slang-shaders/` |
 
 Each script does nothing when its folder is already right, so a run only makes again what a changed
 pin or script asks for. `cmake/SDL3.cmake` uses `.tools/sdl3/` when it is there and otherwise compiles
 SDL3 inside the build folder, so nothing changes for a build that never ran `sdl3.py`. librashader
-goes into every download (`package_launcher.py --librashader`); if its build fails the pipeline carries
-on and that download goes out without it. The same three commands work on your own PC.
+(OpenGL only) is downloaded as the manual `librashader:publish-*` jobs built and published it (their
+log prints the URL and SHA-256 to put in `pins.json`, `prebuilt`), or built with Rust where none is
+published; it goes into every download (`package_launcher.py --librashader`). A release (a tag)
+fails without it (`--require-librashader`); any other pipeline carries on and that download goes
+out without it. The same three commands work on your own PC.
 
 ### The downloads
 
@@ -327,7 +330,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 |---|---|
 | `--work DIR` | the work folder made by `extract_assets.py` |
 | `--no-extensions` | run without the extensions: the PSP program alone ([below](#without-the-extensions)) |
-| `--features LIST` | which extensions are on, comma separated. Core: `saves`, `boot_to_menu` (off by default), `mode_menu_icons`, `quit_key`, `menus`; Display: `widescreen`, `i_ism_display` (off by default), `scaled_endings`, `stage_extensions` (off by default), `shaders`; Extra: `cheats_unlocks`, `local_multiplayer`, `i_ism_select`; or `all`, `none`, `default`; `-NAME` turns one off (`default,-mode_menu_icons`). The launcher's **Extensions** tab writes this, under the same three headings |
+| `--features LIST` | which extensions are on, comma separated. The launcher's: `saves` (Enhanced saves), `menus` (Extra menus), `local_multiplayer`; EX. GAME: `boot_to_menu` (off by default), `quit_key` (Mode Menu Shortcut), `i_ism_select` (Shared Entry Pool); EX. DISPLAY: `mode_menu_icons`, `i_ism_display` (off by default), `scaled_endings`, `stage_extensions` (off by default); built in: `widescreen`, `shaders`, `cheats_unlocks`. Or `all`, `none`, `default`; `-NAME` turns one off (`default,-mode_menu_icons`); `settings`: the EX. GAME / EX. DISPLAY ones as `a3mx.cfg` has them (a name in the list wins for this run). None given is `default,settings`; the launcher passes its three and `settings` |
 | `--custom-assets` | before 0.60.0: the `stage_extensions` feature (the project's own art in `assets/extensions/`) |
 | `--assets DIR`, `--no-assets` | load each archive that `DIR/index.json` gives a folder from it (default: `assets/<region>` beside the work folder); or everything from the disc ([ASSET_LOADING.md](ASSET_LOADING.md)) |
 | `--renderer gl\|soft\|none\|lazy` | GPU renderer (default), software reference, nothing, or only dumped frames |
@@ -378,13 +381,13 @@ Either way:
 | Hooked functions (`hooks.txt`) | the hook (`hook_f_ADDR`) | the translated original |
 | Wrapped functions (`SFA_FUNC_WRAPPED`) | the function with its extension around it | the function alone |
 | Saves | `a3mx.dat` / `a3mx.cfg`, auto-save on, save messages silent; everything unlocked while playing (`cheats_unlocks`, EX. SETTING page 1; never written into the save) | the game's own, on the emulated memory stick (`<save dir>/ms0/PSP/SAVEDATA/`), with its own messages and questions; nothing unlocked |
-| OPTION MODE | EX. SETTING (five pages with `cheats_unlocks`: unlocks, fighters' cheats, World Tour / EDIT MODE EXP, PRIORITY / VIRTUAL PSPS), PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE NATIVE, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
+| OPTION MODE | EX. SETTING (EX. GAME and EX. DISPLAY: the extensions switched in the game, PRIORITY / VIRTUAL PSPS; with `cheats_unlocks` also EX. UNLOCKS, EX. FIGHTERS and EX. EXP), PLAYER CONFIG P4, L2 / R2, IMPORT / EXPORT, WIDE NATIVE, VSYNC | the game's five buttons, two screen sizes, no VSYNC row (vsync ON) |
 | Pads | up to four; join-in, JOIN / WAIT, pad icons | player 1's pad only, as on a PSP; no L2 / R2 |
 | Network modes | played on one PC with virtual players (EX. SETTING > VIRTUAL PSPS; OFF: NETWORK greyed out on the MODE MENU) | as a PSP's ad-hoc wireless: only other instances linked with `--net-hub` / `--net-join` answer |
-| F2, or SELECT + START on player 1's pad | back to the MODE MENU | nothing |
-| Boot | `boot_to_menu`: straight to the MODE MENU, the boot screens and the load run off screen | the title, PRESS START and the attract mode |
-| I-ISM on screen | `i_ism_display` (off by default): entry characters get their own wipe into the fight (a yellow I, a gold logo), and the attract mode an I-ISM score ranking | an entry gets its ISM's wipe; no I-ISM ranking |
-| I-ISM for both sides | `i_ism_select`: an entry can be picked for the other side too (a second player, or the computer's box) | only for the side whose player is present |
+| F2, or SELECT + START on player 1's pad | `quit_key` (Mode Menu Shortcut, EX. GAME): back to the MODE MENU | nothing |
+| Boot | `boot_to_menu` (EX. GAME, off by default, from the next start): straight to the MODE MENU, the boot screens and the load run off screen | the title, PRESS START and the attract mode |
+| I-ISM on screen | `i_ism_display` (ISM PRESENTATION, EX. DISPLAY, off by default): entry characters get their own wipe into the fight (a yellow I, a gold logo), and the attract mode an I-ISM score ranking | an entry gets its ISM's wipe; no I-ISM ranking |
+| Shared Entry Pool | `i_ism_select` (EX. GAME): an entry can be picked for the other side too (a second player, or the computer's box) | only for the side whose player is present |
 | Endings in WIDE NATIVE | `scaled_endings`: the scenes fill the 16:9 screen (their own art past the sides, or drawn 1.25 times larger), profile pictures at the edges | black sides, the 4:3 picture |
 
 The settings file `a3mx.cfg` is neither read nor written without the extensions, so a faithful run

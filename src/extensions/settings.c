@@ -1,8 +1,9 @@
 /* a3mx.cfg: every setting, by name, in sections. Written by the program (OPTION MODE screens, the
  * game's saves, closing); it can also be edited by hand while the program is closed.
  *
- *   [ex setting]     the project's own options (OPTION MODE > EX. SETTING; PRIORITY: docs/PLAYERS.md)
- *   [cheats and unlocks]  EX. SETTING's cheats and UNLOCK ALL (cheats_unlocks.c)
+ *   [ex setting]     the project's own options (OPTION MODE > EX. SETTING; PRIORITY: docs/PLAYERS.md), and
+ *                    the extensions switched there (EX. GAME, EX. DISPLAY: ext_features.h's keys)
+ *   [cheats and unlocks]  EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (cheats_unlocks.c)
  *   [game option]    OPTION MODE > GAME OPTION
  *   [screen setting] OPTION MODE > SCREEN SETTING
  *   [p1 config] .. [p4 config]   OPTION MODE > PLAYER CONFIG: each button's attack (names as on the
@@ -18,6 +19,7 @@
  *   +0x204 mode select (OFF ON)   +0x52 unlocks   +0x200 ISM-Pluses   +20 * p: player p's buttons
  */
 #include "rt.h"
+#include "ext_features.h"
 #define SHADER_TABLE_ONLY
 #include "shader.h"
 #include <stdio.h>
@@ -26,8 +28,11 @@
 #include <ctype.h>
 
 int rt_vsync = 1;                             /* [screen setting] vsync: wait for the monitor (no tearing); ON when missing */
-int rt_filter = 0;                            /* [screen setting] filter: an index into SHADER_FILTERS (shader.h); OFF when missing */
-int rt_frame_timing = 2;                      /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
+int rt_filter = 0;                            /* [screen setting] filter: filter_get's index (shader.h); OFF when missing */
+static char filter_kept[1100];                /* a filter= not offered this run (its catalogue or folder gone): written back as it was while FILTER stays OFF */
+int rt_hud_edges = 1;                         /* [screen setting] hud_messages: WIDE NATIVE's fight messages and Survival timer at the 16:9 edges (EDGES: 1) or on the 4:3 picture (4:3: 0); EDGES when missing */
+int rt_frame_timing = 2;                     /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
+int rt_health_gradient = 1;                   /* [ex setting] health_gradient: EX. DISPLAY's HEALTH GRADIENT (ON: the PSP's shading; OFF: solid, hud_health_solid) */
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
 extern int rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
@@ -220,6 +225,10 @@ void settings_load(void) {
                 continue;
             }
             if (!strcmp(key, "virtual_psps")) { rt_virtual_psps = is_on(val); continue; }
+            if (!strcmp(key, "health_gradient")) { rt_health_gradient = is_on(val); continue; }
+            { int done_feat = 0;                          /* EX. GAME / EX. DISPLAY: the extensions (ext_features.h) */
+              for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key && !strcmp(key, FEATURES[k].key)) { rt_feature_setting[k] = is_on(val); done_feat = 1; }
+              if (done_feat) continue; }
             if (key[0] == 'p' && key[1] >= '1' && key[1] <= '3' && key[2] == '_') {    /* cheats: p1_health ... p3_super */
                 int k = key[1] - '1', *v = !strcmp(key + 3, "health") ? &rt_cheat_health[k] : !strcmp(key + 3, "guard") ? &rt_cheat_guard[k] :
                                             !strcmp(key + 3, "super") ? &rt_cheat_super[k] : NULL;
@@ -236,9 +245,16 @@ void settings_load(void) {
               for (int i = 0; i < UNLOCK_COUNT; i++) if (!strcmp(key, unlock_keys[i])) { rt_unlock[i] = is_on(val); done_wt = 1; }
               if (done_wt) continue; }
             if (!strcmp(key, "vsync")) { rt_vsync = is_on(val); continue; }
-            if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER, by name (shader.h); unknown: OFF */
-                rt_filter = 0;
-                for (int k = 0; k < SHADER_FILTER_COUNT; k++) if (!strcmp(val, SHADER_FILTERS[k].name)) rt_filter = k;
+            if (!strcmp(key, "hud_messages")) {      /* SCREEN SETTING > HUD MESSAGES: EDGES or 4:3 */
+                for (char *s = val; *s; s++) *s = (char)toupper((unsigned char)*s);
+                rt_hud_edges = !strcmp(val, "EDGES");
+                continue;
+            }
+            if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER: a favourite by name, others by path (shader.h); unknown: OFF */
+                int k = filter_find(val);
+                rt_filter = k > 0 ? k : 0;
+                filter_kept[0] = 0;
+                if (k < 0 && *val) { snprintf(filter_kept, sizeof filter_kept, "%s", val); rt_log("settings: filter=%s is not offered this run: OFF (kept in a3mx.cfg)", val); }
                 continue;
             }
             if (!strcmp(key, "frame_timing")) {
@@ -286,6 +302,7 @@ void settings_load(void) {
             if (o) field_set(o, &fields[i], 2); else { pend.field_v[i] = 2; pending = 1; }
         }
     }
+    features_from_settings();                  /* EX. GAME / EX. DISPLAY's extensions, as read */
     rt_log("settings: 1P %s, 2P %s, 3P %s, virtual PSPs %d", v_human[!!rt_join_in[0]], v_human[!!rt_join_in[1]], v_human[!!rt_join_in[2]], rt_virtual_psps);
 }
 
@@ -310,12 +327,18 @@ static void cfg_body(FILE *f) {
     fprintf(f, "\n[ex setting]\n");
     for (int k = 0; k < 3; k++) { char l[48]; snprintf(l, sizeof l, "p%d_priority=%s", k + 1, v_human[!!rt_join_in[k]]); fprintf(f, "%-24s # PLAYER: pad %d plays a fighter nobody started with; COM: the computer does\n", l, k + 1); }
     { char l[48]; snprintf(l, sizeof l, "virtual_psps=%s", off_on[!!rt_virtual_psps]); fprintf(f, "%-24s # ON: NETWORK finds pads 2 and 3 (or the computer) as other PSPs, on this PC; OFF: no other PSPs\n", l); }
-    fprintf(f, "\n[cheats and unlocks]      # with the Cheats and Unlocks extension. Unlocks: ON forced, OFF as your save earned them (forced ones are never saved)\n");
+    { char l[48]; snprintf(l, sizeof l, "health_gradient=%s", off_on[!!rt_health_gradient]); fprintf(f, "%-24s # EX. DISPLAY: Health gradient. ON: the PSP's green-to-yellow health bars; OFF: solid yellow, as the arcade\n", l); }
+    for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key) {   /* EX. GAME / EX. DISPLAY */
+        char l[48]; snprintf(l, sizeof l, "%s=%s", FEATURES[k].key, off_on[!!rt_feature_setting[k]]);
+        fprintf(f, "%-24s # %s: %s%s\n", l, FEATURES[k].where == WHERE_EX_GAME ? "EX. GAME" : "EX. DISPLAY", FEATURES[k].title,
+                k == FEAT_BOOTMENU ? " (from the next start)" : "");
+    }
+    fprintf(f, "\n[cheats and unlocks]      # EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (Extra menus). Unlocks: ON forced, OFF as your save earned them (forced ones are never saved)\n");
     for (int i = 0; i < UNLOCK_COUNT; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", unlock_keys[i], off_on[!!rt_unlock[i]]); fprintf(f, "%-24s # %s\n", l, unlock_notes[i]); }
     fprintf(f, "%-24s # the fighter slots 1 - 3, every mode but network battles\n", "");
     for (int k = 0; k < 3; k++) {
         fprintf(f, "p%d_health=%-14s # NORMAL, INFINITE, HALF or NONE (one hit knocks out)\n", k + 1, cheat_health_names[rt_cheat_health[k] & 3]);
-        fprintf(f, "p%d_guard=%-15s # NORMAL, INFINITE, HALF or NONE (the next guard crushes)\n", k + 1, cheat_guard_names[rt_cheat_guard[k] & 3]);
+        fprintf(f, "p%d_guard=%-15s # NORMAL, INFINITE, HALF, NONE (the next guard crushes) or OFF (no guard gauge, as before Alpha 3)\n", k + 1, cheat_guard_names[rt_cheat_guard[k] >= 0 && rt_cheat_guard[k] <= 4 ? rt_cheat_guard[k] : 0]);
         fprintf(f, "p%d_super=%-15s # NORMAL, INFINITE, LV1, LV2, LV3 or NONE\n", k + 1, cheat_super_names[rt_cheat_super[k] >= 0 && rt_cheat_super[k] < 6 ? rt_cheat_super[k] : 0]);
     }
     for (int i = 0; i < 4; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", cheat_wt_keys[i], cheat_wt_names[!!rt_cheat_wt[i]]); fprintf(f, "%-24s # NORMAL or MAX (World Tour: EXP and Lv 32)\n", l); }
@@ -325,8 +348,13 @@ static void cfg_body(FILE *f) {
     { static const char *const ft[] = { "ORIGINAL", "SMOOTH", "AUTO" };
       char l[48]; snprintf(l, sizeof l, "frame_timing=%s", ft[rt_frame_timing >= 0 && rt_frame_timing <= 2 ? rt_frame_timing : 2]);
       fprintf(f, "%-24s # AUTO: SMOOTH on a 60 / 120 / 240 Hz screen, else ORIGINAL; SMOOTH: 60.00 Hz; ORIGINAL: 59.94 Hz, as the PSP\n", l); }
-    { char l[48]; snprintf(l, sizeof l, "filter=%s", SHADER_FILTERS[rt_filter >= 0 && rt_filter < SHADER_FILTER_COUNT ? rt_filter : 0].name);
-      fprintf(f, "%-24s # OFF, CRT CURVED / LOTTES / ROYALE / GUEST / LIGHT, SCAN LIGHT / STRONG / OSSC / DARK, XBRZ, SCALEFX (docs/DISPLAY.md)\n", l); }
+    { char k[1100], l[1200];
+      if (rt_filter > 0 && rt_filter < filter_count()) { filter_key(rt_filter, k, sizeof k); filter_kept[0] = 0; }
+      else snprintf(k, sizeof k, "%s", filter_kept[0] ? filter_kept : "OFF");
+      snprintf(l, sizeof l, "filter=%s", k);
+      fprintf(f, "%-24s # OFF, CRT CURVED / LOTTES / ROYALE / GUEST / LIGHT, SCAN LIGHT / STRONG / OSSC / DARK, XBRZ, SCALEFX, or a preset's path (docs/DISPLAY.md)\n", l); }
+    { char l[48]; snprintf(l, sizeof l, "hud_messages=%s", rt_hud_edges ? "EDGES" : "4:3");
+      fprintf(f, "%-24s # WIDE NATIVE: EDGES puts the fight's messages (combo, COUNTER HIT ...) and Survival's timer at the 16:9 edges; 4:3 as the game\n", l); }
     for (int p = 0; p < 4; p++) {
         const uint8_t *c = p == 3 ? rt_p4_config : o ? o + 20 * p : NULL;
         fprintf(f, "\n[p%d config]\n", p + 1);

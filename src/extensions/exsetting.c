@@ -173,7 +173,7 @@ static void clone_off(void) {
  * cursor in the option context's +7, colour 0xB on its row and 0xA elsewhere, and GAME OPTION's green
  * bar (object kind 0xC, type 4; once a frame 0x088BA8F4) under it. PLAYER CONFIG reuses the menu's
  * buttons as five tiles. */
-extern int rt_join_in[3], rt_virtual_psps, rt_l2[4], rt_r2[4];
+extern int rt_join_in[3], rt_virtual_psps, rt_l2[4], rt_r2[4], rt_health_gradient;
 extern const uint8_t pcfg_default[20];
 uint8_t *pcfg_block(int p);
 void settings_save(void);
@@ -244,15 +244,21 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
 
-/* EX. SETTING: the project's options, on pages (0.127.0; five since 0.128.0). With the Cheats and Unlocks
- * extension (cheats_unlocks.c):
- *   1/5  the unlocks: SHIN AKUMA, FINAL M.BISON, EX BALROG, SHIN AKUMA BATTLE, BATTLE VARIANTS, EDIT
- *        MODE POINTS, ISM-PLUS (ON forced, OFF as the save earned them)
- *   2/5  1P and 2P HEALTH, GUARD and SUPER
- *   3/5  3P's, and 4P's greyed out (there is no fourth fighter: their values can't be changed)
- *   4/5  WORLD TOUR EXP and its X-, A- and V-ISM EXP; the same four for EDIT MODE
- *   5/5  1P - 3P PRIORITY and VIRTUAL PSPS (the options EX. SETTING always had)
- * and without it only the last, as 1/1. Each page ends with DEFAULT (that page's rows back to their
+/* EX. SETTING: the project's options, on pages (0.127.0), each with its own banner in place of
+ * "EX. SETTING" (0.165.0):
+ *   EX. GAME      BOOT TO MODE MENU (from the next start), MODE MENU SHORTCUT, SHARED ENTRY POOL, 1P - 3P
+ *                 PRIORITY and VIRTUAL PSPS
+ *   EX. DISPLAY   MODE MENU ICONS, ISM PRESENTATION, SCALED ENDINGS, STAGE EXTENSIONS, and HEALTH GRADIENT (a
+ *                 setting, not an extension: rt_health_gradient, object/hud.c's hud_health_solid)
+ * The extensions on these two were the launcher's checkboxes before 0.165.0: they are kept in a3mx.cfg
+ * and switched at once (ext_features.h: features_setting_changed). With Cheats and Unlocks (part of
+ * Extra menus: cheats_unlocks.c), four more:
+ *   EX. UNLOCKS   SHIN AKUMA, FINAL M.BISON, EX BALROG, SHIN AKUMA BATTLE, BATTLE VARIANTS, EDIT MODE
+ *                 POINTS, ISM-PLUS (ON forced, OFF as the save earned them)
+ *   EX. FIGHTERS  1P and 2P HEALTH, GUARD and SUPER; then 3P's, and 4P's greyed out (there is no fourth
+ *                 fighter: their values can't be changed)
+ *   EX. EXP       WORLD TOUR EXP and its X-, A- and V-ISM EXP; the same four for EDIT MODE
+ * Each page ends with DEFAULT (that page's rows back to their
  * defaults) and EXIT. As on SCORE RANKING, an arrow on each side and the page number (font 2, colour 9,
  * above the version) show there are more pages: L / R turn the page, and so do left / right on DEFAULT
  * and EXIT (on a row with a value they change it). With one page it is 1/1, with no arrows. Under the
@@ -272,14 +278,14 @@ static int no_fighter;              /* 4P's rows: shown, not used */
    slot of its own, once, in a pool of ours (the same string, the same slot, every frame) */
 #define POOL_SIZE 0x2000u
 static uint32_t pool, pool_used;
-static const char *pool_key[160];
-static uint32_t pool_at[160];
+static const char *pool_key[256];
+static uint32_t pool_at[256];
 static int pool_n;
 static uint32_t gstr(const char *s) {
     for (int i = 0; i < pool_n; i++) if (pool_key[i] == s) return pool_at[i];
     size_t n = strlen(s) + 1;
     if (!pool) { pool = rt_alloc(POOL_SIZE, 1, 16, "ex. setting text"); pool_used = 0; }
-    if (!pool || pool_n == 160 || pool_used + n > POOL_SIZE) return STR(S_EXIT);   /* (never: the strings are few) */
+    if (!pool || pool_n == 256 || pool_used + n > POOL_SIZE) return STR(S_EXIT);   /* (never: the strings are few) */
     uint32_t a = pool + pool_used; pool_used += (uint32_t)((n + 3) & ~3u);
     memcpy(HOST(a), s, n);
     pool_key[pool_n] = s; pool_at[pool_n++] = a;
@@ -334,21 +340,45 @@ static const Row page_entries[] = {
     { "EDIT MODE V-ISM EXP", &rt_cheat_edit[3], cheat_wt_names, { "EDIT MODE V-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
     R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
 };
-static const Row page_options[] = {
+#define FEAT_ROW(label, f, w1, w2) { label, &rt_feature_setting[f], v_off_on, { w1, w2 }, 0 }
+static const Row page_game[] = {
+    FEAT_ROW("BOOT TO MODE MENU", FEAT_BOOTMENU, "START ON THE MODE MENU - NO", "TITLE. FROM THE NEXT START."),
+    FEAT_ROW("MODE MENU SHORTCUT", FEAT_QUITKEY, "F2 OR SELECT AND START - BACK", "TO THE MODE MENU. NO SAVING."),
+    FEAT_ROW("SHARED ENTRY POOL", FEAT_I_ISM_SELECT, "ENTRY CHARACTERS CAN BE PICKED", "FOR THE OTHER SIDE TOO."),
     { "1P PRIORITY", &rt_join_in[0], v_priority, { "PLAYER - PAD 1 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
     { "2P PRIORITY", &rt_join_in[1], v_priority, { "PLAYER - PAD 2 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
     { "3P PRIORITY", &rt_join_in[2], v_priority, { "PLAYER - PAD 3 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
     { "VIRTUAL PSPS", &rt_virtual_psps, v_off_on, { "NETWORK FINDS PADS 2 AND 3 OR", "THE CPU AS OTHER PSPS HERE." }, 0 },
-    R_DEFAULT_ROW("COM AND VIRTUAL PSPS ON."), R_EXIT_ROW,
+    R_DEFAULT_ROW("BOOT OFF - COM - THE REST ON."), R_EXIT_ROW,
 };
-enum { PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, PG_OPTIONS, N_PAGES };
-#define PAGE(r, x) { r, (int)(sizeof r / sizeof *r), x }
-static const struct { const Row *rows; int n, value_x; } pages[N_PAGES] = {
-    PAGE(page_unlocks, 0xD8), PAGE(page_fighters12, 0xA0), PAGE(page_fighters34, 0xA0), PAGE(page_entries, 0xE0), PAGE(page_options, 0xA0),
+static const Row page_display[] = {
+    FEAT_ROW("MODE MENU ICONS", FEAT_MODE_MENU_ICONS, "PAD BUBBLES AND FRAME TIMING", "BADGE ON THE MODE MENU BAR."),
+    FEAT_ROW("ISM PRESENTATION", FEAT_I_ISM_DISPLAY, "I-ISM WIPE INTO THE FIGHT AND", "I-ISM RANKING IN THE ATTRACT."),
+    FEAT_ROW("SCALED ENDINGS", FEAT_SCALED_ENDINGS, "ENDINGS FILL THE WIDE SCREEN.", "WITH WIDE NATIVE."),
+    FEAT_ROW("STAGE EXTENSIONS", FEAT_STAGE_EXT, "NEW ART FOR THE STAGE EDGES IN", "WIDE NATIVE. EXPERIMENTAL."),
+    { "HEALTH GRADIENT", &rt_health_gradient, v_off_on, { "ON - THE PSP SHADED HEALTH BARS.", "OFF - SOLID YELLOW, AS ARCADE." }, 0 },
+    R_DEFAULT_ROW("ICONS, ENDINGS, GRADIENT ON."), R_EXIT_ROW,
+};
+/* EX. GAME and EX. DISPLAY always; the cheats' pages after them, with Cheats and Unlocks */
+enum { PG_GAME, PG_DISPLAY, PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, N_PAGES };
+#define PAGE(t, r, x) { t, r, (int)(sizeof r / sizeof *r), x }
+static const struct { const char *title; const Row *rows; int n, value_x; } pages[N_PAGES] = {
+    PAGE("EX. GAME", page_game, 0xD8), PAGE("EX. DISPLAY", page_display, 0xD8), PAGE("EX. UNLOCKS", page_unlocks, 0xD8),
+    PAGE("EX. FIGHTERS", page_fighters12, 0xA0), PAGE("EX. FIGHTERS", page_fighters34, 0xA0), PAGE("EX. EXP", page_entries, 0xE0),
 };
 static int page;                    /* PG_* */
-static int first_page(void) { return FEATURE(CHEATS_UNLOCKS) ? PG_UNLOCKS : PG_OPTIONS; }
-static int page_count(void) { return N_PAGES - first_page(); }
+static int first_page(void) { return PG_GAME; }
+static int page_count(void) { return FEATURE(CHEATS_UNLOCKS) ? N_PAGES : PG_DISPLAY + 1; }
+/* a row of EX. GAME / EX. DISPLAY: the extension it switches, or -1 */
+static int row_feature(const Row *r) {
+    return r->value >= &rt_feature_setting[0] && r->value < &rt_feature_setting[FEAT_COUNT] ? (int)(r->value - rt_feature_setting) : -1;
+}
+static void page_features_default(int pg) {
+    for (int i = 0; i < pages[pg].n; i++) {
+        int f = row_feature(&pages[pg].rows[i]);
+        if (f >= 0) { rt_feature_setting[f] = FEATURES[f].on_by_default; features_setting_changed(f); }
+    }
+}
 static int count_names(const char *const *n) { int k = 0; while (n[k]) k++; return k; }
 static int ex_row_y(int r) { return 0x1C + 14 * r; }
 static void page_defaults(int pg) {
@@ -356,7 +386,8 @@ static void page_defaults(int pg) {
     else if (pg == PG_FIGHTERS12) cheats_unlocks_default_fighters(0, 1);
     else if (pg == PG_FIGHTERS34) cheats_unlocks_default_fighters(2, 2);
     else if (pg == PG_ENTRIES) cheats_unlocks_default_entries();
-    else { rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
+    else if (pg == PG_DISPLAY) { page_features_default(pg); rt_health_gradient = 1; }
+    else { page_features_default(pg); rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
 }
 
 /* The side arrows: drawn into our page at ARROW_U / ARROW_V (left, then right), shown by two objects of
@@ -369,7 +400,11 @@ static void page_defaults(int pg) {
 #define ARROW_LX 4                  /* at the 4:3 picture's sides (the user's mock-up) */
 #define ARROW_RX (384 - 4 - ARROW_W)
 static int arrow[2] = { -1, -1 };
+static int scroll[2] = { -1, -1 }, scroll_y[2] = { -1, -1 }, scroll_x;   /* SCORE RANKING's up / down arrows (below) */
+static int other_arrow_y = -1;      /* another screen's side arrows (filterscreen.c): beside this text row, -1 none */
+static void scroll_build(void);
 static void arrows_build(void) {
+    scroll_build();
     for (int side = 0; side < 2; side++)
         for (int y = 0; y < ARROW_H; y++)
             for (int x = 0; x < ARROW_W; x++) {
@@ -388,14 +423,70 @@ static void arrows_on(Cpu *c) {
     if (!arrows_ready) arrows_build();
     for (int i = 0; i < 2; i++) if (arrow[i] < 0) arrow[i] = new_obj(c, 0xC, 4);
 }
-static void arrows_off(void) { free_obj(&arrow[0]); free_obj(&arrow[1]); }
+static void arrows_off(void) { free_obj(&arrow[0]); free_obj(&arrow[1]); free_obj(&scroll[0]); free_obj(&scroll[1]); other_arrow_y = -1; }
+static int arrows_in_use(void) { return mode == M_EX && page_count() > 1; }
 static void arrow_frame(uint32_t o, int side) {
     two_frame(o, 0);                                          /* drawn like the 2: then ours */
     int u = ARROW_U + side * 8;
     WH(o + 0x40, (uint32_t)u); WH(o + 0x42, (uint32_t)(u + ARROW_W)); WH(o + 0x4C, ARROW_V); WH(o + 0x4E, ARROW_V + ARROW_H);
-    WH(o + 6, side ? ARROW_RX : ARROW_LX); WH(o + 0xA, (uint32_t)(2 * (ex_row_y(0) + 1)));
+    WH(o + 6, side ? ARROW_RX : ARROW_LX); WH(o + 0xA, (uint32_t)(2 * ((other_arrow_y >= 0 ? other_arrow_y : ex_row_y(0)) + 1)));
     WH(o + 0xE, ARROW_W); WH(o + 0x1A, 2 * ARROW_H);
-    WB(o + 0x5D, mode == M_EX && page_count() > 1);
+    WB(o + 0x5D, other_arrow_y >= 0 || (mode == M_EX && page_count() > 1));
+}
+
+/* SCORE RANKING's up and down arrows (more rows above / below), drawn into our page at SCROLL_U /
+   ARROW_V (up, then down: the same picture upside down) and shown by two objects of ours like the side
+   arrows. Copied from the game's own on that screen, pixel for pixel (16 x 10): a white edge round a
+   fill that goes from yellow at the point through orange to pink at the base, a white base line. */
+#define SCROLL_U 24
+#define SCROLL_W 16
+#define SCROLL_H 10
+static void scroll_build(void) {
+    static const char *const rows[SCROLL_H] = {
+        "       ab       ", "      cddf      ", "      egge      ", "     hijjih     ", "    klmmmmln    ",
+        "   oprssssrpo   ", "  qtuvvvvvvutq  ", " wxyzzzzzzzzyxA ", " BCDDDDDDDDDDCB ", "EBFGGGGGGGGGGFBE" };
+    static const struct { char k; uint32_t rgb; } pal[] = {
+        { 'a', 0x848484 }, { 'b', 0x848484 }, { 'c', 0x5A5A5A }, { 'd', 0xF7E7CE }, { 'e', 0xF7F7E7 }, { 'f', 0x946363 },
+        { 'g', 0xF7C663 }, { 'h', 0xF7F7F7 }, { 'i', 0xF7CE6B }, { 'j', 0xF7B563 }, { 'k', 0xC6C6C6 }, { 'l', 0xF7D684 },
+        { 'm', 0xF7AD73 }, { 'n', 0xDECECE }, { 'o', 0x9C9C9C }, { 'p', 0xF7CE9C }, { 'r', 0xF79C6B }, { 's', 0xF79473 },
+        { 'q', 0x737373 }, { 't', 0xF7D6BD }, { 'u', 0xF7946B }, { 'v', 0xF77373 }, { 'w', 0x8C5A5A }, { 'x', 0xF7DED6 },
+        { 'y', 0xF78473 }, { 'z', 0xF75273 }, { 'A', 0x4A4A4A }, { 'B', 0xF7F7F7 }, { 'C', 0xF78C7B }, { 'D', 0xF7428C },
+        { 'E', 0xE7E7E7 }, { 'F', 0xF7EFEF }, { 'G', 0xF7E7EF } };
+    for (int y = 0; y < SCROLL_H; y++)
+        for (int x = 0; x < SCROLL_W; x++) {
+            uint16_t p = 0;
+            for (size_t k = 0; k < sizeof pal / sizeof *pal; k++)
+                if (pal[k].k == rows[y][x]) { uint32_t v = pal[k].rgb; p = rgb15((int)(v >> 16), (int)(v >> 8 & 0xFF), (int)(v & 0xFF)); }
+            WH(TEX + (uint32_t)(((ARROW_V + y) * 256 + SCROLL_U + x) * 2), p);                                    /* up */
+            WH(TEX + (uint32_t)(((ARROW_V + SCROLL_H - 1 - y) * 256 + SCROLL_U + SCROLL_W + x) * 2), p);         /* down */
+        }
+}
+static void scroll_frame(uint32_t o, int which) {
+    two_frame(o, 0);
+    int u = SCROLL_U + which * SCROLL_W;
+    WH(o + 0x40, (uint32_t)u); WH(o + 0x42, (uint32_t)(u + SCROLL_W)); WH(o + 0x4C, ARROW_V); WH(o + 0x4E, ARROW_V + SCROLL_H);
+    WH(o + 6, (uint32_t)(which ? scroll_x + 3 : scroll_x - 3 - SCROLL_W)); WH(o + 0xA, (uint32_t)(2 * (scroll_y[which] < 0 ? 0 : scroll_y[which])));
+    WH(o + 0xE, SCROLL_W); WH(o + 0x1A, 2 * SCROLL_H);
+    WB(o + 0x5D, scroll_y[which] >= 0);
+}
+
+/* For another screen of OPTION MODE (filterscreen.c), once a frame while it is up: EX. SETTING's side
+   arrows beside the text row at Y (-1: none), and SCORE RANKING's up / down arrows side by side either side of X, with
+   their tops at UP_Y and DOWN_Y (-1: that one not shown). All -1 takes them away. */
+static int arrows_in_use(void);
+void exsetting_other_arrows(Cpu *c, int y, int x, int up_y, int down_y) {
+    if (!mem) return;
+    other_arrow_y = y; scroll_x = x; scroll_y[0] = up_y; scroll_y[1] = down_y;
+    if (y < 0 && up_y < 0 && down_y < 0) {
+        if (!arrows_in_use()) { free_obj(&arrow[0]); free_obj(&arrow[1]); }
+        free_obj(&scroll[0]); free_obj(&scroll[1]);
+        return;
+    }
+    if (!arrows_ready) arrows_build();
+    for (int i = 0; i < 2; i++) {
+        if (y >= 0 && arrow[i] < 0) arrow[i] = new_obj(c, 0xC, 4);
+        if (scroll[i] < 0) scroll[i] = new_obj(c, 0xC, 4);
+    }
 }
 
 static void grey_font_on(void);
@@ -437,7 +528,8 @@ static int bright(uint16_t p) { int r = p & 31, g = (p >> 5) & 31, b = (p >> 10)
 static void grey_font_on(void) {
     uint32_t list = RW(FONT_LIST), n = RW(FONT_LIST + 4), e = PAGES + 0x18u * GREY_PAGE, e8 = PAGES + 0x18u * 0x8F;
     if (!list || (grey_mem && list == GREY_LIST && RW(e) == GREY_TEX)) return;   /* not loaded yet, or ours already */
-    if (n != 8 || RW(e) != 0 || !RW(e8)) { rt_log("exsetting: the font isn't as expected, no grey colours"); return; }
+    static int warned;
+    if (n != 8 || RW(e) != 0 || !RW(e8)) { if (!warned++) rt_log("exsetting: the font isn't as expected, no grey colours"); return; }
     if (!grey_mem && !(grey_mem = rt_alloc(0x20080u + 12u * 9u, 1, 256, "grey font"))) return;
     memset(HOST(GREY_TEX), 0, 0x20000);
     memcpy(HOST(GREY_DESC), HOST(RW(e8 + 0x14)), 0x44); WW(GREY_DESC, GREY_PAGE);
@@ -459,6 +551,12 @@ static void grey_font_on(void) {
     WW(FONT_LIST, GREY_LIST); WW(FONT_LIST + 4, 9);
     rt_log("exsetting: font colours 14 and 15 (greyed rows) added on page %X", GREY_PAGE);
 }
+/* SCREEN SETTING and FILTER (screensetting.c) grey their disabled rows with the same two colours: 1 when
+   font 1 has them (made now if need be), 0 if not (the caller then uses colour 9) */
+int exsetting_grey_font(void) {
+    grey_font_on();
+    return grey_mem && RW(FONT_LIST) == GREY_LIST && RW(PAGES + 0x18u * GREY_PAGE) == GREY_TEX;
+}
 #define B_L       0x40u
 #define B_R       0x200u
 static void turn_page(Cpu *c, int step) {
@@ -470,7 +568,7 @@ static void turn_page(Cpu *c, int step) {
 }
 static void ex_screen(Cpu *c) {
     uint32_t p = pressed();
-    if (page < first_page()) page = first_page();
+    if (page < first_page() || page >= first_page() + page_count()) page = first_page();
     const Row *rows = pages[page].rows; int n = pages[page].n;
     const Row *r = &rows[row];
     int step = (p & 1) ? 1 : (p & 2) ? -1 : 0;                /* right / left */
@@ -479,15 +577,18 @@ static void ex_screen(Cpu *c) {
     else if (p & 4) { row = (row + 1) % n; sound(c, 0x38); }
     else if (more && (p & (B_L | B_R))) turn_page(c, (p & B_R) ? 1 : -1);
     else if ((step || (p & B_CONFIRM)) && r->greyed) sound(c, 0x2F);   /* not there yet: nothing to change */
-    else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; sound(c, 0x38); }
+    else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; features_setting_changed(row_feature(r)); sound(c, 0x38); }
     else if (step && more) turn_page(c, step);
-    else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; sound(c, 0x39); }
+    else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; features_setting_changed(row_feature(r)); sound(c, 0x39); }
     else if ((p & B_CONFIRM) && row == n - 2) { page_defaults(page); sound(c, 0x39); }   /* DEFAULT: this page */
     else if ((p & B_CONFIRM) && row == n - 1) { ex_close(c, 0x39); return; }   /* EXIT chosen: a confirm */
     else if (p & B_BACK) { ex_close(c, 0x2F); return; }
     rows = pages[page].rows; n = pages[page].n; r = &rows[row];
     WB(OPT + 7, (uint32_t)row); bar_y = 239 - ex_row_y(row);
-    title(c, S_TITLE);
+    {   /* the page's own banner (EX. GAME, EX. DISPLAY, ...) where "EX. SETTING" was */
+        const char *t = pages[page].title;
+        text(c, gstr(t), 2, 0xC0 - 8 * (int)strlen(t), 5, 0xB);
+    }
     for (int i = 0; i < n; i++) {
         int y = ex_row_y(i), colour = rows[i].greyed ? (i == row ? GREYED_ON : GREYED) : i == row ? 0xB : 0xA;
         text(c, gstr(rows[i].label), 1, 0x30, y, colour);
@@ -499,7 +600,7 @@ static void ex_screen(Cpu *c) {
     for (int k = 0; k < 2; k++) if (r->what[k][0]) text(c, gstr(r->what[k]), 0, 0x30, WHAT_Y + 10 * k, 9);
     {                                                         /* the page number, 1/1 too (the user, 0.127.0) */
         static const char *const numbers[N_PAGES][N_PAGES] = { { "1/1" }, { "1/2", "2/2" }, { "1/3", "2/3", "3/3" },
-            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" } };
+            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" }, { "1/6", "2/6", "3/6", "4/6", "5/6", "6/6" } };
         text(c, gstr(numbers[page_count() - 1][page - first_page()]), 2, 0x178 - 48, PAGE_Y, 9);
     }
     text(c, STR(S_VERSION), 0, VERSION_X, VERSION_Y, 0xA);   /* The project's version, bottom right in the small font: just shown */
@@ -801,6 +902,7 @@ int exsetting_green_bar(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
     uint32_t o = c->r[4];
     for (int i = 0; i < 2; i++) if (arrow[i] >= 0 && o == obj(arrow[i])) { arrow_frame(o, i); return 1; }
+    for (int i = 0; i < 2; i++) if (scroll[i] >= 0 && o == obj(scroll[i])) { scroll_frame(o, i); return 1; }
     for (int i = 0; i < 2; i++) if (two[i] >= 0 && o == obj(two[i])) {
         if (mode == M_PEDIT) two_frame(o, erow_y(E_L2 + i)); else WB(o + 0x5D, 0);
         return 1;
@@ -868,6 +970,14 @@ static void sl_game_load(Cpu *c) {
     rt_hold_display_set(SL_AFTER);
     WW(SLOTS + 0xC, k0); memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
+/* GAME OPTION > DEFAULT (0x088B67B8, a0 the system data): the game's defaults, but MODE SELECT ON, as a
+   new save of ours has it (sysdata.c) */
+int exsetting_game_option_default(Cpu *c, uint32_t a0, int after) {
+    (void)c;
+    if (after && (pressed() & B_CONFIRM)) WB(a0 + 516, 1);
+    return 0;
+}
+
 int exsetting_save_load(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;               /* (leaving it is held by exsetting_option_menu, SWITCH_HOLD) */
     /* up / down over all seven rows, by the game's own cursor mover (its press-and-hold repeat too:
@@ -964,7 +1074,7 @@ int exsetting_save_load_bar(Cpu *c, uint32_t o, int after) {
  * the green bar an object of kind 3 type 5 (once a frame 0x08888CC0, rows of 16 from the table at
  * 0x08A2620C).
  *
- * Here it gets the L2 and R2 rows of P1 - P4 CONFIG: the same fourteen rows, 14 apart. Our row per
+ * Here it gets the L2 and R2 rows of P1 - P4 CONFIG: the same fourteen rows, 13 apart (prow_y). Our row per
  * player (pex) maps to the game's (L2 / R2 to COMMAND's, which has no picture); up / down, and left
  * / right on L2 / R2, are ours; the rest is the game's. The 2 of L2 / R2 and their pictures are the
  * ones P1 - P4 CONFIG uses (our page 4; kind 0x93 objects). Leaving saves (a3mx.cfg). */
@@ -981,6 +1091,9 @@ void selectscreen_two(int x, int y);
 #define PAUSE_ANIMS 0x08A3CC78u             /* the pause's attack pictures, by value */
 static uint32_t picon[2];
 static int picon_v[2];
+/* its rows: fourteen 13 apart from 0x18 (P1 - P4 CONFIG's are 14 apart: here EXIT came to the screen's
+   bottom edge, under the fight's gauges) */
+static int prow_y(int r) { return 0x18 + 13 * r; }
 static int pause_live(void) { return (long)rt_vblank_count() - pause_seen <= 2; }
 static int game_row(int ex) { return ex <= E_SEL ? ex : ex <= E_R2 ? 7 : ex - 2; }
 static uint32_t call3(Cpu *c, void (*f)(Cpu *), uint32_t a0, uint32_t a1, uint32_t a2) {
@@ -1070,7 +1183,7 @@ int exsetting_pause_text(Cpu *c, uint32_t a0, int after) {
     int cur = pex[pl];
     static const signed char sym[9] = { 2, 1, 8, 3, 0, 9, -1, 8, 9 };
     for (int r = 0; r < N_EROWS; r++) {
-        int y = erow_y(r), colour = r == cur ? 0xB : 0xA;
+        int y = prow_y(r), colour = r == cur ? 0xB : 0xA;
         if (r <= E_R2) {
             int x = (sym[r] == 8 || sym[r] == 9) ? 0x6C : 0x68;
             if (r == E_L2 || r == E_R2) x = TWO_SYM_X;
@@ -1108,5 +1221,5 @@ void hook_f_08888CC0(Cpu *c) {
     orig_f_08888CC0(c);
     if (!pause_live() || RW(o + 0x7C) != PCTX) return;
     int pl = (int16_t)RH(o + 0x66);
-    if (pl >= 0 && pl <= 2) WH(o + 0xA, (uint32_t)(240 - erow_y(pex[pl])));
+    if (pl >= 0 && pl <= 2) WH(o + 0xA, (uint32_t)(240 - prow_y(pex[pl])));
 }

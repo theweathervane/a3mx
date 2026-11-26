@@ -1423,7 +1423,7 @@ SFA_FUNC(088B6620, game_option_row_side)        { FRAME(0x20, row_side(c, ARG(0)
 SFA_FUNC(088B6678, game_option_row_select)      { FRAME(0x20, row_select(c, ARG(0))); }
 SFA_FUNC(088B66D0, game_option_row_music)       { FRAME(0x20, row_volume(c, ARG(0), ARG(1), 1)); }
 SFA_FUNC(088B6744, game_option_row_effects)     { FRAME(0x20, row_volume(c, ARG(0), ARG(1), 0)); }
-SFA_FUNC(088B67B8, game_option_row_default)     { FRAME(0x20, row_default(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(088B67B8, game_option_row_default, exsetting_game_option_default) { FRAME(0x20, row_default(c, ARG(0), ARG(1))); }
 SFA_FUNC(088B68D0, game_option_row_exit)        { FRAME(0x20, row_exit(c)); }
 SFA_FUNC(088B8894, game_option_text)            { FRAME(0x60, go_text(c)); }
 SFA_FUNC(088B74C4, game_option_done)            { FRAME(0x20, option_done(c)); }

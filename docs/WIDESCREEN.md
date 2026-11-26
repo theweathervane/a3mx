@@ -52,6 +52,21 @@ works, what doesn't, and the rules for refining it.
   - the fight's HUD (0.99.35) stays on the 4:3 picture: what its pictures and bars have past the 4:3
     sides (the super / ISM bars' ends at the bottom, art longer than the 4:3 screen that its sides hid)
     is cut off there (`src/core/object/hud.c`, decompiled for this);
+  - the fight's messages at the edges, as a setting (SCREEN SETTING > HUD MESSAGES, `EDGES` by default,
+    `EDGES`; `a3mx.cfg` `[screen setting] hud_messages`): with EDGES, the combo count and its rating
+    (14 HIT MARVELOUS!!!), FIRST ATTACK, COUNTER HIT, REVERSAL and the like, on either side, and
+    Survival's timer (00'48"18) move out by the margin, away from the middle, so each stands as far in
+    from the 16:9 edge as the game puts it in from the 4:3 picture's (measured on NORMAL: P2's "3HIT
+    GOOD!!" ends 3 pixels in, its underline at the edge; COUNTER HIT 16 in; "5HIT" 30 in; the timer 24
+    in; P1's underline starts at the left edge). A message's blue line still slides in from the side,
+    now the 16:9 one. The messages are the 8-pool's kinds 2 (the count or the message: type 0 player
+    1's, type 1 player 2's), 3 (the rating: its type is the rating, so it goes by the side of the middle
+    it is on) and 4 (LEVEL n SUPER COMBO FINISH, by its side too), in the fight and after the KO (fight
+    steps 3 and 4; fixed in 0.166.0 from Dan's screenshots: the rating, player 2's side and the KO's
+    messages had stayed); `widescreen_edge_shift`. The timer is text, moved toward its own side (it is
+    on the human player's), only while the text passes draw it (`widescreen_hud_text`). The health bars,
+    gauges, portraits and the KO's FINISH stay on the 4:3 picture. Greyed unless SCREEN SIZE is WIDE
+    NATIVE; DEFAULT sets it back to 4:3;
   - the fight's banners (0.99.9): the ROUND banner's band carries on into both margins (its right-end
     cells, `src/core/object/sprite_grid.c`), and the FIGHT FIGHT rows and the KNOCK OUT row get one
     more piece past an end that has reached the 4:3 edge (`src/core/object/sprite_drawers.c`), both
@@ -232,4 +247,4 @@ code (`video/video.h`, `fight/wide_ends.h`, `games/sfa3/src/widescreen.cpp`):
 - **The shape of a native implementation.** One place the drawers ask each frame (their `Wide`
   struct: the margin, each layer's extra scroll, a per-sprite offset that keeps the HUD centred), in
   place of the patch's constants, now that they are all native. With the margin at 0 everything is the
-  original, so parity holds with it off.
+  original, so parity holds with it off.

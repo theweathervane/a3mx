@@ -11,9 +11,16 @@
  *     A3MX_SHADERS_DIR) names another copy.
  * With either missing the picture is shown as it always was, and the log says which and where it looked.
  *
- * The filters are a fixed list: the picture's own look (OFF), five CRTs, four kinds of scanline and two
- * pixel smoothers. Each is one preset from slang-shaders, some with parameters of ours. The names are
- * what SCREEN SETTING shows and what a3mx.cfg holds ([screen setting] filter=). */
+ * The filters (0.166.0, shader_list.c), by category:
+ *   FAVOURITES  the table below, always: the picture's own look (OFF), five CRTs, four kinds of scanline
+ *               and two pixel smoothers, each one preset from slang-shaders, some with parameters of ours;
+ *   then        the catalogue tools/shaders.py makes after the download (<shaders>/a3mx_catalogue.tsv):
+ *               every preset the game could load and build there, by folder (CRT, SCANLINES, HANDHELD,
+ *               NTSC, EDGE SMOOTHING, ...), each named after its file;
+ *   CUSTOM      the player's own *.slangp, in shaders/ beside a3mx.cfg (<configs>/shaders/, its
+ *               subfolders too).
+ * a3mx.cfg holds a favourite by its name ([screen setting] filter=CRT GUEST), any other by its preset's
+ * path (filter=crt/crt-geom-deluxe.slangp; custom:NAME.slangp for one of CUSTOM's). */
 #pragma once
 
 typedef struct {
@@ -37,10 +44,33 @@ static const ShaderFilter SHADER_FILTERS[] = {
     { "XBRZ",        "edge-smoothing/xbrz/xbrz-freescale.slangp", NULL, "xBRZ: smooth pixel edges" },
     { "SCALEFX",     "edge-smoothing/scalefx/scalefx.slangp", NULL, "ScaleFX: smooth pixel edges, truer to the pixel art" },
 };
-#define SHADER_FILTER_COUNT ((int)(sizeof SHADER_FILTERS / sizeof SHADER_FILTERS[0]))
+#define SHADER_BUILTIN_COUNT ((int)(sizeof SHADER_FILTERS / sizeof SHADER_FILTERS[0]))
+
+/* ---------------------------------------------------------------- every filter (shader_list.c) */
+typedef struct {
+    int category;                /* an index for filter_category_name; the list is in category order */
+    char name[64];               /* capitals, as FILTER shows it (long ones are cut short on screen) */
+    char path[1024];             /* the preset: under the shaders folder, or a full path (custom); "" for OFF */
+    const char *params;          /* a favourite's parameters, or NULL */
+    int heavy;                   /* the catalogue says it wants a real GPU */
+    int custom;                  /* the player's own (path is a full path) */
+} FilterEntry;
+void filters_load(void);                     /* reads the catalogue and the player's folder, once (each call after: nothing) */
+int filter_count(void);                      /* every filter; 0 is OFF, 1 - 11 the favourites */
+const FilterEntry *filter_get(int i);        /* NULL past the end */
+int filter_categories(void);
+const char *filter_category_name(int k);
+int filter_category_first(int k);            /* the first filter of category K (they are contiguous) */
+int filter_category_size(int k);
+int filter_find(const char *key);            /* by a3mx.cfg's value (a favourite's name, a path, custom:...); -1 */
+int filter_find_loose(const char *s);        /* --filter: as filter_find, or a favourite by letters and digits only (crt-guest), or a name */
+void filter_key(int i, char *out, size_t n); /* what a3mx.cfg keeps for filter I */
+const char *filters_shaders_dir(void);       /* where the presets are (after filters_load) */
+const char *filters_custom_dir(void);        /* the player's folder for their own ("" if there is none) */
+int filters_catalogued(void);                /* how many came from the catalogue */
 
 #ifndef SHADER_TABLE_ONLY
-extern int rt_filter;                        /* settings.c: the filter chosen (an index above; 0 OFF) */
+extern int rt_filter;                        /* settings.c: the filter chosen (filter_get's index; 0 OFF) */
 extern const char *shader_lib_arg, *shader_dir_arg;   /* main.c: --librashader FILE, --shaders DIR */
 /* ge_gl.c, when a frame is ready to show: draws TEX's top-left SRC_W x SRC_H texels (row 0 at the top)
  * through the chosen filter into the window, letterboxed to 480:272, and returns 1; 0 if there is no
@@ -48,5 +78,8 @@ extern const char *shader_lib_arg, *shader_dir_arg;   /* main.c: --librashader F
  * then draws the picture itself. */
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h);
 void shader_gl_init(void *(*getproc)(const char *), const char *work);
+int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h);   /* --dump-filtered: this frame as filtered */
+int shader_gl_test(const char *list_path, const char *out_path);          /* --filter-test (tools/shaders.py --catalogue) */
+extern int rt_filter_preview;                /* the FILTER screen's preview: the filter shown instead of the setting (-1: none) */
 const char *shader_describe(void);           /* last_run.txt: the filter in use, or why there is none */
 #endif

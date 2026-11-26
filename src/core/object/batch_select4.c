@@ -83,7 +83,7 @@ SFA_FUNC(088CE834, entry_panel_setup) {
 /* (object): with the record at 0x0950FF40's +10 clear, 0x08888EE4; else while +129 is 0, +14 grows by
    10 to 160 with +26 = +14 x 5 / 10, then +129 = 1 and the record's +10 = 2; once +129 is set, +93 =
    whether the record's +10 is not 3. */
-SFA_FUNC(088888E8, grow_14_to_160) {
+SFA_FUNC_WRAPPED(088888E8, grow_14_to_160, pausefilter_panel) {   /* the pause menu's panel (extensions/pausefilter.c) */
     gaddr o = ARG(0), r = 0x0950FF40u;
     uint8_t state = *B(r + 10);
     ARG(1) = r;

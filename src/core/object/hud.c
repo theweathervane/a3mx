@@ -12,6 +12,14 @@
  *   0x0880DF98  elements 1, 2
  *   0x0880DFC8  ten elements (the timer, the score, the win marks ...)
  *
+ * HEALTH GRADIENT OFF (EX. SETTING > EX. DISPLAY; hud_health_solid, extensions/cheats_unlocks.c): each
+ * health bar's fill (element 0x1B4 player 1's, shaded from green at the outer end to yellow F0E000 at the
+ * middle; 0x7F4 player 2's, from that yellow to cyan) is drawn in one colour, its inner (middle) end's:
+ * the PSP's own yellow, as the arcade's solid bars. If the game changes the fill's colours (a flash) the
+ * solid fill follows its inner end. The lost part (red, 0x1F4 / 0x834) and the empty bar (0x274 / 0x874)
+ * stay as they are. Only the drawing changes. Any other change to the health bars' colours (a gradient
+ * by ISM, ...) must check hud_health_solid() first and leave the bars solid while it is on: OFF wins.
+ *
  * WIDE NATIVE: the HUD stays on the 4:3 picture, so what its pictures and rectangles have past the 4:3
  * picture's sides (the super bars' ends: art longer than the 4:3 screen, hidden there by its sides) is
  * cut off at x 0 and 384 (sprite_grid.c's x clip for pictures; the rectangles here). Only the drawing
@@ -21,6 +29,8 @@
 
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_clip_x;                     /* sprite_grid.c */
+int hud_health_solid(void);                         /* HEALTH GRADIENT OFF (above) */
+int hud_guard_off(int side);                        /* EX. FIGHTERS GUARD OFF (part_guard; extensions/cheats_unlocks.c) */
 extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 
 #include "../guest_mem.h"
@@ -107,6 +117,7 @@ static uint32_t mix(uint32_t a, uint32_t b, float t) {
     }
     return out;
 }
+static int solid_from = -1;                         /* HEALTH GRADIENT OFF: the side (1 right, 0 left) a fill takes its one colour from */
 static void draw_rect(Cpu *c, gaddr e, uint32_t alpha) {
     alpha &= 0xFF;
     int16_t y0 = (int16_t)(0xF0 - S16(e + E_Y));
@@ -121,6 +132,8 @@ static void draw_rect(Cpu *c, gaddr e, uint32_t alpha) {
     float fy1 = (float)bottom; fy1 = fy1 * sy; fy1 = fy1 + oy;
     int32_t X0 = CVT_TRUNC(NULL, fx0), X1 = CVT_TRUNC(NULL, fx1), Y0 = CVT_TRUNC(NULL, fy0), Y1 = CVT_TRUNC(NULL, fy1);
     uint32_t col[4] = { corner(e, 0, alpha), corner(e, 1, alpha), corner(e, 2, alpha), corner(e, 3, alpha) };
+    if (solid_from == 1) { col[0] = col[1]; col[3] = col[2]; }          /* player 1's fill: its right (inner) end */
+    else if (solid_from == 0) { col[1] = col[0]; col[2] = col[3]; }     /* player 2's: its left */
     if (rt_widescreen) {   /* WIDE NATIVE: cut at the 4:3 picture's sides, the shading with it */
         float lo, hi; hud_sides(&lo, &hi);
         int32_t L = (int32_t)lo, R = (int32_t)hi;
@@ -149,9 +162,12 @@ static void draw_rect(Cpu *c, gaddr e, uint32_t alpha) {
 /* 0x0880DC08: the health bars */
 static void part_bars(Cpu *c, gaddr o) {
     draw_element(c, o + 0x234);
-    draw_rect(c, o + 0x274, 0x80); draw_rect(c, o + 0x1F4, 0xFF); draw_rect(c, o + 0x1B4, 0xFF);
+    int solid = hud_health_solid();
+    draw_rect(c, o + 0x274, 0x80); draw_rect(c, o + 0x1F4, 0xFF);
+    solid_from = solid ? 1 : -1; draw_rect(c, o + 0x1B4, 0xFF); solid_from = -1;
     draw_element(c, o + 0x8B4);
-    draw_rect(c, o + 0x874, 0x80); draw_rect(c, o + 0x834, 0xFF); draw_rect(c, o + 0x7F4, 0xFF);
+    draw_rect(c, o + 0x874, 0x80); draw_rect(c, o + 0x834, 0xFF);
+    solid_from = solid ? 0 : -1; draw_rect(c, o + 0x7F4, 0xFF); solid_from = -1;
     draw_element(c, o + 0x34);
 }
 
@@ -175,16 +191,17 @@ static void part_bottom(Cpu *c, gaddr o) {
 static int can_guard(gaddr f) {
     return (int8_t)*B(f + 313) == 0 && !(*W(f + 792) & GUARD_STATES);
 }
+/* EX. FIGHTERS > GUARD OFF (hud_guard_off): that side's marks, either kind, aren't drawn */
 static void part_guard(Cpu *c, gaddr o) {
-    int any = 0;
+    int any = 0, off1 = hud_guard_off(0), off2 = hud_guard_off(1);
     if (S16(BATTLE + 56) == 0 && can_guard(FIGHTER_1)) {
-        draw_element(c, o + 0x6F4); draw_element(c, o + 0x6B4); draw_element(c, o + 0x634); draw_element(c, o + 0x734);
+        if (!off1) { draw_element(c, o + 0x6F4); draw_element(c, o + 0x6B4); draw_element(c, o + 0x634); draw_element(c, o + 0x734); }
         any = 1;
-    } else draw_element(c, o + 0x674);
+    } else if (!off1) draw_element(c, o + 0x674);
     if (S16(BATTLE + 56) == 0 && can_guard(FIGHTER_2)) {
-        draw_element(c, o + 0xD34); draw_element(c, o + 0xCF4); draw_element(c, o + 0xC74); draw_element(c, o + 0xD74);
+        if (!off2) { draw_element(c, o + 0xD34); draw_element(c, o + 0xCF4); draw_element(c, o + 0xC74); draw_element(c, o + 0xD74); }
         any = 1;
-    } else draw_element(c, o + 0xCB4);
+    } else if (!off2) draw_element(c, o + 0xCB4);
     if ((int8_t)*B(FIGHTER_1 + 313) != 0 && (int8_t)*B(FIGHTER_2 + 313) != 0) return;
     if ((*W(FIGHTER_1 + 792) & GUARD_STATES) && (*W(FIGHTER_2 + 792) & GUARD_STATES)) return;
     if (any) draw_rect(c, o + 0xF4, 0xFF);

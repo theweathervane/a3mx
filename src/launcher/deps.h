@@ -14,7 +14,15 @@ struct Dep {
     bool system = false;         /* not downloaded: has to be on the system (Linux, macOS): cmake, ninja, clang, python3 */
     bool optional = false;       /* the build and the game work without it (the FILTER setting's shaders and library) */
     std::string detail;          /* system: where it was found, or how to get it */
+    std::string found;           /* librashader: the library found (where_librashader) */
+    bool prebuilt = false;       /* librashader: the pipelines publish one for this system (downloaded, no Rust needed) */
 };
+
+/* FILTER's library: the places it is accepted, best first (the tools folder's librashader/, the tools
+   folder itself, the checkout, the build folders beside the game, and beside the launcher), and the
+   first of them that has it ("" none). */
+std::vector<std::string> librashader_places(const std::string &root, const std::string &tools);
+std::string where_librashader(const std::string &root, const std::string &tools);
 
 /* ROOT: the checkout. TOOLS: the tools folder ("" = ROOT/.tools). err: why the list is empty. */
 std::vector<Dep> deps_list(const std::string &root, const std::string &tools, std::string &err);

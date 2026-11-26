@@ -18,8 +18,10 @@
 # Built once and kept: SDL3 (tools/sdl3.py, compiled), librashader (tools/librashader.py, compiled with
 # Rust) and the FILTER shaders (tools/shaders.py, downloaded) live in .tools/ and are cached per system,
 # keyed on pins.json and the scripts, so a pipeline only makes again what has changed. Each script
-# does nothing when its folder is already right. librashader goes into each download; if its build
-# fails the pipeline carries on and the download goes out without it (FILTER then does nothing).
+# does nothing when its folder is already right. librashader (OpenGL only) is downloaded as
+# librashader:publish built it once (pins.json, its "prebuilt" URL and SHA-256), or built with Rust
+# where there is none; it goes into each download. Without it a release fails (--require-librashader);
+# any other pipeline carries on and its download goes out without it (FILTER then does nothing).
 #
 # Runners: Linux uses a Docker image; Windows and macOS use GitLab's hosted runners
 # (saas-windows-medium-amd64, saas-macos-medium-m1) or your own with those tags.
@@ -78,12 +80,12 @@ build:linux-x64:
   script:
     - *stamp-nightly
     - python3 tools/sdl3.py
-    # Rust only when librashader has to be built (not in the cache yet, or its pin changed)
+    # librashader: downloaded if published (pins.json), else Rust, only when it has to be built
     - |
-      if ! python3 tools/librashader.py --check; then
+      if ! python3 tools/librashader.py --check && ! python3 tools/librashader.py; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
         . "$HOME/.cargo/env"
-        python3 tools/librashader.py || echo "librashader was not built: the download goes out without it"
+        python3 tools/librashader.py || echo "librashader was not built: the download goes out without it (a release fails)"
       fi
     - python3 tools/shaders.py
     - cmake --preset ci
@@ -91,7 +93,7 @@ build:linux-x64:
     - ctest --preset ci
     - cmake --preset ci -B build-ci-noext -DA3MX_EXTENSIONS=OFF
     - cmake --build build-ci-noext
-    - python3 tools/package_launcher.py --system linux-x64 --launcher build-ci/a3mx-launcher --out dist --standalone --librashader .tools/librashader
+    - python3 tools/package_launcher.py --system linux-x64 --launcher build-ci/a3mx-launcher --out dist --standalone --librashader .tools/librashader ${CI_COMMIT_TAG:+--require-librashader}
   artifacts:
     name: "a3mx-linux-x64-$CI_COMMIT_SHORT_SHA"
     paths: [dist/]
@@ -114,6 +116,7 @@ build:windows-x64:
     # librashader needs Rust (and the runner's Visual Studio build tools): fetched only when it has to be built
     - |
       python tools/librashader.py --check
+      if ($LASTEXITCODE -ne 0) { python tools/librashader.py }     # the published one, if pins.json has it
       if ($LASTEXITCODE -ne 0) {
         if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
           Invoke-WebRequest https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
@@ -121,7 +124,7 @@ build:windows-x64:
           $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
         }
         python tools/librashader.py
-        if ($LASTEXITCODE -ne 0) { Write-Host "librashader was not built: the download goes out without it"; $global:LASTEXITCODE = 0 }
+        if ($LASTEXITCODE -ne 0) { Write-Host "librashader was not built: the download goes out without it (a release fails)"; $global:LASTEXITCODE = 0 }
       }
     - python tools/shaders.py
     - cmake --preset ci
@@ -129,7 +132,10 @@ build:windows-x64:
     - ctest --preset ci
     - cmake --preset ci -B build-ci-noext -DA3MX_EXTENSIONS=OFF
     - cmake --build build-ci-noext
-    - python tools/package_launcher.py --system windows-x64 --launcher build-ci/a3mx-launcher.exe --out dist --standalone --librashader .tools/librashader
+    - |
+      $req = @(); if ($env:CI_COMMIT_TAG) { $req = @("--require-librashader") }
+      python tools/package_launcher.py --system windows-x64 --launcher build-ci/a3mx-launcher.exe --out dist --standalone --librashader .tools/librashader @req
+      if ($LASTEXITCODE -ne 0) { exit 1 }
   artifacts:
     name: "a3mx-windows-x64-$CI_COMMIT_SHORT_SHA"
     paths: [dist/]
@@ -147,7 +153,7 @@ build:macos-arm64:
     - export PATH="$PWD/.tools/ninja-macos:$PWD/.tools/cmake-macos/CMake.app/Contents/bin:$PATH"
     - python3 tools/sdl3.py
     - |
-      if ! python3 tools/librashader.py --check; then
+      if ! python3 tools/librashader.py --check && ! python3 tools/librashader.py; then
         command -v cargo > /dev/null || { curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal; . "$HOME/.cargo/env"; }
         python3 tools/librashader.py || echo "librashader was not built: the download goes out without it"
       fi
@@ -172,6 +178,55 @@ build:macos-arm64:
     name: "a3mx-macos-arm64-$CI_COMMIT_SHORT_SHA"
     paths: [dist/]
     expire_in: 2 weeks
+
+# librashader, published (run by hand: Build > Pipelines > New pipeline, then play this job): built once
+# from the pinned source with only the OpenGL runtime, put in the package registry as
+#   $LR_URL/librashader-<system>.dll / .so
+# and its SHA-256 printed. That SHA-256 and URL go in pins.json (sources "librashader", "prebuilt"),
+# from then on what tools/librashader.py, the launcher and these jobs download instead of building.
+# A published file is never replaced (the registry keeps both; pins.json names the one that counts).
+.lr-publish: &lr-publish
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api"
+      when: manual
+  allow_failure: true
+  variables:
+    LR_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/librashader/0.12.1-opengl"
+  artifacts:
+    paths: [lr-out/]
+    expire_in: 4 weeks
+
+librashader:publish-linux-x64:
+  <<: *lr-publish
+  image: debian:bookworm
+  script:
+    - apt-get update -q && apt-get install -y -q git curl python3 build-essential
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+    - . "$HOME/.cargo/env"
+    - python3 tools/librashader.py --build --out lr-out
+    - |
+      curl --fail --silent --show-error --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file lr-out/librashader.so "$LR_URL/librashader-linux-x64.so"
+    - |
+      echo "pins.json, prebuilt linux-x64: url $LR_URL/librashader-linux-x64.so sha256 $(sha256sum lr-out/librashader.so | cut -d ' ' -f 1)"
+
+librashader:publish-windows-x64:
+  <<: *lr-publish
+  tags: [saas-windows-medium-amd64]
+  script:
+    - cmd /c "build.cmd --tools-only"
+    - $env:PATH = "$PWD\.tools\python;$env:PATH"
+    - Invoke-WebRequest https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+    - .\rustup-init.exe -y --profile minimal
+    - $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+    - python tools/librashader.py --build --out lr-out
+    - if ($LASTEXITCODE -ne 0) { exit 1 }
+    - |
+      Invoke-RestMethod -Method Put -Headers @{ "JOB-TOKEN" = $env:CI_JOB_TOKEN } -InFile lr-out\librashader.dll -Uri "$env:LR_URL/librashader-windows-x64.dll"
+    - |
+      $sha = (Get-FileHash lr-out\librashader.dll -Algorithm SHA256).Hash.ToLower()
+    - |
+      Write-Host "pins.json, prebuilt windows-x64: url $env:LR_URL/librashader-windows-x64.dll sha256 $sha"
 
 # A tag v<VERSION> on main: the downloads go to the project's package registry and a release is made
 # with notes from CHANGELOG.md. Windows and Linux must have built; macOS's files are added if its job passed.

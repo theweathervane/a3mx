@@ -22,6 +22,7 @@
  *
  * Restarting a task frees its thread's stack and fiber (kernel.c), so repeated F2 leaks nothing. */
 #include "rt.h"
+#include "ext_features.h"
 
 #define CUR_TASK   0x08E75C40u
 #define TASK0      0x08AD8FE8u
@@ -78,4 +79,11 @@ static int frame_wait(Cpu *c) {
     } else if (requested && !menu_seen) requested = 0;
     return 0;
 }
-int quitkey_task_wait(Cpu *c, uint32_t a0, int after) { (void)a0; return after ? 0 : frame_wait(c); }
+/* (on with any extension: the FILTER screen's preview runs here too, filterpreview.c) */
+int filterpreview_task_wait(Cpu *c);
+int quitkey_task_wait(Cpu *c, uint32_t a0, int after) {
+    (void)a0;
+    if (after) return 0;
+    if (FEATURE(SHADERS) && filterpreview_task_wait(c)) return 1;
+    return FEATURE(QUITKEY) ? frame_wait(c) : 0;
+}

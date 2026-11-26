@@ -48,8 +48,9 @@ SFA_FUNC(088DF10C, net_matching_for_record) {
 /* (game, _, record, confirm): the pause menu's texts: the title by the first side paused (the game's
    +89 bits 0 - 2: 0x089FE360 / 0x089FE36C / 0x089FE378 at 0x90, 0x58); then the four rows of
    0x08A0F96C (text, font, x, y; 12 bytes) with the chosen one (+8) lit (3, else 9); or, to confirm, the
-   question 0x08A0F960 (its byte 9 set to 0x9C) and its two answers 0x089FE384 / 0x089FE388 lit by +8. */
-SFA_FUNC(08834FF0, pause_menu_texts) {
+   question 0x08A0F960 (its byte 9 set to 0x9C) and its two answers 0x089FE384 / 0x089FE388 lit by +8.
+   Wrapped by pausefilter.c: the pause menu's FILTER row (the shaders feature). */
+SFA_FUNC_WRAPPED(08834FF0, pause_menu_texts, screensetting_pause_texts) {
     gaddr g = ARG(0), rec = ARG(2);
     uint32_t confirm = ARG(3);
     gaddr s16 = c->r[16], s17 = c->r[17], s18 = c->r[18];

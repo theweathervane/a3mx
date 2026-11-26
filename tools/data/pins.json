@@ -79,7 +79,7 @@
     },
     {
       "id": "librashader",
-      "name": "librashader (the FILTER setting's shader library, MPL-2.0; built from source, not downloaded built)",
+      "name": "librashader (the FILTER setting's shader library, MPL-2.0; built from this source by the pipelines, OpenGL only)",
       "repo": "https://github.com/SnowflakePowered/librashader",
       "commit": "07ac790cdb9826f37cf8e1daf5011f03e3c4daa7",
       "files": {
@@ -87,7 +87,18 @@
         "include/librashader.h": "5d478897c391af3f60015810b67785ae1a286d262a845485276e36ded9f21e62",
         "include/librashader_ld.h": "bcffcbc854afb287c9f935c1a0e3b569f5e6775ef85914bd7f7025ad1f6bde33"
       },
-      "used_by": "tools/librashader.py, which builds the library from that commit with Rust when asked (the pipelines do, once, and keep it); the same tag as third_party/librashader/'s headers"
+      "prebuilt": {
+        "_about": "the library built from this commit with only the OpenGL runtime by the pipeline's librashader:publish jobs and put in the project's package registry: its URL and the SHA-256 of that file, per system. Empty until published: tools/librashader.py and the launcher then build it with Rust",
+        "windows-x64": {
+          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-opengl/librashader-windows-x64.dll",
+          "sha256": ""
+        },
+        "linux-x64": {
+          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-opengl/librashader-linux-x64.so",
+          "sha256": ""
+        }
+      },
+      "used_by": "tools/librashader.py, which downloads the published library (prebuilt, checked against its SHA-256) or builds it from that commit with Rust (OpenGL only); the same tag as third_party/librashader/'s headers"
     }
   ],
   "vendored": [

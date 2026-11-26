@@ -10,12 +10,20 @@ frame for frame whatever you choose. They only change when you *see* each frame.
 | VSYNC | ON, OFF | ON | `vsync=ON` |
 | FRAME TIMING | AUTO, SMOOTH, ORIGINAL | AUTO | `frame_timing=AUTO` |
 | FILTER | OFF and eleven shaders ([below](#filter)) | OFF | `filter=OFF` |
+| HUD MESSAGES | 4:3, EDGES (WIDE NATIVE only, [WIDESCREEN.md](WIDESCREEN.md)) | EDGES | `hud_messages=EDGES` |
 
 Both apply as soon as you change them, and are saved when you leave SCREEN SETTING. On a display whose
 driver can't sync to the monitor at all, VSYNC is greyed out (the log says so); your saved setting is
 kept. Both work the same with the software renderer as with the GPU one. DEFAULT sets them back to ON
 and AUTO along with the game's own settings, and SCREEN SIZE to WIDE NATIVE. For one run only, `--frame-timing auto`, `smooth` or
 `original` on the command line overrides FRAME TIMING.
+
+**HUD MESSAGES** (below FILTER) only does something in WIDE NATIVE, and is greyed out at the other
+screen sizes. **EDGES** moves the fight's messages (the combo count and its rating, LEVEL n SUPER COMBO
+FINISH, FIRST ATTACK, COUNTER HIT, REVERSAL ...), on both players' sides and after the KO too, and
+Survival's timer out to the 16:9 screen's edges, each toward its own side and as far in from the edge
+as it is on the 4:3 picture; **4:3** leaves them where the game puts them. The health bars, gauges and
+portraits stay where they are either way. DEFAULT sets it back to 4:3.
 
 **Which one you're getting** is shown at the right end of the MODE MENU's bar: **ORIGINAL** in a red
 box, **SMOOTH** in a blue one. If you chose SMOOTH or ORIGINAL, that is always what it says. With AUTO
@@ -27,11 +35,52 @@ again only when you come back to the MODE MENU or leave SCREEN SETTING; if nothi
 changed (VSYNC, the monitor's rate), it keeps its choice. It never changes while a menu is on screen
 or during a fight.
 
+## HEALTH GRADIENT
+
+OPTION MODE > EX. SETTING > EX. DISPLAY > **HEALTH GRADIENT** (not SCREEN SETTING, which is full):
+**ON** (the default) draws the health bars as the PSP does, shaded from green (player 1) or cyan
+(player 2) at the outer end to yellow at the middle; **OFF** draws each bar's remaining health in one
+solid colour, the yellow of the PSP's own bars at the middle, as the arcade game and the series before
+Alpha 3 have it. The part just lost (red) and the empty bar look as they always do; if the game makes
+the bar flash, the solid fill follows the colour of its middle end. It applies at once, is kept in
+`a3mx.cfg` (`[ex setting] health_gradient=OFF`), and the page's DEFAULT sets it back to ON.
+
+**OFF wins** over any other change to the health bars' colours, now or later (a gradient by ISM, for
+example): such a change must ask `hud_health_solid()` (`src/extensions/cheats_unlocks.c`, used by
+`src/core/object/hud.c`) first and leave the bars solid while it says so.
+
 ## FILTER
 
 SCREEN SETTING > FILTER (0.60.0) draws the finished picture through one of RetroArch's shaders. It is
 part of the **Shaders** extension (the launcher's Extensions tab), on by default; with it off the row
 isn't there.
+
+**The FILTER screen** (0.166.0): Cross on the FILTER row (the Cross symbol after its name says so)
+opens a screen of its own, laid out like EX. SETTING's pages. One category at a time (its name between
+EX. SETTING's side arrows, its number bottom right): **L / R** (or left / right) change the category,
+**up / down** scroll its list, nine rows at a time (held: they repeat; SCORE RANKING's up / down arrows
+under the list show when there are more rows above or below), **Cross / START** chooses the filter under
+the cursor: it applies at once and you are back on SCREEN SETTING (`>` marks the one in use). **Circle**
+goes back without changing anything. Under the list: what the filter is (its description or its
+preset's path), HEAVY when it wants a strong GPU, or why it can't be shown. A filter whose preset file
+is missing is greyed and can't be chosen. Left / right on the FILTER row itself still change the filter,
+within its category.
+
+**PREVIEW** (the row under FILTER, Cross): a real fight, HUD and all, to see the filter in use on the
+health bars and gauges: two random fighters (random ISM and colours) on a random stage, both played by
+the computer, one round. Your buttons do nothing in it except **Circle**, which fades the fight to black
+and goes straight back to SCREEN SETTING; when the round ends (after the KO or the time) it goes back
+the same way by itself. SCREEN SETTING fades in where you left it, cursor on PREVIEW, with OPTION
+MODE's music. It is Free Battle underneath
+(its menus answered for you), so nothing is saved or recorded: no records, unlocks or saves change.
+
+**The pause menu** (in a fight, whoever paused: 1P, 2P or 3P) has a FILTER row too, between BUTTON
+CONFIG and MODE MENU. Cross on it opens the same FILTER screen over the paused fight, which shows
+through its panel: Cross chooses (kept at once), Circle cancels, both back to the pause menu. The game
+is paused, so a heavy preset taking a moment to build is fine there. On SCREEN SETTING, a filter name
+too long for the FILTER row scrolls while the row is highlighted.
+
+**Categories.** **FAVOURITES** first, the eleven below (tuned for this game) and OFF:
 
 | FILTER | What it is |
 |---|---|
@@ -46,31 +95,64 @@ isn't there.
 | XBRZ | xBRZ: smooth pixel edges |
 | SCALEFX | ScaleFX: smooth pixel edges, truer to the pixel art |
 
-It applies as you change it and is kept in `a3mx.cfg` (`[screen setting] filter=CRT GUEST`); DEFAULT
-sets it back to OFF. `--filter crt-guest` chooses one for a single run without saving it.
+Then every other preset of libretro's slang-shaders that the game could load and build, by the folder
+it is in: CRT, SCANLINES, HANDHELD, NTSC, PAL, VHS, EDGE SMOOTHING, PIXEL ART, INTERPOLATION,
+ANTI-ALIASING, PRESETS, BORDER, BLUR, ... (858 presets in 28 categories at the pinned commit), each
+named after its file. They come from the **catalogue** `tools/shaders.py` makes after downloading the
+shaders (`.tools/slang-shaders/a3mx_catalogue.tsv`): it has the game load, build and draw each preset
+for a few frames (`a3mx --filter-test`, a small window for a few minutes) and leaves out any that fails.
+Never offered: `bezel/` (Mega Bezel needs its own layout and textures), `hdr/` (an HDR display),
+`subframe-bfi/` (subframes, not drawn yet), `test/`, `spec/`, `include/`, `stereoscopic-3d/` and
+`downsample/`; the download doesn't even unpack most of those. If the shaders were downloaded before the
+game was built, there's no catalogue yet: `python tools/shaders.py --catalogue` makes it (`--game EXE`,
+`--librashader FILE` if they aren't where it looks). Without a catalogue FILTER offers the favourites.
+
+**CUSTOM**, last: your own presets. Put `*.slangp` files (with the shaders they use) in a `shaders`
+folder beside `a3mx.cfg`, that is in your configs folder (`%APPDATA%\a3mx\configs\shaders\` on
+Windows; the launcher's Paths tab says where configs are); subfolders are read too. Each is named after
+its file. A preset can use the downloaded ones by a relative path (`../../...`) or have its own copies. The
+`shaders` folder isn't made for you: create it. It is read when the game starts, so a preset added
+while it runs shows after a restart.
+
+**ReShade** is not part of this: it is a different shader system (`.fx` files) that hooks the graphics
+API from outside the game. If you want it, install ReShade for `a3mx.exe` (OpenGL) as for any game; it
+works over the window whatever FILTER is set to.
+
+FILTER applies as you change it and is kept in `a3mx.cfg`: a favourite by its name (`[screen setting]
+filter=CRT GUEST`), any other by its preset's path (`filter=crt/crt-geom-deluxe.slangp`, yours as
+`filter=custom:NAME.slangp`); one that isn't offered this run (its catalogue or file gone) is kept as it
+was and FILTER is OFF meanwhile. DEFAULT sets it back to OFF. `--filter crt-guest` (or a path, or a
+name) chooses one for a single run without saving it.
 
 **It needs two things that are not part of this project**, and without either the picture is simply
 shown plain (the log and `last_run.txt`'s `filter=` line say which is missing and where it looked):
 
 1. **The shaders:** libretro's slang-shaders. The launcher's **Dependencies** tab has a **Download the
    FILTER shaders** button (or `python tools/shaders.py`): the commit pinned in `tools/data/pins.json`,
-   about 85 MB, into `.tools/slang-shaders/`, kept only if the presets match their SHA-256.
+   about 55 MB unpacked, into `.tools/slang-shaders/`, kept only if the presets match their SHA-256;
+   then the catalogue (above).
 2. **The library:** [librashader](https://github.com/SnowflakePowered/librashader) (MPL-2.0),
    `librashader.dll` on Windows, `librashader.dylib` on macOS, `librashader.so` on Linux, in
-   `.tools/librashader/` (or beside `a3mx.exe`). **A release's download has it already**: the
-   pipeline builds it from librashader's source at the commit pinned in `pins.json`. From a clone,
-   the launcher's **Dependencies > Build librashader...** builds it the same way, once (or
-   `build.cmd --librashader`, or `python tools/librashader.py`). It needs [Rust](https://rustup.rs)
-   1.88 or later; the launcher offers to install it (rustup, for your user only), and on Windows
-   Microsoft's C++ build tools ("Build Tools for Visual Studio", "Desktop development with C++"),
-   which it checks for and links to but doesn't install. A source folder you unpacked into `.tools/`
-   (`librashader-*`) is used if it is the pinned one. It takes ten minutes or more; `--clean` keeps
-   the result. You can also put a library you have there yourself. It is never downloaded
-   ready-built.
+   `.tools/librashader/` (also found in `.tools/` itself, in the checkout, beside `a3mx.exe` in
+   `build/`, or beside the launcher). Only the OpenGL runtime is built in (no Direct3D 9 / D3DX9_43
+   needed). **A release's download has it already**, and a release can't go out without it. From a
+   clone, the launcher's **Dependencies > Get librashader...** (or `build.cmd --librashader`, or
+   `python tools/librashader.py`) downloads the one the project's pipeline built from librashader's
+   source at the commit pinned in `pins.json` (its `prebuilt` URL, checked against its SHA-256),
+   where one is published for your system. Where there is none it is built here instead, once: that
+   needs [Rust](https://rustup.rs) 1.88 or later (the launcher links to rustup.rs, or installs Rust
+   into `.tools/rust/` for you: nothing in your home folder or PATH) and, on Windows, Microsoft's
+   C++ build tools ("Build Tools for Visual Studio", "Desktop development with C++"), which it
+   checks for and links to but doesn't install. A source folder you unpacked into `.tools/`
+   (`librashader-*`) is used if it is the pinned one. Building takes ten minutes or more; `--clean`
+   keeps the result. You can also put a library you have there yourself.
 
 FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL).
 The shader sees the picture at the game's own 480 x 272, so the scanlines are the game's rows
-whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h`.
+whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h` and
+`shader_list.c`, the screen in `src/extensions/filterscreen.c`, the preview in `filterpreview.c`, the
+pause menu's row in `pausefilter.c`. `--dump-filtered` makes `--dump` save the picture as the filter
+drew it (screenshots).
 Tried by the maintainer on Windows with a library built locally (2026-11); not yet on Linux or macOS.
 
 ## VSYNC

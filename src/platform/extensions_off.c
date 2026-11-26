@@ -15,6 +15,9 @@ int rt_vsync = 1;                        /* host_sdl.c */
 int rt_frame_timing = 2;                 /* pacing.c: AUTO */
 int rt_filter;                           /* shader_gl.c: OFF */
 int rt_virtual_psps = 1;                 /* hle_net.c: the network modes as a PSP has them */
+int hud_health_solid(void) { return 0; } /* object/hud.c: the PSP's shaded health bars */
+int hud_guard_off(int side) { (void)side; return 0; }   /* object/hud.c: the guard gauges as the game has them */
+uint32_t filterpreview_pad(int i, uint32_t raw) { (void)i; return raw; }   /* main.c: no FILTER preview */
 int rt_unlock_blocked;                   /* unlocks.h: nothing barred beyond the save */
 int rt_human[3] = { 1, -1, -1 };         /* --p2 / --p3: no effect */
 int rt_pads_forced;                      /* --pads: no effect */

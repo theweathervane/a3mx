@@ -12,8 +12,9 @@
  *                SHA-256 and where it goes, and is downloaded only after you agree
  *   Inputs       bring your own device: for each of four players, keyboard keys and a controller; its
  *                buttons and Test in the Configure window (configs/inputs.cfg, read when the game starts)
- *   Extensions   every extension as a feature of its own (src/platform/ext_features.h): all off is the
- *                PSP game as it was. Widescreen and Stage Extensions are here
+ *   Extensions   PSP original (no extension at all), and the three extensions switched outside the
+ *                game: Enhanced saves, Extra menus, Local multiplayer (src/platform/ext_features.h). The
+ *                rest are in the game's EX. SETTING (--features ...,settings)
  *   Build/Run    preset, extract again, tests; full screen, log level, renderer, resolution, GPU, extra
  *                options; Run (build if needed, then play) or Build; Stop ends a build
  *   About        the version, Report a bug (a new issue, filled in), Request a feature, the project's pages, licences
@@ -246,7 +247,8 @@ struct Settings {
     bool extract = false, tests = false, run = true;
     bool art_pack = false;          /* one go: tools/build.py --art-pack */
     bool fullscreen = true;
-    bool feature[FEAT_COUNT];       /* the Extensions tab: --features (ext_features.h) */
+    bool feature[FEAT_COUNT];       /* the Extensions tab: --features (ext_features.h); only the launcher's are used */
+    bool psp_original = false;      /* the Extensions tab's "PSP original": no extension at all (--features none) */
     int log_level = 0;              /* OFF */
     int renderer = 0;               /* an index into RENDERERS (saved by its --renderer name) */
     int scale = 0;                  /* 0: auto, else --scale N */
@@ -301,11 +303,11 @@ static void settings_load(Settings &s, const std::string &path) {
         else if (k == "console_h" && n >= 60) s.console_h = n;
         else if (k == "win_w" && n >= 400) s.win_w = n;
         else if (k == "win_h" && n >= 200) s.win_h = n;
-        else if (k.compare(0, 8, "feature.") == 0) { for (int f = 0; f < FEAT_COUNT; f++) if (k.substr(8) == FEATURES[f].name) s.feature[f] = n != 0; }
-        /* before 0.60.0: Extensions (all or none), the widescreen patch, Custom Assets */
-        else if (k == "extensions" && n == 0) { for (int f = 0; f < FEAT_COUNT; f++) s.feature[f] = false; }
-        else if (k == "widescreen" && n == 0) s.feature[FEAT_WIDESCREEN] = false;
-        else if (k == "custom_assets" && n != 0) s.feature[FEAT_STAGE_EXT] = true;
+        else if (k == "psp_original") s.psp_original = n != 0;
+        /* (since 0.165.0 only the launcher's three are read: the rest are switched in EX. SETTING) */
+        else if (k.compare(0, 8, "feature.") == 0) { for (int f = 0; f < FEAT_COUNT; f++) if (FEATURES[f].where == WHERE_LAUNCHER && k.substr(8) == FEATURES[f].name) s.feature[f] = n != 0; }
+        /* before 0.60.0: Extensions (all or none) */
+        else if (k == "extensions" && n == 0) s.psp_original = true;
     }
 }
 static void settings_save(const Settings &s, const std::string &path) {
@@ -316,7 +318,8 @@ static void settings_save(const Settings &s, const std::string &path) {
     t += "tests=" + std::to_string(s.tests) + "\n";
     t += "run=" + std::to_string(s.run) + "\n";
     t += "fullscreen=" + std::to_string(s.fullscreen) + "\n";
-    for (int f = 0; f < FEAT_COUNT; f++) t += std::string("feature.") + FEATURES[f].name + "=" + std::to_string(s.feature[f]) + "\n";
+    t += "psp_original=" + std::to_string(s.psp_original) + "\n";
+    for (int f = 0; f < FEAT_COUNT; f++) if (FEATURES[f].where == WHERE_LAUNCHER) t += std::string("feature.") + FEATURES[f].name + "=" + std::to_string(s.feature[f]) + "\n";
     t += "log_level=" + std::to_string(s.log_level) + "\n";
     t += std::string("renderer=") + RENDERERS[s.renderer].arg + "\n";
     t += "scale=" + std::to_string(s.scale) + "\n";
@@ -550,14 +553,17 @@ struct App {
     }
     std::string tools_dir() const { return set.tools_dir.empty() ? join(home_dir(), ".tools") : set.tools_dir; }
     std::string controls_path() const { return join(user_dir("configs"), "inputs.cfg"); }
-    /* --features: the ticked ones by name, "none" if none (then the game is the PSP program alone) */
+    /* --features: "none" for the PSP original; otherwise the launcher's three that are ticked, and
+       "settings": every other extension as the game's EX. SETTING has it (a3mx.cfg) */
     std::string features_arg() const {
+        if (set.psp_original) return "none";
         std::string l;
         for (int f = 0; f < FEAT_COUNT; f++) {
+            if (FEATURES[f].where != WHERE_LAUNCHER) continue;
             bool on = set.feature[f] && (FEATURES[f].needs < 0 || set.feature[FEATURES[f].needs]);
-            if (on) l += (l.empty() ? "" : ",") + std::string(FEATURES[f].name);
+            if (on) l += std::string(FEATURES[f].name) + ",";
         }
-        return l.empty() ? "none" : l;
+        return l + "settings";
     }
     /* the game the button starts: beside the launcher, or the one build.py builds for the preset */
     std::string run_exe() const {
@@ -663,17 +669,12 @@ struct App {
         if (!set.saves_dir.empty()) { game.push_back("--dir-saves"); game.push_back(set.saves_dir); }
         if (!set.configs_dir.empty()) { game.push_back("--dir-configs"); game.push_back(set.configs_dir); }
         if (!set.logs_dir.empty()) { game.push_back("--dir-logs"); game.push_back(set.logs_dir); }
-        if (!set.tools_dir.empty()) {         /* FILTER's shaders and library, when the tools aren't in .tools beside the game */
+        if (!set.tools_dir.empty()) {         /* FILTER's shaders, when the tools aren't in .tools beside the game */
             game.push_back("--shaders"); game.push_back(join(set.tools_dir, "slang-shaders"));
-            std::string lib = join(join(set.tools_dir, "librashader"),
-#if defined(_WIN32)
-                                   "librashader.dll");
-#elif defined(__APPLE__)
-                                   "librashader.dylib");
-#else
-                                   "librashader.so");
-#endif
-            if (is_file(lib)) { game.push_back("--librashader"); game.push_back(lib); }
+        }
+        {   /* FILTER's library, wherever the Dependencies tab found it (deps.cpp: librashader_places) */
+            std::string lib = where_librashader(root, set.tools_dir);
+            if (!lib.empty()) { game.push_back("--librashader"); game.push_back(lib); }
         }
         game.push_back("--log-level"); game.push_back(LOG_ARGS[set.log_level]);
         if (set.renderer != 0) { game.push_back("--renderer"); game.push_back(RENDERERS[set.renderer].arg); }
@@ -831,8 +832,11 @@ struct App {
             if (u) home = join(u, ".cargo");
         }
         std::string c = home.empty() ? std::string() : join(join(home, "bin"), exe);
-        return !c.empty() && is_file(c) ? c : std::string();
+        if (!c.empty() && is_file(c)) return c;
+        c = join(join(join(join(tools_root_for_rust, "rust"), "cargo"), "bin"), exe);   /* installed into the tools folder (tools/librashader.py) */
+        return is_file(c) ? c : std::string();
     }
+    static inline std::string tools_root_for_rust;   /* the tools folder, for find_cargo (set by check_rust) */
     /* Windows: Microsoft's C++ build tools (Rust links with them): Visual Studio <year>\<edition>\VC\Tools\MSVC */
     static int find_msvc() {
 #ifdef _WIN32
@@ -855,7 +859,7 @@ struct App {
         return 1;
 #endif
     }
-    void check_rust() { cargo_path = find_cargo(); msvc = find_msvc(); }
+    void check_rust() { tools_root_for_rust = tools_dir(); cargo_path = find_cargo(); msvc = find_msvc(); }
     void build_librashader(bool install_rust) {
         if (child.busy() || root.empty()) return;
         std::vector<std::string> argv, args; std::string cmdline, shown, err;
@@ -863,14 +867,16 @@ struct App {
         if (install_rust) args.push_back("--install-rust");
         script_command(args, argv, cmdline, shown);
         console.note("");
-        console.note(std::string(install_rust ? "Installing Rust, then building" : "Building") + " librashader into " + join(tools_dir(), "librashader") +
-                     " (ten minutes or more the first time).", K_NOTE);
+        bool pre = false;
+        for (const Dep &d : deps) if (d.id == "librashader") pre = d.prebuilt;
+        console.note(std::string(pre ? "Downloading" : install_rust ? "Installing Rust into the tools folder, then building" : "Building") +
+                     " librashader into " + join(tools_dir(), "librashader") + (pre ? " (checked against its SHA-256)." : " (ten minutes or more the first time)."), K_NOTE);
         console.note("> " + shown, K_CMD);
         set_child_env();
         if (!child.start(argv, cmdline, root, err)) { console.note("Could not start: " + err, K_ERROR); status = "Could not start"; status_kind = K_ERROR; return; }
         started_at = SDL_GetTicks();
         running = RUN_TOOLS; game_running = false; start_after_tools = false;
-        status = "Building librashader..."; status_kind = K_NOTE;
+        status = "Getting librashader..."; status_kind = K_NOTE;
     }
     void set_child_env() {
         if (set.tools_dir.empty()) SDL_unsetenv_unsafe("A3MX_TOOLS_DIR");
@@ -1528,19 +1534,41 @@ struct App {
     /* ---- building librashader: what it takes (Rust, and on Windows Microsoft's C++ build tools) */
     void librashader_window() {
         const float em = ImGui::GetFontSize();
-        const char *title = "Build librashader (for FILTER)";
+        const char *title = "Get librashader (for FILTER)";
         if (lr_modal) { ImGui::OpenPopup(title); lr_modal = false; }
         ImGuiViewport *vp = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(vp->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
         ImGui::SetNextWindowSize(ImVec2(std::min(vp->WorkSize.x - em * 4, em * 44), 0), ImGuiCond_Appearing);
         if (!ImGui::BeginPopupModal(title, NULL, ImGuiWindowFlags_NoSavedSettings)) return;
         const bool rust = !cargo_path.empty();
+        std::string ver; bool pre = false;
+        for (const Dep &d : deps) if (d.id == "librashader") { ver = d.version; pre = d.prebuilt; }
         ImGui::PushTextWrapPos(0);
-        ImGui::TextUnformatted("SCREEN SETTING > FILTER draws its shaders with librashader. It is built here, once, from its source at "
-                               "the commit this project pins, and kept in the tools folder (--clean leaves it).");
+        if (pre) {   /* the pipelines publish it for this system: a download, no Rust */
+            ImGui::TextUnformatted("SCREEN SETTING > FILTER draws its shaders with librashader. This project's pipelines build it once "
+                                   "(OpenGL only) from its source at the commit this project pins; it is downloaded from there, "
+                                   "checked against the SHA-256 in pins.json, and kept in the tools folder (--clean leaves it).");
+            ImGui::Spacing();
+            ImGui::Bullet(); ImGui::TextWrapped("Source: SnowflakePowered/librashader, %s (MPL-2.0)", ver.empty() ? "the pinned commit" : ver.c_str());
+            ImGui::Bullet(); ImGui::TextWrapped("Into: %s", join(tools_dir(), "librashader").c_str());
+            ImGui::TextDisabled("If the download fails it is built here instead, which needs Rust.");
+            ImGui::PopTextWrapPos();
+            ImGui::Spacing();
+            ImGui::BeginDisabled(child.busy());
+            orange_button_push();
+            if (ImGui::Button("Download it", ImVec2(em * 13, 0))) { build_librashader(false); ImGui::CloseCurrentPopup(); }
+            ImGui::SetItemTooltip("Downloads librashader, which FILTER's shaders need, and checks it");
+            ImGui::PopStyleColor(4);
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(em * 6, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape)) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+            return;
+        }
+        ImGui::TextUnformatted("SCREEN SETTING > FILTER draws its shaders with librashader. There is no published one for this system "
+                               "yet, so it is built here, once (OpenGL only), from its source at the commit this project pins, and "
+                               "kept in the tools folder (--clean leaves it).");
         ImGui::Spacing();
-        std::string ver;
-        for (const Dep &d : deps) if (d.id == "librashader") ver = d.version;
         ImGui::Bullet(); ImGui::TextWrapped("Source: SnowflakePowered/librashader, %s, checked against the SHA-256s in pins.json", ver.empty() ? "the pinned commit" : ver.c_str());
         ImGui::Bullet(); ImGui::TextWrapped("Its Rust packages, from crates.io, each checked against the checksum its Cargo.lock gives");
         ImGui::Bullet(); ImGui::TextWrapped("Into: %s", join(tools_dir(), "librashader").c_str());
@@ -1548,9 +1576,13 @@ struct App {
         if (rust) ImGui::TextColored(colour(K_GOOD), "Rust: found (%s)", cargo_path.c_str());
         else {
             ImGui::TextColored(colour(K_WARN), "Rust is not on this PC.");
-            ImGui::TextUnformatted("\"Install Rust and build\" runs Rust's own installer (rustup, from rustup.rs), which installs Rust for "
-                                   "your user only (in .cargo and .rustup in your home folder) and adds it to your PATH. "
-                                   "It can be removed later with: rustup self uninstall");
+            ImGui::TextUnformatted("Install it yourself from");
+            ImGui::SameLine();
+            if (link("rustup.rs")) open_url("https://rustup.rs");
+            ImGui::SetItemTooltip("Opens Rust's installer page in your browser; press \"Check again\" after installing");
+            ImGui::TextUnformatted("or let \"Install Rust and build\" run Rust's own installer (rustup) into the tools folder (its "
+                                   "rust folder): nothing goes in your home folder or on your PATH, and deleting that folder removes it.");
+            if (ImGui::SmallButton("Check again")) check_rust();
         }
 #ifdef _WIN32
         if (msvc == 0) {
@@ -1871,13 +1903,13 @@ struct App {
             }
             if (!have_lib) {
                 ImGui::BeginDisabled(busy);
-                if (ImGui::Button("Build librashader...")) { check_rust(); lr_modal = true; }
+                if (ImGui::Button("Get librashader...")) { check_rust(); lr_modal = true; }
                 ImGui::EndDisabled();
-                ImGui::SetItemTooltip("FILTER's library, built here from its pinned source with Rust (about ten minutes the first time).\n"
-                                      "Kept by --clean, so it is built once.");
+                ImGui::SetItemTooltip("FILTER's library: downloaded as this project's pipelines built it (checked against its SHA-256),\n"
+                                      "or built here from its pinned source with Rust where there is none to download. Kept by --clean.");
                 ImGui::SameLine();
             }
-            ImGui::TextDisabled(have_shaders && have_lib ? "FILTER has its shaders and its library: nothing to agree to." : !have_lib ? "FILTER also needs librashader: built here from its source, once." : "The shaders: about 85 MB.");
+            ImGui::TextDisabled(have_shaders && have_lib ? "FILTER has its shaders and its library: nothing to agree to." : !have_lib ? "FILTER also needs librashader (or put librashader in the tools folder yourself)." : "The shaders: about 85 MB.");
         }
         ImGui::Spacing();
 
@@ -2281,45 +2313,37 @@ struct App {
 
     /* ================================================================ Extensions */
     void extensions_tab(bool busy) {
-        const float em = ImGui::GetFontSize();
         ImGui::SeparatorText("Extensions");
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
-        ImGui::TextDisabled("What this project adds to the PSP game, each on its own switch. With all of them off the game plays as the original does: "
-                            "its own menus and saves, one player.");
+        ImGui::TextDisabled("The project's other options are in the game: see OPTION MODE's menus, EX. SETTING and PLAYER CONFIG.");
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
         ImGui::BeginDisabled(busy);
         bool changed = false;
-        /* the names' column: after the widest checkbox and title, at least 17 em */
-        float name_col = em * 17.0f;
+        if (ImGui::Checkbox("PSP original", &set.psp_original)) changed = true;
+        ImGui::SetItemTooltip("Every extension off: the game plays as the PSP original, with its own menus and saves, one player.\n"
+                              "The game starts with --features none.");
+        ImGui::Spacing();
+        ImGui::BeginDisabled(set.psp_original);
         for (int f = 0; f < FEAT_COUNT; f++) {
-            float w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize(FEATURES[f].title).x + em * 1.5f;
-            if (w > name_col) name_col = w;
-        }
-        for (int f = 0; f < FEAT_COUNT; f++) {
-            if (f == 0 || FEATURES[f].section != FEATURES[f - 1].section) {   /* a heading: Core, Display, Extra */
-                if (f > 0) ImGui::Spacing();
-                ImGui::SeparatorText(FEATURE_SECTIONS[FEATURES[f].section]);
-            }
+            if (FEATURES[f].where != WHERE_LAUNCHER) continue;
             int need = FEATURES[f].needs;
             bool blocked = need >= 0 && !set.feature[need];
             ImGui::BeginDisabled(blocked);
-            bool v = set.feature[f] && !blocked;
+            bool v = set.feature[f] && !blocked && !set.psp_original;
             if (ImGui::Checkbox(FEATURES[f].title, &v)) { set.feature[f] = v; changed = true; }
             ImGui::EndDisabled();
             std::string tip = FEATURES[f].what;
             if (blocked) tip += std::string("\n\nOff, because it needs \"") + FEATURES[need].title + "\".";
-            if (f == FEAT_SHADERS) tip += "\n\nNeeds the shaders and the librashader library: see Dependencies.";
             ImGui::SetItemTooltip("%s", tip.c_str());
-            ImGui::SameLine(name_col);
-            ImGui::TextDisabled("%s%s", FEATURES[f].name, FEATURES[f].on_by_default ? "" : f == FEAT_STAGE_EXT ? "  (off by default: experimental)" : "  (off by default)");
         }
+        ImGui::EndDisabled();
         ImGui::Spacing();
-        if (ImGui::Button("Defaults")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0; changed = true; }
-        ImGui::SetItemTooltip("Every extension back to how it starts: on, but for the ones marked off by default");
-        ImGui::SameLine();
-        if (ImGui::Button("All off (the PSP game)")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = false; changed = true; }
-        ImGui::SetItemTooltip("Every extension off: the game plays as the PSP original");
+        if (ImGui::Button("Defaults")) {
+            for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0;
+            set.psp_original = false; changed = true;
+        }
+        ImGui::SetItemTooltip("PSP original off, and the three extensions on");
         ImGui::EndDisabled();
         if (changed) settings_save(set, settings_path);
         ImGui::Spacing();
