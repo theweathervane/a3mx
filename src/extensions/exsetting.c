@@ -1074,7 +1074,7 @@ int exsetting_save_load_bar(Cpu *c, uint32_t o, int after) {
  * the green bar an object of kind 3 type 5 (once a frame 0x08888CC0, rows of 16 from the table at
  * 0x08A2620C).
  *
- * Here it gets the L2 and R2 rows of P1 - P4 CONFIG: the same fourteen rows, 14 apart. Our row per
+ * Here it gets the L2 and R2 rows of P1 - P4 CONFIG: the same fourteen rows, 13 apart (prow_y). Our row per
  * player (pex) maps to the game's (L2 / R2 to COMMAND's, which has no picture); up / down, and left
  * / right on L2 / R2, are ours; the rest is the game's. The 2 of L2 / R2 and their pictures are the
  * ones P1 - P4 CONFIG uses (our page 4; kind 0x93 objects). Leaving saves (a3mx.cfg). */
@@ -1091,6 +1091,9 @@ void selectscreen_two(int x, int y);
 #define PAUSE_ANIMS 0x08A3CC78u             /* the pause's attack pictures, by value */
 static uint32_t picon[2];
 static int picon_v[2];
+/* its rows: fourteen 13 apart from 0x18 (P1 - P4 CONFIG's are 14 apart: here EXIT came to the screen's
+   bottom edge, under the fight's gauges) */
+static int prow_y(int r) { return 0x18 + 13 * r; }
 static int pause_live(void) { return (long)rt_vblank_count() - pause_seen <= 2; }
 static int game_row(int ex) { return ex <= E_SEL ? ex : ex <= E_R2 ? 7 : ex - 2; }
 static uint32_t call3(Cpu *c, void (*f)(Cpu *), uint32_t a0, uint32_t a1, uint32_t a2) {
@@ -1180,7 +1183,7 @@ int exsetting_pause_text(Cpu *c, uint32_t a0, int after) {
     int cur = pex[pl];
     static const signed char sym[9] = { 2, 1, 8, 3, 0, 9, -1, 8, 9 };
     for (int r = 0; r < N_EROWS; r++) {
-        int y = erow_y(r), colour = r == cur ? 0xB : 0xA;
+        int y = prow_y(r), colour = r == cur ? 0xB : 0xA;
         if (r <= E_R2) {
             int x = (sym[r] == 8 || sym[r] == 9) ? 0x6C : 0x68;
             if (r == E_L2 || r == E_R2) x = TWO_SYM_X;
@@ -1218,5 +1221,5 @@ void hook_f_08888CC0(Cpu *c) {
     orig_f_08888CC0(c);
     if (!pause_live() || RW(o + 0x7C) != PCTX) return;
     int pl = (int16_t)RH(o + 0x66);
-    if (pl >= 0 && pl <= 2) WH(o + 0xA, (uint32_t)(240 - erow_y(pex[pl])));
+    if (pl >= 0 && pl <= 2) WH(o + 0xA, (uint32_t)(240 - prow_y(pex[pl])));
 }
