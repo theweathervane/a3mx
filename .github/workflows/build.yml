@@ -76,10 +76,10 @@ jobs:
           key: kept-${{ inputs.system }}-${{ hashFiles('tools/data/pins.json', 'tools/librashader.py', 'tools/sdl3.py', 'tools/shaders.py') }}
       - name: SDL3
         run: python tools/sdl3.py
-      - name: librashader (built only when it isn't kept, or its pin changed)
+      - name: librashader (downloaded as published in pins.json, else built; only when it isn't kept, or its pin changed)
         run: |
           if ! python tools/librashader.py --check; then
-            python tools/librashader.py || echo "::warning::librashader was not built: the download goes out without it"
+            python tools/librashader.py || echo "::warning::librashader was not built: the download goes out without it (a release fails)"
           fi
       - name: FILTER's shaders
         run: python tools/shaders.py
@@ -98,7 +98,7 @@ jobs:
       # player unzips and opens, and on its own. Made on every run, so a change that breaks it on one
       # system shows up before a release; ci.yml attaches the downloads to a release.
       - name: The downloads
-        run: python tools/package_launcher.py --system ${{ inputs.system }} --launcher build-ci/a3mx-launcher${{ inputs.exe }} --out dist --standalone --librashader .tools/librashader
+        run: python tools/package_launcher.py --system ${{ inputs.system }} --launcher build-ci/a3mx-launcher${{ inputs.exe }} --out dist --standalone --librashader .tools/librashader ${{ startsWith(github.ref, 'refs/tags/v') && '--require-librashader' || '' }}
       # macOS: native Apple silicon only, and for macOS 11 and later (a binary that needs a newer macOS
       # than the player's makes macOS offer Rosetta, which can't help); the app in the download opens
       # (signed, a valid Info.plist).

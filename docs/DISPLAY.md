@@ -129,16 +129,19 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
    then the catalogue (above).
 2. **The library:** [librashader](https://github.com/SnowflakePowered/librashader) (MPL-2.0),
    `librashader.dll` on Windows, `librashader.dylib` on macOS, `librashader.so` on Linux, in
-   `.tools/librashader/` (or beside `a3mx.exe`). **A release's download has it already**: the
-   pipeline builds it from librashader's source at the commit pinned in `pins.json`. From a clone,
-   the launcher's **Dependencies > Build librashader...** builds it the same way, once (or
-   `build.cmd --librashader`, or `python tools/librashader.py`). It needs [Rust](https://rustup.rs)
-   1.88 or later; the launcher offers to install it (rustup, for your user only), and on Windows
-   Microsoft's C++ build tools ("Build Tools for Visual Studio", "Desktop development with C++"),
-   which it checks for and links to but doesn't install. A source folder you unpacked into `.tools/`
-   (`librashader-*`) is used if it is the pinned one. It takes ten minutes or more; `--clean` keeps
-   the result. You can also put a library you have there yourself. It is never downloaded
-   ready-built.
+   `.tools/librashader/` (also found in `.tools/` itself, in the checkout, beside `a3mx.exe` in
+   `build/`, or beside the launcher). Only the OpenGL runtime is built in (no Direct3D 9 / D3DX9_43
+   needed). **A release's download has it already**, and a release can't go out without it. From a
+   clone, the launcher's **Dependencies > Get librashader...** (or `build.cmd --librashader`, or
+   `python tools/librashader.py`) downloads the one the project's pipeline built from librashader's
+   source at the commit pinned in `pins.json` (its `prebuilt` URL, checked against its SHA-256),
+   where one is published for your system. Where there is none it is built here instead, once: that
+   needs [Rust](https://rustup.rs) 1.88 or later (the launcher links to rustup.rs, or installs Rust
+   into `.tools/rust/` for you: nothing in your home folder or PATH) and, on Windows, Microsoft's
+   C++ build tools ("Build Tools for Visual Studio", "Desktop development with C++"), which it
+   checks for and links to but doesn't install. A source folder you unpacked into `.tools/`
+   (`librashader-*`) is used if it is the pinned one. Building takes ten minutes or more; `--clean`
+   keeps the result. You can also put a library you have there yourself.
 
 FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL).
 The shader sees the picture at the game's own 480 x 272, so the scanlines are the game's rows

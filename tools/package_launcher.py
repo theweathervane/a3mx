@@ -81,6 +81,8 @@ def main():
     ap.add_argument('--librashader', metavar='DIR',
                     help="the FILTER setting's library as tools/librashader.py built it (.tools/librashader): put in the "
                          "download at the same place, with its licence. Left out, with a note, if DIR has no library")
+    ap.add_argument('--require-librashader', action='store_true',
+                    help='fail (exit 1) instead of leaving librashader out: the pipelines pass it for a release')
     a = ap.parse_args()
 
     # VERSION as it is now: a nightly's has -nightly.<date>+<commit> (written by the pipeline before the
@@ -131,6 +133,8 @@ def main():
         if any(f.startswith('librashader.') for f in libs):
             for f in libs: add('.tools/librashader/' + f, os.path.join(lib_dir, f))
             print('package_launcher.py: librashader included (%s)' % ', '.join(libs))
+        elif a.require_librashader:
+            sys.exit('package_launcher.py: no librashader in %s, and a release must have it (tools/librashader.py)' % a.librashader)
         elif a.librashader: print('package_launcher.py: no librashader in %s: the download goes out without it' % a.librashader)
         if a.system.startswith('macos'):
             with tempfile.TemporaryDirectory() as t:

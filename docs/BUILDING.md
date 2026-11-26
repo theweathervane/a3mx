@@ -158,7 +158,7 @@ with `--work work` and the Game options: a start for the download-and-run releas
 | `--launcher` | build the launcher (preset `launcher`) and open it; what `launcher.cmd` / `launcher.sh` do |
 | `--clean` | start from nothing, then carry on as usual. It deletes every `build` / `build-*` folder, what's in `.tools/` and what's in `work/` first. **Kept in `.tools/`**: `librashader/`, any `librashader-*` source folder and `slang-shaders/` (FILTER's library and shaders: slow to make again, and the library may be one you built yourself). Never touched: your a3mx folder and `saves/` ([SAVES.md](SAVES.md)), `imports/` (your ISOs), `assets/`, the code. With `--launcher` (`launcher.cmd` / `.sh`) it deletes `build-launcher/` too; without, it stays. Close the game and the launcher first. |
 | `--clean-all` | as `--clean`, and deletes those kept folders too: all of `.tools/` |
-| `--librashader` | only build FILTER's library from its pinned source (`tools/librashader.py`; needs Rust), then stop. `--install-rust` installs Rust first if it isn't there (rustup, for your user only). The launcher's **Dependencies > Build librashader...** does the same |
+| `--librashader` | only get FILTER's library, then stop (`tools/librashader.py`): downloaded as the pipeline published it (checked against its SHA-256), or built from its pinned source with Rust where none is published. `--install-rust` installs Rust first if it has to build (rustup, into `.tools/rust/`). The launcher's **Dependencies > Get librashader...** does the same |
 | `--tools-only` | only fetch / check the tools |
 
 ## CI and releases
@@ -215,14 +215,17 @@ keyed on `tools/data/pins.json` and the script that makes them:
 | What | Made by | Kept in |
 |---|---|---|
 | SDL3, compiled as a static library | `python tools/sdl3.py` | `.tools/sdl3/` |
-| librashader (FILTER's library), compiled with Rust | `python tools/librashader.py` | `.tools/librashader/` |
+| librashader (FILTER's library, OpenGL only), downloaded as published or compiled with Rust | `python tools/librashader.py` | `.tools/librashader/` |
 | FILTER's shaders, downloaded and checked | `python tools/shaders.py` | `.tools/slang-shaders/` |
 
 Each script does nothing when its folder is already right, so a run only makes again what a changed
 pin or script asks for. `cmake/SDL3.cmake` uses `.tools/sdl3/` when it is there and otherwise compiles
 SDL3 inside the build folder, so nothing changes for a build that never ran `sdl3.py`. librashader
-goes into every download (`package_launcher.py --librashader`); if its build fails the pipeline carries
-on and that download goes out without it. The same three commands work on your own PC.
+(OpenGL only) is downloaded as the manual `librashader:publish-*` jobs built and published it (their
+log prints the URL and SHA-256 to put in `pins.json`, `prebuilt`), or built with Rust where none is
+published; it goes into every download (`package_launcher.py --librashader`). A release (a tag)
+fails without it (`--require-librashader`); any other pipeline carries on and that download goes
+out without it. The same three commands work on your own PC.
 
 ### The downloads
 

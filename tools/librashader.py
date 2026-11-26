@@ -1,22 +1,30 @@
 #!/usr/bin/env python3
-"""librashader, the library SCREEN SETTING > FILTER draws its shaders with, built once and kept: its
-source at the commit pinned in tools/data/pins.json ("librashader": the tag librashader-v0.12.1, the
-one third_party/librashader/'s headers are from), compiled with Rust, and the library put in the tools
-folder (.tools/librashader/, or under A3MX_TOOLS_DIR), where the game looks for it.
+"""librashader, the library SCREEN SETTING > FILTER draws its shaders with, kept in the tools folder
+(.tools/librashader/, or under A3MX_TOOLS_DIR), where the game looks for it. Its source is the commit
+pinned in tools/data/pins.json ("librashader": the tag librashader-v0.12.1, the one
+third_party/librashader/'s headers are from), built with only the OpenGL runtime (the one the game
+uses: no Direct3D 9 / D3DX9_43, Direct3D 11 / 12 or Vulkan in it).
 
-    python tools/librashader.py                 build it if it isn't there (ten minutes or more)
-    python tools/librashader.py --install-rust  the same, installing Rust first if it isn't there
-    python tools/librashader.py --check         exit 0 if the library is there, 1 if not (nothing is built)
+Built once by the project's pipelines and published (the pin's "prebuilt": a URL and the SHA-256 of
+the file there, per system), it is downloaded and checked against that SHA-256: no Rust needed. Only
+where there is none for this system, or with --build, is it compiled here with Rust.
+
+    python tools/librashader.py                 download it (or build it) if it isn't there
+    python tools/librashader.py --build         build it from the source, even where it could be downloaded
+    python tools/librashader.py --install-rust  the same as no option, installing Rust first if it has to build
+    python tools/librashader.py --out DIR       put the library in DIR instead (the pipelines: the file to publish)
+    python tools/librashader.py --check         exit 0 if the library is there, 1 if not (nothing is fetched)
     python tools/librashader.py --rust          say whether Rust (and on Windows its C++ linker) is there
 
-Needs Rust 1.88 or later (cargo: on the PATH, or in ~/.cargo/bin where rustup puts it) and, on Windows,
-Microsoft's C++ build tools (Visual Studio Build Tools, "Desktop development with C++"), which Rust
-uses to link. --install-rust runs Rust's own installer (rustup, from https://rustup.rs: not pinned here,
-as it changes with each Rust release), which puts Rust in your user profile (~/.cargo, ~/.rustup) and on
-your PATH; it can be removed with `rustup self uninstall`. The C++ build tools are not installed by this
-script: the error says where to get them. The game runs without the library; FILTER then shows the
-picture plain. Nobody has to run this: the pipelines do, keep .tools/librashader/ in their cache
-(keyed on this file and pins.json) and put the library in each download.
+Building needs Rust 1.88 or later (cargo: on the PATH, in ~/.cargo/bin where rustup puts it, or in
+.tools/rust/) and, on Windows, Microsoft's C++ build tools (Visual Studio Build Tools, "Desktop
+development with C++"), which Rust uses to link. --install-rust runs Rust's own installer (rustup, from
+https://rustup.rs: not pinned here, as it changes with each Rust release) into the tools folder
+(.tools/rust/), leaving the home folder and the PATH alone: deleting .tools/rust removes it. The C++
+build tools are not installed by this script: the error says where to get them. The game runs without
+the library; FILTER then shows the picture plain. The pipelines build it, keep .tools/librashader/ in
+their cache (keyed on this file and pins.json), put the library in each download, and fail a release
+without it.
 
 A source folder you unpacked yourself is used as it is if it is the pinned one: any .tools/librashader-*
 folder (librashader-src/, or librashader-librashader-v0.12.1/ as GitHub's zip unpacks), or --source DIR.
@@ -30,11 +38,14 @@ import fetch, pins
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.environ.get('A3MX_TOOLS_DIR') or os.path.join(ROOT, '.tools')
 DEST = os.path.join(TOOLS, 'librashader')
+RUNTIMES = ['--no-default-features', '--features', 'runtime-opengl']     # cargo's: OpenGL only (librashader-capi's Cargo.toml)
+BUILD_KIND = 'opengl'                                                    # in the stamp: what was built
+RUST = os.path.join(TOOLS, 'rust')                                    # --install-rust puts Rust here (cargo/, rustup/)
+SYSTEM = ('windows-x64' if os.name == 'nt' else 'macos-arm64' if sys.platform == 'darwin' else 'linux-x64')
 SRC = os.path.join(TOOLS, 'librashader-src')
 LIB = 'librashader.dll' if os.name == 'nt' else 'librashader.dylib' if sys.platform == 'darwin' else 'librashader.so'
 BUILT = ('librashader.dll',) if os.name == 'nt' else ('liblibrashader.dylib', 'librashader.dylib') if sys.platform == 'darwin' \
         else ('liblibrashader.so', 'librashader.so')
-STAMP = os.path.join(DEST, 'a3mx-built.txt')
 
 
 def verified(src, pin):
@@ -69,13 +80,47 @@ def get_source(pin):
         subprocess.check_call(['git', '-C', SRC, 'checkout', '-q', 'FETCH_HEAD'])
 
 
+def prebuilt(pin):
+    """(url, sha256) of the published library for this system, or None"""
+    p = (pin.get('prebuilt') or {}).get(SYSTEM) or {}
+    url, sha = p.get('url', ''), p.get('sha256', '')
+    return (url, sha) if url and len(sha) == 64 else None
+
+
+def download_prebuilt(pin, dest):
+    """the published library into DEST, if its SHA-256 is the pinned one; True when it is there"""
+    got = prebuilt(pin)
+    if not got: return False
+    url, sha = got
+    print('==> librashader: downloading the one the pipelines built (%s)' % url, flush=True)
+    try: data = fetch.fetch(url, timeout=600)
+    except Exception as ex:
+        print('  the download failed (%s): building it instead' % ex)
+        return False
+    import hashlib
+    if hashlib.sha256(data).hexdigest() != sha:
+        print('  what was downloaded is not the file pinned (SHA-256 %s, pinned %s): not used' % (hashlib.sha256(data).hexdigest(), sha))
+        return False
+    os.makedirs(dest, exist_ok=True)
+    with open(os.path.join(dest, LIB), 'wb') as f: f.write(data)
+    with open(os.path.join(dest, 'SOURCE.txt'), 'w', encoding='utf-8', newline='\n') as f:
+        f.write('librashader, built unchanged (OpenGL runtime only) from %s at commit %s by the A3MX pipelines;\n'
+                'downloaded from %s, SHA-256 %s. Licence: MPL-2.0 (%s/blob/%s/LICENSE.md).\n'
+                % (pin['repo'], pin['commit'], url, sha, pin['repo'], pin['commit']))
+    with open(os.path.join(dest, 'a3mx-built.txt'), 'w', encoding='utf-8', newline='\n') as f: f.write('%s %s\n' % (pin['commit'], BUILD_KIND))
+    print('  %s is in %s (SHA-256 checked)' % (LIB, dest))
+    return True
+
+
 def find_cargo():
     """cargo: on the PATH, or where rustup puts it (a Rust installed a moment ago isn't on this PATH yet)."""
     c = shutil.which('cargo')
     if c: return c
+    exe = 'cargo.exe' if os.name == 'nt' else 'cargo'
     home = os.environ.get('CARGO_HOME') or os.path.join(os.path.expanduser('~'), '.cargo')
-    c = os.path.join(home, 'bin', 'cargo.exe' if os.name == 'nt' else 'cargo')
-    return c if os.path.isfile(c) else None
+    for c in (os.path.join(home, 'bin', exe), os.path.join(RUST, 'cargo', 'bin', exe)):   # (or installed into the tools folder)
+        if os.path.isfile(c): return c
+    return None
 
 
 def msvc_found():
@@ -97,17 +142,19 @@ MSVC_HELP = ('Rust on Windows links with Microsoft\'s C++ build tools, which wer
 
 
 def install_rust():
-    """Rust's own installer (rustup), for this user only: Rust into ~/.cargo and ~/.rustup, and onto the PATH."""
-    print('==> Rust: installing it with rustup (https://rustup.rs), for your user only', flush=True)
+    """Rust's own installer (rustup), into the tools folder (.tools/rust: cargo/ and rustup/), nothing in the home
+    folder or on the PATH: deleting .tools/rust removes it."""
+    print('==> Rust: installing it with rustup (https://rustup.rs) into %s' % RUST, flush=True)
+    os.environ['CARGO_HOME'] = os.path.join(RUST, 'cargo'); os.environ['RUSTUP_HOME'] = os.path.join(RUST, 'rustup')
     os.makedirs(TOOLS, exist_ok=True)
     if os.name == 'nt':
         exe = os.path.join(TOOLS, 'rustup-init.exe')
         fetch.fetch_to('https://win.rustup.rs/x86_64', exe, timeout=600)
-        cmd = [exe, '-y', '--profile', 'minimal']
+        cmd = [exe, '-y', '--profile', 'minimal', '--no-modify-path']
     else:
         sh = os.path.join(TOOLS, 'rustup-init.sh')
         fetch.fetch_to('https://sh.rustup.rs', sh, timeout=600)
-        cmd = ['sh', sh, '-y', '--profile', 'minimal']
+        cmd = ['sh', sh, '-y', '--profile', 'minimal', '--no-modify-path']
     try: r = subprocess.run(cmd)
     finally:
         for f in ('rustup-init.exe', 'rustup-init.sh'):
@@ -145,24 +192,30 @@ def main(install_rust=False):
     install_rust = install_rust or '--install-rust' in argv
     if '--rust' in argv: return report_rust()
     pin = pins.source('librashader')
-    here = os.path.isfile(os.path.join(DEST, LIB))
+    dest = argv[argv.index('--out') + 1] if '--out' in argv and argv.index('--out') + 1 < len(argv) else DEST
+    stamp_path = os.path.join(dest, 'a3mx-built.txt')
+    want = '%s %s' % (pin['commit'], BUILD_KIND)
+    here = os.path.isfile(os.path.join(dest, LIB))
     if '--check' in argv:
-        stamp = open(STAMP, encoding='utf-8').read().strip() if os.path.isfile(STAMP) else ''
-        how = 'built here from %s' % stamp[:12] if stamp else 'put there by hand'
-        print('librashader: %s' % ('%s in %s (%s)' % (LIB, DEST, how) if here else 'no %s in %s' % (LIB, DEST)))
+        st = open(stamp_path, encoding='utf-8').read().strip() if os.path.isfile(stamp_path) else ''
+        how = 'from %s' % st if st else 'put there by hand'
+        print('librashader: %s' % ('%s in %s (%s)' % (LIB, dest, how) if here else 'no %s in %s' % (LIB, dest)))
         return 0 if here else 1
-    if here and os.path.isfile(STAMP) and open(STAMP, encoding='utf-8').read().strip() == pin['commit']:
-        print('librashader: already built in %s (%s)' % (DEST, pin['commit'][:12]))
+    stamp = open(stamp_path, encoding='utf-8').read().strip() if os.path.isfile(stamp_path) else None
+    if here and stamp == want and '--rebuild' not in argv:
+        print('librashader: already in %s (%s, %s)' % (dest, pin['commit'][:12], BUILD_KIND))
         return 0
-    if here and not os.path.isfile(STAMP) and '--rebuild' not in argv:
-        print('librashader: %s is already in %s (not built by this script; --rebuild to build it again)' % (LIB, DEST))
+    if here and stamp is None and '--rebuild' not in argv:
+        print('librashader: %s is already in %s (not put there by this script; --rebuild to replace it)' % (LIB, dest))
         return 0
+    if '--build' not in argv and download_prebuilt(pin, dest): return 0
     print('==> librashader, built once (%s at %s)' % (pin['repo'], pin['commit'][:12]), flush=True)
     cargo = find_cargo()
     if not cargo and install_rust: cargo = install_rust_now()
     if not cargo:
-        print('ERROR: Rust is needed to build librashader (cargo was not found). Install it from https://rustup.rs '
-              '(1.88 or later), or run this again with --install-rust. The game runs without it; FILTER then does nothing.')
+        print('ERROR: there is no published librashader for %s to download, and Rust is needed to build it (cargo was '
+              'not found). Install it from https://rustup.rs (1.88 or later), or run this again with --install-rust. '
+              'Or put a %s you have in %s. The game runs without it; FILTER then does nothing.' % (SYSTEM, LIB, DEST))
         return 1
     print('  Rust: %s' % cargo, flush=True)
     if msvc_found() is False:
@@ -185,7 +238,13 @@ def main(install_rust=False):
     # its own build script, as its README says; --locked: exactly the crates its Cargo.lock names
     env = dict(os.environ)
     env['PATH'] = os.path.dirname(cargo) + os.pathsep + env.get('PATH', '')     # rustc beside cargo, for a Rust installed just now
-    r = subprocess.run([cargo, 'run', '--locked', '-p', 'librashader-build-script', '--', '--profile', 'optimized'], cwd=src, env=env)
+    if os.path.normcase(os.path.abspath(cargo)).startswith(os.path.normcase(os.path.abspath(RUST))):   # Rust in the tools folder
+        env['CARGO_HOME'] = os.path.join(RUST, 'cargo'); env['RUSTUP_HOME'] = os.path.join(RUST, 'rustup')
+    if os.name == 'nt':   # the C and C++ runtimes linked in: the library needs no Visual C++ Redistributable
+        env['RUSTFLAGS'] = (env.get('RUSTFLAGS', '') + ' -C target-feature=+crt-static').strip()
+    # (after the second --: cargo's own flags, OpenGL only; --locked for that build too)
+    r = subprocess.run([cargo, 'run', '--locked', '-p', 'librashader-build-script', '--', '--profile', 'optimized', '--', '--locked'] + RUNTIMES,
+                       cwd=src, env=env)
     if r.returncode != 0:
         print('ERROR: the librashader build failed (above).')
         return 1
@@ -194,16 +253,17 @@ def main(install_rust=False):
     if not out:
         print('ERROR: the build finished but no %s is in %s' % (' / '.join(BUILT), os.path.join(src, 'target', 'optimized')))
         return 1
-    os.makedirs(DEST, exist_ok=True)
-    shutil.copyfile(out, os.path.join(DEST, LIB))
+    os.makedirs(dest, exist_ok=True)
+    shutil.copyfile(out, os.path.join(dest, LIB))
     for lic in ('LICENSE.md', 'LICENSE-GPL.md'):              # MPL-2.0 (or GPL-3.0): the notice goes with the library
-        if os.path.isfile(os.path.join(src, lic)): shutil.copyfile(os.path.join(src, lic), os.path.join(DEST, lic))
-    with open(os.path.join(DEST, 'SOURCE.txt'), 'w', encoding='utf-8', newline='\n') as f:
-        f.write('librashader, built unchanged from %s at commit %s\n(tools/librashader.py). Licence: LICENSE.md here.\n'
+        if os.path.isfile(os.path.join(src, lic)): shutil.copyfile(os.path.join(src, lic), os.path.join(dest, lic))
+    with open(os.path.join(dest, 'SOURCE.txt'), 'w', encoding='utf-8', newline='\n') as f:
+        f.write('librashader, built unchanged (OpenGL runtime only) from %s at commit %s\n(tools/librashader.py). Licence: LICENSE.md here.\n'
                 % (pin['repo'], pin['commit']))
-    with open(STAMP, 'w', encoding='utf-8', newline='\n') as f: f.write(pin['commit'] + '\n')
-    print('  %s is in %s (%d bytes, SHA-256 %s)' % (LIB, DEST, os.path.getsize(os.path.join(DEST, LIB)),
-                                                 pins.sha256_file(os.path.join(DEST, LIB))))
+    with open(stamp_path, 'w', encoding='utf-8', newline='\n') as f: f.write(want + '\n')
+    sha = pins.sha256_file(os.path.join(dest, LIB))
+    print('  %s is in %s (%d bytes, SHA-256 %s)' % (LIB, dest, os.path.getsize(os.path.join(dest, LIB)), sha))
+    print('  to publish it: pins.json, sources "librashader", "prebuilt": {"%s": {"url": ..., "sha256": "%s"}}' % (SYSTEM, sha))
     return 0
 
 
