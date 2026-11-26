@@ -68,9 +68,10 @@ within its category.
 
 **PREVIEW** (the row under FILTER, Cross): a real fight, HUD and all, to see the filter in use on the
 health bars and gauges: two random fighters (random ISM and colours) on a random stage, both played by
-the computer, one round. Your buttons do nothing in it except **Circle**, which goes back to SCREEN
-SETTING at once; when the round ends (after the KO or the time) it goes back by itself. Either way you
-are on SCREEN SETTING again, cursor on PREVIEW, with OPTION MODE's music. It is Free Battle underneath
+the computer, one round. Your buttons do nothing in it except **Circle**, which fades the fight to black
+and goes straight back to SCREEN SETTING; when the round ends (after the KO or the time) it goes back
+the same way by itself. SCREEN SETTING fades in where you left it, cursor on PREVIEW, with OPTION
+MODE's music. It is Free Battle underneath
 (its menus answered for you), so nothing is saved or recorded: no records, unlocks or saves change.
 
 **The pause menu** (in a fight) has a FILTER row too, between BUTTON CONFIG and MODE MENU: left / right

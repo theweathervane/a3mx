@@ -21,13 +21,15 @@
  *      is drawn in the banners' yellow. While the preview runs the pads give the game nothing
  *      (filterpreview_pad, main.c): no pause, no joining in.
  *   5. Circle (any pad), at any time, or the round's end (the KO or the time, once shown: the round's
- *      part GAME + 6 at 5, the winner's pose; or the fight's step leaving 3): what
- *      leaving a mode does (0x088325DC, mode_menu.c: voices stopped, the battle task ended, the game
- *      state cleared), then task 0 goes straight to OPTION MODE as the MODE MENU starts it (the mode
- *      OPTION, "back from a mode" set so the MODE MENU later saves the settings as after any OPTION MODE
- *      visit), then to SCREEN SETTING by the buttons a player would press (fed to the game in place of
- *      the pads, behind the held picture), with the cursor on PREVIEW (filterpreview_back) and OPTION
- *      MODE's music.
+ *      part GAME + 6 at 5, the winner's pose; or the fight's step leaving 3): the game's fade to black
+ *      (as its fade task draws it: fade_step, 16 frames), then, behind that black picture held up, what leaving a mode does
+ *      (0x088325DC, mode_menu.c: voices stopped, the battle task ended, the game state cleared), task 0
+ *      straight to OPTION MODE as the MODE MENU starts it (the mode OPTION, "back from a mode" set so
+ *      the MODE MENU later saves the settings as after any OPTION MODE visit), and on its menu's first
+ *      frames straight into SCREEN SETTING as the menu's Cross does, without its sound
+ *      (open_screen_setting). SCREEN SETTING puts its cursor on PREVIEW (filterpreview_back), the
+ *      picture lets go and SCREEN SETTING fades in from the black (16 frames), where it was, with OPTION
+ *      MODE's music. No buttons are pressed for the player on the way: no menu sounds.
  * The fight saves nothing (Free Battle keeps no records). F2 / SELECT + START during it go back to the
  * MODE MENU as from any mode. With the shaders feature only. */
 #include "rt.h"
@@ -56,8 +58,15 @@
 #define MODE_FREE   16
 #define KIND_ARCADE 1
 #define PSP_CIRCLE  0x2000u
-#define PSP_CROSS   0x4000u
-#define PSP_DOWN    0x40u
+#define OPT         0x08E75912u             /* OPTION MODE's context: +0 state, +1 the menu's cursor, +6 in a submenu, +7 its row */
+#define OPT_STATES  0x08A37A04u             /* OPTION MODE's states by OPT + 0 */
+#define OPTION_MENU 0x088B6164u             /* the state of its menu */
+#define SUB_TIMER   0x08B02E0Cu             /* +2 the held direction's repeat count */
+#define ITEM_SCREEN 2                       /* the menu's SCREEN SETTING */
+#define FADE_LEVEL  0x08E75B9Cu             /* float: the fade, 0 clear - 1 the full colour (fade.c) */
+#define FADE_UPDATED 0x08E75B9Au            /* u16: set to 1 when the level changes */
+#define FADE_WAIT   60                      /* frames the fade out may take, at most */
+#define SHOW_WAIT   300                     /* frames SCREEN SETTING may take to open, at most */
 #define ROUND_OVER  5                       /* the round's part (GAME + 6) to go back at: after the KO, before the pose */
 #define OVER_WAIT   600                     /* frames of the KO's part before going back, at most */
 #define PROMPT_Y    0xB8                    /* PRESS (Circle) TO EXIT: above the super gauges, in the middle */
@@ -66,14 +75,14 @@ void f_0887C4CC(Cpu *c); void f_0880A6CC(Cpu *c); void f_0880A7B0(Cpu *c);
 void f_08814320(Cpu *c); void f_0880A39C(Cpu *c); void f_08821FEC(Cpu *c); void f_088AC618(Cpu *c);
 void f_08804A74(Cpu *c); void f_08813744(Cpu *c); void f_08805614(Cpu *c); void f_088054C8(Cpu *c);
 void f_08823304(Cpu *c); void f_08822934(Cpu *c); void f_08809FC8(Cpu *c); void f_08805564(Cpu *c);
-void f_08822BD8(Cpu *c); void f_0882E0D0(Cpu *c); void f_089E0B64(Cpu *c);
+void f_08822BD8(Cpu *c); void f_0882E0D0(Cpu *c); void f_089E0B64(Cpu *c); void f_089E0BD8(Cpu *c);
+void f_088B8078(Cpu *c);                    /* option_mode.c: a menu item's objects (item) */
 void rt_hold_display(int frames); void rt_hold_display_set(int frames);
 
-enum { P_OFF, P_ASKED, P_FIGHT, P_BACK };
+enum { P_OFF, P_ASKED, P_FIGHT, P_FADE, P_BACK, P_SHOW, P_FADE_IN };
 static int phase, chosen, shown, fought, over, back;   /* back: SCREEN SETTING is to put its cursor on PREVIEW */
-static int step, step_wait;                 /* the way back's button, and frames on it */
+static int faded, waited;                   /* the fade out was started; frames waited in this phase */
 static uint32_t edges;                      /* PSP buttons newly pressed (filterpreview_pad) */
-static uint32_t macro_buttons;              /* the way back: the button held this frame */
 static uint32_t buf;
 static uint32_t seed = 0x9E3779B9u;         /* our own random numbers (xorshift): the game's are left alone */
 static int pick(int n) { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; if (!seed) seed = 1; return n > 0 ? (int)(seed % (uint32_t)n) : 0; }
@@ -106,8 +115,8 @@ void filterpreview_start(Cpu *c) {
     rt_log("filter preview: a fight with %s", filter_get(rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0)->name);
 }
 
-/* main.c, each frame, each pad (PSP bits): while the preview runs the game gets nothing but what the
-   way back presses; what was newly pressed is kept for the task (edges) */
+/* main.c, each frame, each pad (PSP bits): while the preview runs the game gets nothing; what was newly
+   pressed is kept for the task (edges) */
 uint32_t filterpreview_pad(int i, uint32_t raw) {
     static uint32_t prev[4];
     if (i < 0 || i > 3) return raw;
@@ -115,7 +124,7 @@ uint32_t filterpreview_pad(int i, uint32_t raw) {
     prev[i] = raw;
     if (phase == P_OFF) return raw;
     edges |= i == 0 ? now : now & PSP_CIRCLE;   /* (any pad's Circle leaves) */
-    return i == 0 ? macro_buttons : 0;
+    return 0;
 }
 
 /* 1: out of OPTION MODE, into Free Battle (as the MODE MENU's dispatch starts it, mode_menu.c) */
@@ -168,7 +177,7 @@ static void choose(void) {
 /* 5: out of the fight, into OPTION MODE (leaving a mode as 0x088325DC does, then as the dispatch starts
    OPTION MODE) */
 static void leave_fight(Cpu *c) {
-    phase = P_BACK; back = 0; macro_buttons = 0; edges = 0; step = step_wait = 0;
+    phase = P_BACK; back = 0; edges = 0; waited = 0;
     rt_hold_display(900);
     call(c, f_08814320, 0);
     call(c, f_08809FC8, 0);
@@ -184,6 +193,28 @@ static void leave_fight(Cpu *c) {
     call(c, f_08805614, OPTION_TASK);                      /* (does not come back) */
 }
 
+/* The fade to black, a step a frame, as the game's fade task steps it (fade.c: the level 0 - 1 by 1/16,
+   drawn as a full-screen black). Done here rather than by that task (0x0880AA74), which the fight loop
+   then waits on for good. 1 once black. */
+static int fade_step(Cpu *c) {
+    float f;
+    if (!faded) { faded = 1; c->r[4] = 0xFF000000u; c->r[31] = 0; f_089E0BD8(c); f = 0.0f; }
+    else memcpy(&f, HOST(FADE_LEVEL), 4);
+    f += 1.0f / 16;
+    if (f > 1.0f) f = 1.0f;
+    memcpy(HOST(FADE_LEVEL), &f, 4); WH(FADE_UPDATED, 1);
+    return f >= 1.0f || ++waited > FADE_WAIT;
+}
+/* ... and back from black, on SCREEN SETTING: 1 once clear */
+static int unfade_step(void) {
+    float f;
+    memcpy(&f, HOST(FADE_LEVEL), 4);
+    f -= 1.0f / 16;
+    if (!(f > 0.0f)) f = 0.0f;
+    memcpy(HOST(FADE_LEVEL), &f, 4); WH(FADE_UPDATED, 1);
+    return f <= 0.0f;
+}
+
 /* 2 - 4: each frame of the fight loop while the preview runs */
 static void fight_frame(Cpu *c) {
     int screen = RH(GAME + 2), st = RH(GAME + 4);
@@ -196,21 +227,37 @@ static void fight_frame(Cpu *c) {
        5 the winner's pose, 6 - 7 the round's end */
     int part = RH(GAME + 6);
     if (st == 3 && part >= 2 && part <= 3) fought = 1;
-    if (fought && (st != 3 || part >= ROUND_OVER || (part == 4 && ++over > OVER_WAIT))) {
-        if (!(edges & PSP_CIRCLE)) rt_log("filter preview: the round is over");
+    if (phase == P_FIGHT && fought && (st != 3 || part >= ROUND_OVER || (part == 4 && ++over > OVER_WAIT))) {
+        rt_log("filter preview: the round is over");
         edges |= PSP_CIRCLE;
     }
+    if (phase != P_FIGHT) return;                          /* (no prompt while fading out) */
     if (!buf && (buf = rt_alloc(32, 1, 16, "filter preview"))) { strcpy((char *)HOST(buf), "PRESS"); strcpy((char *)HOST(buf + 16), "TO EXIT"); }
     if (buf) { text(c, buf, 2, 0x4D, PROMPT_Y, 0xB); symbol(c, 0, 0xA2, PROMPT_Y + 2); text(c, buf + 16, 2, 0xBD, PROMPT_Y, 0xB); }
 }
 
-/* The way back, in OPTION MODE: it opens on GAME OPTION (exsetting.c); down twice to SCREEN SETTING and
-   Cross, a press (4 frames) every 30 frames once it has faded in; SCREEN SETTING then puts its cursor on
-   PREVIEW (filterpreview_back). */
-static const struct { uint32_t b; int wait; } way_back[] = { { 0, 90 }, { PSP_DOWN, 30 }, { PSP_DOWN, 30 }, { PSP_CROSS, 40 } };
+/* Into SCREEN SETTING at once, as the menu's Cross on it does (0x088B6164: no sound): the screen and its
+   row cleared, in a submenu, the repeat count, the item's objects (SCREEN SETTING's bar); SCREEN SETTING
+   then puts its cursor on PREVIEW (filterpreview_back). The menu's cursor is left on SCREEN SETTING, so
+   EXIT comes back to it there. */
+static void open_screen_setting(Cpu *c) {
+    WB(OPT + 1, ITEM_SCREEN);
+    call(c, f_0880A39C, 0);
+    WB(OPT + 7, 0); WB(OPT + 6, 1); WB(SUB_TIMER + 2, 0x14);
+    call(c, f_088B8078, ITEM_SCREEN);
+}
 
-/* quitkey_task_wait (task.c's frame wait): 1 if task 0 was restarted here */
+/* quitkey_task_wait (task.c's frame wait): 1 if task 0 was restarted here. When it goes on to wait, the
+   wait's own argument (a0: the frames) and the other registers are as they came. */
+static int task_wait(Cpu *c);
 int filterpreview_task_wait(Cpu *c) {
+    if (phase == P_OFF) return 0;
+    uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
+    int r = task_wait(c);
+    if (!r) { memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra; }
+    return r;
+}
+static int task_wait(Cpu *c) {
     if (phase == P_OFF || RW(CUR_TASK) != TASK0) return 0;
     uint32_t task = RW(TASK0 + 4);
     if (phase == P_ASKED) {
@@ -219,26 +266,29 @@ int filterpreview_task_wait(Cpu *c) {
         return 1;
     }
     if (task == MODE_MENU) {                                    /* F2 or SELECT + START: the MODE MENU, as from any mode */
-        phase = P_OFF; macro_buttons = 0; rt_hold_display_set(0);
+        phase = P_OFF; rt_hold_display_set(0);
         return 0;
     }
-    if (phase == P_FIGHT && task == FIGHT_LOOP) {
+    if ((phase == P_FIGHT || phase == P_FADE) && task == FIGHT_LOOP) {
         fight_frame(c);
-        int leave = (edges & PSP_CIRCLE) != 0;
+        if (phase == P_FIGHT && (edges & PSP_CIRCLE)) { phase = P_FADE; faded = 0; waited = 0; }   /* 5: fade to black first */
         edges = 0;
-        if (leave) { leave_fight(c); return 1; }
+        if (phase == P_FADE && fade_step(c)) { rt_hold_display(900); leave_fight(c); return 1; }   /* the black picture stays up */
         return 0;
     }
-    if (phase == P_BACK && task == OPTION_TASK) {
-        macro_buttons = 0;
-        if (step >= (int)(sizeof way_back / sizeof *way_back)) {
-            phase = P_OFF; step = step_wait = 0; back = 1;
-            rt_hold_display_set(2);
-            return 0;
-        }
+    if (phase == P_BACK && task == OPTION_TASK) {               /* its menu up (and laid out): straight into SCREEN SETTING */
         rt_hold_display(30);
-        if (step_wait < 4) macro_buttons = way_back[step].b;
-        if (++step_wait >= way_back[step].wait) { step++; step_wait = 0; }
+        if (RW(OPT_STATES + 4u * (uint32_t)(int32_t)(int8_t)RB(OPT)) == OPTION_MENU && !RB(OPT + 6) && ++waited >= 2) {
+            open_screen_setting(c);
+            phase = P_SHOW; back = 1; waited = 0;
+        }
+        return 0;
     }
+    if (phase == P_SHOW) {                                      /* until SCREEN SETTING takes input (it took back) */
+        if (!back || ++waited > SHOW_WAIT) { phase = P_FADE_IN; back = 0; rt_hold_display_set(1); }
+        else rt_hold_display(30);
+        return 0;
+    }
+    if (phase == P_FADE_IN && unfade_step()) phase = P_OFF;      /* SCREEN SETTING fades in from the black */
     return 0;
 }
