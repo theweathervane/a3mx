@@ -17,8 +17,8 @@
  *      (0x08A2B3E6[rand & 63]: BATTLE + 0 / + 100), and both players marked done (GAME + 10 = 3): the
  *      select's own frame then ends it (the X-ISM characters, colours kept apart) and the fight starts.
  *   4. The fight (screen 2): player 1's fighter is the computer's (+0x175 = 1, +336 = 0, each frame,
- *      over what the select set up for a player); the held picture lets go, and PRESS (Circle) TO EXIT
- *      is drawn in the banners' yellow. While the preview runs the pads give the game nothing
+ *      over what the select set up for a player); the held picture lets go, and SCORE RANKING's PRESS (Circle) TO
+ *      EXIT is drawn above the gauges in its small yellow font, flashing. While the preview runs the pads give the game nothing
  *      (filterpreview_pad, main.c): no pause, no joining in.
  *   5. Circle (any pad), at any time, or the round's end (the KO or the time, once shown: the round's
  *      part GAME + 6 at 5, the winner's pose; or the fight's step leaving 3): the game's fade to black
@@ -69,7 +69,10 @@
 #define SHOW_WAIT   300                     /* frames SCREEN SETTING may take to open, at most */
 #define ROUND_OVER  5                       /* the round's part (GAME + 6) to go back at: after the KO, before the pose */
 #define OVER_WAIT   600                     /* frames of the KO's part before going back, at most */
-#define PROMPT_Y    0xB8                    /* PRESS (Circle) TO EXIT: above the super gauges, in the middle */
+#define PRESS_EXIT  0x089FFDDCu             /* "PRESS    TO EXIT": SCORE RANKING's, font 1, the Circle symbol in its gap */
+#define PROMPT_X    0x7A                    /* where SCORE RANKING has it (0x088C0D00), the symbol 0x30 further */
+#define PROMPT_Y    0xB8                    /* above the super gauges */
+#define PROMPT_BLINK 20                     /* frames on, then off */
 
 void f_0887C4CC(Cpu *c); void f_0880A6CC(Cpu *c); void f_0880A7B0(Cpu *c);
 void f_08814320(Cpu *c); void f_0880A39C(Cpu *c); void f_08821FEC(Cpu *c); void f_088AC618(Cpu *c);
@@ -83,7 +86,7 @@ enum { P_OFF, P_ASKED, P_FIGHT, P_FADE, P_BACK, P_SHOW, P_FADE_IN };
 static int phase, chosen, shown, fought, over, back;   /* back: SCREEN SETTING is to put its cursor on PREVIEW */
 static int faded, waited;                   /* the fade out was started; frames waited in this phase */
 static uint32_t edges;                      /* PSP buttons newly pressed (filterpreview_pad) */
-static uint32_t buf;
+static unsigned blink;
 static uint32_t seed = 0x9E3779B9u;         /* our own random numbers (xorshift): the game's are left alone */
 static int pick(int n) { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; if (!seed) seed = 1; return n > 0 ? (int)(seed % (uint32_t)n) : 0; }
 int filterpreview_on(void) { return phase != P_OFF; }
@@ -232,8 +235,8 @@ static void fight_frame(Cpu *c) {
         edges |= PSP_CIRCLE;
     }
     if (phase != P_FIGHT) return;                          /* (no prompt while fading out) */
-    if (!buf && (buf = rt_alloc(32, 1, 16, "filter preview"))) { strcpy((char *)HOST(buf), "PRESS"); strcpy((char *)HOST(buf + 16), "TO EXIT"); }
-    if (buf) { text(c, buf, 2, 0x4D, PROMPT_Y, 0xB); symbol(c, 0, 0xA2, PROMPT_Y + 2); text(c, buf + 16, 2, 0xBD, PROMPT_Y, 0xB); }
+    if ((++blink / PROMPT_BLINK) & 1) return;              /* flashing: on, off, ... */
+    text(c, PRESS_EXIT, 1, PROMPT_X, PROMPT_Y, 0xB); symbol(c, 0, PROMPT_X + 0x30, PROMPT_Y);   /* as SCORE RANKING draws it */
 }
 
 /* Into SCREEN SETTING at once, as the menu's Cross on it does (0x088B6164: no sound): the screen and its
