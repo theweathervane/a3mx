@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.167.0
 ### For players
 - **Most extensions are switched in the game now, so everyone runs the same build:** OPTION MODE > EX. SETTING has two new pages. **EX. GAME** has Boot to the MODE MENU (off by default; from the next start), Mode Menu Shortcut (was the F2 / SELECT + START key), Shared Entry Pool (was I-ISM for both sides; on by default), 1P - 3P PRIORITY and VIRTUAL PSPS. **EX. DISPLAY** has MODE MENU icons, ISM presentation, Scaled endings and Stage Extensions. They take effect at once and are kept in `a3mx.cfg`.
 - **GAME OPTION > DEFAULT keeps MODE SELECT ON,** as a new save has it (the game's own default is OFF).
