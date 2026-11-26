@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.166.1
+### For players
+- **WIDE NATIVE: the character select screen's "1P RYU" and "2P KEN" name rows reach both sides of the screen.** They used to stop before the right edge, so names popped in and out there.
+
+### Technical
+- `src/extensions/widescreen.c`: the name rows (kind 16 type 6, drawer 2; player 1's at y 220, player 2's at y 36) scroll and jump back by 64 units. They are no longer moved out as the other type 6 pieces (that pushed both rows left), and are drawn again 64 units each way (`widescreen_edge_copy`).
+- Checked: parity arcade_fight, arcade_join_select, no_extensions passed; the WIDE NATIVE check wide_fight passed; the select screen with both players joined looked at by eye.
+
 ## 0.166.0
 ### For players
 - **More of the game decompiled (82 functions, 38.60% of the program now):** special-move follow-ups and their effects, a mashed special and a mashed hold throw, the fighter's fall and knockdown recovery, the first super-combo starts, and three menu cursors (a three-item menu, a six-item menu and a grid). Nothing plays differently.

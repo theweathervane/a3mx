@@ -88,8 +88,9 @@ void widescreen_bar(void) {                    /* exsetting.c: once a frame on S
    - the win screen after a fight (step 4, kind 18): its scrolling columns at the sides (types 4, 6);
    - the VS screen (kind 14): the portraits (type 0). Its name bars (type 2, at x 0 and 384) are
      drawn a second time moved out, so they reach the edges without leaving a gap in the middle.
-   - the select screen's name ticker (kind 16 type 5, the top one): drawn one period further each way,
-     so its words reach the 16:9 sides instead of appearing in the right margin.
+   - the select screen's name ticker (kind 16 type 5, the top one) and the 1P / 2P name rows (kind 16
+     type 6, drawer 2): drawn one period further each way, so their words reach the 16:9 sides instead
+     of appearing in the right margin.
    In the sprite's own units: the screen's 48 pixels through SCALE_X. */
 #define SCALE_X 0x08E759E8u
 #define GAME    0x08E75910u
@@ -157,6 +158,7 @@ int widescreen_edge_shift(uint32_t sp) {
     if (RH(GAME) == 2 && kind == 48 && type == 3) return px_to_units(-48);
     if (RB(GAME + 2) == 1) {                               /* the character select screen */
         if (kind == 16 && type >= 2 && type <= 4) return away_from_middle(sp, margin_units());
+        if (kind == 16 && type == 6 && RW(sp + 148) == 2) return 0;                  /* the 1P / 2P name rows (widescreen_edge_copy) */
         if (kind == 16 && type == 6) return away_from_middle(sp, margin_units());   /* the chosen MODE / ISM panel, the name */
         if (kind == 33) return away_from_middle(sp, margin_units());                /* the ISM panel's parts */
     }
@@ -198,6 +200,10 @@ int widescreen_edge_copy(uint32_t sp, int n) {
     if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) >= 200) return n ? -320 : 320;
     /* the bottom one (STREET FIGHTER ALPHA3, y 24) scrolls the other way and jumps back by 480 */
     if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) < 200) return n ? -480 : 480;
+    /* the 1P / 2P name rows ("1P RYU 1P RYU ...", kind 16 type 6 drawn by drawer 2: player 1's at the top,
+       player 2's at the foot): they scroll and jump back by 64, filling just the 4:3 picture; they stay
+       where they are (not moved out as the other type 6 pieces) and are drawn a period further each way */
+    if (RB(GAME + 2) == 1 && kind == 16 && type == 6 && RW(sp + 148) == 2) return n ? -64 : 64;
     return 0;
 }
 
