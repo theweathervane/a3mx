@@ -144,6 +144,60 @@ static int find_piece(int panel, int *x) {
     return 0;
 }
 
+/* WIDE NATIVE with SCREEN SETTING > HUD MESSAGES at EDGES (rt_hud_edges, settings.c): the fight's
+   messages at the sides go the margin out, away from the middle, so they stand as far in from the 16:9
+   screen's edge as the game puts them in from the 4:3 picture's. In the fight (GAME + 2 = 2, step 3),
+   in the 8-pool only (its slots 3 / 4 / 7; kinds 2 and 3 in the other pools are hit sparks and stage
+   pieces): kind 2, the message (the combo's count "14 HIT", FIRST ATTACK, COUNTER HIT, REVERSAL ...,
+   drawers 5 / 6; its blue line slides in from the picture's side as part of the same sprite) and kind
+   3, the combo's rating beside it (GOOD!!, GREAT!!, MARVELOUS!!! ...); type 0 player 1's side (left,
+   slot 4, x 32 - 64), type 1 player 2's (right, slot 3, x 288 - 368). The anchor moves, so the slide
+   in starts from the 16:9 side. Measured in screen pixels on NORMAL (wide_fight, and a Survival fight
+   of Ryu against Ken), and again in WIDE NATIVE with EDGES, from the 16:9 edge: the same in both, the
+   move is 48 pixels at scale 1. P2's "3HIT GOOD!!" ends 3 pixels in from the right edge, its underline
+   at the edge; COUNTER HIT 16 in; "5HIT" 30 in; P1's "2HIT GOOD!" starts about 8 in from the left edge, its
+   underline at the edge. Health bars, gauges, portraits, the KO's
+   FINISH (kind 1) and the round's pieces stay. Survival's timer is text: widescreen_hud_text. */
+extern int rt_hud_edges;                       /* settings.c */
+static int hud_edges(void) { return rt_widescreen && rt_hud_edges && RB(GAME + 2) == 2 && RH(GAME + 4) == 3; }
+static int hud_message(uint32_t sp, uint32_t kind, uint32_t type) {
+    return sp >= 0x09512170u && sp < 0x09512170u + 8u * 0xC0u && (kind == 2 || kind == 3) && type <= 1;
+}
+
+/* ... and Survival's timer (00'48"18, bottom right): text asked for through the text queue (0x0880A6CC,
+   core/text/queue.c; 16-byte records at 0x092DF240: +0 in use, +1 font, +3 kind 7, +4 x, +8 the string),
+   font 1 at x 296, y 184 from the buffer 0x08A0F82C. On NORMAL it ends 24 pixels in from the 4:3 picture's
+   right edge (measured; in WIDE NATIVE with EDGES 24 in from the 16:9 one). Moved the margin right only while the
+   text passes draw (selectscreen.c's hooks, before and after 0x08812520 / 0x0880B098), then put back,
+   so the queue in memory is as the game left it. Known by its shape (two digits ' two digits " two
+   digits), not by its buffer. */
+#define TEXT_QUEUE 0x092DF240u
+static struct { uint32_t rec; uint16_t x; } hud_text_moved[4];
+static int hud_text_n;
+static int is_timer(uint32_t s) {
+    if (s < 0x08800000u || s >= 0x0A000000u - 9) return 0;
+    const char *t = (const char *)HOST(s);
+    static const char shape[] = "dd'dd\"dd";
+    for (int i = 0; i < 8; i++) if (shape[i] == 'd' ? (t[i] < '0' || t[i] > '9') : t[i] != shape[i]) return 0;
+    return t[8] == 0;
+}
+void widescreen_hud_text(int after) {
+    if (after) {
+        for (int i = 0; i < hud_text_n; i++) WH(hud_text_moved[i].rec + 4, hud_text_moved[i].x);
+        hud_text_n = 0;
+        return;
+    }
+    hud_text_n = 0;
+    if (!hud_edges()) return;
+    for (uint32_t r = TEXT_QUEUE; r < TEXT_QUEUE + 96u * 16u && hud_text_n < 4; r += 16u) {
+        if (!RB(r) || RB(r + 3) != 7 || RB(r + 1) != 1 || !is_timer(RW(r + 8))) continue;
+        uint16_t x = (uint16_t)RH(r + 4);
+        if ((int16_t)x < 192) continue;                          /* (the right side's) */
+        hud_text_moved[hud_text_n].rec = r; hud_text_moved[hud_text_n].x = x; hud_text_n++;
+        WH(r + 4, (uint32_t)(uint16_t)((int16_t)x + margin_units()));
+    }
+}
+
 /* the score ranking's rows: how far their place, name, score and profile move (widescreen_piece_shift) */
 static const int RANK_SHIFT[4] = { -48, 0, 12, 48 };
 int widescreen_edge_shift(uint32_t sp) {
@@ -163,6 +217,7 @@ int widescreen_edge_shift(uint32_t sp) {
     /* the win screen after a fight (GAME + 4 = 4): its scrolling columns at the sides (kind 18 types 4, 6) */
     if (RB(GAME + 2) == 2 && RH(GAME + 4) == 4 && kind == 18 && (type == 4 || type == 6))
         return away_from_middle(sp, margin_units());
+    if (hud_edges() && hud_message(sp, kind, type)) return type == 0 ? -margin_units() : margin_units();
     if (round_win() && win_piece(kind, type)) return px_to_units(win_shift_px(units_x(sp)));
     if (round_win() && panel_piece(kind, type)) return px_to_units(panel_shift_px(units_x(sp)));
     /* the portraits of the dialogue before a rival or final fight (step 3, kind 14 type 6) */

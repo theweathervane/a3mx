@@ -29,7 +29,8 @@
 
 int rt_vsync = 1;                             /* [screen setting] vsync: wait for the monitor (no tearing); ON when missing */
 int rt_filter = 0;                            /* [screen setting] filter: an index into SHADER_FILTERS (shader.h); OFF when missing */
-int rt_frame_timing = 2;                      /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
+int rt_hud_edges = 0;                         /* [screen setting] hud_messages: WIDE NATIVE's fight messages and Survival timer at the 16:9 edges (EDGES: 1) or on the 4:3 picture (4:3: 0); 4:3 when missing */
+int rt_frame_timing = 2;                     /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
 extern int rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
@@ -241,6 +242,11 @@ void settings_load(void) {
               for (int i = 0; i < UNLOCK_COUNT; i++) if (!strcmp(key, unlock_keys[i])) { rt_unlock[i] = is_on(val); done_wt = 1; }
               if (done_wt) continue; }
             if (!strcmp(key, "vsync")) { rt_vsync = is_on(val); continue; }
+            if (!strcmp(key, "hud_messages")) {      /* SCREEN SETTING > HUD MESSAGES: EDGES or 4:3 */
+                for (char *s = val; *s; s++) *s = (char)toupper((unsigned char)*s);
+                rt_hud_edges = !strcmp(val, "EDGES");
+                continue;
+            }
             if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER, by name (shader.h); unknown: OFF */
                 rt_filter = 0;
                 for (int k = 0; k < SHADER_FILTER_COUNT; k++) if (!strcmp(val, SHADER_FILTERS[k].name)) rt_filter = k;
@@ -338,6 +344,8 @@ static void cfg_body(FILE *f) {
       fprintf(f, "%-24s # AUTO: SMOOTH on a 60 / 120 / 240 Hz screen, else ORIGINAL; SMOOTH: 60.00 Hz; ORIGINAL: 59.94 Hz, as the PSP\n", l); }
     { char l[48]; snprintf(l, sizeof l, "filter=%s", SHADER_FILTERS[rt_filter >= 0 && rt_filter < SHADER_FILTER_COUNT ? rt_filter : 0].name);
       fprintf(f, "%-24s # OFF, CRT CURVED / LOTTES / ROYALE / GUEST / LIGHT, SCAN LIGHT / STRONG / OSSC / DARK, XBRZ, SCALEFX (docs/DISPLAY.md)\n", l); }
+    { char l[48]; snprintf(l, sizeof l, "hud_messages=%s", rt_hud_edges ? "EDGES" : "4:3");
+      fprintf(f, "%-24s # WIDE NATIVE: EDGES puts the fight's messages (combo, COUNTER HIT ...) and Survival's timer at the 16:9 edges; 4:3 as the game\n", l); }
     for (int p = 0; p < 4; p++) {
         const uint8_t *c = p == 3 ? rt_p4_config : o ? o + 20 * p : NULL;
         fprintf(f, "\n[p%d config]\n", p + 1);

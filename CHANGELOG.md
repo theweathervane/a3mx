@@ -5,6 +5,7 @@
 - **Most extensions are switched in the game now, so everyone runs the same build:** OPTION MODE > EX. SETTING has two new pages. **EX. GAME** has Boot to the MODE MENU (off by default; from the next start), Mode Menu Shortcut (was the F2 / SELECT + START key), Shared Entry Pool (was I-ISM for both sides; on by default), 1P - 3P PRIORITY and VIRTUAL PSPS. **EX. DISPLAY** has MODE MENU icons, ISM presentation, Scaled endings and Stage Extensions. They take effect at once and are kept in `a3mx.cfg`.
 - **GAME OPTION > DEFAULT keeps MODE SELECT ON,** as a new save has it (the game's own default is OFF).
 - **Each EX. SETTING page has its own banner** in place of "EX. SETTING": EX. GAME, EX. DISPLAY, EX. UNLOCKS, EX. FIGHTERS, EX. EXP.
+- **New: SCREEN SETTING > HUD MESSAGES (WIDE NATIVE):** EDGES moves the fight's messages (combo counts such as "14 HIT MARVELOUS!!!", FIRST ATTACK, COUNTER HIT, REVERSAL ...) and Survival's timer out to the 16:9 screen's edges, as far in from them as they are from the 4:3 picture's. Off (4:3) by default; greyed out unless SCREEN SIZE is WIDE NATIVE. Health bars, gauges and portraits stay where they are.
 - **The launcher's Extensions tab is down to four switches:** PSP original (no extension at all), Enhanced saves (was Silent saves), Extra menus and Local multiplayer. Widescreen and Shaders are no longer switches: SCREEN SETTING's SCREEN SIZE (WIDE NATIVE) and FILTER choose them, as before. Cheats and Unlocks are part of Extra menus. A choice of Boot to the MODE MENU made in the launcher before isn't carried over: set it in EX. GAME.
 
 ### Technical
@@ -13,6 +14,7 @@
 - `a3mx.cfg` `[ex setting]`: `boot_to_mode_menu`, `mode_menu_shortcut`, `shared_entry_pool`, `mode_menu_icons`, `ism_presentation`, `scaled_endings`, `stage_extensions`.
 - `exsetting_game_option_default` wraps 0x088B67B8 (GAME OPTION > DEFAULT): MODE SELECT (system data + 516) back to 1 after it. The launcher's Extensions tab points to OPTION MODE's menus instead of listing them.
 - `exsetting.c`: pages `PG_GAME`, `PG_DISPLAY` first, the cheats' four after them with `cheats_unlocks`; titles per page; the text pool holds 256 strings. Launcher settings: `psp_original`, and `feature.*` only for the launcher's three.
+- `a3mx.cfg` `[screen setting]`: `hud_messages` (`4:3` / `EDGES`, `rt_hud_edges`). `screensetting.c`: row `R_HUD` after FILTER (eight rows with FILTER, seven without; DEFAULT and EXIT one lower). `widescreen.c`: `widescreen_edge_shift` moves the 8-pool's kinds 2 / 3 (types 0 / 1: left / right) by the margin in the fight with it on; `widescreen_hud_text`, called around the two text passes (`selectscreen.c`'s hooks of 0x08812520 / 0x0880B098), moves Survival's timer text and puts the queue's x back after.
 - Checked: the changed C and C++ files compile (syntax only, gcc / g++ on Linux). Not built or run on Windows yet; parity not run.
 
 ## 0.164.0
@@ -1569,4 +1571,4 @@ The WIDE NATIVE presentation work of 0.99.x is finished. From here the minor ver
 - **New Screen Settings:** Selection of VSYNC and FRAME TIMING: AUTO, ORIGINAL (59.94HZ), SMOOTH (60.00HZ). (Note: VRR or manual refresh rate needs to be set for ORIGINAL), A badge will appear in MODE MENU to tell you what mode is enabled, changing to Windowed may also change this setting).
 - **Support for high refresh rate monitors:** 120HZ, 240HZ, 480HZ (240HZ and 480HZ untested)
 - **Custom Assets (Experimental):** When Custom Assets enabled with WIDE FORCED, placer holder assets will be displayed. (This is an experimental feature currently), for more info see [assets/LAYOUT.md](../assets/LAYOUT.md) and [docs/STAGE_EXTENSIONS.md](docs/STAGE_EXTENSIONS.md)/
-- **Frame Timings:** Option to select ORIGINAL PSP frame times or SMOOTH for modern displays. Note: this is highly depedennt on your screen setup, if you are getting hitches see [docs/DISPLAY.md](docs/DISPLAY.md) before logging issues.
+- **Frame Timings:** Option to select ORIGINAL PSP frame times or SMOOTH for modern displays. Note: this is highly depedennt on your screen setup, if you are getting hitches see [docs/DISPLAY.md](docs/DISPLAY.md) before logging issues.

@@ -10,12 +10,19 @@ frame for frame whatever you choose. They only change when you *see* each frame.
 | VSYNC | ON, OFF | ON | `vsync=ON` |
 | FRAME TIMING | AUTO, SMOOTH, ORIGINAL | AUTO | `frame_timing=AUTO` |
 | FILTER | OFF and eleven shaders ([below](#filter)) | OFF | `filter=OFF` |
+| HUD MESSAGES | 4:3, EDGES (WIDE NATIVE only, [WIDESCREEN.md](WIDESCREEN.md)) | 4:3 | `hud_messages=4:3` |
 
 Both apply as soon as you change them, and are saved when you leave SCREEN SETTING. On a display whose
 driver can't sync to the monitor at all, VSYNC is greyed out (the log says so); your saved setting is
 kept. Both work the same with the software renderer as with the GPU one. DEFAULT sets them back to ON
 and AUTO along with the game's own settings, and SCREEN SIZE to WIDE NATIVE. For one run only, `--frame-timing auto`, `smooth` or
 `original` on the command line overrides FRAME TIMING.
+
+**HUD MESSAGES** (below FILTER) only does something in WIDE NATIVE, and is greyed out at the other
+screen sizes. **EDGES** moves the fight's messages (the combo count and its rating, FIRST ATTACK, COUNTER
+HIT, REVERSAL ...) and Survival's timer out to the 16:9 screen's edges, each as far in from the edge as
+it is on the 4:3 picture; **4:3** leaves them where the game puts them. The health bars, gauges and
+portraits stay where they are either way. DEFAULT sets it back to 4:3.
 
 **Which one you're getting** is shown at the right end of the MODE MENU's bar: **ORIGINAL** in a red
 box, **SMOOTH** in a blue one. If you chose SMOOTH or ORIGINAL, that is always what it says. With AUTO
