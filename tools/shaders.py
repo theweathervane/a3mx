@@ -104,10 +104,21 @@ def preset_files(path, seen=None):
     return need, passes
 
 
+def clean(s):
+    return re.sub(r'\s+', ' ', re.sub(r"[^A-Z0-9 .+\-()/'&!,]", ' ', s.upper().replace('_', ' '))).strip()
+
+
 def display_name(rel):
-    """FILTER's name for a preset: its file name in capitals (the game's fonts have no small letters)"""
-    stem = os.path.splitext(os.path.basename(rel))[0].upper().replace('_', ' ')
-    return re.sub(r'\s+', ' ', re.sub(r"[^A-Z0-9 .+\-()/'&!,]", ' ', stem)).strip()
+    """FILTER's name for a preset: its file name in capitals (the game's fonts have no small letters),
+    after the folder it is a variant of when the name doesn't say (crt/shaders/crt-yah/presets/
+    base-medium.slangp: CRT-YAH BASE-MEDIUM)"""
+    parts = rel.split('/')
+    stem = clean(os.path.splitext(parts[-1])[0])
+    for d in reversed(parts[1:-1]):
+        if d.lower() in ('shaders', 'shader', 'presets', 'preset', 'slang', 'variants', 'extras'): continue
+        if clean(d) not in stem: stem = clean(d) + ' ' + stem
+        break
+    return stem
 
 
 def candidates(dst):

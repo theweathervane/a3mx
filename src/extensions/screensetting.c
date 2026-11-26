@@ -33,6 +33,9 @@
  *     player actually gets is shown on the MODE MENU (padicons.c).
  *   - The green bar is as wide as the longest value any row can show (widescreen.c), on every row, so
  *     a longer name never runs past it.
+ *   - FILTER: Cross opens the FILTER screen (filterscreen.c: every filter, by category, and the live
+ *     preview), drawn and run in place of these rows until Circle; left / right on the row change the
+ *     filter within its category. The row shows the name cut to the bar.
  * With --no-extensions the game's own four rows are untouched: vsync stays ON, FRAME TIMING AUTO.
  */
 #include "rt.h"
@@ -150,8 +153,14 @@ static int move(Cpu *c, int r) {
     return (r + step + rows()) % rows();
 }
 
+int filterscreen_on(void); void filterscreen_open(Cpu *c); void filterscreen_close(Cpu *c, int snd);
+void filterscreen_frame(Cpu *c); void filterscreen_text(Cpu *c); void filterscreen_bar(uint32_t o);
 int screensetting_frame(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
+    if (filterscreen_on()) {                /* the FILTER screen, in place of the rows */
+        if ((int8_t)RB(OPT + 2) == 0) { filterscreen_frame(c); return 1; }
+        filterscreen_close(NULL, 0);
+    }
     if (vsync_saved < 0) { vsync_saved = rt_vsync; timing_saved = rt_frame_timing; filter_saved = rt_filter; hud_saved = rt_hud_edges; }
     int state = (int8_t)RB(OPT + 2);
     if (state != 0) {                       /* 1 closing (after EXIT or back), others opening: the game's */
@@ -175,6 +184,7 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
             return 1;
         }
         if (disabled(r)) return 1;            /* (highlighted, but not changed) */
+        if (id == R_FILTER && (pressed & B_CONFIRM)) { filterscreen_open(c); return 1; }
         uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
         const FilterEntry *fe = filter_get(filter());     /* FILTER: left / right within its category */
         int f_first = filter_category_first(fe->category), f_size = filter_category_size(fe->category);
@@ -234,6 +244,7 @@ int screensetting_bar_width(void) {
 int screensetting_text(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
     if (!wf_name) { wf_name = rt_alloc(16, 1, 4, "wide native"); if (wf_name) strcpy((char *)HOST(wf_name), "WIDE NATIVE"); }
+    if (filterscreen_on()) { filterscreen_text(c); return 1; }
     int r = (int8_t)RB(OPT + 7);
     static const uint32_t names[R_ROWS] = { S_SIZE, S_WALL, 0, 0, 0, 0, S_DEFAULT, S_EXIT };   /* by id; 0: ours */
     /* our words, 16 bytes each: VSYNC, FRAME TIMING, FILTER, HUD MESSAGES, then the values ORIGINAL, SMOOTH, AUTO,
@@ -285,6 +296,6 @@ int screensetting_bar(Cpu *c, uint32_t a0, int after) {
     WB(OPT + 7, (uint32_t)(ours(r) ? 0 : game_row(r)));
     inner_f_088BAA90(c);
     WB(OPT + 7, (uint32_t)r);
-    if (RB(OPT + 6) && RB(OPT + 5) == 3) WH(o + 0xA, (uint32_t)(240 - row_y(r)));   /* (still SCREEN SETTING's) */
+    if (RB(OPT + 6) && RB(OPT + 5) == 3) { WH(o + 0xA, (uint32_t)(240 - row_y(r))); filterscreen_bar(o); }   /* (still SCREEN SETTING's) */
     return 1;
 }

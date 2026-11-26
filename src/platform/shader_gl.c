@@ -242,6 +242,9 @@ int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, 
     return 1;
 }
 
+/* the FILTER screen: whether a filter can be shown at all (the window, the library, the shaders) */
+int shader_gl_ready(void) { return FEATURE(SHADERS) && gl_getproc && load_lib() && shaders_ok; }
+
 /* --dump-filtered (main.c): the last frame as the filter drew it (the letterboxed picture, top row
    first), if it drew this frame; 0 otherwise (the dump is then the game's own picture) */
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) {
@@ -322,6 +325,7 @@ int shader_gl_test(const char *list_path, const char *out_path) {
 }
 #else   /* no OpenGL in this build (headless tests): nothing to draw with */
 void shader_gl_init(void *(*getproc)(const char *), const char *work) { (void)getproc; (void)work; }
+int shader_gl_ready(void) { return 0; }
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) { (void)rgba; (void)max_w; (void)max_h; (void)w; (void)h; return 0; }
 int shader_gl_test(const char *list_path, const char *out_path) {
     FILE *out = fopen(out_path, "w");
