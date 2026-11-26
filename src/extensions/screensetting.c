@@ -19,11 +19,12 @@
  *   - DEFAULT also sets VSYNC back to ON, FRAME TIMING to AUTO, FILTER to OFF, HUD MESSAGES to EDGES, and SCREEN SIZE to
  *     WIDE NATIVE (the default on a new save since 0.99.21).
  * The whole screen is drawn here (WIDE NATIVE as the size's name while it is on: widescreen.c).
- *   - A row whose setting has no effect at the moment is drawn disabled, label and value, in text
- *     colour 9: light grey with no gradient. Font 1's colours are not tints: each is its own set of
- *     glyphs drawn into the font's texture (0x08812520 offsets the glyph by colour * 144), so a light
- *     grey with a dark grey outline needs a glyph set of our own (to come; colour 9's outline is brown).
- *     The cursor and the green bar still go onto it, but left / right do nothing. Today: VSYNC when the display can't wait for the monitor (host_vsync_available).
+ *   - A row whose setting has no effect at the moment is drawn disabled, label and value, in EX.
+ *     SETTING's greyed colours of font 1 (exsetting.c, grey_font_on: 14, grey with a dark outline; 15 on
+ *     the cursor's row, grey on dark red), made when SCREEN SETTING first draws if EX. SETTING hasn't
+ *     yet; colour 9 (light grey, brown outline) only if they can't be made. Font 1's colours are not
+ *     tints: each is its own set of glyphs drawn into the font's texture (0x08812520 offsets the glyph
+ *     by colour * 144). The cursor and the green bar still go onto it, but left / right do nothing. Today: VSYNC when the display can't wait for the monitor (host_vsync_available).
  *     FRAME TIMING always applies (0.49.0): where the monitor can't set the pace, SMOOTH runs on a 60.00 Hz timer.
  *     SMOOTH and ORIGINAL are always what they say; AUTO chooses one when this screen closes and when the
  *     MODE MENU opens (pacing.c, pacing_decide), not while a screen is up.
@@ -77,7 +78,10 @@ static int game_row(int pos) { return game_row_of[id_of(pos)]; }
 static int ours(int pos) { return game_row(pos) < 0; }
 #define C_TEXT     0xA                      /* the game's colours: a row, the row with the cursor */
 #define C_CURSOR   0xB
-#define C_DISABLED 0x9                      /* light grey, no gradient (outline brown: see above) */
+#define C_DISABLED 0x9                      /* light grey, no gradient (outline brown): if ours can't be made */
+#define C_GREYED    14                      /* EX. SETTING's greyed colours (exsetting.c) */
+#define C_GREYED_ON 15
+int exsetting_grey_font(void);
 /* whether a row's setting can't take effect now (drawn grey; left / right ignored) */
 int host_vsync_available(void);
 static int disabled(int pos) {
@@ -109,7 +113,8 @@ static void text(Cpu *c, uint32_t s, int font, int x, int y, int colour) {
     f_0880A6CC(c);
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
-static void text_disabled(Cpu *c, uint32_t s, int font, int x, int y) { text(c, s, font, x, y, C_DISABLED); }
+static int grey_ok;                         /* EX. SETTING's greyed colours are in font 1 (screensetting_text) */
+static void text_disabled(Cpu *c, uint32_t s, int font, int x, int y, int on) { text(c, s, font, x, y, grey_ok ? (on ? C_GREYED_ON : C_GREYED) : C_DISABLED); }
 static void vsync_set(int on) {
     on = !!on;
     if (on == rt_vsync) return;
@@ -232,23 +237,25 @@ int screensetting_text(Cpu *c, uint32_t a0, int after) {
                        for (int k = 0; k < 3; k++) strcpy((char *)HOST(our_str + 16u * (uint32_t)(W_TIMINGS + k)), timing_names[k]);
                        for (int k = 0; k < SHADER_FILTER_COUNT; k++) { char *d = (char *)HOST(our_str + 16u * (uint32_t)(W_FILTERS + k)); strncpy(d, SHADER_FILTERS[k].name, 15); d[15] = 0; } }
     }
+    grey_ok = exsetting_grey_font();
     text(c, S_TITLE, 2, 0x50, 5, 0xB);
     for (int i = 0; i < rows(); i++) {
         int id = id_of(i);
         uint32_t s = names[id] ? names[id] : our_str ? our_str + 16u * (uint32_t)(id == R_VSYNC ? W_VSYNC : id == R_TIMING ? W_TIMING : id == R_HUD ? W_HUD : W_FILTER) : 0;
-        if (s && disabled(i)) text_disabled(c, s, 1, 0x6C, row_y(i));
+        if (s && disabled(i)) text_disabled(c, s, 1, 0x6C, row_y(i), i == r);
         else if (s) text(c, s, 1, 0x6C, row_y(i), i == r ? C_CURSOR : C_TEXT);
     }
     int size = widescreen_value();
     uint32_t sname = size == 2 && wf_name ? wf_name : RW(SIZE_NAMES + 4u * (uint32_t)(size == 1));
     text(c, sname, 1, 0xDC, row_y(pos_of(R_SIZE)), 0xB);
     text(c, RW(WALL_NAMES + 4u * (uint32_t)RB(OPTS + 0x1FE)), 1, 0xDC, row_y(pos_of(R_WALL)), 0xB);
-    text(c, RW(ONOFF + 4u * (uint32_t)!!rt_vsync), 1, 0xDC, row_y(pos_of(R_VSYNC)), 0xB);
+    if (disabled(pos_of(R_VSYNC))) text_disabled(c, RW(ONOFF + 4u * (uint32_t)!!rt_vsync), 1, 0xDC, row_y(pos_of(R_VSYNC)), r == pos_of(R_VSYNC));
+    else text(c, RW(ONOFF + 4u * (uint32_t)!!rt_vsync), 1, 0xDC, row_y(pos_of(R_VSYNC)), 0xB);
     if (our_str) text(c, our_str + 16u * (uint32_t)(W_TIMINGS + timing()), 1, 0xDC, row_y(pos_of(R_TIMING)), 0xB);
     if (our_str && FEATURE(SHADERS)) text(c, our_str + 16u * (uint32_t)(W_FILTERS + filter()), 1, 0xDC, row_y(R_FILTER), 0xB);
     if (our_str) {
         uint32_t hs = our_str + 16u * (uint32_t)(W_HUDS + !!rt_hud_edges);
-        if (disabled(pos_of(R_HUD))) text_disabled(c, hs, 1, 0xDC, row_y(pos_of(R_HUD)));
+        if (disabled(pos_of(R_HUD))) text_disabled(c, hs, 1, 0xDC, row_y(pos_of(R_HUD)), r == pos_of(R_HUD));
         else text(c, hs, 1, 0xDC, row_y(pos_of(R_HUD)), 0xB);
     }
     return 1;

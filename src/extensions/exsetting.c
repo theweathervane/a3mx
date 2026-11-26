@@ -466,7 +466,8 @@ static int bright(uint16_t p) { int r = p & 31, g = (p >> 5) & 31, b = (p >> 10)
 static void grey_font_on(void) {
     uint32_t list = RW(FONT_LIST), n = RW(FONT_LIST + 4), e = PAGES + 0x18u * GREY_PAGE, e8 = PAGES + 0x18u * 0x8F;
     if (!list || (grey_mem && list == GREY_LIST && RW(e) == GREY_TEX)) return;   /* not loaded yet, or ours already */
-    if (n != 8 || RW(e) != 0 || !RW(e8)) { rt_log("exsetting: the font isn't as expected, no grey colours"); return; }
+    static int warned;
+    if (n != 8 || RW(e) != 0 || !RW(e8)) { if (!warned++) rt_log("exsetting: the font isn't as expected, no grey colours"); return; }
     if (!grey_mem && !(grey_mem = rt_alloc(0x20080u + 12u * 9u, 1, 256, "grey font"))) return;
     memset(HOST(GREY_TEX), 0, 0x20000);
     memcpy(HOST(GREY_DESC), HOST(RW(e8 + 0x14)), 0x44); WW(GREY_DESC, GREY_PAGE);
@@ -487,6 +488,12 @@ static void grey_font_on(void) {
     }
     WW(FONT_LIST, GREY_LIST); WW(FONT_LIST + 4, 9);
     rt_log("exsetting: font colours 14 and 15 (greyed rows) added on page %X", GREY_PAGE);
+}
+/* SCREEN SETTING and FILTER (screensetting.c) grey their disabled rows with the same two colours: 1 when
+   font 1 has them (made now if need be), 0 if not (the caller then uses colour 9) */
+int exsetting_grey_font(void) {
+    grey_font_on();
+    return grey_mem && RW(FONT_LIST) == GREY_LIST && RW(PAGES + 0x18u * GREY_PAGE) == GREY_TEX;
 }
 #define B_L       0x40u
 #define B_R       0x200u
