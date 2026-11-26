@@ -23,6 +23,14 @@
 - `a3mx.cfg` `[screen setting]`: `hud_messages` (`4:3` / `EDGES`, `rt_hud_edges`). `screensetting.c`: row `R_HUD` after FILTER (eight rows with FILTER, seven without; DEFAULT and EXIT one lower). `widescreen.c`: `widescreen_edge_shift` moves the 8-pool's kinds 2 / 3 (types 0 / 1: left / right) by the margin in the fight with it on; `widescreen_hud_text`, called around the two text passes (`selectscreen.c`'s hooks of 0x08812520 / 0x0880B098), moves Survival's timer text and puts the queue's x back after.
 - Checked: the changed C and C++ files compile (syntax only, gcc / g++ on Linux). Not built or run on Windows yet; parity not run.
 
+## 0.165.0
+### For players
+- **More of the game decompiled (1,595 functions, 37.88% of the program now):** the fighters' moves step by step (special-move starts and their follow-ups, the super gauge's gains, throws, dashes, jumps and landings, projectiles and effects), the round flow, the HUD, crouching, damage into vitality, the fighter animation step, the sound cue queue, the wireless (ad-hoc) VS link and the stage's start and load. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_moves140.c` - `batch_moves243.c`, `batch_tiny33.c` - `batch_tiny109.c`, `batch_net113.c` - `batch_net126.c`, `batch_sound127.c` - `batch_sound134.c`, `batch_round*.c`, `batch_anim*.c`, `batch_crouch*.c`, `batch_hud*.c`, `batch_parts*.c`, `batch_starts*.c`, `batch_dmg129.c`, `batch_menu*.c`, `batch_rect*.c`, `batch_text*.c` (new); `src/core/stage/stage_load111.c`, `stage_start110.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch.
+
 ## 0.164.0
 ### For players
 - **Edited fighter sprites are in the game:** repaint a picture in your assets folder (`characters/<nn>_<name>/fighter/sprites/pictures/`, from the art pack) or change a colour in its `metadata.json`, and the game uses it the next time it loads that fighter. Nothing to run. A picture that can't be used (another size, two palettes in one 32 x 32 cell) is left as it was, and the log says why.
@@ -1577,4 +1585,4 @@ The WIDE NATIVE presentation work of 0.99.x is finished. From here the minor ver
 - **New Screen Settings:** Selection of VSYNC and FRAME TIMING: AUTO, ORIGINAL (59.94HZ), SMOOTH (60.00HZ). (Note: VRR or manual refresh rate needs to be set for ORIGINAL), A badge will appear in MODE MENU to tell you what mode is enabled, changing to Windowed may also change this setting).
 - **Support for high refresh rate monitors:** 120HZ, 240HZ, 480HZ (240HZ and 480HZ untested)
 - **Custom Assets (Experimental):** When Custom Assets enabled with WIDE FORCED, placer holder assets will be displayed. (This is an experimental feature currently), for more info see [assets/LAYOUT.md](../assets/LAYOUT.md) and [docs/STAGE_EXTENSIONS.md](docs/STAGE_EXTENSIONS.md)/
-- **Frame Timings:** Option to select ORIGINAL PSP frame times or SMOOTH for modern displays. Note: this is highly depedennt on your screen setup, if you are getting hitches see [docs/DISPLAY.md](docs/DISPLAY.md) before logging issues.
+- **Frame Timings:** Option to select ORIGINAL PSP frame times or SMOOTH for modern displays. Note: this is highly depedennt on your screen setup, if you are getting hitches see [docs/DISPLAY.md](docs/DISPLAY.md) before logging issues.
