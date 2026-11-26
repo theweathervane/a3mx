@@ -338,7 +338,7 @@ static void cfg_body(FILE *f) {
     fprintf(f, "%-24s # the fighter slots 1 - 3, every mode but network battles\n", "");
     for (int k = 0; k < 3; k++) {
         fprintf(f, "p%d_health=%-14s # NORMAL, INFINITE, HALF or NONE (one hit knocks out)\n", k + 1, cheat_health_names[rt_cheat_health[k] & 3]);
-        fprintf(f, "p%d_guard=%-15s # NORMAL, INFINITE, HALF or NONE (the next guard crushes)\n", k + 1, cheat_guard_names[rt_cheat_guard[k] & 3]);
+        fprintf(f, "p%d_guard=%-15s # NORMAL, INFINITE, HALF, NONE (the next guard crushes) or OFF (no guard gauge, as before Alpha 3)\n", k + 1, cheat_guard_names[rt_cheat_guard[k] >= 0 && rt_cheat_guard[k] <= 4 ? rt_cheat_guard[k] : 0]);
         fprintf(f, "p%d_super=%-15s # NORMAL, INFINITE, LV1, LV2, LV3 or NONE\n", k + 1, cheat_super_names[rt_cheat_super[k] >= 0 && rt_cheat_super[k] < 6 ? rt_cheat_super[k] : 0]);
     }
     for (int i = 0; i < 4; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", cheat_wt_keys[i], cheat_wt_names[!!rt_cheat_wt[i]]); fprintf(f, "%-24s # NORMAL or MAX (World Tour: EXP and Lv 32)\n", l); }

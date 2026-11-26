@@ -28,7 +28,9 @@
  *   HEALTH  NORMAL, INFINITE (back to full each frame), HALF (never above half the round's full health),
  *           NONE (never above 1: the next hit knocks out, by the game's own damage)
  *   GUARD   NORMAL, INFINITE (no guard damage), HALF (at least half the gauge's damage), NONE (one short
- *           of a crush: the next guarded hit crushes)
+ *           of a crush: the next guarded hit crushes), OFF (0.166.0: no guard gauge at all, as before
+ *           Alpha 3: no guard damage, so never a crush, as INFINITE; and the fighter's guard gauge and
+ *           its GUARD label aren't drawn, 1P's and 2P's sides of the HUD: hud_guard_off, object/hud.c)
  *   SUPER   NORMAL, INFINITE (full), LV1 / LV2 / LV3 (held at that level: 48 / 96 / 144), NONE (empty)
  * They act while a round is on (GAME + 2 = 2, + 6 = 3) in every mode but the network battles (mode 1,
  * and NETWORK's own, 12), and never on a knocked-out fighter (health below 0).
@@ -66,10 +68,10 @@ int rt_unlock[UNLOCK_COUNT] = { 1, 1, 1, 1, 1, 1, 1 };
 int rt_unlock_blocked;                      /* bits by UNLOCK_*: the game's code doesn't allow these (see above) */
 
 const char *const cheat_health_names[] = { "NORMAL", "INFINITE", "HALF", "NONE", NULL };
-const char *const cheat_guard_names[] = { "NORMAL", "INFINITE", "HALF", "NONE", NULL };
+const char *const cheat_guard_names[] = { "NORMAL", "INFINITE", "HALF", "NONE", "OFF", NULL };
 const char *const cheat_super_names[] = { "NORMAL", "INFINITE", "LV1", "LV2", "LV3", "NONE", NULL };
 const char *const cheat_wt_names[] = { "NORMAL", "MAX", NULL };
-enum { HP_NORMAL, HP_INFINITE, HP_HALF, HP_NONE };
+enum { HP_NORMAL, HP_INFINITE, HP_HALF, HP_NONE, GU_OFF };   /* (GU_OFF: GUARD only) */
 enum { SU_NORMAL, SU_INFINITE, SU_LV1, SU_LV2, SU_LV3, SU_NONE };
 
 void cheats_unlocks_default_unlocks(void) { for (int i = 0; i < UNLOCK_COUNT; i++) rt_unlock[i] = 1; }
@@ -206,7 +208,7 @@ static void fighter(uint32_t f, int k) {
     }
     int size = RB(f + F_GUARD_SIZE), dmg = RB(f + F_GUARD_DAMAGE);
     switch (rt_cheat_guard[k]) {
-    case HP_INFINITE: if (dmg) WB(f + F_GUARD_DAMAGE, 0); break;
+    case HP_INFINITE: case GU_OFF: if (dmg) WB(f + F_GUARD_DAMAGE, 0); break;   /* (OFF: never crushes) */
     case HP_HALF: if (size > 1 && dmg < size / 2) WB(f + F_GUARD_DAMAGE, (uint8_t)(size / 2)); break;
     case HP_NONE: if (size > 1 && dmg < size - 1) WB(f + F_GUARD_DAMAGE, (uint8_t)(size - 1)); break;
     }
@@ -235,6 +237,13 @@ static void entry_max(uint32_t e, const int rows[4], int status) {
     }
 }
 
+/* object/hud.c: whether side SIDE's guard gauge is off (GUARD OFF on that fighter slot, where the cheats
+   act: not in the network battles) */
+int hud_guard_off(int side) {
+    if (side < 0 || side > 2 || !FEATURE(CHEATS_UNLOCKS) || rt_cheat_guard[side] != GU_OFF) return 0;
+    int mode = (int8_t)RB(GAME + G_MODE);
+    return mode != MODE_NETWORK_BATTLE && mode != MODE_NETWORK;
+}
 void cheats_unlocks_frame(int ready) {
     unlocks_frame(ready);
     int mode = (int8_t)RB(GAME + G_MODE);

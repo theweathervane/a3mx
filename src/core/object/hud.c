@@ -30,6 +30,7 @@
 extern int rt_widescreen;   /* WIDE NATIVE: extensions/widescreen.c (extensions_off.c: 0) */
 extern int sprite_grid_clip_x;                     /* sprite_grid.c */
 int hud_health_solid(void);                         /* HEALTH GRADIENT OFF (above) */
+int hud_guard_off(int side);                        /* EX. FIGHTERS GUARD OFF (part_guard; extensions/cheats_unlocks.c) */
 extern float sprite_grid_clip_lo, sprite_grid_clip_hi;
 
 #include "../guest_mem.h"
@@ -190,16 +191,17 @@ static void part_bottom(Cpu *c, gaddr o) {
 static int can_guard(gaddr f) {
     return (int8_t)*B(f + 313) == 0 && !(*W(f + 792) & GUARD_STATES);
 }
+/* EX. FIGHTERS > GUARD OFF (hud_guard_off): that side's marks, either kind, aren't drawn */
 static void part_guard(Cpu *c, gaddr o) {
-    int any = 0;
+    int any = 0, off1 = hud_guard_off(0), off2 = hud_guard_off(1);
     if (S16(BATTLE + 56) == 0 && can_guard(FIGHTER_1)) {
-        draw_element(c, o + 0x6F4); draw_element(c, o + 0x6B4); draw_element(c, o + 0x634); draw_element(c, o + 0x734);
+        if (!off1) { draw_element(c, o + 0x6F4); draw_element(c, o + 0x6B4); draw_element(c, o + 0x634); draw_element(c, o + 0x734); }
         any = 1;
-    } else draw_element(c, o + 0x674);
+    } else if (!off1) draw_element(c, o + 0x674);
     if (S16(BATTLE + 56) == 0 && can_guard(FIGHTER_2)) {
-        draw_element(c, o + 0xD34); draw_element(c, o + 0xCF4); draw_element(c, o + 0xC74); draw_element(c, o + 0xD74);
+        if (!off2) { draw_element(c, o + 0xD34); draw_element(c, o + 0xCF4); draw_element(c, o + 0xC74); draw_element(c, o + 0xD74); }
         any = 1;
-    } else draw_element(c, o + 0xCB4);
+    } else if (!off2) draw_element(c, o + 0xCB4);
     if ((int8_t)*B(FIGHTER_1 + 313) != 0 && (int8_t)*B(FIGHTER_2 + 313) != 0) return;
     if ((*W(FIGHTER_1 + 792) & GUARD_STATES) && (*W(FIGHTER_2 + 792) & GUARD_STATES)) return;
     if (any) draw_rect(c, o + 0xF4, 0xFF);
