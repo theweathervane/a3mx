@@ -1164,6 +1164,21 @@ owner at + 88, and frame data at + 296.
 | (3 functions) | (`object/batch_moves241.c`) a bouncing special, a held special that repeats on the button and a special that throws one or two projectiles |
 | (4 functions) | (`object/batch_moves242.c`) specials that throw one or two projectiles on a frame flag (objects 0, 3, 7, 0xB) |
 | (2 functions) | (`object/batch_moves243.c`) an effect spawner after a cue and a hop-and-land special in seven steps |
+| (24 functions) | (`object/batch_moves244.c`) special-move follow-ups that call the effect spawner on a frame flag |
+| (14 functions) | (`object/batch_moves245.c`) more special-move follow-ups calling an effect on a frame flag |
+| (10 functions) | (`object/batch_moves246.c`) special-move follow-ups calling the effect spawner with a count, a push or a second effect |
+| (3 functions) | (`object/batch_moves247.c`) special-move steps that set +573 through 0x0886E294 and call the effect spawner |
+| (2 functions) | (`object/batch_moves248.c`) a leap that hands over to 0x08921FD8 and a special that calls the effect spawner once per frame flag |
+| (2 functions) | (`object/batch_moves249.c`) special-move steps that leap once ended and call the effect spawner on a frame flag |
+| (3 functions) | (`object/batch_moves250.c`) special-move steps that set +573 after their effect: a dash, a throw of object 0x16 and a counted hop |
+| (1 functions) | (`object/batch_menu251.c`) a three-item menu: cursor by the pad, picked on the button or a countdown, labels drawn by 0x0880A6CC |
+| (1 functions) | (`object/batch_menu252.c`) a six-item menu: cursor by a pad with auto-repeat, picked or cancelled on the buttons |
+| (2 functions) | (`object/batch_moves253.c`) a mashed special and its start: presses past a level restart it at that strength, ended when its count runs out |
+| (3 functions) | (`object/batch_moves254.c`) a fighter's fall start, its fall (lies down on landing, or the recovery once allowed) and its knockdown-recovery start: state reset, then stay down or a short / long hop back by held direction, or for the computer by level, distance and random bits |
+| (1 functions) | (`object/batch_moves255.c`) a mashed hold throw: holds the opponent while a count runs, presses keep it going and change its strength |
+| (1 functions) | (`object/batch_menu256.c`) a grid cursor: column and row moved by a pad's press or held repeat, wrapping round |
+| (3 functions) | (`object/batch_moves257.c`) the meter gain at strength 2 picked by distance and two special starts that use it with +81 |
+| (12 functions) | (`object/batch_supers258.c`) super-combo starts: choice / distance / gauge checks, the super state, its number and the start through 0x0886D2EC / 0x0886D3E0 |
 | (286 step dispatchers) | (0.166.0, `object/steps_fighters.c`) the step dispatchers the fighter scenarios reach, most of them characters' own move steps: run_step by a step byte (+3 - +7, +128, ...), half-word or signed byte (+194, +236, ...), and run_step_with (the owner +88 to the handler); one line each, matched to the translations' shape |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the

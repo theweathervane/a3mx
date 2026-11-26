@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.166.0
+### For players
+- **More of the game decompiled (82 functions, 38.60% of the program now):** special-move follow-ups and their effects, a mashed special and a mashed hold throw, the fighter's fall and knockdown recovery, the first super-combo starts, and three menu cursors (a three-item menu, a six-item menu and a grid). Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_moves244.c` - `batch_moves257.c`, `batch_menu251.c`, `batch_menu252.c`, `batch_menu256.c`, `batch_supers258.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch. 0x0886D5D0 did not run in any scenario, the knockdown recovery ran twice and each super start once or twice.
+
 ## 0.165.0
 ### For players
 - **More of the game decompiled (1,595 functions, 37.88% of the program now):** the fighters' moves step by step (special-move starts and their follow-ups, the super gauge's gains, throws, dashes, jumps and landings, projectiles and effects), the round flow, the HUD, crouching, damage into vitality, the fighter animation step, the sound cue queue, the wireless (ad-hoc) VS link and the stage's start and load. Nothing plays differently.
