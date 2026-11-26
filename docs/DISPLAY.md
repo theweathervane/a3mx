@@ -55,6 +55,28 @@ SCREEN SETTING > FILTER (0.60.0) draws the finished picture through one of Retro
 part of the **Shaders** extension (the launcher's Extensions tab), on by default; with it off the row
 isn't there.
 
+**The FILTER screen** (0.166.0): Cross on the FILTER row opens a screen of its own, laid out like EX.
+SETTING's pages. One category at a time (its name between the L and R symbols, its number bottom
+right): **L / R** (or left / right) change the category, **up / down** scroll its list (held: they
+repeat), **Cross / START** chooses the filter under the cursor (it applies at once; `>` marks the one in
+use), **Triangle** starts the live preview, **Circle** goes back to SCREEN SETTING. Under the list: what
+the filter is (its description or its preset's path), HEAVY when it wants a strong GPU, or why it can't
+be shown. A filter whose preset file is missing is greyed and can't be chosen. Left / right on the
+FILTER row itself still change the filter, within its category.
+
+**The live preview** (Triangle): a fight between two computer fighters, the one the attract mode shows
+(new fighters and stage each time it ends, until you stop), drawn through the filter under the cursor.
+Your buttons do nothing in it except **left / right** (the previous / next filter of that category,
+live) and **Circle** (back to the FILTER screen, on the filter you were looking at). Nothing is saved or
+recorded by it: no records, unlocks or saves change. It leaves OPTION MODE and comes back to it the way
+the MODE MENU starts it, so coming back takes a second or two.
+
+**The pause menu** (in a fight) has a FILTER row too, between BUTTON CONFIG and MODE MENU: left / right
+change the filter within its category, L / R the category; the filter's name shows under the menu. The
+game is paused, so a heavy preset taking a moment to build is fine there.
+
+**Categories.** **FAVOURITES** first, the eleven below (tuned for this game) and OFF:
+
 | FILTER | What it is |
 |---|---|
 | OFF | the picture as it is drawn (the default) |
@@ -68,15 +90,40 @@ isn't there.
 | XBRZ | xBRZ: smooth pixel edges |
 | SCALEFX | ScaleFX: smooth pixel edges, truer to the pixel art |
 
-It applies as you change it and is kept in `a3mx.cfg` (`[screen setting] filter=CRT GUEST`); DEFAULT
-sets it back to OFF. `--filter crt-guest` chooses one for a single run without saving it.
+Then every other preset of libretro's slang-shaders that the game could load and build, by the folder
+it is in: CRT, SCANLINES, HANDHELD, NTSC, PAL, VHS, EDGE SMOOTHING, PIXEL ART, INTERPOLATION,
+ANTI-ALIASING, PRESETS, BORDER, BLUR, ... (858 presets in 28 categories at the pinned commit), each
+named after its file. They come from the **catalogue** `tools/shaders.py` makes after downloading the
+shaders (`.tools/slang-shaders/a3mx_catalogue.tsv`): it has the game load, build and draw each preset
+for a few frames (`a3mx --filter-test`, a small window for a few minutes) and leaves out any that fails.
+Never offered: `bezel/` (Mega Bezel needs its own layout and textures), `hdr/` (an HDR display),
+`subframe-bfi/` (subframes, not drawn yet), `test/`, `spec/`, `include/`, `stereoscopic-3d/` and
+`downsample/`; the download doesn't even unpack most of those. If the shaders were downloaded before the
+game was built, there's no catalogue yet: `python tools/shaders.py --catalogue` makes it (`--game EXE`,
+`--librashader FILE` if they aren't where it looks). Without a catalogue FILTER offers the favourites.
+
+**CUSTOM**, last: your own presets. Put `*.slangp` files (with the shaders they use) in a `shaders`
+folder beside `a3mx.cfg`, that is in your configs folder (`%APPDATA%\a3mx\configs\shaders\` on
+Windows; the launcher's Paths tab says where configs are); subfolders are read too. Each is named after
+its file. A preset can use the downloaded ones by a relative path (`../../...`) or have its own copies.
+
+**ReShade** is not part of this: it is a different shader system (`.fx` files) that hooks the graphics
+API from outside the game. If you want it, install ReShade for `a3mx.exe` (OpenGL) as for any game; it
+works over the window whatever FILTER is set to.
+
+FILTER applies as you change it and is kept in `a3mx.cfg`: a favourite by its name (`[screen setting]
+filter=CRT GUEST`), any other by its preset's path (`filter=crt/crt-geom-deluxe.slangp`, yours as
+`filter=custom:NAME.slangp`); one that isn't offered this run (its catalogue or file gone) is kept as it
+was and FILTER is OFF meanwhile. DEFAULT sets it back to OFF. `--filter crt-guest` (or a path, or a
+name) chooses one for a single run without saving it.
 
 **It needs two things that are not part of this project**, and without either the picture is simply
 shown plain (the log and `last_run.txt`'s `filter=` line say which is missing and where it looked):
 
 1. **The shaders:** libretro's slang-shaders. The launcher's **Dependencies** tab has a **Download the
    FILTER shaders** button (or `python tools/shaders.py`): the commit pinned in `tools/data/pins.json`,
-   about 85 MB, into `.tools/slang-shaders/`, kept only if the presets match their SHA-256.
+   about 55 MB unpacked, into `.tools/slang-shaders/`, kept only if the presets match their SHA-256;
+   then the catalogue (above).
 2. **The library:** [librashader](https://github.com/SnowflakePowered/librashader) (MPL-2.0),
    `librashader.dll` on Windows, `librashader.dylib` on macOS, `librashader.so` on Linux, in
    `.tools/librashader/` (or beside `a3mx.exe`). **A release's download has it already**: the
@@ -92,7 +139,10 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
 
 FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL).
 The shader sees the picture at the game's own 480 x 272, so the scanlines are the game's rows
-whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h`.
+whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h` and
+`shader_list.c`, the screen in `src/extensions/filterscreen.c`, the preview in `filterpreview.c`, the
+pause menu's row in `pausefilter.c`. `--dump-filtered` makes `--dump` save the picture as the filter
+drew it (screenshots).
 Tried by the maintainer on Windows with a library built locally (2026-11); not yet on Linux or macOS.
 
 ## VSYNC
