@@ -244,15 +244,20 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
 
-/* EX. SETTING: the project's options, on pages (0.127.0; five since 0.128.0). With the Cheats and Unlocks
- * extension (cheats_unlocks.c):
- *   1/5  the unlocks: SHIN AKUMA, FINAL M.BISON, EX BALROG, SHIN AKUMA BATTLE, BATTLE VARIANTS, EDIT
- *        MODE POINTS, ISM-PLUS (ON forced, OFF as the save earned them)
- *   2/5  1P and 2P HEALTH, GUARD and SUPER
- *   3/5  3P's, and 4P's greyed out (there is no fourth fighter: their values can't be changed)
- *   4/5  WORLD TOUR EXP and its X-, A- and V-ISM EXP; the same four for EDIT MODE
- *   5/5  1P - 3P PRIORITY and VIRTUAL PSPS (the options EX. SETTING always had)
- * and without it only the last, as 1/1. Each page ends with DEFAULT (that page's rows back to their
+/* EX. SETTING: the project's options, on pages (0.127.0), each with its own banner in place of
+ * "EX. SETTING" (0.165.0):
+ *   EX. GAME      BOOT TO MODE MENU (from the next start), MODE MENU SHORTCUT, SHARED ENTRY POOL, 1P - 3P
+ *                 PRIORITY and VIRTUAL PSPS
+ *   EX. DISPLAY   MODE MENU ICONS, ISM PRESENTATION, SCALED ENDINGS, STAGE EXTENSIONS
+ * The extensions on these two were the launcher's checkboxes before 0.165.0: they are kept in a3mx.cfg
+ * and switched at once (ext_features.h: features_setting_changed). With Cheats and Unlocks (part of
+ * Extra menus: cheats_unlocks.c), four more:
+ *   EX. UNLOCKS   SHIN AKUMA, FINAL M.BISON, EX BALROG, SHIN AKUMA BATTLE, BATTLE VARIANTS, EDIT MODE
+ *                 POINTS, ISM-PLUS (ON forced, OFF as the save earned them)
+ *   EX. FIGHTERS  1P and 2P HEALTH, GUARD and SUPER; then 3P's, and 4P's greyed out (there is no fourth
+ *                 fighter: their values can't be changed)
+ *   EX. EXP       WORLD TOUR EXP and its X-, A- and V-ISM EXP; the same four for EDIT MODE
+ * Each page ends with DEFAULT (that page's rows back to their
  * defaults) and EXIT. As on SCORE RANKING, an arrow on each side and the page number (font 2, colour 9,
  * above the version) show there are more pages: L / R turn the page, and so do left / right on DEFAULT
  * and EXIT (on a row with a value they change it). With one page it is 1/1, with no arrows. Under the
@@ -272,14 +277,14 @@ static int no_fighter;              /* 4P's rows: shown, not used */
    slot of its own, once, in a pool of ours (the same string, the same slot, every frame) */
 #define POOL_SIZE 0x2000u
 static uint32_t pool, pool_used;
-static const char *pool_key[160];
-static uint32_t pool_at[160];
+static const char *pool_key[256];
+static uint32_t pool_at[256];
 static int pool_n;
 static uint32_t gstr(const char *s) {
     for (int i = 0; i < pool_n; i++) if (pool_key[i] == s) return pool_at[i];
     size_t n = strlen(s) + 1;
     if (!pool) { pool = rt_alloc(POOL_SIZE, 1, 16, "ex. setting text"); pool_used = 0; }
-    if (!pool || pool_n == 160 || pool_used + n > POOL_SIZE) return STR(S_EXIT);   /* (never: the strings are few) */
+    if (!pool || pool_n == 256 || pool_used + n > POOL_SIZE) return STR(S_EXIT);   /* (never: the strings are few) */
     uint32_t a = pool + pool_used; pool_used += (uint32_t)((n + 3) & ~3u);
     memcpy(HOST(a), s, n);
     pool_key[pool_n] = s; pool_at[pool_n++] = a;
@@ -334,21 +339,44 @@ static const Row page_entries[] = {
     { "EDIT MODE V-ISM EXP", &rt_cheat_edit[3], cheat_wt_names, { "EDIT MODE V-ISM EXP.", "MAX - FULL AND LV 32 - MASTER." }, 0 },
     R_DEFAULT_ROW("ALL NORMAL."), R_EXIT_ROW,
 };
-static const Row page_options[] = {
+#define FEAT_ROW(label, f, w1, w2) { label, &rt_feature_setting[f], v_off_on, { w1, w2 }, 0 }
+static const Row page_game[] = {
+    FEAT_ROW("BOOT TO MODE MENU", FEAT_BOOTMENU, "START ON THE MODE MENU - NO", "TITLE. FROM THE NEXT START."),
+    FEAT_ROW("MODE MENU SHORTCUT", FEAT_QUITKEY, "F2 OR SELECT AND START - BACK", "TO THE MODE MENU. NO SAVING."),
+    FEAT_ROW("SHARED ENTRY POOL", FEAT_I_ISM_SELECT, "ENTRY CHARACTERS CAN BE PICKED", "FOR THE OTHER SIDE TOO."),
     { "1P PRIORITY", &rt_join_in[0], v_priority, { "PLAYER - PAD 1 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
     { "2P PRIORITY", &rt_join_in[1], v_priority, { "PLAYER - PAD 2 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
     { "3P PRIORITY", &rt_join_in[2], v_priority, { "PLAYER - PAD 3 PLAYS A FIGHTER", "NOBODY STARTED. COM - THE CPU." }, 0 },
     { "VIRTUAL PSPS", &rt_virtual_psps, v_off_on, { "NETWORK FINDS PADS 2 AND 3 OR", "THE CPU AS OTHER PSPS HERE." }, 0 },
-    R_DEFAULT_ROW("COM AND VIRTUAL PSPS ON."), R_EXIT_ROW,
+    R_DEFAULT_ROW("BOOT OFF - COM - THE REST ON."), R_EXIT_ROW,
 };
-enum { PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, PG_OPTIONS, N_PAGES };
-#define PAGE(r, x) { r, (int)(sizeof r / sizeof *r), x }
-static const struct { const Row *rows; int n, value_x; } pages[N_PAGES] = {
-    PAGE(page_unlocks, 0xD8), PAGE(page_fighters12, 0xA0), PAGE(page_fighters34, 0xA0), PAGE(page_entries, 0xE0), PAGE(page_options, 0xA0),
+static const Row page_display[] = {
+    FEAT_ROW("MODE MENU ICONS", FEAT_MODE_MENU_ICONS, "PAD BUBBLES AND FRAME TIMING", "BADGE ON THE MODE MENU BAR."),
+    FEAT_ROW("ISM PRESENTATION", FEAT_I_ISM_DISPLAY, "I-ISM WIPE INTO THE FIGHT AND", "I-ISM RANKING IN THE ATTRACT."),
+    FEAT_ROW("SCALED ENDINGS", FEAT_SCALED_ENDINGS, "ENDINGS FILL THE WIDE SCREEN.", "WITH WIDE NATIVE."),
+    FEAT_ROW("STAGE EXTENSIONS", FEAT_STAGE_EXT, "NEW ART FOR THE STAGE EDGES IN", "WIDE NATIVE. EXPERIMENTAL."),
+    R_DEFAULT_ROW("ICONS AND ENDINGS ON."), R_EXIT_ROW,
+};
+/* EX. GAME and EX. DISPLAY always; the cheats' pages after them, with Cheats and Unlocks */
+enum { PG_GAME, PG_DISPLAY, PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, N_PAGES };
+#define PAGE(t, r, x) { t, r, (int)(sizeof r / sizeof *r), x }
+static const struct { const char *title; const Row *rows; int n, value_x; } pages[N_PAGES] = {
+    PAGE("EX. GAME", page_game, 0xD8), PAGE("EX. DISPLAY", page_display, 0xD8), PAGE("EX. UNLOCKS", page_unlocks, 0xD8),
+    PAGE("EX. FIGHTERS", page_fighters12, 0xA0), PAGE("EX. FIGHTERS", page_fighters34, 0xA0), PAGE("EX. EXP", page_entries, 0xE0),
 };
 static int page;                    /* PG_* */
-static int first_page(void) { return FEATURE(CHEATS_UNLOCKS) ? PG_UNLOCKS : PG_OPTIONS; }
-static int page_count(void) { return N_PAGES - first_page(); }
+static int first_page(void) { return PG_GAME; }
+static int page_count(void) { return FEATURE(CHEATS_UNLOCKS) ? N_PAGES : PG_DISPLAY + 1; }
+/* a row of EX. GAME / EX. DISPLAY: the extension it switches, or -1 */
+static int row_feature(const Row *r) {
+    return r->value >= &rt_feature_setting[0] && r->value < &rt_feature_setting[FEAT_COUNT] ? (int)(r->value - rt_feature_setting) : -1;
+}
+static void page_features_default(int pg) {
+    for (int i = 0; i < pages[pg].n; i++) {
+        int f = row_feature(&pages[pg].rows[i]);
+        if (f >= 0) { rt_feature_setting[f] = FEATURES[f].on_by_default; features_setting_changed(f); }
+    }
+}
 static int count_names(const char *const *n) { int k = 0; while (n[k]) k++; return k; }
 static int ex_row_y(int r) { return 0x1C + 14 * r; }
 static void page_defaults(int pg) {
@@ -356,7 +384,8 @@ static void page_defaults(int pg) {
     else if (pg == PG_FIGHTERS12) cheats_unlocks_default_fighters(0, 1);
     else if (pg == PG_FIGHTERS34) cheats_unlocks_default_fighters(2, 2);
     else if (pg == PG_ENTRIES) cheats_unlocks_default_entries();
-    else { rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
+    else if (pg == PG_DISPLAY) page_features_default(pg);
+    else { page_features_default(pg); rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
 }
 
 /* The side arrows: drawn into our page at ARROW_U / ARROW_V (left, then right), shown by two objects of
@@ -470,7 +499,7 @@ static void turn_page(Cpu *c, int step) {
 }
 static void ex_screen(Cpu *c) {
     uint32_t p = pressed();
-    if (page < first_page()) page = first_page();
+    if (page < first_page() || page >= first_page() + page_count()) page = first_page();
     const Row *rows = pages[page].rows; int n = pages[page].n;
     const Row *r = &rows[row];
     int step = (p & 1) ? 1 : (p & 2) ? -1 : 0;                /* right / left */
@@ -479,15 +508,18 @@ static void ex_screen(Cpu *c) {
     else if (p & 4) { row = (row + 1) % n; sound(c, 0x38); }
     else if (more && (p & (B_L | B_R))) turn_page(c, (p & B_R) ? 1 : -1);
     else if ((step || (p & B_CONFIRM)) && r->greyed) sound(c, 0x2F);   /* not there yet: nothing to change */
-    else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; sound(c, 0x38); }
+    else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; features_setting_changed(row_feature(r)); sound(c, 0x38); }
     else if (step && more) turn_page(c, step);
-    else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; sound(c, 0x39); }
+    else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; features_setting_changed(row_feature(r)); sound(c, 0x39); }
     else if ((p & B_CONFIRM) && row == n - 2) { page_defaults(page); sound(c, 0x39); }   /* DEFAULT: this page */
     else if ((p & B_CONFIRM) && row == n - 1) { ex_close(c, 0x39); return; }   /* EXIT chosen: a confirm */
     else if (p & B_BACK) { ex_close(c, 0x2F); return; }
     rows = pages[page].rows; n = pages[page].n; r = &rows[row];
     WB(OPT + 7, (uint32_t)row); bar_y = 239 - ex_row_y(row);
-    title(c, S_TITLE);
+    {   /* the page's own banner (EX. GAME, EX. DISPLAY, ...) where "EX. SETTING" was */
+        const char *t = pages[page].title;
+        text(c, gstr(t), 2, 0xC0 - 8 * (int)strlen(t), 5, 0xB);
+    }
     for (int i = 0; i < n; i++) {
         int y = ex_row_y(i), colour = rows[i].greyed ? (i == row ? GREYED_ON : GREYED) : i == row ? 0xB : 0xA;
         text(c, gstr(rows[i].label), 1, 0x30, y, colour);
@@ -499,7 +531,7 @@ static void ex_screen(Cpu *c) {
     for (int k = 0; k < 2; k++) if (r->what[k][0]) text(c, gstr(r->what[k]), 0, 0x30, WHAT_Y + 10 * k, 9);
     {                                                         /* the page number, 1/1 too (the user, 0.127.0) */
         static const char *const numbers[N_PAGES][N_PAGES] = { { "1/1" }, { "1/2", "2/2" }, { "1/3", "2/3", "3/3" },
-            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" } };
+            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" }, { "1/6", "2/6", "3/6", "4/6", "5/6", "6/6" } };
         text(c, gstr(numbers[page_count() - 1][page - first_page()]), 2, 0x178 - 48, PAGE_Y, 9);
     }
     text(c, STR(S_VERSION), 0, VERSION_X, VERSION_Y, 0xA);   /* The project's version, bottom right in the small font: just shown */

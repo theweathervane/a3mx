@@ -19,7 +19,7 @@ static const GameOption PLAY_OPTIONS[] = {
     { "--p3 human", "--p3 human|cpu|auto", "The same for fighter 3 (the team modes).", false },
     { "--save-dir saves", "--save-dir DIR", "Keep saves and settings (a3mx.dat / .cfg) in DIR instead of work/.", false },
     { "--assets assets/us", "--assets DIR", "Load each archive that DIR/index.json gives an unpacked folder from it (default: assets/<region>).", false },
-    { "--custom-assets", "--custom-assets", "Use the project's own new art in assets/extensions/ (the WIDE NATIVE stage edge strips). Off without it.", true },
+    { "--custom-assets", "--custom-assets", "Use the project's own new art in assets/extensions/ (the WIDE NATIVE stage edge strips) for this run, whatever EX. SETTING > EX. DISPLAY > STAGE EXTENSIONS says.", false },
     { "--no-assets", "--no-assets", "Load everything from the disc, ignoring edited assets.", false },
     { "--log run.log", "--log FILE", "Write the log to FILE instead of work/a3mx.log.", false },
     { "--trace", "--trace", "Log every OS call (slow; the same as --log-level verbose).", false },

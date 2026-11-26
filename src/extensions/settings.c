@@ -1,8 +1,9 @@
 /* a3mx.cfg: every setting, by name, in sections. Written by the program (OPTION MODE screens, the
  * game's saves, closing); it can also be edited by hand while the program is closed.
  *
- *   [ex setting]     the project's own options (OPTION MODE > EX. SETTING; PRIORITY: docs/PLAYERS.md)
- *   [cheats and unlocks]  EX. SETTING's cheats and UNLOCK ALL (cheats_unlocks.c)
+ *   [ex setting]     the project's own options (OPTION MODE > EX. SETTING; PRIORITY: docs/PLAYERS.md), and
+ *                    the extensions switched there (EX. GAME, EX. DISPLAY: ext_features.h's keys)
+ *   [cheats and unlocks]  EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (cheats_unlocks.c)
  *   [game option]    OPTION MODE > GAME OPTION
  *   [screen setting] OPTION MODE > SCREEN SETTING
  *   [p1 config] .. [p4 config]   OPTION MODE > PLAYER CONFIG: each button's attack (names as on the
@@ -18,6 +19,7 @@
  *   +0x204 mode select (OFF ON)   +0x52 unlocks   +0x200 ISM-Pluses   +20 * p: player p's buttons
  */
 #include "rt.h"
+#include "ext_features.h"
 #define SHADER_TABLE_ONLY
 #include "shader.h"
 #include <stdio.h>
@@ -220,6 +222,9 @@ void settings_load(void) {
                 continue;
             }
             if (!strcmp(key, "virtual_psps")) { rt_virtual_psps = is_on(val); continue; }
+            { int done_feat = 0;                          /* EX. GAME / EX. DISPLAY: the extensions (ext_features.h) */
+              for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key && !strcmp(key, FEATURES[k].key)) { rt_feature_setting[k] = is_on(val); done_feat = 1; }
+              if (done_feat) continue; }
             if (key[0] == 'p' && key[1] >= '1' && key[1] <= '3' && key[2] == '_') {    /* cheats: p1_health ... p3_super */
                 int k = key[1] - '1', *v = !strcmp(key + 3, "health") ? &rt_cheat_health[k] : !strcmp(key + 3, "guard") ? &rt_cheat_guard[k] :
                                             !strcmp(key + 3, "super") ? &rt_cheat_super[k] : NULL;
@@ -286,6 +291,7 @@ void settings_load(void) {
             if (o) field_set(o, &fields[i], 2); else { pend.field_v[i] = 2; pending = 1; }
         }
     }
+    features_from_settings();                  /* EX. GAME / EX. DISPLAY's extensions, as read */
     rt_log("settings: 1P %s, 2P %s, 3P %s, virtual PSPs %d", v_human[!!rt_join_in[0]], v_human[!!rt_join_in[1]], v_human[!!rt_join_in[2]], rt_virtual_psps);
 }
 
@@ -310,7 +316,12 @@ static void cfg_body(FILE *f) {
     fprintf(f, "\n[ex setting]\n");
     for (int k = 0; k < 3; k++) { char l[48]; snprintf(l, sizeof l, "p%d_priority=%s", k + 1, v_human[!!rt_join_in[k]]); fprintf(f, "%-24s # PLAYER: pad %d plays a fighter nobody started with; COM: the computer does\n", l, k + 1); }
     { char l[48]; snprintf(l, sizeof l, "virtual_psps=%s", off_on[!!rt_virtual_psps]); fprintf(f, "%-24s # ON: NETWORK finds pads 2 and 3 (or the computer) as other PSPs, on this PC; OFF: no other PSPs\n", l); }
-    fprintf(f, "\n[cheats and unlocks]      # with the Cheats and Unlocks extension. Unlocks: ON forced, OFF as your save earned them (forced ones are never saved)\n");
+    for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key) {   /* EX. GAME / EX. DISPLAY */
+        char l[48]; snprintf(l, sizeof l, "%s=%s", FEATURES[k].key, off_on[!!rt_feature_setting[k]]);
+        fprintf(f, "%-24s # %s: %s%s\n", l, FEATURES[k].where == WHERE_EX_GAME ? "EX. GAME" : "EX. DISPLAY", FEATURES[k].title,
+                k == FEAT_BOOTMENU ? " (from the next start)" : "");
+    }
+    fprintf(f, "\n[cheats and unlocks]      # EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (Extra menus). Unlocks: ON forced, OFF as your save earned them (forced ones are never saved)\n");
     for (int i = 0; i < UNLOCK_COUNT; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", unlock_keys[i], off_on[!!rt_unlock[i]]); fprintf(f, "%-24s # %s\n", l, unlock_notes[i]); }
     fprintf(f, "%-24s # the fighter slots 1 - 3, every mode but network battles\n", "");
     for (int k = 0; k < 3; k++) {

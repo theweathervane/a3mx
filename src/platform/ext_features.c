@@ -7,7 +7,11 @@ void rt_log(const char *fmt, ...);
 extern int rt_extensions;                    /* main.c: any feature on (0: the PSP program alone) */
 
 unsigned char rt_feature_on[FEAT_COUNT + 1];
-static char described[256] = "none";
+int rt_feature_setting[FEAT_COUNT];
+static unsigned char named[FEAT_COUNT];      /* named in --features: stays so for this run, whatever a3mx.cfg says */
+static int follow_settings;                  /* "settings" was in the list */
+static char described[256] = "none", spec[320] = "none";
+static int in_game(int f) { return FEATURES[f].where == WHERE_EX_GAME || FEATURES[f].where == WHERE_EX_DISPLAY; }
 
 static void finish(void) {
     /* a feature whose need is off goes off with it (twice: a need can itself have just gone) */
@@ -28,6 +32,17 @@ static void finish(void) {
             any = 1;
         }
     if (!any) snprintf(described, sizeof described, "none");
+    /* the same run again (--record): what isn't left to a3mx.cfg by name, and "settings" (a replay has
+       this run's a3mx.cfg) */
+    n = 0; spec[0] = 0;
+    for (int f = 0; f < FEAT_COUNT && any; f++) {
+        if (follow_settings && in_game(f) && !named[f]) continue;          /* a3mx.cfg's to say */
+        /* an off one is written out only where "settings" would otherwise turn it on */
+        if (!rt_feature_on[f] && !(follow_settings && FEATURES[f].where != WHERE_LAUNCHER)) continue;
+        n += (size_t)snprintf(spec + n, sizeof spec - n, "%s%s%s", n ? "," : "", rt_feature_on[f] ? "" : "-", FEATURES[f].name);
+    }
+    if (any && follow_settings) n += (size_t)snprintf(spec + n, sizeof spec - n, "%ssettings", n ? "," : "");
+    if (!any) snprintf(spec, sizeof spec, "none");
     rt_feature_on[FEAT_ANY] = (unsigned char)any;
     rt_extensions = any;
 }
@@ -40,7 +55,10 @@ static int by_name(const char *s, size_t n) {
 int features_set(const char *list, const char **bad) {
     static char bad_name[40];
     memset(rt_feature_on, 0, sizeof rt_feature_on);
-    if (!list) list = "default";
+    memset(named, 0, sizeof named);
+    follow_settings = 0;
+    for (int f = 0; f < FEAT_COUNT; f++) rt_feature_setting[f] = FEATURES[f].on_by_default;   /* until a3mx.cfg is read */
+    if (!list) list = "default,settings";
     for (const char *p = list; *p;) {
         const char *e = strchr(p, ',');
         size_t n = e ? (size_t)(e - p) : strlen(p);
@@ -49,19 +67,40 @@ int features_set(const char *list, const char **bad) {
         if (sn == 3 && !strncmp(s, "all", 3)) { for (int f = 0; f < FEAT_COUNT; f++) rt_feature_on[f] = (unsigned char)!off; }
         else if (sn == 4 && !strncmp(s, "none", 4)) memset(rt_feature_on, 0, sizeof rt_feature_on);
         else if (sn == 7 && !strncmp(s, "default", 7)) { for (int f = 0; f < FEAT_COUNT; f++) rt_feature_on[f] = (unsigned char)FEATURES[f].on_by_default; }
+        else if (sn == 8 && !strncmp(s, "settings", 8)) {         /* the rest at their defaults, then as a3mx.cfg has them */
+            follow_settings = !off;
+            for (int f = 0; f < FEAT_COUNT; f++) if (FEATURES[f].where != WHERE_LAUNCHER && !named[f]) rt_feature_on[f] = (unsigned char)(!off && FEATURES[f].on_by_default);
+        }
         else if (sn) {
             int f = by_name(s, sn);
             if (f < 0) { snprintf(bad_name, sizeof bad_name, "%.*s", (int)(sn < 39 ? sn : 39), s); if (bad) *bad = bad_name; return 0; }
             rt_feature_on[f] = (unsigned char)!off;
+            named[f] = 1;
         }
         p = e ? e + 1 : p + n;
     }
     finish();
     return 1;
 }
-void features_none(void) { memset(rt_feature_on, 0, sizeof rt_feature_on); finish(); }
-void features_add(int f) { if (f >= 0 && f < FEAT_COUNT && rt_feature_on[FEAT_ANY]) { rt_feature_on[f] = 1; finish(); } }
+void features_none(void) { memset(rt_feature_on, 0, sizeof rt_feature_on); follow_settings = 0; finish(); }
+
+void features_from_settings(void) {
+    if (!follow_settings || !rt_feature_on[FEAT_ANY]) return;
+    for (int f = 0; f < FEAT_COUNT; f++)
+        if (in_game(f) && !named[f]) rt_feature_on[f] = (unsigned char)!!rt_feature_setting[f];
+    finish();
+    rt_log("features: with EX. SETTING's (a3mx.cfg): %s", described);
+}
+void features_setting_changed(int f) {
+    if (f < 0 || f >= FEAT_COUNT || !in_game(f) || !rt_feature_on[FEAT_ANY]) return;
+    if (f == FEAT_BOOTMENU) return;                          /* it acts at boot only: the next start */
+    rt_feature_on[f] = (unsigned char)!!rt_feature_setting[f];
+    finish();
+    rt_log("features: %s %s from EX. SETTING", FEATURES[f].name, rt_feature_on[f] ? "on" : "off");
+}
+void features_add(int f) { if (f >= 0 && f < FEAT_COUNT && rt_feature_on[FEAT_ANY]) { rt_feature_on[f] = 1; named[f] = 1; finish(); } }
 const char *features_describe(void) { return described; }
+const char *features_spec(void) { return spec; }
 
 /* An extension's function is named after its file: exsetting_option_menu is exsetting.c's. */
 static const struct { const char *prefix; int feature; } BY_PREFIX[] = {

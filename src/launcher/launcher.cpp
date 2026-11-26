@@ -12,8 +12,9 @@
  *                SHA-256 and where it goes, and is downloaded only after you agree
  *   Inputs       bring your own device: for each of four players, keyboard keys and a controller; its
  *                buttons and Test in the Configure window (configs/inputs.cfg, read when the game starts)
- *   Extensions   every extension as a feature of its own (src/platform/ext_features.h): all off is the
- *                PSP game as it was. Widescreen and Stage Extensions are here
+ *   Extensions   PSP original (no extension at all), and the three extensions switched outside the
+ *                game: Enhanced saves, Extra menus, Local multiplayer (src/platform/ext_features.h). The
+ *                rest are in the game's EX. SETTING (--features ...,settings)
  *   Build/Run    preset, extract again, tests; full screen, log level, renderer, resolution, GPU, extra
  *                options; Run (build if needed, then play) or Build; Stop ends a build
  *   About        the version, Report a bug (a new issue, filled in), Request a feature, the project's pages, licences
@@ -246,7 +247,8 @@ struct Settings {
     bool extract = false, tests = false, run = true;
     bool art_pack = false;          /* one go: tools/build.py --art-pack */
     bool fullscreen = true;
-    bool feature[FEAT_COUNT];       /* the Extensions tab: --features (ext_features.h) */
+    bool feature[FEAT_COUNT];       /* the Extensions tab: --features (ext_features.h); only the launcher's are used */
+    bool psp_original = false;      /* the Extensions tab's "PSP original": no extension at all (--features none) */
     int log_level = 0;              /* OFF */
     int renderer = 0;               /* an index into RENDERERS (saved by its --renderer name) */
     int scale = 0;                  /* 0: auto, else --scale N */
@@ -301,11 +303,11 @@ static void settings_load(Settings &s, const std::string &path) {
         else if (k == "console_h" && n >= 60) s.console_h = n;
         else if (k == "win_w" && n >= 400) s.win_w = n;
         else if (k == "win_h" && n >= 200) s.win_h = n;
-        else if (k.compare(0, 8, "feature.") == 0) { for (int f = 0; f < FEAT_COUNT; f++) if (k.substr(8) == FEATURES[f].name) s.feature[f] = n != 0; }
-        /* before 0.60.0: Extensions (all or none), the widescreen patch, Custom Assets */
-        else if (k == "extensions" && n == 0) { for (int f = 0; f < FEAT_COUNT; f++) s.feature[f] = false; }
-        else if (k == "widescreen" && n == 0) s.feature[FEAT_WIDESCREEN] = false;
-        else if (k == "custom_assets" && n != 0) s.feature[FEAT_STAGE_EXT] = true;
+        else if (k == "psp_original") s.psp_original = n != 0;
+        /* (since 0.165.0 only the launcher's three are read: the rest are switched in EX. SETTING) */
+        else if (k.compare(0, 8, "feature.") == 0) { for (int f = 0; f < FEAT_COUNT; f++) if (FEATURES[f].where == WHERE_LAUNCHER && k.substr(8) == FEATURES[f].name) s.feature[f] = n != 0; }
+        /* before 0.60.0: Extensions (all or none) */
+        else if (k == "extensions" && n == 0) s.psp_original = true;
     }
 }
 static void settings_save(const Settings &s, const std::string &path) {
@@ -316,7 +318,8 @@ static void settings_save(const Settings &s, const std::string &path) {
     t += "tests=" + std::to_string(s.tests) + "\n";
     t += "run=" + std::to_string(s.run) + "\n";
     t += "fullscreen=" + std::to_string(s.fullscreen) + "\n";
-    for (int f = 0; f < FEAT_COUNT; f++) t += std::string("feature.") + FEATURES[f].name + "=" + std::to_string(s.feature[f]) + "\n";
+    t += "psp_original=" + std::to_string(s.psp_original) + "\n";
+    for (int f = 0; f < FEAT_COUNT; f++) if (FEATURES[f].where == WHERE_LAUNCHER) t += std::string("feature.") + FEATURES[f].name + "=" + std::to_string(s.feature[f]) + "\n";
     t += "log_level=" + std::to_string(s.log_level) + "\n";
     t += std::string("renderer=") + RENDERERS[s.renderer].arg + "\n";
     t += "scale=" + std::to_string(s.scale) + "\n";
@@ -550,14 +553,17 @@ struct App {
     }
     std::string tools_dir() const { return set.tools_dir.empty() ? join(home_dir(), ".tools") : set.tools_dir; }
     std::string controls_path() const { return join(user_dir("configs"), "inputs.cfg"); }
-    /* --features: the ticked ones by name, "none" if none (then the game is the PSP program alone) */
+    /* --features: "none" for the PSP original; otherwise the launcher's three that are ticked, and
+       "settings": every other extension as the game's EX. SETTING has it (a3mx.cfg) */
     std::string features_arg() const {
+        if (set.psp_original) return "none";
         std::string l;
         for (int f = 0; f < FEAT_COUNT; f++) {
+            if (FEATURES[f].where != WHERE_LAUNCHER) continue;
             bool on = set.feature[f] && (FEATURES[f].needs < 0 || set.feature[FEATURES[f].needs]);
-            if (on) l += (l.empty() ? "" : ",") + std::string(FEATURES[f].name);
+            if (on) l += std::string(FEATURES[f].name) + ",";
         }
-        return l.empty() ? "none" : l;
+        return l + "settings";
     }
     /* the game the button starts: beside the launcher, or the one build.py builds for the preset */
     std::string run_exe() const {
@@ -2281,45 +2287,40 @@ struct App {
 
     /* ================================================================ Extensions */
     void extensions_tab(bool busy) {
-        const float em = ImGui::GetFontSize();
         ImGui::SeparatorText("Extensions");
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
-        ImGui::TextDisabled("What this project adds to the PSP game, each on its own switch. With all of them off the game plays as the original does: "
-                            "its own menus and saves, one player.");
+        ImGui::TextDisabled("Three of the project's extensions are switched here. Everything else is switched in the game, so every "
+                            "player runs the same build: OPTION MODE > EX. SETTING (EX. GAME: Boot to the MODE MENU, Mode Menu Shortcut, "
+                            "Shared Entry Pool; EX. DISPLAY: MODE MENU icons, ISM presentation, Scaled endings, Stage Extensions; "
+                            "the cheats and unlocks) and SCREEN SETTING (SCREEN SIZE's WIDE NATIVE, FILTER).");
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
         ImGui::BeginDisabled(busy);
         bool changed = false;
-        /* the names' column: after the widest checkbox and title, at least 17 em */
-        float name_col = em * 17.0f;
+        if (ImGui::Checkbox("PSP original", &set.psp_original)) changed = true;
+        ImGui::SetItemTooltip("Every extension off: the game plays as the PSP original, with its own menus and saves, one player.\n"
+                              "The game starts with --features none.");
+        ImGui::Spacing();
+        ImGui::BeginDisabled(set.psp_original);
         for (int f = 0; f < FEAT_COUNT; f++) {
-            float w = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize(FEATURES[f].title).x + em * 1.5f;
-            if (w > name_col) name_col = w;
-        }
-        for (int f = 0; f < FEAT_COUNT; f++) {
-            if (f == 0 || FEATURES[f].section != FEATURES[f - 1].section) {   /* a heading: Core, Display, Extra */
-                if (f > 0) ImGui::Spacing();
-                ImGui::SeparatorText(FEATURE_SECTIONS[FEATURES[f].section]);
-            }
+            if (FEATURES[f].where != WHERE_LAUNCHER) continue;
             int need = FEATURES[f].needs;
             bool blocked = need >= 0 && !set.feature[need];
             ImGui::BeginDisabled(blocked);
-            bool v = set.feature[f] && !blocked;
+            bool v = set.feature[f] && !blocked && !set.psp_original;
             if (ImGui::Checkbox(FEATURES[f].title, &v)) { set.feature[f] = v; changed = true; }
             ImGui::EndDisabled();
             std::string tip = FEATURES[f].what;
             if (blocked) tip += std::string("\n\nOff, because it needs \"") + FEATURES[need].title + "\".";
-            if (f == FEAT_SHADERS) tip += "\n\nNeeds the shaders and the librashader library: see Dependencies.";
             ImGui::SetItemTooltip("%s", tip.c_str());
-            ImGui::SameLine(name_col);
-            ImGui::TextDisabled("%s%s", FEATURES[f].name, FEATURES[f].on_by_default ? "" : f == FEAT_STAGE_EXT ? "  (off by default: experimental)" : "  (off by default)");
         }
+        ImGui::EndDisabled();
         ImGui::Spacing();
-        if (ImGui::Button("Defaults")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0; changed = true; }
-        ImGui::SetItemTooltip("Every extension back to how it starts: on, but for the ones marked off by default");
-        ImGui::SameLine();
-        if (ImGui::Button("All off (the PSP game)")) { for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = false; changed = true; }
-        ImGui::SetItemTooltip("Every extension off: the game plays as the PSP original");
+        if (ImGui::Button("Defaults")) {
+            for (int f = 0; f < FEAT_COUNT; f++) set.feature[f] = FEATURES[f].on_by_default != 0;
+            set.psp_original = false; changed = true;
+        }
+        ImGui::SetItemTooltip("PSP original off, and the three extensions on");
         ImGui::EndDisabled();
         if (changed) settings_save(set, settings_path);
         ImGui::Spacing();

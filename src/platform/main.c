@@ -54,10 +54,12 @@
  *   --stick "F=LX,LY;.." scripted analogue stick by frame (tests)
  *   --assets DIR         load each archive that DIR/index.json gives an unpacked folder from it (default:
  *                        assets/<region> beside the work folder, when it exists; docs/ASSET_LOADING.md)
- *   --features LIST      which extensions are on, by name (ext_features.h): saves, boot_to_menu, mode_menu_icons, quit_key,
- *                        menus, widescreen, i_ism_display, scaled_endings, stage_extensions, shaders, cheats_unlocks,
- *                        local_multiplayer, i_ism_select; also all, none, default, and -name to take one out
- *                        ("default,-mode_menu_icons"). The launcher's Extensions tab sets it
+ *   --features LIST      which extensions are on, by name (ext_features.h): saves, menus, local_multiplayer,
+ *                        boot_to_menu, quit_key, i_ism_select, mode_menu_icons, i_ism_display, scaled_endings,
+ *                        stage_extensions, widescreen, shaders, cheats_unlocks; also all, none, default, -name to
+ *                        take one out ("default,-mode_menu_icons"), and settings: the ones EX. SETTING switches as
+ *                        a3mx.cfg has them (a name in the list wins for this run). None given: default,settings.
+ *                        The launcher passes its three and settings
  *   --no-extensions      none of them: the PSP program alone
  *   --custom-assets      as before 0.60.0: also turns stage_extensions on (the project's own stage edge art)
  *   --no-assets          load everything from the disc
@@ -813,7 +815,7 @@ int main(int argc, char **argv) {
         if (!features_set(features_arg, &bad)) {
             char names[400]; size_t n = 0;                  /* the features' names, from the table */
             for (int f = 0; f < FEAT_COUNT; f++) n += (size_t)snprintf(names + n, sizeof names - n, "%s, ", FEATURES[f].name);
-            rt_fatal("--features: %s is not a feature (%sall, none, default)", bad, names);
+            rt_fatal("--features: %s is not a feature (%sall, none, default, settings)", bad, names);
         }
         if (rt_custom_assets) features_add(FEAT_STAGE_EXT);
     }
@@ -826,7 +828,7 @@ int main(int argc, char **argv) {
         snprintf(datp, sizeof datp, "%s/a3mx.dat", save_dir);
         extern int rt_human[3], rt_frame_timing_cli;
         int human[2] = { rt_human[1], rt_human[2] };
-        record_open(record_path, A3MX_VERSION, disc, region, features_describe(), !no_assets, human, rt_frame_timing_cli, cfgp, datp);
+        record_open(record_path, A3MX_VERSION, disc, region, features_spec(), !no_assets, human, rt_frame_timing_cli, cfgp, datp);
     }
     rt_work_dir = work;
     if (rt_extensions) { void settings_load(void); rt_log("features: %s", features_describe()); settings_load(); }
