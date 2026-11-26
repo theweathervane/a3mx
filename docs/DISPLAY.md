@@ -74,9 +74,11 @@ the same way by itself. SCREEN SETTING fades in where you left it, cursor on PRE
 MODE's music. It is Free Battle underneath
 (its menus answered for you), so nothing is saved or recorded: no records, unlocks or saves change.
 
-**The pause menu** (in a fight) has a FILTER row too, between BUTTON CONFIG and MODE MENU: left / right
-change the filter within its category, L / R the category; the filter's name shows under the menu. The
-game is paused, so a heavy preset taking a moment to build is fine there.
+**The pause menu** (in a fight, whoever paused: 1P, 2P or 3P) has a FILTER row too, between BUTTON
+CONFIG and MODE MENU. Cross on it opens the same FILTER screen over the paused fight, which shows
+through its panel: Cross chooses (kept at once), Circle cancels, both back to the pause menu. The game
+is paused, so a heavy preset taking a moment to build is fine there. On SCREEN SETTING, a filter name
+too long for the FILTER row scrolls while the row is highlighted.
 
 **Categories.** **FAVOURITES** first, the eleven below (tuned for this game) and OFF:
 
