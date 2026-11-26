@@ -45,6 +45,8 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_BLEND 0x0BE2
 #define GL_SCISSOR_TEST 0x0C11
 #define GL_CULL_FACE 0x0B44
+#define GL_STENCIL_TEST 0x0B90
+#define GL_FRAMEBUFFER_SRGB 0x8DB9
 #define GL_DEPTH_TEST 0x0B71
 #define GL_ZERO 0
 #define GL_ONE 1
@@ -134,13 +136,13 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
     X(GLenum, glGetError, (void)) \
     X(const GLubyte *, glGetString, (GLenum))
 
-/* optional: frame timing only (perf.h); the renderer works without them */
+/* optional: frame timing (perf.h), and what shader_gl.c puts back after a filter; the renderer works without them */
 #define GL_FUNCS_OPTIONAL(X) \
     X(void, glGenQueries, (GLsizei, GLuint *)) \
     X(void, glBeginQuery, (GLenum, GLuint)) \
     X(void, glEndQuery, (GLenum)) \
     X(void, glGetQueryObjectiv, (GLuint, GLenum, GLint *)) \
-    X(void, glGetQueryObjectui64v, (GLuint, GLenum, uint64_t *))
+    X(void, glGetQueryObjectui64v, (GLuint, GLenum, uint64_t *))     X(void, glBindSampler, (GLuint, GLuint))     X(void, glDepthMask, (GLboolean))
 
 #define GL_DECLARE(ret, name, args) typedef ret (GLAPIENTRY *PFN_##name) args; extern PFN_##name p_##name;
 GL_FUNCS(GL_DECLARE)

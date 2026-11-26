@@ -138,8 +138,9 @@ static int load_lib(void) {
     return lib_ok;
 }
 
+static void put_back_state(void);
 static void drop_chain(void) {
-    if (chain) { libra_error_t e = lib.gl_filter_chain_free(&chain); if (e) lib.error_free(&e); chain = NULL; }
+    if (chain) { libra_error_t e = lib.gl_filter_chain_free(&chain); if (e) lib.error_free(&e); chain = NULL; put_back_state(); }
 }
 
 /* the chain for filter F: made once, kept until the filter changes */
@@ -164,7 +165,9 @@ static int want_chain(int f) {
     struct filter_chain_gl_opt_t opt;
     memset(&opt, 0, sizeof opt);
     opt.version = LIBRASHADER_CURRENT_VERSION; opt.glsl_version = 330; opt.use_dsa = false; opt.force_no_mipmaps = false; opt.disable_cache = true;
+    p_glBindVertexArray(0);
     err = lib.gl_filter_chain_create(&preset, loader, &opt, &chain);
+    put_back_state();
     if (err || !chain) { report(err, sf->path); chain = NULL; snprintf(described, sizeof described, "%s: not shown (its shaders did not compile)", sf->name); return 0; }
     /* our parameters, "NAME=value;NAME=value" */
     for (const char *p = sf->params; p && *p;) {
@@ -194,6 +197,26 @@ static void make_tex(GLuint *tex, GLuint *fbo, int w, int h) {
     p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tex, 0);
 }
 
+/* What a preset's passes may leave behind that the game's renderer (ge_gl.c) takes as it set it once, or
+   doesn't set at all: put back after every filtered frame. Some presets left a sampler on a texture unit
+   or changed the vertex array bound at the time, and the game's text then drew as stray lines on every
+   frame after, whatever filter came next (0.166.0). librashader is given no vertex array of ours to
+   change (0 is bound while it draws); ge_gl.c binds its own before each draw. */
+static void put_back_state(void) {
+    p_glUseProgram(0);
+    p_glBindVertexArray(0);
+    p_glBindBuffer(GL_ARRAY_BUFFER, 0);
+    if (p_glBindSampler) for (GLuint u = 0; u < 16; u++) p_glBindSampler(u, 0);
+    for (GLuint u = 16; u-- > 0;) { p_glActiveTexture(GL_TEXTURE0 + u); p_glBindTexture(GL_TEXTURE_2D, 0); }   /* (ends on unit 0) */
+    p_glDisable(GL_DEPTH_TEST); p_glDisable(GL_CULL_FACE); p_glDisable(GL_STENCIL_TEST);
+    p_glDisable(GL_FRAMEBUFFER_SRGB); p_glDisable(GL_SCISSOR_TEST); p_glDisable(GL_BLEND);
+    if (p_glDepthMask) p_glDepthMask(GL_TRUE);
+    p_glColorMask(1, 1, 1, 1);
+    p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4); p_glPixelStorei(GL_PACK_ALIGNMENT, 4); p_glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    while (p_glGetError() != 0) {}                             /* (what the preset left: not the game's) */
+}
+
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h) {
     (void)tex_w; (void)tex_h;
     int f = filter_now();
@@ -211,25 +234,29 @@ int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, 
     if (w <= 0 || h <= 0) return 0;
 
     p_glDisable(GL_SCISSOR_TEST); p_glDisable(GL_BLEND); p_glColorMask(1, 1, 1, 1);
-    /* 1. the picture at the game's own size, turned over (row 0 at the bottom, as OpenGL has it) */
+    /* 1. the picture at the game's own size, row 0 its top, as librashader has every image: the images a
+          preset brings (borders, masks, a VHS's lettering) are loaded top row first, so the game's picture
+          goes in the same way up (turned over here, the borders came out upside down: 0.166.0) */
     if (!in_tex) make_tex(&in_tex, &in_fbo, 480, 272);
     if (!src_fbo) p_glGenFramebuffers(1, &src_fbo);
     p_glBindFramebuffer(GL_READ_FRAMEBUFFER, src_fbo);
     p_glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
     p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, in_fbo);
-    p_glBlitFramebuffer(0, src_h, src_w, 0, 0, 0, 480, 272, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    p_glBlitFramebuffer(0, 0, src_w, src_h, 0, 0, 480, 272, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     /* 2. through the preset, into a texture the size it will have in the window */
     if (!out_tex || out_w != w || out_h != h) { make_tex(&out_tex, &out_fbo, w, h); out_w = w; out_h = h; }
     struct libra_image_gl_t src = { in_tex, GL_RGBA8, 480, 272 }, dst = { out_tex, GL_RGBA8, (uint32_t)w, (uint32_t)h };
     struct libra_viewport_t vp = { 0, 0, (uint32_t)w, (uint32_t)h };
+    p_glBindVertexArray(0);
     libra_error_t err = lib.gl_filter_chain_frame(&chain, frame_no++, src, dst, &vp, NULL, NULL);
+    put_back_state();
     if (err) {                               /* once: the picture is plain until the filter changes */
         report(err, filter_get(f)->path);
         chain_failed = 1; drop_chain();
         snprintf(described, sizeof described, "%s: not shown (it failed while drawing)", fname(f));
         return 0;
     }
-    /* 3. into the window */
+    /* 3. into the window, turned over (OpenGL's window has row 0 at the bottom) */
     p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
     p_glDisable(GL_SCISSOR_TEST);
     p_glViewport(0, 0, win_w, win_h);
@@ -237,7 +264,7 @@ int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, 
     p_glClear(GL_COLOR_BUFFER_BIT);
     p_glBindFramebuffer(GL_READ_FRAMEBUFFER, out_fbo);
     p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    p_glBlitFramebuffer(0, 0, w, h, x0, y0, x0 + w, y0 + h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    p_glBlitFramebuffer(0, h, w, 0, x0, y0, x0 + w, y0 + h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
     drawn_at = frame_seen;
     return 1;
@@ -254,11 +281,7 @@ int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) {
     p_glPixelStorei(GL_PACK_ALIGNMENT, 4);
     p_glReadPixels(0, 0, out_w, out_h, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
     p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    for (int y = 0; y < out_h / 2; y++)                     /* (OpenGL's row 0 is the bottom) */
-        for (int x = 0; x < out_w * 4; x++) {
-            uint8_t *a = rgba + (size_t)y * out_w * 4 + x, *b = rgba + (size_t)(out_h - 1 - y) * out_w * 4 + x, t = *a;
-            *a = *b; *b = t;
-        }
+    /* (the filter's picture has its top row first already: shader_gl_present) */
     for (int i = 0; i < out_w * out_h; i++) rgba[i * 4 + 3] = 255;
     *w = out_w; *h = out_h;
     return 1;
