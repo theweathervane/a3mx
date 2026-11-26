@@ -400,7 +400,11 @@ static void page_defaults(int pg) {
 #define ARROW_LX 4                  /* at the 4:3 picture's sides (the user's mock-up) */
 #define ARROW_RX (384 - 4 - ARROW_W)
 static int arrow[2] = { -1, -1 };
+static int scroll[2] = { -1, -1 }, scroll_y[2] = { -1, -1 }, scroll_x;   /* SCORE RANKING's up / down arrows (below) */
+static int other_arrow_y = -1;      /* another screen's side arrows (filterscreen.c): beside this text row, -1 none */
+static void scroll_build(void);
 static void arrows_build(void) {
+    scroll_build();
     for (int side = 0; side < 2; side++)
         for (int y = 0; y < ARROW_H; y++)
             for (int x = 0; x < ARROW_W; x++) {
@@ -419,14 +423,70 @@ static void arrows_on(Cpu *c) {
     if (!arrows_ready) arrows_build();
     for (int i = 0; i < 2; i++) if (arrow[i] < 0) arrow[i] = new_obj(c, 0xC, 4);
 }
-static void arrows_off(void) { free_obj(&arrow[0]); free_obj(&arrow[1]); }
+static void arrows_off(void) { free_obj(&arrow[0]); free_obj(&arrow[1]); free_obj(&scroll[0]); free_obj(&scroll[1]); other_arrow_y = -1; }
+static int arrows_in_use(void) { return mode == M_EX && page_count() > 1; }
 static void arrow_frame(uint32_t o, int side) {
     two_frame(o, 0);                                          /* drawn like the 2: then ours */
     int u = ARROW_U + side * 8;
     WH(o + 0x40, (uint32_t)u); WH(o + 0x42, (uint32_t)(u + ARROW_W)); WH(o + 0x4C, ARROW_V); WH(o + 0x4E, ARROW_V + ARROW_H);
-    WH(o + 6, side ? ARROW_RX : ARROW_LX); WH(o + 0xA, (uint32_t)(2 * (ex_row_y(0) + 1)));
+    WH(o + 6, side ? ARROW_RX : ARROW_LX); WH(o + 0xA, (uint32_t)(2 * ((other_arrow_y >= 0 ? other_arrow_y : ex_row_y(0)) + 1)));
     WH(o + 0xE, ARROW_W); WH(o + 0x1A, 2 * ARROW_H);
-    WB(o + 0x5D, mode == M_EX && page_count() > 1);
+    WB(o + 0x5D, other_arrow_y >= 0 || (mode == M_EX && page_count() > 1));
+}
+
+/* SCORE RANKING's up and down arrows (more rows above / below), drawn into our page at SCROLL_U /
+   ARROW_V (up, then down: the same picture upside down) and shown by two objects of ours like the side
+   arrows. Copied from the game's own on that screen, pixel for pixel (16 x 10): a white edge round a
+   fill that goes from yellow at the point through orange to pink at the base, a white base line. */
+#define SCROLL_U 24
+#define SCROLL_W 16
+#define SCROLL_H 10
+static void scroll_build(void) {
+    static const char *const rows[SCROLL_H] = {
+        "       ab       ", "      cddf      ", "      egge      ", "     hijjih     ", "    klmmmmln    ",
+        "   oprssssrpo   ", "  qtuvvvvvvutq  ", " wxyzzzzzzzzyxA ", " BCDDDDDDDDDDCB ", "EBFGGGGGGGGGGFBE" };
+    static const struct { char k; uint32_t rgb; } pal[] = {
+        { 'a', 0x848484 }, { 'b', 0x848484 }, { 'c', 0x5A5A5A }, { 'd', 0xF7E7CE }, { 'e', 0xF7F7E7 }, { 'f', 0x946363 },
+        { 'g', 0xF7C663 }, { 'h', 0xF7F7F7 }, { 'i', 0xF7CE6B }, { 'j', 0xF7B563 }, { 'k', 0xC6C6C6 }, { 'l', 0xF7D684 },
+        { 'm', 0xF7AD73 }, { 'n', 0xDECECE }, { 'o', 0x9C9C9C }, { 'p', 0xF7CE9C }, { 'r', 0xF79C6B }, { 's', 0xF79473 },
+        { 'q', 0x737373 }, { 't', 0xF7D6BD }, { 'u', 0xF7946B }, { 'v', 0xF77373 }, { 'w', 0x8C5A5A }, { 'x', 0xF7DED6 },
+        { 'y', 0xF78473 }, { 'z', 0xF75273 }, { 'A', 0x4A4A4A }, { 'B', 0xF7F7F7 }, { 'C', 0xF78C7B }, { 'D', 0xF7428C },
+        { 'E', 0xE7E7E7 }, { 'F', 0xF7EFEF }, { 'G', 0xF7E7EF } };
+    for (int y = 0; y < SCROLL_H; y++)
+        for (int x = 0; x < SCROLL_W; x++) {
+            uint16_t p = 0;
+            for (size_t k = 0; k < sizeof pal / sizeof *pal; k++)
+                if (pal[k].k == rows[y][x]) { uint32_t v = pal[k].rgb; p = rgb15((int)(v >> 16), (int)(v >> 8 & 0xFF), (int)(v & 0xFF)); }
+            WH(TEX + (uint32_t)(((ARROW_V + y) * 256 + SCROLL_U + x) * 2), p);                                    /* up */
+            WH(TEX + (uint32_t)(((ARROW_V + SCROLL_H - 1 - y) * 256 + SCROLL_U + SCROLL_W + x) * 2), p);         /* down */
+        }
+}
+static void scroll_frame(uint32_t o, int which) {
+    two_frame(o, 0);
+    int u = SCROLL_U + which * SCROLL_W;
+    WH(o + 0x40, (uint32_t)u); WH(o + 0x42, (uint32_t)(u + SCROLL_W)); WH(o + 0x4C, ARROW_V); WH(o + 0x4E, ARROW_V + SCROLL_H);
+    WH(o + 6, (uint32_t)(which ? scroll_x + 3 : scroll_x - 3 - SCROLL_W)); WH(o + 0xA, (uint32_t)(2 * (scroll_y[which] < 0 ? 0 : scroll_y[which])));
+    WH(o + 0xE, SCROLL_W); WH(o + 0x1A, 2 * SCROLL_H);
+    WB(o + 0x5D, scroll_y[which] >= 0);
+}
+
+/* For another screen of OPTION MODE (filterscreen.c), once a frame while it is up: EX. SETTING's side
+   arrows beside the text row at Y (-1: none), and SCORE RANKING's up / down arrows side by side either side of X, with
+   their tops at UP_Y and DOWN_Y (-1: that one not shown). All -1 takes them away. */
+static int arrows_in_use(void);
+void exsetting_other_arrows(Cpu *c, int y, int x, int up_y, int down_y) {
+    if (!mem) return;
+    other_arrow_y = y; scroll_x = x; scroll_y[0] = up_y; scroll_y[1] = down_y;
+    if (y < 0 && up_y < 0 && down_y < 0) {
+        if (!arrows_in_use()) { free_obj(&arrow[0]); free_obj(&arrow[1]); }
+        free_obj(&scroll[0]); free_obj(&scroll[1]);
+        return;
+    }
+    if (!arrows_ready) arrows_build();
+    for (int i = 0; i < 2; i++) {
+        if (y >= 0 && arrow[i] < 0) arrow[i] = new_obj(c, 0xC, 4);
+        if (scroll[i] < 0) scroll[i] = new_obj(c, 0xC, 4);
+    }
 }
 
 static void grey_font_on(void);
@@ -842,6 +902,7 @@ int exsetting_green_bar(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
     uint32_t o = c->r[4];
     for (int i = 0; i < 2; i++) if (arrow[i] >= 0 && o == obj(arrow[i])) { arrow_frame(o, i); return 1; }
+    for (int i = 0; i < 2; i++) if (scroll[i] >= 0 && o == obj(scroll[i])) { scroll_frame(o, i); return 1; }
     for (int i = 0; i < 2; i++) if (two[i] >= 0 && o == obj(two[i])) {
         if (mode == M_PEDIT) two_frame(o, erow_y(E_L2 + i)); else WB(o + 0x5D, 0);
         return 1;

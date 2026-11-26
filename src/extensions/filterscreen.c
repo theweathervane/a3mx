@@ -1,16 +1,20 @@
 /* SCREEN SETTING > FILTER's own screen (0.166.0). Cross on the FILTER row of SCREEN SETTING
  * (screensetting.c) opens it in place of SCREEN SETTING's rows, laid out like EX. SETTING's pages
  * (exsetting.c): the banner FILTER, then one category of filters (shader.h, shader_list.c) at a time:
- *   - the category's name between the L and R symbols, and its number (3/29) where EX. SETTING has its
- *     page number; L / R, or left / right, turn to the previous / next category;
- *   - its filters, ten rows at a time, scrolling with up / down (held: repeating); the one in use is
- *     marked with a > before it; a name too long for the row is cut, ending in '.';
+ *   - the category's name, with EX. SETTING's side arrows (exsetting_other_arrows) at the screen's
+ *     sides on its line, and its number (3/29) where EX. SETTING has its page number; L / R, or left /
+ *     right, turn to the previous / next category;
+ *   - a little below it, its filters, nine rows at a time, scrolling with up / down (held: repeating);
+ *     the one in use is marked with a > before it; a name too long for the row is cut, ending in '.';
+ *   - a line's gap under them, then SCORE RANKING's up and down arrows, side by side in the middle: up
+ *     while there are rows above the ones shown, down while there are rows below;
  *   - under them, in the small font: what the filter is (a favourite's description, else its preset's
  *     path), and HEAVY when the catalogue says it wants a real GPU; or why it can't be shown;
  *   - SCREEN SETTING's green bar under the cursor's row, as wide as the rows.
- * Cross or START chooses the filter under the cursor (it applies at once, the screen stays up);
- * Triangle starts the live preview (filterpreview.c) on it; Circle goes back to SCREEN SETTING, where
- * the FILTER row shows the choice (and leaving SCREEN SETTING keeps it in a3mx.cfg).
+ * Cross or START chooses the filter under the cursor: it applies at once and SCREEN SETTING is back,
+ * its FILTER row showing the choice (leaving SCREEN SETTING keeps it in a3mx.cfg). Circle goes back
+ * without changing it: the filter in use when the screen opened stays. (The preview fight is SCREEN
+ * SETTING's own PREVIEW row: filterpreview.c.)
  * A filter whose preset file isn't there is drawn in EX. SETTING's greyed colours and can't be chosen.
  * Nothing here touches the game's memory but the screen's own row (+7, kept) and its text and bar. */
 #include "rt.h"
@@ -22,10 +26,8 @@
 
 void f_0880A6CC(Cpu *c);                    /* text: a0 string, a1 font, a2 x, a3 y, t0 colour */
 void f_0887C4CC(Cpu *c);                    /* sound effect: a0 0, a1 id, a2 0xC0 */
-void f_0880A7B0(Cpu *c);                    /* button symbol a0 (0 Circle, 1 Triangle, 2 Square, 3 Cross, 8 L, 9 R) at a1, a2 */
 int exsetting_grey_font(void);
 int shader_gl_ready(void);                  /* shader_gl.c: librashader and the shaders are there */
-void filterpreview_start(Cpu *c, int f);    /* filterpreview.c */
 
 #define SLOTS      0x08E75BA0u              /* per-slot input, 0x2C each: +4 held, +0xC new presses */
 #define B_UP       0x8u
@@ -34,19 +36,22 @@ void filterpreview_start(Cpu *c, int f);    /* filterpreview.c */
 #define B_RIGHT    0x1u
 #define B_CONFIRM  0x8080u
 #define B_BACK     0x100u
-#define B_TRIANGLE 0x20u
 #define B_L        0x40u
 #define B_R        0x200u
-#define VISIBLE    10                       /* rows shown */
+#define VISIBLE    9                        /* rows shown */
 #define LIST_X     0x30
 #define MARK_X     0x24
 #define NAME_LEN   38                       /* letters of a name on a row (font 1: 8 wide, to x 0x160) */
-#define WHAT_Y     0xBC                     /* the description, as EX. SETTING's */
+#define WHAT_Y     0xCE                     /* the description, under the scroll arrows */
 #define WHAT_LEN   34                       /* (clear of the category number) */
-#define PAGE_Y     0xB6
-static int row_y(int i) { return 0x1C + 14 * i; }        /* EX. SETTING's rows: 0 the category, 1 - 10 the list */
+#define PAGE_Y     0xBC                     /* the category's number, on the scroll arrows' line */
+#define CAT_Y      0x1C                     /* EX. SETTING's first row: the category */
+static int row_y(int i) { return CAT_Y + 14 + 6 + 14 * i; }   /* the list, 6 more below the category than EX. SETTING's rows */
+#define SCROLL_Y   (row_y(VISIBLE) + 14 + 2)  /* the scroll arrows' tops: a line's gap under the last row */
+#define SCROLL_X   0xC0                     /* the middle of the 4:3 picture */
+void exsetting_other_arrows(Cpu *c, int y, int x, int up_y, int down_y);
 
-static int on, cat, cursor, top, repeat;
+static int on, cat, cursor, top, repeat, entry_filter;   /* entry_filter: in use when the screen opened */
 static uint32_t buf;                         /* our strings in guest memory, written each frame */
 #define SLOT(i)    (buf + 64u * (uint32_t)(i))
 enum { T_TITLE, T_CAT, T_PAGE, T_WHAT1, T_WHAT2, T_MARK, T_ROWS, T_COUNT = T_ROWS + VISIBLE };
@@ -65,11 +70,6 @@ static void text(Cpu *c, uint32_t s, int font, int x, int y, int colour) {
     f_0880A6CC(c);
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
-static void symbol(Cpu *c, int id, int x, int y) {
-    uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
-    c->r[4] = (uint32_t)id; c->r[5] = (uint32_t)x; c->r[6] = (uint32_t)y; f_0880A7B0(c);
-    memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
-}
 /* S into slot I, in capitals, at most N letters (cut ending in '.') */
 static uint32_t put(int i, const char *s, int n) {
     char *d = (char *)HOST(SLOT(i));
@@ -81,8 +81,6 @@ static uint32_t put(int i, const char *s, int n) {
 }
 
 int filterscreen_on(void) { return on; }
-static int reopen = -1;                      /* filterpreview.c: open on this filter when SCREEN SETTING is next up */
-void filterscreen_reopen(int f) { reopen = f; }
 static int filter(void) { return rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0; }
 static int there(int f) {                    /* the preset file is there (OFF always) */
     if (f <= 0) return 1;
@@ -117,20 +115,14 @@ static void turn(int step) {
 void filterscreen_open(Cpu *c) {
     if (!buf && !(buf = rt_alloc(64u * T_COUNT, 1, 16, "filter screen"))) return;
     const FilterEntry *e = filter_get(filter());
-    on = 1; cat = e ? e->category : 0; top = 0; repeat = 0;
+    on = 1; cat = e ? e->category : 0; top = 0; repeat = 0; entry_filter = rt_filter;
     show(filter());
     sound(c, 0x39);
     rt_log("filter screen: open (%d filters, %d categories)", filter_count(), filter_categories());
 }
-void filterscreen_close(Cpu *c, int snd) { on = 0; if (c) sound(c, snd); }
-/* screensetting.c, when SCREEN SETTING takes input: back from the preview, straight to this screen */
-int filterscreen_back(Cpu *c) {
-    if (reopen < 0) return 0;
-    int f = reopen; reopen = -1;
-    filterscreen_open(c);
-    const FilterEntry *e = filter_get(f);
-    if (on && e) { cat = e->category; top = 0; show(f); }
-    return on;
+void filterscreen_close(Cpu *c, int snd) {
+    on = 0;
+    if (c) { exsetting_other_arrows(c, -1, 0, -1, -1); sound(c, snd); }
 }
 
 /* once a frame while open, in place of SCREEN SETTING's input (screensetting.c) */
@@ -148,18 +140,17 @@ void filterscreen_frame(Cpu *c) {
     }
     if (p & (B_L | B_LEFT)) { turn(-1); sound(c, 0x38); return; }
     if (p & (B_R | B_RIGHT)) { turn(1); sound(c, 0x38); return; }
-    if (p & B_CONFIRM) {
+    if (p & B_CONFIRM) {                     /* chosen: in use at once, back to SCREEN SETTING */
         if (!there(cursor)) { sound(c, 0x2F); return; }
         if (cursor != rt_filter) { rt_filter = cursor; rt_log("screen setting: filter %s", filter_get(cursor)->name); }
-        sound(c, 0x39);
+        filterscreen_close(c, 0x39);
         return;
     }
-    if (p & B_TRIANGLE) {
-        if (!there(cursor)) { sound(c, 0x2F); return; }
-        filterpreview_start(c, cursor);
+    if (p & B_BACK) {                        /* cancelled: the filter in use when it opened */
+        if (rt_filter != entry_filter) { rt_filter = entry_filter; rt_log("screen setting: filter back to %s", filter_get(filter())->name); }
+        filterscreen_close(c, 0x2F);
         return;
     }
-    if (p & B_BACK) { filterscreen_close(c, 0x2F); return; }
 }
 
 void filterscreen_text(Cpu *c) {
@@ -167,15 +158,14 @@ void filterscreen_text(Cpu *c) {
     grey_ok = exsetting_grey_font();
     const char *title = "FILTER";
     text(c, put(T_TITLE, title, 20), 2, 0xC0 - 8 * (int)strlen(title), 5, 0xB);
-    /* the category: L NAME R */
+    /* the category between EX. SETTING's side arrows; the scroll arrows when there are more rows */
     const char *cn = filter_category_name(cat);
-    text(c, put(T_CAT, cn, 30), 1, 0xC0 - 4 * (int)strlen(cn), row_y(0), 0xB);
-    symbol(c, 8, LIST_X - 0x8, row_y(0));
-    symbol(c, 9, 0x158, row_y(0));
-    { char s[16]; snprintf(s, sizeof s, "%d/%d", cat + 1, filter_categories()); text(c, put(T_PAGE, s, 8), 2, 0x178 - 8 * (int)strlen(s), PAGE_Y, 9); }
+    text(c, put(T_CAT, cn, 30), 1, 0xC0 - 4 * (int)strlen(cn), CAT_Y, 0xB);
     int first = filter_category_first(cat), n = filter_category_size(cat);
+    exsetting_other_arrows(c, filter_categories() > 1 ? CAT_Y : -1, SCROLL_X, top > 0 ? SCROLL_Y : -1, top + VISIBLE < n ? SCROLL_Y : -1);
+    { char s[16]; snprintf(s, sizeof s, "%d/%d", cat + 1, filter_categories()); text(c, put(T_PAGE, s, 8), 2, 0x178 - 8 * (int)strlen(s), PAGE_Y, 9); }
     for (int i = 0; i < VISIBLE && top + i < n; i++) {
-        int f = first + top + i, y = row_y(1 + i), cur = f == cursor;
+        int f = first + top + i, y = row_y(i), cur = f == cursor;
         const FilterEntry *e = filter_get(f);
         int colour = there(f) ? (cur ? 0xB : 0xA) : grey_ok ? (cur ? 15 : 14) : 9;
         text(c, put(T_ROWS + i, e->name, NAME_LEN), 1, LIST_X, y, colour);
@@ -190,7 +180,6 @@ void filterscreen_text(Cpu *c) {
     if (!there(cursor)) snprintf(w2, sizeof w2, "ITS PRESET IS MISSING.");
     else if (cursor > 0 && !shader_gl_ready()) snprintf(w2, sizeof w2, "NO LIBRASHADER: NOT SHOWN.");
     else if (e->heavy) snprintf(w2, sizeof w2, "HEAVY - WANTS A STRONG GPU.");
-    else if (cursor > 0) snprintf(w2, sizeof w2, "TRIANGLE - PREVIEW IN A FIGHT.");
     text(c, put(T_WHAT1, w1, WHAT_LEN), 0, LIST_X, WHAT_Y, 9);
     if (w2[0]) text(c, put(T_WHAT2, w2, WHAT_LEN), 0, LIST_X, WHAT_Y + 10, 9);
 }
@@ -203,7 +192,7 @@ void filterscreen_bar(uint32_t o) {
     if (on) {
         if (kept_x < 0) { kept_x = (int16_t)RH(o + 6); kept_w = (int16_t)RH(o + 0xE); }
         int at = cursor - filter_category_first(cat) - top;
-        WH(o + 0xA, (uint32_t)(240 - row_y(1 + at)));
+        WH(o + 0xA, (uint32_t)(240 - row_y(at)));
         WH(o + 6, BAR_X); WH(o + 0xE, BAR_W);
     } else if (kept_x >= 0) { WH(o + 6, (uint32_t)kept_x); WH(o + 0xE, (uint32_t)kept_w); kept_x = -1; }
 }
