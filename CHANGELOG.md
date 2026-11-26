@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.165.0
+### For players
+- **More of the game decompiled (1,595 functions, 37.88% of the program now):** the fighters' moves step by step (special-move starts and their follow-ups, the super gauge's gains, throws, dashes, jumps and landings, projectiles and effects), the round flow, the HUD, crouching, damage into vitality, the fighter animation step, the sound cue queue, the wireless (ad-hoc) VS link and the stage's start and load. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_moves140.c` - `batch_moves243.c`, `batch_tiny33.c` - `batch_tiny109.c`, `batch_net113.c` - `batch_net126.c`, `batch_sound127.c` - `batch_sound134.c`, `batch_round*.c`, `batch_anim*.c`, `batch_crouch*.c`, `batch_hud*.c`, `batch_parts*.c`, `batch_starts*.c`, `batch_dmg129.c`, `batch_menu*.c`, `batch_rect*.c`, `batch_text*.c` (new); `src/core/stage/stage_load111.c`, `stage_start110.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch.
+
 ## 0.164.0
 ### For players
 - **Edited fighter sprites are in the game:** repaint a picture in your assets folder (`characters/<nn>_<name>/fighter/sprites/pictures/`, from the art pack) or change a colour in its `metadata.json`, and the game uses it the next time it loads that fighter. Nothing to run. A picture that can't be used (another size, two palettes in one 32 x 32 cell) is left as it was, and the log says why.
