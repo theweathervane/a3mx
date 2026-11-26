@@ -29,7 +29,7 @@
 
 int rt_vsync = 1;                             /* [screen setting] vsync: wait for the monitor (no tearing); ON when missing */
 int rt_filter = 0;                            /* [screen setting] filter: an index into SHADER_FILTERS (shader.h); OFF when missing */
-int rt_hud_edges = 0;                         /* [screen setting] hud_messages: WIDE NATIVE's fight messages and Survival timer at the 16:9 edges (EDGES: 1) or on the 4:3 picture (4:3: 0); 4:3 when missing */
+int rt_hud_edges = 1;                         /* [screen setting] hud_messages: WIDE NATIVE's fight messages and Survival timer at the 16:9 edges (EDGES: 1) or on the 4:3 picture (4:3: 0); EDGES when missing */
 int rt_frame_timing = 2;                     /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
 extern int rt_l2[4], rt_r2[4];

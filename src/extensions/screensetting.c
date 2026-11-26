@@ -16,7 +16,7 @@
  *     pacing.c checks every frame) and are kept in a3mx.cfg ([screen setting] vsync, frame_timing),
  *     written when SCREEN SETTING closes if either changed.
  *   - The other rows are the game's: each frame the game runs with its own row number in +7.
- *   - DEFAULT also sets VSYNC back to ON, FRAME TIMING to AUTO, FILTER to OFF, HUD MESSAGES to 4:3, and SCREEN SIZE to
+ *   - DEFAULT also sets VSYNC back to ON, FRAME TIMING to AUTO, FILTER to OFF, HUD MESSAGES to EDGES, and SCREEN SIZE to
  *     WIDE NATIVE (the default on a new save since 0.99.21).
  * The whole screen is drawn here (WIDE NATIVE as the size's name while it is on: widescreen.c).
  *   - A row whose setting has no effect at the moment is drawn disabled, label and value, in text
@@ -190,7 +190,7 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
     inner_f_088B85BC(c);
     int g = (int8_t)RB(OPT + 7);
     WB(OPT + 7, (uint32_t)(g >= 0 && g < 4 ? pos_of(our_id[g]) : r));
-    if (id == R_DEFAULT && (pressed & B_CONFIRM)) { vsync_set(1); rt_frame_timing = 2; rt_filter = 0; rt_hud_edges = 0; widescreen_set(2); }
+    if (id == R_DEFAULT && (pressed & B_CONFIRM)) { vsync_set(1); rt_frame_timing = 2; rt_filter = 0; rt_hud_edges = 1; widescreen_set(2); }
     return 1;
 }
 

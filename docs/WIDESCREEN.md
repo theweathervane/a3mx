@@ -52,7 +52,7 @@ works, what doesn't, and the rules for refining it.
   - the fight's HUD (0.99.35) stays on the 4:3 picture: what its pictures and bars have past the 4:3
     sides (the super / ISM bars' ends at the bottom, art longer than the 4:3 screen that its sides hid)
     is cut off there (`src/core/object/hud.c`, decompiled for this);
-  - the fight's messages at the edges, as a setting (SCREEN SETTING > HUD MESSAGES, `4:3` by default,
+  - the fight's messages at the edges, as a setting (SCREEN SETTING > HUD MESSAGES, `EDGES` by default,
     `EDGES`; `a3mx.cfg` `[screen setting] hud_messages`): with EDGES, the combo count and its rating
     (14 HIT MARVELOUS!!!), FIRST ATTACK, COUNTER HIT, REVERSAL and the like, on either side, and
     Survival's timer (00'48"18) move out by the margin, away from the middle, so each stands as far in

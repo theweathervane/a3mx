@@ -10,7 +10,7 @@ frame for frame whatever you choose. They only change when you *see* each frame.
 | VSYNC | ON, OFF | ON | `vsync=ON` |
 | FRAME TIMING | AUTO, SMOOTH, ORIGINAL | AUTO | `frame_timing=AUTO` |
 | FILTER | OFF and eleven shaders ([below](#filter)) | OFF | `filter=OFF` |
-| HUD MESSAGES | 4:3, EDGES (WIDE NATIVE only, [WIDESCREEN.md](WIDESCREEN.md)) | 4:3 | `hud_messages=4:3` |
+| HUD MESSAGES | 4:3, EDGES (WIDE NATIVE only, [WIDESCREEN.md](WIDESCREEN.md)) | EDGES | `hud_messages=EDGES` |
 
 Both apply as soon as you change them, and are saved when you leave SCREEN SETTING. On a display whose
 driver can't sync to the monitor at all, VSYNC is greyed out (the log says so); your saved setting is
