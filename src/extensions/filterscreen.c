@@ -81,6 +81,8 @@ static uint32_t put(int i, const char *s, int n) {
 }
 
 int filterscreen_on(void) { return on; }
+static int reopen = -1;                      /* filterpreview.c: open on this filter when SCREEN SETTING is next up */
+void filterscreen_reopen(int f) { reopen = f; }
 static int filter(void) { return rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0; }
 static int there(int f) {                    /* the preset file is there (OFF always) */
     if (f <= 0) return 1;
@@ -121,6 +123,15 @@ void filterscreen_open(Cpu *c) {
     rt_log("filter screen: open (%d filters, %d categories)", filter_count(), filter_categories());
 }
 void filterscreen_close(Cpu *c, int snd) { on = 0; if (c) sound(c, snd); }
+/* screensetting.c, when SCREEN SETTING takes input: back from the preview, straight to this screen */
+int filterscreen_back(Cpu *c) {
+    if (reopen < 0) return 0;
+    int f = reopen; reopen = -1;
+    filterscreen_open(c);
+    const FilterEntry *e = filter_get(f);
+    if (on && e) { cat = e->category; top = 0; show(f); }
+    return on;
+}
 
 /* once a frame while open, in place of SCREEN SETTING's input (screensetting.c) */
 void filterscreen_frame(Cpu *c) {

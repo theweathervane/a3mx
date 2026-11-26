@@ -460,6 +460,7 @@ void rt_display_vblank(void) {
                 if (combo) raw &= ~PSP_START;
             }
             rt_pad_buttons[i] = FEATURE(MENUS) ? pcfg_pad_to_psp(i, raw) : raw & ~0xC0000000u;   /* no L2 / R2 on a PSP */
+            if (rt_extensions) { uint32_t filterpreview_pad(int i, uint32_t raw); rt_pad_buttons[i] = filterpreview_pad(i, rt_pad_buttons[i]); }   /* the FILTER preview */
         }
         if (host_quit_requested()) rt_quit = 1;
     }

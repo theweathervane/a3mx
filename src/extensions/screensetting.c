@@ -154,7 +154,7 @@ static int move(Cpu *c, int r) {
 }
 
 int filterscreen_on(void); void filterscreen_open(Cpu *c); void filterscreen_close(Cpu *c, int snd);
-void filterscreen_frame(Cpu *c); void filterscreen_text(Cpu *c); void filterscreen_bar(uint32_t o);
+void filterscreen_frame(Cpu *c); void filterscreen_text(Cpu *c); void filterscreen_bar(uint32_t o); int filterscreen_back(Cpu *c);
 int screensetting_frame(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;
     if (filterscreen_on()) {                /* the FILTER screen, in place of the rows */
@@ -174,6 +174,7 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
     int8_t t = (int8_t)RB(TIMER);
     if (t + 1 < 5) { WB(OPT + 7, (uint32_t)(ours(r) ? 0 : game_row(r))); inner_f_088B85BC(c); WB(OPT + 7, (uint32_t)r); return 1; }   /* no input yet: the game counts */
     WB(TIMER, 5);
+    if (FEATURE(SHADERS) && filterscreen_back(c)) { WB(OPT + 7, (uint32_t)pos_of(R_FILTER)); return 1; }   /* back from the FILTER preview */
     int m = move(c, r);
     if (m >= 0) { WB(OPT + 7, (uint32_t)m); return 1; }
     uint32_t pressed = RW(SLOTS + 0xC) | RW(SLOTS + 0x2C + 0xC);

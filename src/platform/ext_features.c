@@ -109,6 +109,7 @@ static const struct { const char *prefix; int feature; } BY_PREFIX[] = {
     { "hooks_", FEAT_MULTIPLAYER }, { "selectscreen_", FEAT_MULTIPLAYER },
     { "padicons_mode_menu", FEAT_ANY },      /* also tells pacing.c the MODE MENU has opened; its drawing goes by FEAT_MODE_MENU_ICONS */
     { "padicons_", FEAT_MODE_MENU_ICONS },
+    { "quitkey_task_wait", FEAT_ANY },      /* F2 (quit_key) and the FILTER preview (shaders): it asks each */
     { "quitkey_", FEAT_QUITKEY },
     { "bootmenu_", FEAT_BOOTMENU },
     { "widescreen_", FEAT_WIDESCREEN },
