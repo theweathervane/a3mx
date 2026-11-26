@@ -16,7 +16,14 @@
  * without changing it: the filter in use when the screen opened stays. (The preview fight is SCREEN
  * SETTING's own PREVIEW row: filterpreview.c.)
  * A filter whose preset file isn't there is drawn in EX. SETTING's greyed colours and can't be chosen.
- * Nothing here touches the game's memory but the screen's own row (+7, kept) and its text and bar. */
+ * Nothing here touches the game's memory but the screen's own row (+7, kept) and its text and bar.
+ *
+ * The fight's pause menu opens the same screen on its FILTER row (pausefilter.c, filterscreen_open_pause):
+ * the same rows and keys, read from the pausing player's pad only, the pause's sound channel, over the
+ * paused fight (the pause menu's own see-through panel, made bigger, behind it, and its bar on the
+ * cursor's row: pausefilter.c places them by filterscreen_bar_y); Cross / Circle go back to the pause
+ * menu. The side and scroll arrows there are the game's button symbols (font 5: left / right, up /
+ * down), as OPTION MODE's objects aren't there in a fight. */
 #include "rt.h"
 #include "ext_features.h"
 #include "shader.h"
@@ -52,7 +59,9 @@ static int row_y(int i) { return CAT_Y + 14 + 6 + 14 * i; }   /* the list, 6 mor
 void exsetting_other_arrows(Cpu *c, int y, int x, int up_y, int down_y);
 
 static unsigned tick;                        /* frames the cursor's filter has been shown (its marquees) */
-static int on, cat, cursor, top, repeat, entry_filter;   /* entry_filter: in use when the screen opened */
+static int on, cat, cursor, top, repeat, entry_filter;
+static int in_pause;                         /* opened from the pause menu: its pad, its sound channel */
+static uint32_t pause_pad;                   /* (the pausing player's input record) */   /* entry_filter: in use when the screen opened */
 static uint32_t buf;                         /* our strings in guest memory, written each frame */
 #define SLOT(i)    (buf + 64u * (uint32_t)(i))
 enum { T_TITLE, T_CAT, T_PAGE, T_WHAT1, T_WHAT2, T_MARK, T_ROWS, T_COUNT = T_ROWS + VISIBLE };
@@ -62,13 +71,23 @@ static int present_n;
 
 static void sound(Cpu *c, int id) {
     uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
-    c->r[4] = 0; c->r[5] = (uint32_t)id; c->r[6] = 0xC0; f_0887C4CC(c);
+    c->r[4] = in_pause ? 6 : 0; c->r[5] = (uint32_t)id; c->r[6] = 0xC0; f_0887C4CC(c);
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
 static void text(Cpu *c, uint32_t s, int font, int x, int y, int colour) {
     uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
     c->r[4] = s; c->r[5] = (uint32_t)font; c->r[6] = (uint32_t)x; c->r[7] = (uint32_t)y; c->r[8] = (uint32_t)colour;
     f_0880A6CC(c);
+    memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
+}
+void f_0880A7B0(Cpu *c);                    /* button symbol a0 (font 5: 0 Circle, 1 Triangle, 2 Square, 3 Cross, 4 down, 5 up, 6 left, 7 right, 8 L, 9 R) at a1, a2 */
+#define SYM_UP     5
+#define SYM_DOWN   4
+#define SYM_LEFT   6
+#define SYM_RIGHT  7
+static void symbol(Cpu *c, int id, int x, int y) {
+    uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
+    c->r[4] = (uint32_t)id; c->r[5] = (uint32_t)x; c->r[6] = (uint32_t)y; f_0880A7B0(c);
     memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
 /* S into slot I, in capitals, at most N letters (cut ending in '.') */
@@ -97,7 +116,8 @@ static uint32_t put_marquee(int i, const char *s, int n, unsigned t) {
     return put(i, w, n);
 }
 
-int filterscreen_on(void) { return on; }
+int filterscreen_on(void) { return on && !in_pause; }
+int filterscreen_in_pause(void) { return on && in_pause; }
 static int filter(void) { return rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0; }
 static int there(int f) {                    /* the preset file is there (OFF always) */
     if (f <= 0) return 1;
@@ -129,7 +149,10 @@ static void turn(int step) {
     show(e && e->category == cat ? filter() : filter_category_first(cat));   /* on the one in use, if it is here */
 }
 
-void filterscreen_open(Cpu *c) {
+static void open_screen(Cpu *c);
+void filterscreen_open(Cpu *c) { in_pause = 0; open_screen(c); }
+void filterscreen_open_pause(Cpu *c, uint32_t pad) { in_pause = 1; pause_pad = pad; open_screen(c); }
+static void open_screen(Cpu *c) {
     if (!buf && !(buf = rt_alloc(64u * T_COUNT, 1, 16, "filter screen"))) return;
     const FilterEntry *e = filter_get(filter());
     on = 1; cat = e ? e->category : 0; top = 0; repeat = 0; entry_filter = rt_filter;
@@ -139,12 +162,13 @@ void filterscreen_open(Cpu *c) {
 }
 void filterscreen_close(Cpu *c, int snd) {
     on = 0;
-    if (c) { exsetting_other_arrows(c, -1, 0, -1, -1); sound(c, snd); }
+    if (c) { if (!in_pause) exsetting_other_arrows(c, -1, 0, -1, -1); sound(c, snd); }
 }
 
 /* once a frame while open, in place of SCREEN SETTING's input (screensetting.c) */
 void filterscreen_frame(Cpu *c) {
-    uint32_t p = RW(SLOTS + 0xC) | RW(SLOTS + 0x2C + 0xC), held = RW(SLOTS + 4) | RW(SLOTS + 0x2C + 4);
+    uint32_t p = in_pause ? RW(pause_pad + 0xC) : RW(SLOTS + 0xC) | RW(SLOTS + 0x2C + 0xC);
+    uint32_t held = in_pause ? RW(pause_pad + 4) : RW(SLOTS + 4) | RW(SLOTS + 0x2C + 4);
     int first = filter_category_first(cat), n = filter_category_size(cat), at = cursor - first;
     int step = 0;
     if (p & (B_UP | B_DOWN)) { step = (p & B_UP) ? -1 : 1; repeat = 0x14; }
@@ -159,7 +183,7 @@ void filterscreen_frame(Cpu *c) {
     if (p & (B_R | B_RIGHT)) { turn(1); sound(c, 0x38); return; }
     if (p & B_CONFIRM) {                     /* chosen: in use at once, back to SCREEN SETTING */
         if (!there(cursor)) { sound(c, 0x2F); return; }
-        if (cursor != rt_filter) { rt_filter = cursor; rt_log("screen setting: filter %s", filter_get(cursor)->name); }
+        if (cursor != rt_filter) { rt_filter = cursor; rt_log("filter screen: filter %s", filter_get(cursor)->name); if (in_pause) { void settings_save(void); settings_save(); } }   /* (SCREEN SETTING saves when it closes) */
         filterscreen_close(c, 0x39);
         return;
     }
@@ -181,7 +205,12 @@ void filterscreen_text(Cpu *c) {
     const char *cn = filter_category_name(cat);
     text(c, put(T_CAT, cn, 30), 1, 0xC0 - 4 * (int)strlen(cn), CAT_Y, 0xB);
     int first = filter_category_first(cat), n = filter_category_size(cat);
-    exsetting_other_arrows(c, filter_categories() > 1 ? CAT_Y : -1, SCROLL_X, top > 0 ? SCROLL_Y : -1, top + VISIBLE < n ? SCROLL_Y : -1);
+    if (!in_pause) exsetting_other_arrows(c, filter_categories() > 1 ? CAT_Y : -1, SCROLL_X, top > 0 ? SCROLL_Y : -1, top + VISIBLE < n ? SCROLL_Y : -1);
+    else {                                        /* the game's symbols: left / right, up / down */
+        if (filter_categories() > 1) { symbol(c, SYM_LEFT, LIST_X - 0x10, CAT_Y); symbol(c, SYM_RIGHT, 0x158, CAT_Y); }
+        if (top > 0) symbol(c, SYM_UP, SCROLL_X - 0x14, SCROLL_Y);
+        if (top + VISIBLE < n) symbol(c, SYM_DOWN, SCROLL_X + 0x4, SCROLL_Y);
+    }
     { char s[16]; snprintf(s, sizeof s, "%d/%d", cat + 1, filter_categories()); text(c, put(T_PAGE, s, 8), 2, 0x178 - 16 * (int)strlen(s), PAGE_Y, 9); }   /* (font 2: 16 wide, as EX. SETTING's) */
     for (int i = 0; i < VISIBLE && top + i < n; i++) {
         int f = first + top + i, y = row_y(i), cur = f == cursor;
@@ -202,6 +231,11 @@ void filterscreen_text(Cpu *c) {
     text(c, put_marquee(T_WHAT1, w1, WHAT_LEN, tick), 0, LIST_X, WHAT_Y, 9);
     if (w2[0]) text(c, put(T_WHAT2, w2, WHAT_LEN), 0, LIST_X, WHAT_Y + 10, 9);
 }
+
+/* the text y of the cursor's row (pausefilter.c: the pause menu's bar there) */
+int filterscreen_bar_y(void) { return row_y(cursor - filter_category_first(cat) - top); }
+int filterscreen_bar_x(void) { return LIST_X - 0xC; }
+int filterscreen_bar_w(void) { return 8 * NAME_LEN + 0x18; }
 
 /* SCREEN SETTING's green bar (object kind 0xC type 0xA), after the game placed it: on our row, wide */
 #define BAR_X  (LIST_X - 0xC)
