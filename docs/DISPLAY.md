@@ -55,21 +55,23 @@ SCREEN SETTING > FILTER (0.60.0) draws the finished picture through one of Retro
 part of the **Shaders** extension (the launcher's Extensions tab), on by default; with it off the row
 isn't there.
 
-**The FILTER screen** (0.166.0): Cross on the FILTER row opens a screen of its own, laid out like EX.
-SETTING's pages. One category at a time (its name between the L and R symbols, its number bottom
-right): **L / R** (or left / right) change the category, **up / down** scroll its list (held: they
-repeat), **Cross / START** chooses the filter under the cursor (it applies at once; `>` marks the one in
-use), **Triangle** starts the live preview, **Circle** goes back to SCREEN SETTING. Under the list: what
-the filter is (its description or its preset's path), HEAVY when it wants a strong GPU, or why it can't
-be shown. A filter whose preset file is missing is greyed and can't be chosen. Left / right on the
-FILTER row itself still change the filter, within its category.
+**The FILTER screen** (0.166.0): Cross on the FILTER row (the Cross symbol after its name says so)
+opens a screen of its own, laid out like EX. SETTING's pages. One category at a time (its name between
+EX. SETTING's side arrows, its number bottom right): **L / R** (or left / right) change the category,
+**up / down** scroll its list, nine rows at a time (held: they repeat; SCORE RANKING's up / down arrows
+under the list show when there are more rows above or below), **Cross / START** chooses the filter under
+the cursor: it applies at once and you are back on SCREEN SETTING (`>` marks the one in use). **Circle**
+goes back without changing anything. Under the list: what the filter is (its description or its
+preset's path), HEAVY when it wants a strong GPU, or why it can't be shown. A filter whose preset file
+is missing is greyed and can't be chosen. Left / right on the FILTER row itself still change the filter,
+within its category.
 
-**The live preview** (Triangle): a fight between two computer fighters, the one the attract mode shows
-(new fighters and stage each time it ends, until you stop), drawn through the filter under the cursor.
-Your buttons do nothing in it except **left / right** (the previous / next filter of that category,
-live) and **Circle** (back to the FILTER screen, on the filter you were looking at). Nothing is saved or
-recorded by it: no records, unlocks or saves change. It leaves OPTION MODE and comes back to it the way
-the MODE MENU starts it, so coming back takes a second or two.
+**PREVIEW** (the row under FILTER, Cross): a real fight, HUD and all, to see the filter in use on the
+health bars and gauges: two random fighters (random ISM and colours) on a random stage, both played by
+the computer, one round. Your buttons do nothing in it except **Circle**, which goes back to SCREEN
+SETTING at once; when the round ends (after the KO or the time) it goes back by itself. Either way you
+are on SCREEN SETTING again, cursor on PREVIEW, with OPTION MODE's music. It is Free Battle underneath
+(its menus answered for you), so nothing is saved or recorded: no records, unlocks or saves change.
 
 **The pause menu** (in a fight) has a FILTER row too, between BUTTON CONFIG and MODE MENU: left / right
 change the filter within its category, L / R the category; the filter's name shows under the menu. The
