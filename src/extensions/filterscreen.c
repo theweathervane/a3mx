@@ -5,7 +5,7 @@
  *     sides on its line, and its number (3/29) where EX. SETTING has its page number; L / R, or left /
  *     right, turn to the previous / next category;
  *   - a little below it, its filters, nine rows at a time, scrolling with up / down (held: repeating);
- *     the one in use is marked with a > before it; a name too long for the row is cut, ending in '.';
+ *     the one in use is marked with a > before it; a name too long for the row is cut, ending in '.', except the cursor's, which scrolls (a marquee), as does a description too long for its line;
  *   - a line's gap under them, then SCORE RANKING's up and down arrows, side by side in the middle: up
  *     while there are rows above the ones shown, down while there are rows below;
  *   - under them, in the small font: what the filter is (a favourite's description, else its preset's
@@ -43,7 +43,7 @@ int shader_gl_ready(void);                  /* shader_gl.c: librashader and the 
 #define MARK_X     0x24
 #define NAME_LEN   38                       /* letters of a name on a row (font 1: 8 wide, to x 0x160) */
 #define WHAT_Y     0xCE                     /* the description, under the scroll arrows */
-#define WHAT_LEN   34                       /* (clear of the category number) */
+#define WHAT_LEN   41                       /* letters of the description (font 0: 8 wide, to x 0x178) */
 #define PAGE_Y     0xBC                     /* the category's number, on the scroll arrows' line */
 #define CAT_Y      0x1C                     /* EX. SETTING's first row: the category */
 static int row_y(int i) { return CAT_Y + 14 + 6 + 14 * i; }   /* the list, 6 more below the category than EX. SETTING's rows */
@@ -51,6 +51,7 @@ static int row_y(int i) { return CAT_Y + 14 + 6 + 14 * i; }   /* the list, 6 mor
 #define SCROLL_X   0xC0                     /* the middle of the 4:3 picture */
 void exsetting_other_arrows(Cpu *c, int y, int x, int up_y, int down_y);
 
+static unsigned tick;                        /* frames the cursor's filter has been shown (its marquees) */
 static int on, cat, cursor, top, repeat, entry_filter;   /* entry_filter: in use when the screen opened */
 static uint32_t buf;                         /* our strings in guest memory, written each frame */
 #define SLOT(i)    (buf + 64u * (uint32_t)(i))
@@ -78,6 +79,22 @@ static uint32_t put(int i, const char *s, int n) {
     d[l] = 0;
     if (l > n) { while (n > 2 && d[n - 2] == ' ') n--; d[n - 1] = '.'; d[n] = 0; }
     return SLOT(i);
+}
+/* S into slot I as a marquee, N letters of it at a time: when it is longer, the window waits MARQUEE_WAIT
+   frames at the start, moves on a letter every MARQUEE_STEP frames to the end, waits there, and starts
+   over. T: frames since the text was first shown. */
+#define MARQUEE_WAIT 60
+#define MARQUEE_STEP 8
+static uint32_t put_marquee(int i, const char *s, int n, unsigned t) {
+    int l = (int)strlen(s);
+    if (l <= n) return put(i, s, n);
+    int moves = l - n, cycle = 2 * MARQUEE_WAIT + moves * MARQUEE_STEP;
+    int at = (int)(t % (unsigned)cycle) - MARQUEE_WAIT;
+    at = at <= 0 ? 0 : at / MARQUEE_STEP > moves ? moves : at / MARQUEE_STEP;
+    char w[64]; int k = 0;
+    for (; k < n && k < 63 && s[at + k]; k++) w[k] = s[at + k];
+    w[k] = 0;
+    return put(i, w, n);
 }
 
 int filterscreen_on(void) { return on; }
@@ -156,6 +173,8 @@ void filterscreen_frame(Cpu *c) {
 void filterscreen_text(Cpu *c) {
     if (!buf) return;
     grey_ok = exsetting_grey_font();
+    static int shown_cursor = -1;                 /* the marquees start over on another filter */
+    if (cursor != shown_cursor) { shown_cursor = cursor; tick = 0; } else tick++;
     const char *title = "FILTER";
     text(c, put(T_TITLE, title, 20), 2, 0xC0 - 8 * (int)strlen(title), 5, 0xB);
     /* the category between EX. SETTING's side arrows; the scroll arrows when there are more rows */
@@ -163,12 +182,12 @@ void filterscreen_text(Cpu *c) {
     text(c, put(T_CAT, cn, 30), 1, 0xC0 - 4 * (int)strlen(cn), CAT_Y, 0xB);
     int first = filter_category_first(cat), n = filter_category_size(cat);
     exsetting_other_arrows(c, filter_categories() > 1 ? CAT_Y : -1, SCROLL_X, top > 0 ? SCROLL_Y : -1, top + VISIBLE < n ? SCROLL_Y : -1);
-    { char s[16]; snprintf(s, sizeof s, "%d/%d", cat + 1, filter_categories()); text(c, put(T_PAGE, s, 8), 2, 0x178 - 8 * (int)strlen(s), PAGE_Y, 9); }
+    { char s[16]; snprintf(s, sizeof s, "%d/%d", cat + 1, filter_categories()); text(c, put(T_PAGE, s, 8), 2, 0x178 - 16 * (int)strlen(s), PAGE_Y, 9); }   /* (font 2: 16 wide, as EX. SETTING's) */
     for (int i = 0; i < VISIBLE && top + i < n; i++) {
         int f = first + top + i, y = row_y(i), cur = f == cursor;
         const FilterEntry *e = filter_get(f);
         int colour = there(f) ? (cur ? 0xB : 0xA) : grey_ok ? (cur ? 15 : 14) : 9;
-        text(c, put(T_ROWS + i, e->name, NAME_LEN), 1, LIST_X, y, colour);
+        text(c, cur ? put_marquee(T_ROWS + i, e->name, NAME_LEN, tick) : put(T_ROWS + i, e->name, NAME_LEN), 1, LIST_X, y, colour);   /* the cursor's: all of it, scrolling */
         if (f == filter()) text(c, put(T_MARK, ">", 2), 1, MARK_X, y, 0xB);
     }
     /* what it is */
@@ -180,7 +199,7 @@ void filterscreen_text(Cpu *c) {
     if (!there(cursor)) snprintf(w2, sizeof w2, "ITS PRESET IS MISSING.");
     else if (cursor > 0 && !shader_gl_ready()) snprintf(w2, sizeof w2, "NO LIBRASHADER: NOT SHOWN.");
     else if (e->heavy) snprintf(w2, sizeof w2, "HEAVY - WANTS A STRONG GPU.");
-    text(c, put(T_WHAT1, w1, WHAT_LEN), 0, LIST_X, WHAT_Y, 9);
+    text(c, put_marquee(T_WHAT1, w1, WHAT_LEN, tick), 0, LIST_X, WHAT_Y, 9);
     if (w2[0]) text(c, put(T_WHAT2, w2, WHAT_LEN), 0, LIST_X, WHAT_Y + 10, 9);
 }
 
