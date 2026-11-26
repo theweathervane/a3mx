@@ -15,8 +15,9 @@ static void call2(Cpu *c, uint32_t a, uint32_t b, uint32_t back, void (*fn)(Cpu 
 /* (cursor): with the menu state (0x0950FF4A) 0 just 0x08888EE4. Until it starts (+129) it waits for
    state 2. Then its shade (+42, three copies at +43 - +45; +48 with copies at +49 - +51) pulses by 2 a
    frame between 0x40 and 0xA0 (+131 the direction); +93 is cleared in state 3, else set with +10
-   from the 4-byte row of 0x08A261BC by 0x0950FF48 (its first half while 0x0950FF40 is 1). */
-SFA_FUNC(088889A0, cursor_pulse) {
+   from the 4-byte row of 0x08A261BC by 0x0950FF48 (its first half while 0x0950FF40 is 1). Wrapped by
+   pausefilter.c: on the pause menu's FILTER row the bar goes by its own row. */
+SFA_FUNC_WRAPPED(088889A0, cursor_pulse, screensetting_pause_cursor) {
     gaddr o = ARG(0);
     uint32_t ra = c->r[31];
     c->r[29] -= 0x20;

@@ -19,3 +19,4 @@
 08833DDC     a player not playing presses Start (join / new challenger): not in R.DRAMATIC BATTLE (hooks.c)
 0882AE20     a mode cleared, its unlock bits set: run without the forced ones, so what it earns is seen (cheats_unlocks.c)
 0883B800     an entry's ISM-Pluses added to the system data: run without the forced ones (cheats_unlocks.c)
+08834AC8     the fight's pause menu, choosing: a FILTER row (pausefilter.c)
