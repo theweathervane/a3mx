@@ -19,9 +19,10 @@ and AUTO along with the game's own settings, and SCREEN SIZE to WIDE NATIVE. For
 `original` on the command line overrides FRAME TIMING.
 
 **HUD MESSAGES** (below FILTER) only does something in WIDE NATIVE, and is greyed out at the other
-screen sizes. **EDGES** moves the fight's messages (the combo count and its rating, FIRST ATTACK, COUNTER
-HIT, REVERSAL ...) and Survival's timer out to the 16:9 screen's edges, each as far in from the edge as
-it is on the 4:3 picture; **4:3** leaves them where the game puts them. The health bars, gauges and
+screen sizes. **EDGES** moves the fight's messages (the combo count and its rating, LEVEL n SUPER COMBO
+FINISH, FIRST ATTACK, COUNTER HIT, REVERSAL ...), on both players' sides and after the KO too, and
+Survival's timer out to the 16:9 screen's edges, each toward its own side and as far in from the edge
+as it is on the 4:3 picture; **4:3** leaves them where the game puts them. The health bars, gauges and
 portraits stay where they are either way. DEFAULT sets it back to 4:3.
 
 **Which one you're getting** is shown at the right end of the MODE MENU's bar: **ORIGINAL** in a red

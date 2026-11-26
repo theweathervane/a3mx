@@ -59,8 +59,12 @@ works, what doesn't, and the rules for refining it.
     from the 16:9 edge as the game puts it in from the 4:3 picture's (measured on NORMAL: P2's "3HIT
     GOOD!!" ends 3 pixels in, its underline at the edge; COUNTER HIT 16 in; "5HIT" 30 in; the timer 24
     in; P1's underline starts at the left edge). A message's blue line still slides in from the side,
-    now the 16:9 one. The messages are the 8-pool's kinds 2 and 3 (`widescreen_edge_shift`); the timer
-    is text, moved only while the text passes draw it (`widescreen_hud_text`). The health bars,
+    now the 16:9 one. The messages are the 8-pool's kinds 2 (the count or the message: type 0 player
+    1's, type 1 player 2's), 3 (the rating: its type is the rating, so it goes by the side of the middle
+    it is on) and 4 (LEVEL n SUPER COMBO FINISH, by its side too), in the fight and after the KO (fight
+    steps 3 and 4; fixed in 0.166.0 from Dan's screenshots: the rating, player 2's side and the KO's
+    messages had stayed); `widescreen_edge_shift`. The timer is text, moved toward its own side (it is
+    on the human player's), only while the text passes draw it (`widescreen_hud_text`). The health bars,
     gauges, portraits and the KO's FINISH stay on the 4:3 picture. Greyed unless SCREEN SIZE is WIDE
     NATIVE; DEFAULT sets it back to 4:3;
   - the fight's banners (0.99.9): the ROUND banner's band carries on into both margins (its right-end
