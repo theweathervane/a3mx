@@ -28,7 +28,8 @@
 #include <ctype.h>
 
 int rt_vsync = 1;                             /* [screen setting] vsync: wait for the monitor (no tearing); ON when missing */
-int rt_filter = 0;                            /* [screen setting] filter: an index into SHADER_FILTERS (shader.h); OFF when missing */
+int rt_filter = 0;                            /* [screen setting] filter: filter_get's index (shader.h); OFF when missing */
+static char filter_kept[1100];                /* a filter= not offered this run (its catalogue or folder gone): written back as it was while FILTER stays OFF */
 int rt_hud_edges = 1;                         /* [screen setting] hud_messages: WIDE NATIVE's fight messages and Survival timer at the 16:9 edges (EDGES: 1) or on the 4:3 picture (4:3: 0); EDGES when missing */
 int rt_frame_timing = 2;                     /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
@@ -247,9 +248,11 @@ void settings_load(void) {
                 rt_hud_edges = !strcmp(val, "EDGES");
                 continue;
             }
-            if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER, by name (shader.h); unknown: OFF */
-                rt_filter = 0;
-                for (int k = 0; k < SHADER_FILTER_COUNT; k++) if (!strcmp(val, SHADER_FILTERS[k].name)) rt_filter = k;
+            if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER: a favourite by name, others by path (shader.h); unknown: OFF */
+                int k = filter_find(val);
+                rt_filter = k > 0 ? k : 0;
+                filter_kept[0] = 0;
+                if (k < 0 && *val) { snprintf(filter_kept, sizeof filter_kept, "%s", val); rt_log("settings: filter=%s is not offered this run: OFF (kept in a3mx.cfg)", val); }
                 continue;
             }
             if (!strcmp(key, "frame_timing")) {
@@ -342,8 +345,11 @@ static void cfg_body(FILE *f) {
     { static const char *const ft[] = { "ORIGINAL", "SMOOTH", "AUTO" };
       char l[48]; snprintf(l, sizeof l, "frame_timing=%s", ft[rt_frame_timing >= 0 && rt_frame_timing <= 2 ? rt_frame_timing : 2]);
       fprintf(f, "%-24s # AUTO: SMOOTH on a 60 / 120 / 240 Hz screen, else ORIGINAL; SMOOTH: 60.00 Hz; ORIGINAL: 59.94 Hz, as the PSP\n", l); }
-    { char l[48]; snprintf(l, sizeof l, "filter=%s", SHADER_FILTERS[rt_filter >= 0 && rt_filter < SHADER_FILTER_COUNT ? rt_filter : 0].name);
-      fprintf(f, "%-24s # OFF, CRT CURVED / LOTTES / ROYALE / GUEST / LIGHT, SCAN LIGHT / STRONG / OSSC / DARK, XBRZ, SCALEFX (docs/DISPLAY.md)\n", l); }
+    { char k[1100], l[1200];
+      if (rt_filter > 0 && rt_filter < filter_count()) { filter_key(rt_filter, k, sizeof k); filter_kept[0] = 0; }
+      else snprintf(k, sizeof k, "%s", filter_kept[0] ? filter_kept : "OFF");
+      snprintf(l, sizeof l, "filter=%s", k);
+      fprintf(f, "%-24s # OFF, CRT CURVED / LOTTES / ROYALE / GUEST / LIGHT, SCAN LIGHT / STRONG / OSSC / DARK, XBRZ, SCALEFX, or a preset's path (docs/DISPLAY.md)\n", l); }
     { char l[48]; snprintf(l, sizeof l, "hud_messages=%s", rt_hud_edges ? "EDGES" : "4:3");
       fprintf(f, "%-24s # WIDE NATIVE: EDGES puts the fight's messages (combo, COUNTER HIT ...) and Survival's timer at the 16:9 edges; 4:3 as the game\n", l); }
     for (int p = 0; p < 4; p++) {

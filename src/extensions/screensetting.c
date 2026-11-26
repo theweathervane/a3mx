@@ -97,7 +97,7 @@ static int disabled(int pos) {
 static int row_y(int r) { return ROWS_MID - ((rows() - 1) * 0x18 + 12) / 2 + 0x18 * r; }
 static uint32_t wf_name;                    /* "WIDE NATIVE" in guest memory */
 static int vsync_saved = -1, timing_saved, filter_saved, hud_saved;   /* VSYNC, FRAME TIMING, FILTER and HUD MESSAGES as last written to a3mx.cfg (-1: not seen yet) */
-static int filter(void) { return rt_filter >= 0 && rt_filter < SHADER_FILTER_COUNT ? rt_filter : 0; }
+static int filter(void) { return rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0; }
 
 static const char *const timing_names[3] = { "ORIGINAL", "SMOOTH", "AUTO" };   /* rt_frame_timing 0, 1, 2 */
 static const char *const hud_names[2] = { "4:3", "EDGES" };                    /* rt_hud_edges 0, 1 */
@@ -126,7 +126,7 @@ static void left(void) {
     if (vsync_saved >= 0 && (vsync_saved != rt_vsync || timing_saved != rt_frame_timing || filter_saved != rt_filter || hud_saved != rt_hud_edges)) {
         settings_save();
         rt_log("screen setting: vsync %s, frame timing %s, filter %s, hud messages %s, saved", rt_vsync ? "ON" : "OFF", timing_names[timing()],
-               SHADER_FILTERS[filter()].name, hud_names[!!rt_hud_edges]);
+               filter_get(filter())->name, hud_names[!!rt_hud_edges]);
     }
     vsync_saved = rt_vsync; timing_saved = rt_frame_timing; filter_saved = rt_filter; hud_saved = rt_hud_edges;
     { void pacing_decide(const char *where); pacing_decide("leaving SCREEN SETTING"); }   /* AUTO chooses again from what is set now */
@@ -176,17 +176,19 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
         }
         if (disabled(r)) return 1;            /* (highlighted, but not changed) */
         uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
-        int v = id == R_VSYNC ? rt_vsync : id == R_TIMING ? timing() : id == R_HUD ? !!rt_hud_edges : filter();
+        const FilterEntry *fe = filter_get(filter());     /* FILTER: left / right within its category */
+        int f_first = filter_category_first(fe->category), f_size = filter_category_size(fe->category);
+        int v = id == R_VSYNC ? rt_vsync : id == R_TIMING ? timing() : id == R_HUD ? !!rt_hud_edges : filter() - f_first;
         for (int k = 0; k < 2; k++) {
             c->r[4] = SLOTS + 0x2Cu * (uint32_t)k; c->r[5] = (uint32_t)v;
-            c->r[6] = id == R_VSYNC || id == R_HUD ? 1 : id == R_TIMING ? 2 : (uint32_t)(SHADER_FILTER_COUNT - 1);
+            c->r[6] = id == R_VSYNC || id == R_HUD ? 1 : id == R_TIMING ? 2 : (uint32_t)(f_size - 1);
             f_088B7D08(c); v = (int)(int16_t)c->r[2];
         }
         memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
         if (id == R_VSYNC) vsync_set(v == 1);
         else if (id == R_HUD) { if ((v == 1) != !!rt_hud_edges) { rt_hud_edges = v == 1; rt_log("screen setting: hud messages %s", hud_names[rt_hud_edges]); } }
         else if (id == R_TIMING) { if (v >= 0 && v <= 2 && v != rt_frame_timing) { rt_frame_timing = v; rt_log("screen setting: frame timing %s", timing_names[v]); } }
-        else if (v >= 0 && v < SHADER_FILTER_COUNT && v != rt_filter) { rt_filter = v; rt_log("screen setting: filter %s", SHADER_FILTERS[v].name); }   /* (shader_gl.c sees it at the next frame) */
+        else if (v >= 0 && v < f_size && f_first + v != rt_filter) { rt_filter = f_first + v; rt_log("screen setting: filter %s", filter_get(rt_filter)->name); }   /* (shader_gl.c sees it at the next frame) */
         return 1;
     }
     /* one of the game's rows: the game, with its own row number (no up / down this frame, so it stays) */
@@ -205,11 +207,20 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
 #define BAR_X     0x60
 #define VALUE_X   0xDC
 #define LETTER_W  8
+#define VALUE_LEN 11                        /* letters of a value on the bar: WIDE NATIVE, CRT LOTTES ... */
+/* NAME in at most N letters: cut, ending in '.' when it was longer */
+static void filter_short(const char *name, char *out, int n) {
+    int l = (int)strlen(name);
+    if (l <= n) { memcpy(out, name, (size_t)l + 1); return; }
+    memcpy(out, name, (size_t)n - 1);
+    while (n > 2 && out[n - 2] == ' ') n--;
+    out[n - 1] = '.'; out[n] = 0;
+}
 int screensetting_bar_width(void) {
     static const char *const ours_v[] = { "WIDE NATIVE", "AUTO", "SMOOTH", "ORIGINAL", "4:3", "EDGES" };
     size_t longest = 0;
     for (size_t k = 0; k < sizeof ours_v / sizeof *ours_v; k++) if (strlen(ours_v[k]) > longest) longest = strlen(ours_v[k]);
-    for (int k = 0; k < SHADER_FILTER_COUNT; k++) if (strlen(SHADER_FILTERS[k].name) > longest) longest = strlen(SHADER_FILTERS[k].name);
+    for (int k = 0; k < SHADER_BUILTIN_COUNT; k++) if (strlen(SHADER_FILTERS[k].name) > longest) longest = strlen(SHADER_FILTERS[k].name);   /* (others are cut to VALUE_LEN) */
     const uint32_t tables[][2] = { { SIZE_NAMES, 2 }, { WALL_NAMES, 11 }, { ONOFF, 2 } };   /* the game's values */
     for (size_t t = 0; t < 3; t++)
         for (uint32_t k = 0; k < tables[t][1]; k++) {
@@ -230,12 +241,12 @@ int screensetting_text(Cpu *c, uint32_t a0, int after) {
     enum { W_VSYNC, W_TIMING, W_FILTER, W_HUD, W_TIMINGS, W_HUDS = W_TIMINGS + 3, W_FILTERS = W_HUDS + 2 };
     static uint32_t our_str;
     if (!our_str) {
-        our_str = rt_alloc(16u * (uint32_t)(W_FILTERS + SHADER_FILTER_COUNT), 1, 4, "screen setting");
+        our_str = rt_alloc(16u * (uint32_t)(W_FILTERS + 1), 1, 4, "screen setting");
         if (our_str) { strcpy((char *)HOST(our_str + 16u * W_VSYNC), "VSYNC"); strcpy((char *)HOST(our_str + 16u * W_TIMING), "FRAME TIMING");
                        strcpy((char *)HOST(our_str + 16u * W_FILTER), "FILTER"); strcpy((char *)HOST(our_str + 16u * W_HUD), "HUD MESSAGES");
                        for (int k = 0; k < 2; k++) strcpy((char *)HOST(our_str + 16u * (uint32_t)(W_HUDS + k)), hud_names[k]);
                        for (int k = 0; k < 3; k++) strcpy((char *)HOST(our_str + 16u * (uint32_t)(W_TIMINGS + k)), timing_names[k]);
-                       for (int k = 0; k < SHADER_FILTER_COUNT; k++) { char *d = (char *)HOST(our_str + 16u * (uint32_t)(W_FILTERS + k)); strncpy(d, SHADER_FILTERS[k].name, 15); d[15] = 0; } }
+                     }
     }
     grey_ok = exsetting_grey_font();
     text(c, S_TITLE, 2, 0x50, 5, 0xB);
@@ -252,7 +263,11 @@ int screensetting_text(Cpu *c, uint32_t a0, int after) {
     if (disabled(pos_of(R_VSYNC))) text_disabled(c, RW(ONOFF + 4u * (uint32_t)!!rt_vsync), 1, 0xDC, row_y(pos_of(R_VSYNC)), r == pos_of(R_VSYNC));
     else text(c, RW(ONOFF + 4u * (uint32_t)!!rt_vsync), 1, 0xDC, row_y(pos_of(R_VSYNC)), 0xB);
     if (our_str) text(c, our_str + 16u * (uint32_t)(W_TIMINGS + timing()), 1, 0xDC, row_y(pos_of(R_TIMING)), 0xB);
-    if (our_str && FEATURE(SHADERS)) text(c, our_str + 16u * (uint32_t)(W_FILTERS + filter()), 1, 0xDC, row_y(R_FILTER), 0xB);
+    if (our_str && FEATURE(SHADERS)) {          /* the filter's name, cut to the bar (the FILTER screen shows it whole) */
+        char *d = (char *)HOST(our_str + 16u * W_FILTERS);
+        filter_short(filter_get(filter())->name, d, VALUE_LEN);
+        text(c, our_str + 16u * W_FILTERS, 1, 0xDC, row_y(R_FILTER), 0xB);
+    }
     if (our_str) {
         uint32_t hs = our_str + 16u * (uint32_t)(W_HUDS + !!rt_hud_edges);
         if (disabled(pos_of(R_HUD))) text_disabled(c, hs, 1, 0xDC, row_y(pos_of(R_HUD)), r == pos_of(R_HUD));

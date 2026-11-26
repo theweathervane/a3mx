@@ -43,7 +43,11 @@
  *   --dir-saves DIR, --dir-configs DIR, --dir-logs DIR   one of those folders somewhere else (the launcher's
  *                        Paths tab); the others stay in the player's folder
  *   --filter NAME        SCREEN SETTING > FILTER for this run: off, crt-curved, crt-lottes, crt-royale, crt-guest,
- *                        crt-light, scan-light, scan-strong, scan-ossc, scan-dark, xbrz, scalefx (shader.h)
+ *                        crt-light, scan-light, scan-strong, scan-ossc, scan-dark, xbrz, scalefx (shader.h), or
+ *                        any other FILTER offers, by its preset's path (crt/crt-geom-deluxe.slangp) or name
+ *   --filter-test LIST OUT  load, build and draw each preset LIST names, a line each to OUT, then quit
+ *                        (tools/shaders.py --catalogue: no game, a small window)
+ *   --dump-filtered      --dump saves the picture as FILTER drew it, when it did (screenshots)
  *   --librashader FILE, --shaders DIR   the shader library and libretro's slang-shaders, if they are not where
  *                        the game looks (beside it, and .tools/ beside the work folder: shader.h)
  *   --save-dir DIR       keep saves and settings together in DIR, and the log and last_run.txt in the work
@@ -342,6 +346,7 @@ static void parse_script(const char *s) {
     }
 }
 static long dump_every = 60, dump_from = 0;
+static int dump_filtered;                   /* --dump-filtered */
 static FILE *hash_log;                      /* --hash-log */
 static const char *decomp_report;            /* --decomp-report */
 static int difftest_n;                      /* --difftest [N] */
@@ -523,7 +528,7 @@ void rt_display_vblank(void) {
         int w = 480, h = 272;
         if (!big) big = (uint8_t *)malloc((size_t)480 * 8 * 272 * 8 * 4);
         snprintf(p, sizeof p, "%s/frame_%05llu.png", dump_dir, (unsigned long long)f);
-        if (!(ge_use_gl && ge_gl_read(rt_fb_addr(), big, &w, &h)))
+        if (!(dump_filtered && shader_gl_read(big, 480 * 8, 272 * 8, &w, &h)) && !(ge_use_gl && ge_gl_read(rt_fb_addr(), big, &w, &h)))
             ge_fb_to_rgba(rt_fb_addr(), (int)rt_fb_width(), (int)rt_fb_format(), 480, 272, big);
         png_write(p, big, w, h);
     }
@@ -600,7 +605,7 @@ char rt_config_dir[1024];                   /* where a3mx.cfg is kept (savestore
 int rt_custom_assets;                        /* --custom-assets: assets/extensions/ (the launcher's Custom Assets, off by default) */
 
 int main(int argc, char **argv) {
-    const char *work = "work", *log_path = NULL, *assets = NULL, *user_dir = NULL, *features_arg = NULL, *renderer_asked = NULL, *dir_saves = NULL, *dir_configs = NULL, *dir_logs = NULL, *filter_arg = NULL;
+    const char *work = "work", *log_path = NULL, *assets = NULL, *user_dir = NULL, *features_arg = NULL, *renderer_asked = NULL, *dir_saves = NULL, *dir_configs = NULL, *dir_logs = NULL, *filter_arg = NULL, *filter_test_list = NULL, *filter_test_out = NULL;
     int no_assets = 0;
     setvbuf(stdout, NULL, _IOFBF, 1 << 16);   /* written once a frame (rt_log_flush), not line by line */
     atexit(rt_log_flush);
@@ -652,6 +657,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--librashader") && i + 1 < argc) { extern const char *shader_lib_arg; shader_lib_arg = argv[++i]; }
         else if (!strcmp(argv[i], "--shaders") && i + 1 < argc) { extern const char *shader_dir_arg; shader_dir_arg = argv[++i]; }
         else if (!strcmp(argv[i], "--filter") && i + 1 < argc) filter_arg = argv[++i];
+        else if (!strcmp(argv[i], "--filter-test") && i + 2 < argc) { filter_test_list = argv[++i]; filter_test_out = argv[++i]; }
+        else if (!strcmp(argv[i], "--dump-filtered")) dump_filtered = 1;
         else if (!strcmp(argv[i], "--dir-saves") && i + 1 < argc) dir_saves = argv[++i];
         else if (!strcmp(argv[i], "--dir-configs") && i + 1 < argc) dir_configs = argv[++i];
         else if (!strcmp(argv[i], "--dir-logs") && i + 1 < argc) dir_logs = argv[++i];
@@ -834,21 +841,23 @@ int main(int argc, char **argv) {
     if (rt_extensions) { void settings_load(void); rt_log("features: %s", features_describe()); settings_load(); }
     else rt_log("extensions: off (%s): the PSP program alone", rt_extensions_built() ? "no feature is on (--no-extensions)" : "built without them");
     if (filter_arg) {                         /* --filter NAME: this run only (the setting is SCREEN SETTING > FILTER) */
-        extern int rt_filter_cli; int found = -1;
-        for (int k = 0; k < SHADER_FILTER_COUNT; k++) {               /* letters and digits only, any case: crt-curved is CRT CURVED */
-            char a[24], b[24]; const char *src[2] = { filter_arg, SHADER_FILTERS[k].name }; char *dst[2] = { a, b };
-            for (int w = 0; w < 2; w++) {
-                size_t n = 0;
-                for (const char *p = src[w]; *p && n < sizeof a - 1; p++) {
-                    char ch = *p >= 'a' && *p <= 'z' ? (char)(*p - 32) : *p;
-                    if ((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) dst[w][n++] = ch;
-                }
-                dst[w][n] = 0;
-            }
-            if (!strcmp(a, b)) found = k;
-        }
-        if (found < 0) rt_fatal("--filter: off, crt-curved, crt-lottes, crt-royale, crt-guest, crt-light, scan-light, scan-strong, scan-ossc, scan-dark, xbrz or scalefx, not %s", filter_arg);
+        extern int rt_filter_cli;
+        int found = filter_find_loose(filter_arg);   /* letters and digits only, any case: crt-curved is CRT CURVED; or a path */
+        if (found < 0) rt_fatal("--filter: off, crt-curved, crt-lottes, crt-royale, crt-guest, crt-light, scan-light, scan-strong, scan-ossc, scan-dark, xbrz, scalefx, "
+                                "or a preset FILTER offers (its path under the shaders, or its name), not %s", filter_arg);
         rt_filter_cli = found;
+    }
+    if (filter_test_list) {                   /* --filter-test: the presets, in a small window; no game */
+        host_start_fullscreen = 0;
+        if (!host_init(0, 1)) rt_fatal("--filter-test: could not open the window (SDL)");
+        HostGetProc gp = host_gl_getproc();
+        if (!gp || !ge_gl_init(gp, 1, host_display_height())) {
+            FILE *o = fopen(filter_test_out, "w"); if (o) { fprintf(o, "*\tno OpenGL 3.3\n"); fclose(o); }
+            return 2;
+        }
+        int r = shader_gl_test(filter_test_list, filter_test_out);
+        rt_log_flush();
+        return r;
     }
 
     if (!rt_mem_init()) rt_fatal("could not reserve guest memory");
