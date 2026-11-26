@@ -37,7 +37,7 @@ const char *shader_describe(void) {
 /* librashader_ld.h looks for the library by its bare name only. Ours is usually not on the system's
  * search path (it sits beside the game or in .tools/), so the loader's own call is pointed at
  * lib_open(), which tries those places first and the bare name last. */
-static char lib_tried[4][1100]; static int lib_tried_n;
+static char lib_tried[5][1100]; static int lib_tried_n;
 static char lib_found[1100];
 #ifdef _WIN32
 #include <windows.h>
@@ -118,6 +118,7 @@ void shader_gl_init(void *(*getproc)(const char *), const char *work) {
     if (env && *env) snprintf(lib_tried[lib_tried_n++], sizeof lib_tried[0], "%s", env);
     snprintf(lib_tried[lib_tried_n++], sizeof lib_tried[0], "%s" LIB_NAME, beside);
     snprintf(lib_tried[lib_tried_n++], sizeof lib_tried[0], "%s.tools/librashader/" LIB_NAME, beside);
+    snprintf(lib_tried[lib_tried_n++], sizeof lib_tried[0], "%s.tools/" LIB_NAME, beside);          /* (put in the tools folder itself) */
     /* where the shaders may be (shader_list.c) */
     shaders_dir = filters_shaders_dir();
     shaders_ok = is_dir(shaders_dir);

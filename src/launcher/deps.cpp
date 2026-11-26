@@ -112,6 +112,33 @@ const Want WANTED[] = {
 };
 }
 
+#if defined(_WIN32)
+static const char *const LIBRASHADER = "librashader.dll";
+static const char *const SYSTEM_KEY = "windows-x64";
+#elif defined(__APPLE__)
+static const char *const LIBRASHADER = "librashader.dylib";
+static const char *const SYSTEM_KEY = "macos-arm64";
+#else
+static const char *const LIBRASHADER = "librashader.so";
+static const char *const SYSTEM_KEY = "linux-x64";
+#endif
+std::vector<std::string> librashader_places(const std::string &root, const std::string &tools_dir) {
+    const std::string tools = tools_dir.empty() ? join(root, ".tools") : tools_dir;
+    std::vector<std::string> p = { join(join(tools, "librashader"), LIBRASHADER), join(tools, LIBRASHADER) };
+    if (!root.empty()) {
+        p.push_back(join(root, LIBRASHADER));
+        p.push_back(join(join(root, "build"), LIBRASHADER));            /* beside the game a build makes */
+        p.push_back(join(join(root, "build-launcher"), LIBRASHADER));
+    }
+    const char *base = SDL_GetBasePath();                                 /* beside this launcher (a release's) */
+    if (base && *base) p.push_back(join(base, LIBRASHADER));
+    return p;
+}
+std::string where_librashader(const std::string &root, const std::string &tools) {
+    for (const std::string &p : librashader_places(root, tools)) if (exists(p)) return p;
+    return std::string();
+}
+
 std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir, std::string &err) {
     std::vector<Dep> out;
     std::string text = read_text(join(root, "tools/data/pins.json"));
@@ -132,6 +159,8 @@ std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir
             d.url = e.str("repo") + "/archive/" + commit + ".zip";
             const J *files = e.get("files");
             if (files && files->t == J::OBJ && !files->o.empty()) { d.sha_of = files->o[0].first; d.sha256 = files->o[0].second.s; }
+            const J *pre = e.get("prebuilt"), *mine = pre ? pre->get(SYSTEM_KEY) : nullptr;   /* published built (librashader) */
+            d.prebuilt = mine && !mine->str("url").empty() && mine->str("sha256").size() == 64;
             pins[d.id] = d;
         }
     const std::string tools = tools_dir.empty() ? join(root, ".tools") : tools_dir;
@@ -203,22 +232,18 @@ std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir
         }
         out.push_back(d);
     }
-    {   /* the shader library: built from its pinned source by tools/librashader.py (needs Rust), or in a
-           release's download already; never downloaded built (docs/DISPLAY.md, FILTER) */
-#if defined(_WIN32)
-        const char *lib = "librashader.dll";
-#elif defined(__APPLE__)
-        const char *lib = "librashader.dylib";
-#else
-        const char *lib = "librashader.so";
-#endif
+    {   /* the shader library: the one the pipelines built and published, downloaded and checked against its
+           SHA-256 by tools/librashader.py, or built there from its pinned source (needs Rust); or in a
+           release's download already, or put in one of librashader_places by hand (docs/DISPLAY.md, FILTER) */
         Dep d; d.id = "librashader"; d.name = "librashader (for FILTER)"; d.system = true; d.optional = true;
-        std::string a = join(join(tools, "librashader"), lib), b = join(root, lib);
-        d.here = exists(a) || exists(b);
+        d.found = where_librashader(root, tools_dir);
+        d.here = !d.found.empty();
         d.dest = join(tools, "librashader");
         auto src = pins.find("librashader");                 /* its source's pin (tools/librashader.py builds from it) */
-        if (src != pins.end()) { d.version = src->second.version; d.url = src->second.url; }
-        d.detail = d.here ? (exists(a) ? a : b) : std::string("optional: python tools/librashader.py builds it (needs Rust), or put ") + lib + " in " + d.dest;
+        if (src != pins.end()) { d.version = src->second.version; d.url = src->second.url; d.prebuilt = src->second.prebuilt; }
+        d.detail = d.here ? d.found
+                 : std::string("optional: ") + (d.prebuilt ? "\"Get librashader\" downloads it" : "\"Get librashader\" builds it (needs Rust)") +
+                   ", or put " + LIBRASHADER + " in " + d.dest + " (also found in " + join(tools, "") + ", beside the game or the launcher)";
         out.push_back(d);
     }
     return out;
