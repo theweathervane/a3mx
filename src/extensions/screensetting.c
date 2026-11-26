@@ -295,7 +295,14 @@ int screensetting_text(Cpu *c, uint32_t a0, int after) {
     if (our_str) text(c, our_str + 16u * (uint32_t)(W_TIMINGS + timing()), 1, 0xDC, row_y(pos_of(R_TIMING)), 0xB);
     if (our_str && FEATURE(SHADERS)) {          /* the filter's name, cut to the bar (the FILTER screen shows it whole) */
         char *d = (char *)HOST(our_str + 16u * W_FILTERS);
-        filter_short(filter_get(filter())->name, d, VALUE_LEN);
+        static unsigned tick;                   /* the cursor on FILTER: the whole name scrolls by (a marquee) */
+        const char *nm = filter_get(filter())->name;
+        int l = (int)strlen(nm);
+        if (r == R_FILTER && l > VALUE_LEN) {
+            int moves = l - VALUE_LEN, cycle = 2 * 60 + moves * 8, at = (int)(tick++ % (unsigned)cycle) - 60;
+            at = at <= 0 ? 0 : at / 8 > moves ? moves : at / 8;
+            memcpy(d, nm + at, VALUE_LEN); d[VALUE_LEN] = 0;
+        } else { tick = 0; filter_short(nm, d, VALUE_LEN); }
         text(c, our_str + 16u * W_FILTERS, 1, 0xDC, row_y(R_FILTER), 0xB);
     }
     if (FEATURE(SHADERS)) {                     /* Cross opens them: the game's Cross symbol after the name */
