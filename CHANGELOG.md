@@ -3,6 +3,7 @@
 ## Unreleased
 ### For players
 - **Most extensions are switched in the game now, so everyone runs the same build:** OPTION MODE > EX. SETTING has two new pages. **EX. GAME** has Boot to the MODE MENU (off by default; from the next start), Mode Menu Shortcut (was the F2 / SELECT + START key), Shared Entry Pool (was I-ISM for both sides; on by default), 1P - 3P PRIORITY and VIRTUAL PSPS. **EX. DISPLAY** has MODE MENU icons, ISM presentation, Scaled endings and Stage Extensions. They take effect at once and are kept in `a3mx.cfg`.
+- **GAME OPTION > DEFAULT keeps MODE SELECT ON,** as a new save has it (the game's own default is OFF).
 - **Each EX. SETTING page has its own banner** in place of "EX. SETTING": EX. GAME, EX. DISPLAY, EX. UNLOCKS, EX. FIGHTERS, EX. EXP.
 - **The launcher's Extensions tab is down to four switches:** PSP original (no extension at all), Enhanced saves (was Silent saves), Extra menus and Local multiplayer. Widescreen and Shaders are no longer switches: SCREEN SETTING's SCREEN SIZE (WIDE NATIVE) and FILTER choose them, as before. Cheats and Unlocks are part of Extra menus. A choice of Boot to the MODE MENU made in the launcher before isn't carried over: set it in EX. GAME.
 
@@ -10,6 +11,7 @@
 - `ext_features.h`: each feature has `where` (`WHERE_LAUNCHER`, `WHERE_EX_GAME`, `WHERE_EX_DISPLAY`, `WHERE_BUILT_IN`, replacing `section` / `FEATURE_SECTIONS`) and an `a3mx.cfg` key; `rt_feature_setting`, `features_from_settings`, `features_setting_changed`, `features_spec`. The enum is in the new order; names are unchanged. `boot_to_menu` and `quit_key` need `menus`, as does `cheats_unlocks`.
 - `--features`: new keyword `settings` (the EX. SETTING features as `a3mx.cfg` has them; a feature named in the list wins for this run). No `--features` is `default,settings`; the launcher passes `saves,menus,local_multiplayer,settings` (or `none`). A list without `settings`, as the tests pass, is exact as before. `--record` stores `features_spec()`, so a replay reads its own copy of `a3mx.cfg` the same way; `--custom-assets` wins over the setting.
 - `a3mx.cfg` `[ex setting]`: `boot_to_mode_menu`, `mode_menu_shortcut`, `shared_entry_pool`, `mode_menu_icons`, `ism_presentation`, `scaled_endings`, `stage_extensions`.
+- `exsetting_game_option_default` wraps 0x088B67B8 (GAME OPTION > DEFAULT): MODE SELECT (system data + 516) back to 1 after it. The launcher's Extensions tab points to OPTION MODE's menus instead of listing them.
 - `exsetting.c`: pages `PG_GAME`, `PG_DISPLAY` first, the cheats' four after them with `cheats_unlocks`; titles per page; the text pool holds 256 strings. Launcher settings: `psp_original`, and `feature.*` only for the launcher's three.
 - Checked: the changed C and C++ files compile (syntax only, gcc / g++ on Linux). Not built or run on Windows yet; parity not run.
 

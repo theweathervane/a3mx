@@ -2289,10 +2289,7 @@ struct App {
     void extensions_tab(bool busy) {
         ImGui::SeparatorText("Extensions");
         ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
-        ImGui::TextDisabled("Three of the project's extensions are switched here. Everything else is switched in the game, so every "
-                            "player runs the same build: OPTION MODE > EX. SETTING (EX. GAME: Boot to the MODE MENU, Mode Menu Shortcut, "
-                            "Shared Entry Pool; EX. DISPLAY: MODE MENU icons, ISM presentation, Scaled endings, Stage Extensions; "
-                            "the cheats and unlocks) and SCREEN SETTING (SCREEN SIZE's WIDE NATIVE, FILTER).");
+        ImGui::TextDisabled("The project's other options are in the game: see OPTION MODE's menus, EX. SETTING and PLAYER CONFIG.");
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
         ImGui::BeginDisabled(busy);

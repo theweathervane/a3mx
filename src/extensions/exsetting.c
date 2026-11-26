@@ -900,6 +900,14 @@ static void sl_game_load(Cpu *c) {
     rt_hold_display_set(SL_AFTER);
     WW(SLOTS + 0xC, k0); memcpy(&c->r[4], keep, sizeof keep); c->r[31] = ra;
 }
+/* GAME OPTION > DEFAULT (0x088B67B8, a0 the system data): the game's defaults, but MODE SELECT ON, as a
+   new save of ours has it (sysdata.c) */
+int exsetting_game_option_default(Cpu *c, uint32_t a0, int after) {
+    (void)c;
+    if (after && (pressed() & B_CONFIRM)) WB(a0 + 516, 1);
+    return 0;
+}
+
 int exsetting_save_load(Cpu *c, uint32_t a0, int after) {
     if (after) return 0;               /* (leaving it is held by exsetting_option_menu, SWITCH_HOLD) */
     /* up / down over all seven rows, by the game's own cursor mover (its press-and-hold repeat too:
