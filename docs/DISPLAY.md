@@ -35,6 +35,20 @@ again only when you come back to the MODE MENU or leave SCREEN SETTING; if nothi
 changed (VSYNC, the monitor's rate), it keeps its choice. It never changes while a menu is on screen
 or during a fight.
 
+## HEALTH GRADIENT
+
+OPTION MODE > EX. SETTING > EX. DISPLAY > **HEALTH GRADIENT** (not SCREEN SETTING, which is full):
+**ON** (the default) draws the health bars as the PSP does, shaded from green (player 1) or cyan
+(player 2) at the outer end to yellow at the middle; **OFF** draws each bar's remaining health in one
+solid colour, the yellow of the PSP's own bars at the middle, as the arcade game and the series before
+Alpha 3 have it. The part just lost (red) and the empty bar look as they always do; if the game makes
+the bar flash, the solid fill follows the colour of its middle end. It applies at once, is kept in
+`a3mx.cfg` (`[ex setting] health_gradient=OFF`), and the page's DEFAULT sets it back to ON.
+
+**OFF wins** over any other change to the health bars' colours, now or later (a gradient by ISM, for
+example): such a change must ask `hud_health_solid()` (`src/extensions/cheats_unlocks.c`, used by
+`src/core/object/hud.c`) first and leave the bars solid while it says so.
+
 ## FILTER
 
 SCREEN SETTING > FILTER (0.60.0) draws the finished picture through one of RetroArch's shaders. It is

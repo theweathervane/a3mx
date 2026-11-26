@@ -32,6 +32,7 @@ int rt_filter = 0;                            /* [screen setting] filter: filter
 static char filter_kept[1100];                /* a filter= not offered this run (its catalogue or folder gone): written back as it was while FILTER stays OFF */
 int rt_hud_edges = 1;                         /* [screen setting] hud_messages: WIDE NATIVE's fight messages and Survival timer at the 16:9 edges (EDGES: 1) or on the 4:3 picture (4:3: 0); EDGES when missing */
 int rt_frame_timing = 2;                     /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
+int rt_health_gradient = 1;                   /* [ex setting] health_gradient: EX. DISPLAY's HEALTH GRADIENT (ON: the PSP's shading; OFF: solid, hud_health_solid) */
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
 extern int rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
@@ -224,6 +225,7 @@ void settings_load(void) {
                 continue;
             }
             if (!strcmp(key, "virtual_psps")) { rt_virtual_psps = is_on(val); continue; }
+            if (!strcmp(key, "health_gradient")) { rt_health_gradient = is_on(val); continue; }
             { int done_feat = 0;                          /* EX. GAME / EX. DISPLAY: the extensions (ext_features.h) */
               for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key && !strcmp(key, FEATURES[k].key)) { rt_feature_setting[k] = is_on(val); done_feat = 1; }
               if (done_feat) continue; }
@@ -325,6 +327,7 @@ static void cfg_body(FILE *f) {
     fprintf(f, "\n[ex setting]\n");
     for (int k = 0; k < 3; k++) { char l[48]; snprintf(l, sizeof l, "p%d_priority=%s", k + 1, v_human[!!rt_join_in[k]]); fprintf(f, "%-24s # PLAYER: pad %d plays a fighter nobody started with; COM: the computer does\n", l, k + 1); }
     { char l[48]; snprintf(l, sizeof l, "virtual_psps=%s", off_on[!!rt_virtual_psps]); fprintf(f, "%-24s # ON: NETWORK finds pads 2 and 3 (or the computer) as other PSPs, on this PC; OFF: no other PSPs\n", l); }
+    { char l[48]; snprintf(l, sizeof l, "health_gradient=%s", off_on[!!rt_health_gradient]); fprintf(f, "%-24s # EX. DISPLAY: Health gradient. ON: the PSP's green-to-yellow health bars; OFF: solid yellow, as the arcade\n", l); }
     for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key) {   /* EX. GAME / EX. DISPLAY */
         char l[48]; snprintf(l, sizeof l, "%s=%s", FEATURES[k].key, off_on[!!rt_feature_setting[k]]);
         fprintf(f, "%-24s # %s: %s%s\n", l, FEATURES[k].where == WHERE_EX_GAME ? "EX. GAME" : "EX. DISPLAY", FEATURES[k].title,

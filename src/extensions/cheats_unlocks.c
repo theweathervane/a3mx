@@ -53,6 +53,12 @@
 #include <stdio.h>
 #include <string.h>
 
+/* EX. DISPLAY > HEALTH GRADIENT OFF (rt_health_gradient, settings.c): the health bars' fills in one solid
+   colour (object/hud.c). The one switch for it: any other change to the health bars' colours checks this
+   first, and OFF wins. */
+extern int rt_health_gradient;
+int hud_health_solid(void) { return FEATURE(MENUS) && !rt_health_gradient; }
+
 int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3];
 int rt_cheat_wt[4];                         /* WORLD TOUR EXP, X-ISM, A-ISM, V-ISM: NORMAL (0), MAX (1) */
 int rt_cheat_edit[4];                       /* EDIT MODE EXP, X-ISM, A-ISM, V-ISM */

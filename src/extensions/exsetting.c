@@ -173,7 +173,7 @@ static void clone_off(void) {
  * cursor in the option context's +7, colour 0xB on its row and 0xA elsewhere, and GAME OPTION's green
  * bar (object kind 0xC, type 4; once a frame 0x088BA8F4) under it. PLAYER CONFIG reuses the menu's
  * buttons as five tiles. */
-extern int rt_join_in[3], rt_virtual_psps, rt_l2[4], rt_r2[4];
+extern int rt_join_in[3], rt_virtual_psps, rt_l2[4], rt_r2[4], rt_health_gradient;
 extern const uint8_t pcfg_default[20];
 uint8_t *pcfg_block(int p);
 void settings_save(void);
@@ -248,7 +248,8 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
  * "EX. SETTING" (0.165.0):
  *   EX. GAME      BOOT TO MODE MENU (from the next start), MODE MENU SHORTCUT, SHARED ENTRY POOL, 1P - 3P
  *                 PRIORITY and VIRTUAL PSPS
- *   EX. DISPLAY   MODE MENU ICONS, ISM PRESENTATION, SCALED ENDINGS, STAGE EXTENSIONS
+ *   EX. DISPLAY   MODE MENU ICONS, ISM PRESENTATION, SCALED ENDINGS, STAGE EXTENSIONS, and HEALTH GRADIENT (a
+ *                 setting, not an extension: rt_health_gradient, object/hud.c's hud_health_solid)
  * The extensions on these two were the launcher's checkboxes before 0.165.0: they are kept in a3mx.cfg
  * and switched at once (ext_features.h: features_setting_changed). With Cheats and Unlocks (part of
  * Extra menus: cheats_unlocks.c), four more:
@@ -355,7 +356,8 @@ static const Row page_display[] = {
     FEAT_ROW("ISM PRESENTATION", FEAT_I_ISM_DISPLAY, "I-ISM WIPE INTO THE FIGHT AND", "I-ISM RANKING IN THE ATTRACT."),
     FEAT_ROW("SCALED ENDINGS", FEAT_SCALED_ENDINGS, "ENDINGS FILL THE WIDE SCREEN.", "WITH WIDE NATIVE."),
     FEAT_ROW("STAGE EXTENSIONS", FEAT_STAGE_EXT, "NEW ART FOR THE STAGE EDGES IN", "WIDE NATIVE. EXPERIMENTAL."),
-    R_DEFAULT_ROW("ICONS AND ENDINGS ON."), R_EXIT_ROW,
+    { "HEALTH GRADIENT", &rt_health_gradient, v_off_on, { "ON - THE PSP SHADED HEALTH BARS.", "OFF - SOLID YELLOW, AS ARCADE." }, 0 },
+    R_DEFAULT_ROW("ICONS, ENDINGS, GRADIENT ON."), R_EXIT_ROW,
 };
 /* EX. GAME and EX. DISPLAY always; the cheats' pages after them, with Cheats and Unlocks */
 enum { PG_GAME, PG_DISPLAY, PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, N_PAGES };
@@ -384,7 +386,7 @@ static void page_defaults(int pg) {
     else if (pg == PG_FIGHTERS12) cheats_unlocks_default_fighters(0, 1);
     else if (pg == PG_FIGHTERS34) cheats_unlocks_default_fighters(2, 2);
     else if (pg == PG_ENTRIES) cheats_unlocks_default_entries();
-    else if (pg == PG_DISPLAY) page_features_default(pg);
+    else if (pg == PG_DISPLAY) { page_features_default(pg); rt_health_gradient = 1; }
     else { page_features_default(pg); rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
 }
 
