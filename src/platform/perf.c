@@ -54,6 +54,9 @@ static uint64_t run_start, io_at_last_frame;
 int rt_display_held(void);
 
 void perf_add(int what, uint64_t us) { if (what >= 0 && what < PERF_N) part[what] += us; }
+static uint64_t swap_in_present;
+void perf_swap_in_present(uint64_t us) { part[PERF_SWAP] += us; swap_in_present += us; }
+uint64_t perf_take_swap_in_present(void) { uint64_t u = swap_in_present; swap_in_present = 0; return u; }
 void perf_count_texture(int uploaded, uint32_t bytes_hashed) { frame_uploads += (uint64_t)uploaded; frame_hashed += bytes_hashed; }
 void perf_count_draws(int draws, int draw_calls) { frame_draws += (uint64_t)draws; frame_draw_calls += (uint64_t)draw_calls; }
 void perf_gpu_time(uint64_t ns) { frame_gpu_ns = ns; }

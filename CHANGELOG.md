@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.174.1
+### Technical
+- The perf log and `last_run.txt` count the Vulkan / DirectX 12 / Metal renderer's wait for the monitor as swap, as OpenGL's: SDL3's GPU API waits while acquiring the swapchain's image (and possibly while submitting the frame), inside presenting, where OpenGL waits in the swap. Until now that wait was counted as present and as work, so `busy_ms`, `present_ms` and `slow_frames` looked worse than OpenGL's although the frames reached the screen as smoothly (seen on an M1 Pro with Metal: 701 "slow" frames against OpenGL's 5, the same `shown_p99`). `perf_swap_in_present` (perf.c), timed in `ge_sdlgpu.c`; nothing drawn or played changes.
+
 ## 0.174.0
 ### For players
 - **New: Vulkan and DirectX 12 renderers** (the launcher's Renderer, or `--renderer vulkan` / `d3d12`): the same GPU renderer through SDL3's GPU API, drawing what OpenGL draws. OpenGL stays the default. **Metal** (macOS) is built from the same code but hasn't been tried on a Mac yet ("Metal (untested)"). If the API can't be had on the PC, the game uses OpenGL and its log says why.

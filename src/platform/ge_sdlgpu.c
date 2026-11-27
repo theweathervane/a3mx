@@ -344,7 +344,10 @@ static int vsync_on = 1;
 
 static void draw_to_window(SDL_GPUTexture *tex, float src_w, float src_h, float uv_w, float uv_h, int sharp) {
     SDL_GPUTexture *sw = NULL; Uint32 ww = 0, wh = 0;
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cb(), win, &sw, &ww, &wh) || !sw) { submit(); return; }   /* (minimised) */
+    uint64_t t0 = perf_now_us();                     /* (the wait for the monitor: perf counts it as swap, as OpenGL's) */
+    int got = SDL_WaitAndAcquireGPUSwapchainTexture(cb(), win, &sw, &ww, &wh);
+    perf_swap_in_present(perf_now_us() - t0);
+    if (!got || !sw) { submit(); return; }        /* (minimised) */
     SDL_GPUColorTargetInfo ct;
     memset(&ct, 0, sizeof ct);
     ct.texture = sw; ct.load_op = SDL_GPU_LOADOP_CLEAR; ct.store_op = SDL_GPU_STOREOP_STORE;
@@ -366,7 +369,9 @@ static void draw_to_window(SDL_GPUTexture *tex, float src_w, float src_h, float 
         SDL_DrawGPUPrimitives(rp, 6, 1, 0, 0);
     }
     if (rp) SDL_EndGPURenderPass(rp);
+    uint64_t t1 = perf_now_us();                     /* (submitting the frame may wait for a free swapchain image: swap too) */
     submit();
+    perf_swap_in_present(perf_now_us() - t1);
 }
 
 static int gpu_present(uint32_t fb_addr, int win_w, int win_h) {

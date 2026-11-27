@@ -514,6 +514,7 @@ void rt_display_vblank(void) {
         uint64_t shown = perf_now_us();
         perf_add(PERF_SWAP, shown - swap_t0);
         present_t0 += shown - swap_t0;                /* present is the drawing only */
+        present_t0 += perf_take_swap_in_present();    /* (the SDL GPU renderer's wait for the monitor: swap, perf.h) */
         perf_shown();
     }
     { void pacing_frame(int presented, int frame); pacing_frame(!headless && !held, (int)f); }

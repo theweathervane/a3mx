@@ -25,6 +25,11 @@
 enum { PERF_RENDER, PERF_TEXTURE, PERF_PRESENT, PERF_IDLE, PERF_SWAP, PERF_N };
 uint64_t perf_now_us(void);
 void perf_add(int what, uint64_t us);                /* time spent in one part of the frame */
+/* a wait for the monitor inside presenting (the SDL GPU renderer: acquiring the swapchain's image waits
+   for vsync there, where OpenGL waits in the swap): counted as swap, and taken out of present by main.c
+   (perf_take_swap_in_present), so busy and slow frames compare like for like across renderers (0.174.1) */
+void perf_swap_in_present(uint64_t us);
+uint64_t perf_take_swap_in_present(void);
 void perf_count_texture(int uploaded, uint32_t bytes_hashed);
 void perf_count_draws(int draws, int draw_calls);  /* GPU renderer: the game's draws, and the OpenGL draw calls issued for them */
 void perf_gpu_time(uint64_t ns);                    /* a finished frame's GPU time (arrives a few frames late) */
