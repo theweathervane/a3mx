@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.173.1
+### Technical
+- macOS / Linux: `build.sh`, `launcher.sh` and the Docker test scripts are marked executable in git, so a fresh clone or download runs them without `chmod +x` ("permission denied" before). `.DS_Store` (macOS Finder) is in `.gitignore`.
+
 ## 0.173.0
 ### For players
 - **New: START in SCREEN SETTING > PREVIEW opens the FILTER screen over the fight.** Player 1's START pauses the preview fight with the FILTER screen up at once (no pause menu, no hint). Cross chooses a filter (in use and kept at once), Circle keeps the one you had, and either way the fight goes on, drawn through it; it is still the filter in use back on SCREEN SETTING. Circle while the screen is up only closes it.

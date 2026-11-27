@@ -47,3 +47,6 @@ __pycache__/
 # Docker test runner: your own settings (a mirror's address, a token)
 docker/tests/.env
 /art-pack/
+
+# macOS Finder
+.DS_Store
