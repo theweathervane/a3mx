@@ -479,3 +479,160 @@ SFA_FUNC(08823ED4, cpu_hit_slot) {
     c->r[4] = v;
     *H(o + 114) = (uint16_t)v; *H(o + 112) = (uint16_t)v; *H(o + 420) = (uint16_t)v;
 }
+
+
+void f_089CCEC0(Cpu *c); void f_08821A64(Cpu *c);
+
+/* (object): 0x089CCEC0 unless +48 is set. */
+SFA_FUNC(089D913C, effect_start_once) {
+    gaddr o = ARG(0);
+    uint32_t ra = c->r[31];
+    c->r[29] -= 0x20;
+    c->r[5] = *W(o + 48);
+    *W(c->r[29] + 16) = ra;
+    if (c->r[5] == 0) { c->r[31] = 0x089D9158u; f_089CCEC0(c); }
+    c->r[31] = ra; c->r[29] += 0x20;
+}
+
+/* (effect, kind): an effect that follows its fighter: the fighter (0 or 1) whose +338 matches the
+   effect's +73 lends its +86 and +171 (an owner in move 0x29 also starts it, 0x089D913C); with neither,
+   fighter 0's +86 (fighter 1's when 0's +338 is 0xA). +164 = 1 and its script by kind from the list at
+   0x09358CF0's word (0x08821A64). A frame keeping s0, s1. */
+SFA_FUNC(089D8C40, effect_follow) {
+    gaddr e = ARG(0); uint32_t k = ARG(1);
+    uint32_t s0 = c->r[16], s1 = c->r[17], ra = c->r[31];
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = s0; c->r[16] = e;
+    *W(c->r[29] + 20) = s1;
+    const gaddr f0 = 0x092E3EA0u, f1 = 0x092E4338u;
+    int32_t side = S8(e + 73);
+    *W(c->r[29] + 24) = ra;
+    k &= 0xFFFF; c->r[17] = k;
+    gaddr own = 0; uint32_t back = 0;
+    if (side == S8(f1 + 338)) { own = f1; back = 0x089D8C98u; }
+    else if (side == S8(f0 + 338)) { own = f0; back = 0x089D8CE0u; }
+    if (own) {
+        *H(e + 86) = *H(own + 86);
+        *B(e + 171) = (uint8_t)S8(own + 171);
+        if (S8(own + 338) == 0x29) { ARG(0) = e; c->r[31] = back; f_089D913C(c); }
+    } else *H(e + 86) = S8(f0 + 338) != 0xA ? *H(f0 + 86) : *H(f1 + 86);
+    *W(e + 164) = 1;
+    gaddr lst = *W(0x09358BE0u + 272);
+    ARG(0) = e; ARG(1) = *W(lst + (k << 2)); c->r[31] = 0x089D8D2Cu; f_08821A64(c);
+    c->r[16] = s0; c->r[17] = s1; c->r[31] = ra; c->r[29] += 0x20;
+}
+
+
+void f_0886C164(Cpu *c); void f_0886C08C(Cpu *c); void f_08822EAC(Cpu *c);
+
+/* (fighter): a special's input check (0x0886C164, then 0x0886C08C, both with 1, 1), not while +251 is
+   set nor in state 1 / 0 / 3 / 3. A 0x30 frame keeping s0..s3. */
+SFA_FUNC(0886C8F4, special_check_11) {
+    gaddr o = ARG(0);
+    uint32_t s0 = c->r[16], s1 = c->r[17], s2 = c->r[18], s3 = c->r[19], ra = c->r[31];
+    c->r[29] -= 0x30;
+    gaddr sp = c->r[29];
+    *W(sp + 24) = s2; c->r[18] = 1;
+    *W(sp + 20) = s1; c->r[17] = 1;
+    *W(sp + 16) = s0; *W(sp + 28) = s3; *W(sp + 32) = ra;
+    c->r[16] = o;
+    uint32_t r = 0;
+    int skip = S8(o + 251) != 0
+        || (*B(o + 4) == 1 && *B(o + 5) == 0 && *B(o + 6) == 3 && *B(o + 7) == 3);
+    if (!skip) {
+        c->r[19] = 0;
+        ARG(0) = o; ARG(1) = 1; ARG(2) = 1; c->r[31] = 0x0886C990u; f_0886C164(c);
+        if (c->r[2] != 0) {
+            ARG(0) = o; ARG(1) = 1; ARG(2) = 1; c->r[31] = 0x0886C9CCu; f_0886C08C(c);
+            r = c->r[2];
+        }
+    }
+    c->r[2] = r;
+    c->r[16] = s0; c->r[17] = s1; c->r[18] = s2; c->r[19] = s3; c->r[31] = ra; c->r[29] += 0x30;
+}
+
+/* (fighter, kind): a hit spark on the fighter (object 0x2C of kind, 0x08822EAC): its owner, side +86,
+   +9 = 1, the fighter's +12 / +13 / +14 / +24 / +164 and facing, at 0x14 in front (0x18 behind for kind
+   7) and 0x74 up. A frame keeping s0, s1. */
+SFA_FUNC(088F5DBC, spark_on_fighter) {
+    gaddr o = ARG(0); int32_t k = (int8_t)ARG(1);
+    uint32_t s0 = c->r[16], s1 = c->r[17], ra = c->r[31];
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 20) = s1; c->r[17] = (uint32_t)k;
+    *W(c->r[29] + 16) = s0; c->r[16] = o;
+    *W(c->r[29] + 24) = ra;
+    ARG(0) = 0x2C; ARG(1) = (uint32_t)k & 0xFF; c->r[31] = 0x088F5DE4u; f_08822EAC(c);
+    gaddr e = c->r[2];
+    if (e != 0) {
+        *B(e + 14) = *B(o + 14); *B(e + 9) = 1; *W(e + 88) = o;
+        *B(e + 12) = (uint8_t)S8(o + 12); *B(e + 13) = *B(o + 13); *H(e + 24) = *H(o + 24);
+        *H(e + 86) = (uint16_t)(int16_t)S8(o + 337);
+        *W(e + 164) = *W(o + 164);
+        int16_t dx = k == 7 ? -0x18 : 0x14;
+        uint8_t f = *B(o + 11);
+        *B(e + 11) = f;
+        if (f != 0) dx = (int16_t)-dx;
+        *H(e + 18) = (uint16_t)(S16(o + 18) + dx);
+        *H(e + 22) = (uint16_t)(S16(o + 22) + 0x74);
+    }
+    c->r[16] = s0; c->r[17] = s1; c->r[31] = ra; c->r[29] += 0x20;
+}
+
+
+void f_0882196C(Cpu *c); void f_088219B0(Cpu *c); void f_08821424(Cpu *c);
+
+/* (object): a piece its owner (+88) holds and then drops: gone (+4 on) once the owner's +338 leaves the
+   object's step +7. Held (+5 = 0): with the owner's +77 clear it is let go (+5 on, +134 cleared, x 4.0
+   along the facing, y 1.0, brake -0.375, its ground the owner's); else placed by the owner's +77 from
+   0x08A5171C (mirrored by its facing) with its pose (+78) from 0x08A4C3F8 when that changes. Dropped:
+   it flies, bounces once at half speed on landing (+134), then on the next landing +4 on and the
+   owner's +656 cleared; +82 counts down with 0x088219B0. Drawn (0x08821424) on even +82. */
+SFA_FUNC(08905438, held_piece) {
+    gaddr o = ARG(0);
+    uint32_t s0 = c->r[16], ra = c->r[31];
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = s0; c->r[16] = o;
+    gaddr own = *W(o + 88);
+    *W(c->r[29] + 20) = ra;
+    if (S8(own + 338) != (int32_t)*B(o + 7)) *B(o + 4) = (uint8_t)(*B(o + 4) + 1);
+    else {
+        if (*B(o + 5) == 0) {
+            int32_t f77 = S8(own + 77);
+            if (f77 == 0) {
+                *B(o + 5) = 1; *B(o + 134) = 0;
+                *W(o + 96) = *B(o + 11) != 0 ? 0xFFFC0000u : 0x40000u;
+                *W(o + 104) = 0; *W(o + 100) = 0x10000; *W(o + 108) = 0xFFFFA000u;
+                *H(o + 132) = *H(own + 132);
+            } else {
+                gaddr t = 0x08A5171Cu + (uint32_t)((f77 - 13) * 4);
+                *H(o + 22) = (uint16_t)(S16(own + 22) + S16(t + 2));
+                uint8_t f = *B(own + 11);
+                *B(o + 11) = f;
+                int32_t x = S16(own + 18);
+                *H(o + 18) = (uint16_t)(f != 0 ? x - S16(t) : x + S16(t));
+                int32_t k = S8(own + 77);
+                if (k != S8(o + 78)) {
+                    *B(o + 78) = (uint8_t)k;
+                    ARG(0) = o; ARG(1) = *W(0x08A4C3F8u + ((uint32_t)S8(o + 78) << 2));
+                    c->r[31] = 0x08905538u; f_0882196C(c);
+                }
+            }
+        } else {
+            uint32_t vx = *W(o + 96), vy = *W(o + 100);
+            *W(o + 16) += vx; *W(o + 20) += vy;
+            *W(o + 96) = vx + *W(o + 104);
+            int32_t nv = (int32_t)(vy + *W(o + 108));
+            *W(o + 100) = (uint32_t)nv;
+            if (nv < 0 && !(S16(o + 132) < S16(o + 22))) {
+                *H(o + 22) = *H(o + 132); *H(o + 20) = 0;
+                int32_t b = S8(o + 134);
+                if (b == 0) { *W(o + 100) = (uint32_t)((int32_t)(0u - (uint32_t)nv) >> 1); *B(o + 134) = 1; }
+                else { *B(o + 4) = (uint8_t)(*B(o + 4) + 1); *B(own + 656) = 0; }
+            }
+            *H(o + 82) = (uint16_t)(S16(o + 82) - 1);
+            ARG(0) = o; c->r[31] = 0x089055DCu; f_088219B0(c);
+        }
+        if ((S16(o + 82) & 1) == 0) { ARG(0) = o; c->r[31] = 0x089055F4u; f_08821424(c); }
+    }
+    c->r[16] = s0; c->r[31] = ra; c->r[29] += 0x20;
+}

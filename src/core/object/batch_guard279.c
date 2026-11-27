@@ -177,3 +177,105 @@ SFA_FUNC(0885E634, knock_up_b) {
     static const uint32_t b[4] = { 0x0885E678u, 0x0885E680u, 0x0885E698u, 0x0885E6A0u };
     knock_up(c, f_0885E6B0, b);
 }
+
+
+void f_0886163C(Cpu *c);
+
+/* (fighter): stand up from a stun (+252 set): +252 / +251 cleared and the stun gauge +366 drained by
+   0x48 (not below 0): the fighter's own in one-on-one, else both of its team's (+337 bit 1: fighters
+   2 / 3, else 0 / 1). Then state 1 / 5 / 0 / 0, +251 cleared, facing the opponent, move 0
+   (0x0886163C) and +772 cleared. */
+SFA_FUNC(08862C48, stun_recover) {
+    gaddr o = ARG(0); uint32_t sv[2]; enter(c, o, sv);
+    if (S16(o + 252) != 0) {
+        *H(o + 252) = 0; *B(o + 251) = 0;
+        gaddr list[2]; int n;
+        if (S16(0x092E1228u + 56) == 0) { list[0] = o; n = 1; }
+        else if (S8(o + 337) & 2) { list[0] = 0x092E47D0u; list[1] = 0x092E4C68u; n = 2; }
+        else { list[0] = 0x092E3EA0u; list[1] = 0x092E4338u; n = 2; }
+        for (int i = 0; i < n; i++) {
+            int16_t v = (int16_t)(S16(list[i] + 366) - 0x48);
+            *H(list[i] + 366) = (uint16_t)v;
+            if (v < 0) *H(list[i] + 366) = 0;
+        }
+    }
+    *B(o + 4) = 1; *B(o + 5) = 5; *B(o + 6) = 0;
+    int32_t f = S8(o + 697);
+    *B(o + 7) = 0; *B(o + 251) = 0; *B(o + 11) = (uint8_t)f;
+    call2(c, o, 0, f_0886163C, 0x08862D74u);
+    *B(o + 772) = 0;
+    leave(c, sv);
+}
+
+
+void f_088728B0(Cpu *c); void f_08863600(Cpu *c); void f_08867060(Cpu *c); void f_088632C4(Cpu *c);
+void f_08863504(Cpu *c); void f_08862B84(Cpu *c); void f_088629CC(Cpu *c);
+
+/* The stun drain shared by the recoveries: +252 / +251 cleared and +366 drained by 0x48 (not below 0),
+   the fighter's own in one-on-one, else both of its team's. */
+static void stun_drain(gaddr o) {
+    *H(o + 252) = 0; *B(o + 251) = 0;
+    gaddr list[2]; int n;
+    if (S16(0x092E1228u + 56) == 0) { list[0] = o; n = 1; }
+    else if (S8(o + 337) & 2) { list[0] = 0x092E47D0u; list[1] = 0x092E4C68u; n = 2; }
+    else { list[0] = 0x092E3EA0u; list[1] = 0x092E4338u; n = 2; }
+    for (int i = 0; i < n; i++) {
+        int16_t v = (int16_t)(S16(list[i] + 366) - 0x48);
+        *H(list[i] + 366) = (uint16_t)v;
+        if (v < 0) *H(list[i] + 366) = 0;
+    }
+}
+
+/* (fighter): stand up at the round's end: the stun drained if stunned; with the result block's +76
+   state 1 / 5, else on the winning side (+12's bit for +121) 0x088728B0 (3), 0x08863600 and state 1 / 4,
+   otherwise 1 / 5; +251 cleared, facing the opponent, move 0 and 0x08867060. A frame keeping s0, s1. */
+SFA_FUNC(088629CC, stun_recover_end) {
+    gaddr o = ARG(0);
+    uint32_t s0 = c->r[16], s1 = c->r[17], ra = c->r[31];
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = s0; c->r[16] = o;
+    const gaddr res = 0x092E1228u;
+    *W(c->r[29] + 20) = s1; *W(c->r[29] + 24) = ra;
+    c->r[17] = 1;
+    if (S16(o + 252) != 0) stun_drain(o);
+    uint32_t sub = 5;
+    if (S8(res + 76) == 0) {
+        int32_t s = S8(o + 121);
+        if (S8(res + 12) & (1 << ((uint32_t)s & 31))) {
+            ARG(0) = o; ARG(1) = 3; c->r[31] = 0x08862B18u; f_088728B0(c);
+            ARG(0) = o; c->r[31] = 0x08862B20u; f_08863600(c);
+            sub = 4;
+        }
+    }
+    *B(o + 4) = 1; *B(o + 5) = (uint8_t)sub; *B(o + 6) = 0; *B(o + 7) = 0;
+    c->r[17] = (uint32_t)S8(o + 697);
+    *B(o + 251) = 0; *B(o + 11) = (uint8_t)c->r[17];
+    ARG(0) = o; ARG(1) = 0; c->r[31] = 0x08862B68u; f_0886163C(c);
+    ARG(0) = o; c->r[31] = 0x08862B70u; f_08867060(c);
+    c->r[16] = s0; c->r[17] = s1; c->r[31] = ra; c->r[29] += 0x20;
+}
+
+/* (fighter): the stand-up choice: at the round's end (the result block's +13) 0x088629CC; else
+   0x088632C4 picks 0x08863504, 0x08862B84 picks the stun recovery; otherwise it faces the opponent and
+   stands (state 1 / 0 / 4 / 0, move 0xA), or crouches (+696: step 1, move 0xD). */
+SFA_FUNC(088622E8, stand_up) {
+    gaddr o = ARG(0); uint32_t sv[2]; enter(c, o, sv);
+    if (S8(0x092E1228u + 13) != 0) call1(c, o, f_088629CC, 0x08862310u);
+    else {
+        call1(c, o, f_088632C4, 0x08862320u);
+        if (c->r[2] != 0) call1(c, o, f_08863504, 0x08862330u);
+        else {
+            call1(c, o, f_08862B84, 0x08862340u);
+            if (c->r[2] != 0) call1(c, o, f_08862C48, 0x08862350u);
+            else {
+                int32_t f = S8(o + 697);
+                int32_t cr = S8(o + 696);
+                *B(o + 11) = (uint8_t)f;
+                *B(o + 4) = 1; *B(o + 5) = 0; *B(o + 6) = 4;
+                if (cr != 0) { *B(o + 7) = 1; call2(c, o, 0xD, f_0886163C, 0x088623ACu); }
+                else { *B(o + 7) = 0; call2(c, o, 0xA, f_0886163C, 0x08862388u); }
+            }
+        }
+    }
+    leave(c, sv);
+}

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.170.0
+### For players
+- **More of the game decompiled (269 functions, 43.89% of the program now):** the fighter's own frame (its round start with each mode's handicaps, the timers that count down every frame, the dizzy wait and the knock-out it can end in), the jump, fall, recovery, move-end and block steps with the taunt check, the counter out of a block for every character, the fight's tune, the score and fight numbers under the bars, the hit counts shown to each side, the cpu's handicap levels and draw of lots, the 2D library's texture copies, and many small move steps; also standing up and recovering from stun, dash and air-dash sparks, back-steps, a rush, charge moves, arm and held pieces, air special and super starts, and the wireless link's receive loops and thread. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_steps282.c`, `batch_roots283.c`, `batch_roots284.c`, `batch_engine285.c`, `batch_engine286.c`, `batch_moves287.c`, `batch_tiny288.c`, `batch_tiny289.c`, `batch_moves290.c`, `batch_moves291.c` (new); more in `batch_guard279.c`, `batch_misc272.c` and `batch_net281.c`. docs/PSP_PROGRAM_MAP.md: a row for each batch; README.md / docs/ROADMAP.md progress bars updated.
+- Fixed before release: the two arm piece functions (0x08987AB0, 0x08987E88) read each other's half of the pose table 0x08A93D8C; attract_mode and fighters_06_balrog_vega caught it.
+- The ready list (reached functions whose callees are all decompiled) had run dry: this release takes the functions it was waiting on (kept aside until now) and then works down the call trees that stay out of the library.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios on the final code. 156 functions of `batch_moves287.c`, `batch_tiny288.c`, `batch_tiny289.c`, `batch_moves290.c` and `batch_moves291.c` (counters, moves of other ISM choices and other steps no scenario plays) did not run in any scenario and were checked against the original code only; so were 0x08862C48, 0x088629CC, 0x089D913C, 0x0886C8F4, 0x088F5DBC, 0x08905438, 0x08968A1C, 0x08987D2C, 0x0898C268, 0x08943F04, 0x088873DC, 0x0884A264, 0x088598F0, 0x088599EC, 0x08859B44, 0x0887E868, 0x08863D24, 0x08863D4C and 0x0887BE00.
+
 ## 0.169.0
 ### For players
 - **More of the game decompiled (31 functions, 41.87% of the program now):** the frame's hit pass (every fighter's and projectile's hits, hits meeting hits, a projectile's flight), guard stun with its push-back and shake, guard reactions and guard crushes, knock-ups and landing from a hit, the round's line-up (one-on-one, two-on-one and three-fighter rounds), the cpu's counter-move choice, more command-input elements and the wireless link's receive. Nothing plays differently.
