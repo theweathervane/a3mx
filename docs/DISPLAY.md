@@ -157,7 +157,10 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
    `build/`, or beside the launcher). Built with the OpenGL runtime and, since 0.176.0, the one the
    Vulkan / DirectX 12 / Metal renderer needs on the system (Vulkan and Direct3D 12 on Windows, Vulkan
    on Linux, Metal on macOS); never Direct3D 9 / 11 (no D3DX9_43 or Visual C++ runtime needed). One
-   built before 0.176.0 (OpenGL only) is built or downloaded again. With DirectX 12, FILTER also needs
+   built before 0.176.0 (OpenGL only) is used until you make it again: FILTER then works on OpenGL
+   and is OPENGL ONLY on the others; the launcher's Dependencies tab offers **Get librashader...**
+   again and a build ends with a note saying so (`build.sh --librashader` / `build.cmd --librashader`
+   makes it again; 0.177.1). With DirectX 12, FILTER also needs
    Microsoft's shader compiler beside the game (`dxcompiler.dll`, `dxil.dll`: `build.cmd` puts them
    in `build/` from the pinned DirectXShaderCompiler release). **A release's download has it already**, and a release can't go out without it. From a
    clone, the launcher's **Dependencies > Get librashader...** (or `build.cmd --librashader`, or

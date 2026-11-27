@@ -79,7 +79,7 @@ libraries, which come from your package manager). Anything missing is listed wit
 | **Console** | in its own frame at the bottom on every tab: `build.py`'s and the game's output as it comes, whichever tab started it. Drag the orange bar above it to resize. Everything is also written to `logs/launcher.log` (the previous session's is `launcher.log.1`). **Log folder**, **Copy** and **Clear** are in the bottom right corner. |
 
 **Renderer:** OpenGL (the default), Software, and since 0.174.0 **Vulkan** and **DirectX 12** (Windows)
-or **Metal** (macOS, built but not yet tried on a Mac): the same GPU renderer through SDL3's GPU API
+or **Metal** (macOS; tried on an M1 Pro in 0.177.1, FILTER included): the same GPU renderer through SDL3's GPU API
 (`src/platform/ge_sdlgpu.c`, beside OpenGL's behind the renderer's backend interface
 `src/platform/ge_backend.h`, [ARCHITECTURE.md](ARCHITECTURE.md#3-platform-srcplatform)). They draw
 what OpenGL draws, and since 0.176.0 FILTER too ([DISPLAY.md](DISPLAY.md#filter); with DirectX 12 it
@@ -339,7 +339,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `--custom-assets` | before 0.60.0: the `stage_extensions` feature (the project's own art in `assets/extensions/`) |
 | `--assets DIR`, `--no-assets` | load each archive that `DIR/index.json` gives a folder from it (default: `assets/<region>` beside the work folder); or everything from the disc ([ASSET_LOADING.md](ASSET_LOADING.md)) |
 | `--renderer gl\|soft\|none\|lazy` | GPU renderer (default), software reference, nothing, or only dumped frames |
-| `--renderer vulkan\|d3d12\|metal` | the GPU renderer through SDL3's GPU API with that API (0.174.0; Metal untested); OpenGL if it can't be had (the log says why), and always when `--headless`. No FILTER |
+| `--renderer vulkan\|d3d12\|metal` | the GPU renderer through SDL3's GPU API with that API (0.174.0); OpenGL if it can't be had (the log says why), and always when `--headless`. FILTER too since 0.176.0 (OPENGL ONLY where it can't be had, the log says why) |
 | `--scale N` | GPU internal resolution, N × 480×272 (1–8). Default: enough to cover the monitor's height, at most 4 (1088 rows), and 1 on a software OpenGL (llvmpipe). The GPU's work grows with N²; the game's doesn't change |
 | `--filter NAME` | overrides SCREEN SETTING > FILTER for this run (`off`, `crt-curved`, `scan-light`, `xbrz`, ...; [DISPLAY.md](DISPLAY.md)). `--librashader FILE` / `--shaders DIR` use that library / shader folder |
 | `--frame-timing auto\|smooth\|original` | overrides SCREEN SETTING > FRAME TIMING for this run ([DISPLAY.md](DISPLAY.md)) |

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.177.1
+### For players
+- **FILTER's library built before 0.176.0 (OpenGL only) is now noticed:** the launcher's Dependencies tab no longer counts it as there and offers **Get librashader...** again, which makes it with the runtimes FILTER needs on the other renderers (Metal on macOS, Vulkan and Direct3D 12 on Windows, Vulkan on Linux). A build ends with a note saying the same. Before, the launcher showed it as found and hid the button, so FILTER stayed OPENGL ONLY on Metal (found on a Mac). Until it is made again the old one is still used, so FILTER works on OpenGL as before.
+
+### Technical
+- `src/launcher/deps.cpp` / `deps.h`: `Dep::kind`, the runtimes this system wants (`pins.json` `prebuilt.<system>.kind`); the library in the tools folder's `librashader/` whose `a3mx-built.txt` (`<commit> <kind>`) names another kind is not `here`, and its detail says which it has. A library without a stamp (put there by hand) or found elsewhere is taken as it is.
+- `tools/librashader.py`: `stale()`, the kind of an out-of-date library in `.tools/librashader/` (`main` already makes it again when run, as the stamp differs). `tools/build.py`: after a build, a note when it is out of date. docs/DISPLAY.md.
+- **Metal tried on a Mac (M1 Pro, 120 Hz) with FILTER:** after `./build.sh --librashader` made the library with Metal, CRT GUEST draws on the Metal renderer; 11,719 frames, 3.8 ms busy a frame (present 1.6 ms with the filter, 0.5 without), the same hitches as without it. docs/BUILDING.md no longer calls Metal untested or the GPU renderer FILTER-less.
+- Checked: `deps_list` on a tools folder with stamps `opengl` (not here, with the note), `opengl+vulkan+d3d12` and none (here); `stale()` the same; `deps.cpp` compiles. Not run on a Mac.
+
 ## 0.177.0
 ### For players
 - **More of the game decompiled (20 functions, 45.05% of the program now):** the block's start and first step, an air move's way down with its attack and throw, a forward dash that can turn into a move, a reaching grab, a rolling attack with its sparks, two held projectiles' releases, three helper fighters' starts, an entrance that walks in, the taunt's wait, the side mark's start, the piece that follows characters 17 and 19, the screen object that serves each frame's requests, and the wireless link's peer and list entries. Nothing plays differently.

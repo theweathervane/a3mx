@@ -194,6 +194,15 @@ def find_source(pin, given):
     return next((c for c in cands if os.path.isdir(c) and verified(c, pin)), None)
 
 
+def stale(dest=DEST):
+    """The runtimes the library in DEST was made with when they are fewer than this system's (before 0.176.0 the
+    stamp said opengl: FILTER then works on OpenGL only), else None (none there, put there by hand, or up to date)."""
+    stamp_path = os.path.join(dest, 'a3mx-built.txt')
+    if not os.path.isfile(os.path.join(dest, LIB)) or not os.path.isfile(stamp_path): return None
+    parts = open(stamp_path, encoding='utf-8').read().split()
+    return parts[1] if len(parts) == 2 and parts[1] != BUILD_KIND else None
+
+
 def main(install_rust=False):
     argv = sys.argv[1:]
     install_rust = install_rust or '--install-rust' in argv

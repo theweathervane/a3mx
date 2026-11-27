@@ -162,6 +162,7 @@ std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir
             if (files && files->t == J::OBJ && !files->o.empty()) { d.sha_of = files->o[0].first; d.sha256 = files->o[0].second.s; }
             const J *pre = e.get("prebuilt"), *mine = pre ? pre->get(SYSTEM_KEY) : nullptr;   /* published built (librashader) */
             d.prebuilt = mine && !mine->str("url").empty() && mine->str("sha256").size() == 64;
+            if (mine) d.kind = mine->str("kind");
             pins[d.id] = d;
         }
     const std::string tools = tools_dir.empty() ? join(root, ".tools") : tools_dir;
@@ -241,8 +242,22 @@ std::vector<Dep> deps_list(const std::string &root, const std::string &tools_dir
         d.here = !d.found.empty();
         d.dest = join(tools, "librashader");
         auto src = pins.find("librashader");                 /* its source's pin (tools/librashader.py builds from it) */
-        if (src != pins.end()) { d.version = src->second.version; d.url = src->second.url; d.prebuilt = src->second.prebuilt; }
-        d.detail = d.here ? d.found
+        if (src != pins.end()) { d.version = src->second.version; d.url = src->second.url; d.prebuilt = src->second.prebuilt; d.kind = src->second.kind; }
+        /* one tools/librashader.py made with fewer runtimes than this system's (its stamp: "<commit> <kind>"; before
+           0.176.0 OpenGL only) is not counted as here, so "Get librashader" is offered and makes it again. The game
+           still uses it meanwhile: FILTER works on OpenGL and is OPENGL ONLY on the other renderers. */
+        std::string stale;
+        if (d.here && !d.kind.empty() && d.found == join(d.dest, LIBRASHADER)) {
+            std::string st = read_text(join(d.dest, "a3mx-built.txt"));
+            while (!st.empty() && (st.back() == '\n' || st.back() == '\r' || st.back() == ' ')) st.pop_back();
+            size_t sp = st.rfind(' ');
+            std::string built = sp == std::string::npos ? std::string() : st.substr(sp + 1);
+            if (!built.empty() && built != d.kind) stale = built;
+        }
+        if (!stale.empty()) d.here = false;
+        d.detail = !stale.empty() ? d.found + " (built with " + stale + " only; FILTER on every renderer needs " + d.kind +
+                                    ": \"Get librashader\" makes it again)"
+                 : d.here ? d.found
                  : std::string("optional: ") + (d.prebuilt ? "\"Get librashader\" downloads it" : "\"Get librashader\" builds it (needs Rust)") +
                    ", or put " + LIBRASHADER + " in " + d.dest + " (also found in " + join(tools, "") + ", beside the game or the launcher)";
         out.push_back(d);

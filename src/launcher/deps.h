@@ -16,6 +16,7 @@ struct Dep {
     std::string detail;          /* system: where it was found, or how to get it */
     std::string found;           /* librashader: the library found (where_librashader) */
     bool prebuilt = false;       /* librashader: the pipelines publish one for this system (downloaded, no Rust needed) */
+    std::string kind;            /* librashader: the runtimes wanted on this system (pins.json prebuilt kind, "opengl+metal") */
 };
 
 /* FILTER's library: the places it is accepted, best first (the tools folder's librashader/, the tools

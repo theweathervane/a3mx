@@ -462,6 +462,12 @@ def main():
         step('Tests')
         run([ctest, '--test-dir', os.path.join(ROOT, out), '--output-on-failure'], env)
     say('\nBuilt: %s\nPlay:  %s --work work' % (os.path.relpath(exe, ROOT), os.path.relpath(exe, ROOT)))
+    import librashader                            # FILTER's library: never made by a build, but say if it is out of date
+    old = librashader.stale()
+    if old:
+        say('Note: FILTER\'s library in %s was built with %s only, so FILTER works on OpenGL only (OPENGL ONLY on the\n'
+            '      other renderers). To build it with %s:  %s --librashader  (or the launcher\'s "Get librashader...")'
+            % (os.path.relpath(librashader.DEST, ROOT), old, librashader.BUILD_KIND, 'build.cmd' if WINDOWS else './build.sh'))
     if a.art_pack:
         step('Art pack (stage art for painting the Stage Extensions, from your disc)')
         run([sys.executable, os.path.join(ROOT, 'tools', 'art_pack.py'), '--exe', exe, '--work', work], env)
