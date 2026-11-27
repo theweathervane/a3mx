@@ -79,7 +79,7 @@ the attract mode's demos.
 | Row | Values (default first) | What it does |
 |---|---|---|
 | 1P / 2P / 3P HEALTH | NORMAL, INFINITE, HALF, NONE | INFINITE back to full every frame; HALF never above half the round's full health; NONE never above 1, so one hit knocks out |
-| 1P / 2P / 3P GUARD | NORMAL, INFINITE, HALF, NONE, OFF | the guard gauge: never damaged; at least half damaged; NONE one short of a crush, so the next guarded hit crushes; OFF no guard gauge at all, as before Alpha 3: never damaged (so no guard crush) and not drawn (1P's and 2P's gauge and GUARD label on the HUD) |
+| 1P / 2P / 3P GUARD | NORMAL, INFINITE, HALF, NONE, OFF | the guard gauge: never damaged; at least half damaged; NONE one short of a crush, so the next guarded hit crushes; OFF no guard gauge at all, as before Alpha 3: never damaged (so no guard crush) and not drawn (1P's and 2P's gauge and GUARD label on the HUD are replaced by the plain ISM-coloured background bar CLASSIC fighters have) |
 | 1P / 2P / 3P SUPER | NORMAL, INFINITE, LV1, LV2, LV3, NONE | the super gauge: full; held at that level; empty |
 
 **Page 4/5, World Tour and EDIT MODE.**

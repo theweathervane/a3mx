@@ -30,7 +30,8 @@
  *   GUARD   NORMAL, INFINITE (no guard damage), HALF (at least half the gauge's damage), NONE (one short
  *           of a crush: the next guarded hit crushes), OFF (0.166.0: no guard gauge at all, as before
  *           Alpha 3: no guard damage, so never a crush, as INFINITE; and the fighter's guard gauge and
- *           its GUARD label aren't drawn, 1P's and 2P's sides of the HUD: hud_guard_off, object/hud.c)
+ *           its GUARD label are replaced by the background bar CLASSIC fighters have, in the ISM's
+ *           colour, 1P's and 2P's sides of the HUD: hud_guard_off, object/hud.c)
  *   SUPER   NORMAL, INFINITE (full), LV1 / LV2 / LV3 (held at that level: 48 / 96 / 144), NONE (empty)
  * They act while a round is on (GAME + 2 = 2, + 6 = 3) in every mode but the network battles (mode 1,
  * and NETWORK's own, 12), and never on a knocked-out fighter (health below 0).

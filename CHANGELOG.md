@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.171.1
+### For players
+- **Fix: EX. FIGHTERS GUARD OFF now draws the ISM-coloured background bar (as CLASSIC fighters have) in place of the guard gauge, 1P and 2P, instead of leaving the space empty.**
+
+### Technical
+- `src/core/object/hud.c` (`part_guard`): the HUD's layout (0x0888DB10) places the no-guard picture (1P element +0x674, picture 0x16C; 2P +0xCB4, 0x10E) only for a side that can't guard, so with GUARD OFF it is placed where the layout put the first guard mark, then drawn. The stun bar is unchanged. Comments in `cheats_unlocks.c` and docs/PLAYERS.md updated.
+- Checked: GUARD OFF isn't in any parity scenario, so they play as before (the full run was cut short on a busy PC: 47 passed, none differed); 1P OFF, 2P OFF, both and NORMAL looked at in an Arcade fight (Ryu A-ISM v Dan V-ISM).
+
 ## 0.171.0
 ### For players
 - **Downloading the FILTER shaders no longer tests them** (several minutes in a small window, and a preset that brought the game down could stop the build). The list of presets FILTER offers is now shipped with the project: `tools/data/shader_catalogue.tsv`, made once on 2026-11-26 for the pinned slang-shaders commit (858 presets), the same list as before. Your own presets (CUSTOM) are listed as they are; one that fails when chosen is shown plain and the log says why.

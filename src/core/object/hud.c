@@ -191,17 +191,27 @@ static void part_bottom(Cpu *c, gaddr o) {
 static int can_guard(gaddr f) {
     return (int8_t)*B(f + 313) == 0 && !(*W(f + 792) & GUARD_STATES);
 }
-/* EX. FIGHTERS > GUARD OFF (hud_guard_off): that side's marks, either kind, aren't drawn */
+/* EX. FIGHTERS > GUARD OFF (hud_guard_off): that side's four marks are replaced by its one picture,
+   the plain background bar CLASSIC fighters have (it follows the ISM colour); the stun bar is as before.
+   The HUD's layout (0x0888DB10) places that picture only for a side that can't guard: here it is put
+   where the layout put the first mark, as the layout itself would (1P picture 0x16C, 2P 0x10E) */
+static void place_bar(gaddr bar, gaddr mark, uint16_t picture) {
+    *B(bar) = *B(mark); *B(bar + 2) = *B(mark + 2); *B(bar + 56) = *B(mark + 56);
+    *H(bar + E_X) = *H(mark + E_X); *H(bar + E_Y) = *H(mark + E_Y);
+    *B(bar + E_LIST) = *B(mark + E_LIST); *H(bar + E_PICTURE) = picture;
+}
 static void part_guard(Cpu *c, gaddr o) {
     int any = 0, off1 = hud_guard_off(0), off2 = hud_guard_off(1);
-    if (S16(BATTLE + 56) == 0 && can_guard(FIGHTER_1)) {
-        if (!off1) { draw_element(c, o + 0x6F4); draw_element(c, o + 0x6B4); draw_element(c, o + 0x634); draw_element(c, o + 0x734); }
-        any = 1;
-    } else if (!off1) draw_element(c, o + 0x674);
-    if (S16(BATTLE + 56) == 0 && can_guard(FIGHTER_2)) {
-        if (!off2) { draw_element(c, o + 0xD34); draw_element(c, o + 0xCF4); draw_element(c, o + 0xC74); draw_element(c, o + 0xD74); }
-        any = 1;
-    } else if (!off2) draw_element(c, o + 0xCB4);
+    int g1 = S16(BATTLE + 56) == 0 && can_guard(FIGHTER_1);
+    int g2 = S16(BATTLE + 56) == 0 && can_guard(FIGHTER_2);
+    if (g1 && off1) place_bar(o + 0x674, o + 0x634, 0x16C);
+    if (g2 && off2) place_bar(o + 0xCB4, o + 0xC74, 0x10E);
+    if (g1 && !off1) { draw_element(c, o + 0x6F4); draw_element(c, o + 0x6B4); draw_element(c, o + 0x634); draw_element(c, o + 0x734); }
+    else draw_element(c, o + 0x674);
+    if (g1) any = 1;
+    if (g2 && !off2) { draw_element(c, o + 0xD34); draw_element(c, o + 0xCF4); draw_element(c, o + 0xC74); draw_element(c, o + 0xD74); }
+    else draw_element(c, o + 0xCB4);
+    if (g2) any = 1;
     if ((int8_t)*B(FIGHTER_1 + 313) != 0 && (int8_t)*B(FIGHTER_2 + 313) != 0) return;
     if ((*W(FIGHTER_1 + 792) & GUARD_STATES) && (*W(FIGHTER_2 + 792) & GUARD_STATES)) return;
     if (any) draw_rect(c, o + 0xF4, 0xFF);
