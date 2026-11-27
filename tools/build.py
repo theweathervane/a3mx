@@ -63,7 +63,7 @@ WINDOWS = os.name == 'nt'
 
 # Windows build tools, pinned in tools/data/pins.json (the same versions CI uses): the file that shows
 # each one is unpacked
-PROBES = {'llvm-mingw': 'bin/clang.exe', 'cmake': 'bin/cmake.exe', 'ninja': 'ninja.exe',
+PROBES = {'llvm-mingw': 'bin/clang.exe', 'cmake': 'bin/cmake.exe', 'ninja': 'ninja.exe', 'dxc': 'bin/x64/dxcompiler.dll',
           'cmake-macos': 'CMake.app/Contents/bin/cmake', 'ninja-macos': 'ninja'}
 MACOS = sys.platform == 'darwin'
 LINUX = sys.platform.startswith('linux')
@@ -382,6 +382,20 @@ def anthology_import(iso, env):
         say('The import failed (above): the game runs without it, its EX. SETTING options stay greyed.')
 
 
+def dxc_beside(out):
+    """Windows: Microsoft's shader compiler (dxcompiler.dll, dxil.dll: the pinned DirectXShaderCompiler release) beside the
+    game, for FILTER with the DirectX 12 renderer (librashader's Direct3D 12 runtime compiles its shaders with it while
+    the game runs; 0.176.0). Without them that renderer shows FILTER greyed; OpenGL and Vulkan don't need them."""
+    src = os.path.join(download('dxc'), 'bin', 'x64')
+    for f in ('dxcompiler.dll', 'dxil.dll'):
+        a, b = os.path.join(src, f), os.path.join(out, f)
+        if not os.path.isfile(b) or os.path.getsize(a) != os.path.getsize(b): shutil.copyfile(a, b)
+    lic = os.path.join(out, 'dxc-licences')
+    os.makedirs(lic, exist_ok=True)
+    for f in ('LICENSE-MS.txt', 'LICENSE-LLVM.txt', 'LICENCE-MIT.txt'):
+        if os.path.isfile(os.path.join(TOOLS, 'dxc', f)): shutil.copyfile(os.path.join(TOOLS, 'dxc', f), os.path.join(lic, f))
+
+
 def main():
     ap = argparse.ArgumentParser(description='Build A3MX from your disc.')
     ap.add_argument('--preset', default='release', choices=['release', 'debug', 'watch', 'headless'])
@@ -443,6 +457,7 @@ def main():
         run([cmake, '--build', '--preset', a.preset], env)
 
     exe = os.path.join(ROOT, out, 'a3mx.exe' if WINDOWS else 'a3mx')
+    if WINDOWS: dxc_beside(os.path.join(ROOT, out))
     if a.test:
         step('Tests')
         run([ctest, '--test-dir', os.path.join(ROOT, out), '--output-on-failure'], env)

@@ -23,9 +23,12 @@ DEST = os.path.join(build.TOOLS, 'sdl3')
 STAMP = os.path.join(DEST, 'a3mx-built.txt')
 
 
+PATCH = os.path.join(ROOT, 'cmake', 'patches', 'sdl-gpu-native-handles.patch')   # (cmake/SDL3.cmake applies it too)
+
+
 def wanted():
     p = pins.by_id(pins.load(), 'downloads', 'sdl3')
-    return '%s %s' % (p['version'], p['sha256'])
+    return '%s %s patch %s' % (p['version'], p['sha256'], pins.sha256_file(PATCH))
 
 
 def built():
@@ -57,6 +60,8 @@ def main():
         try: t.extractall(work, filter='data')
         except TypeError: t.extractall(work)                # Python before 3.12
     src = os.path.join(work, top)
+    import apply_patch                                       # the project's patch to SDL (cmake/patches/)
+    if apply_patch.apply(PATCH, src): build.fail('SDL3: %s does not apply' % PATCH)
     cmd = [cmake, '-S', src, '-B', os.path.join(work, 'b'), '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
            '-DCMAKE_C_COMPILER=clang', '-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_INSTALL_PREFIX=' + DEST,
            '-DSDL_SHARED=OFF', '-DSDL_STATIC=ON', '-DSDL_TEST_LIBRARY=OFF', '-DSDL_TESTS=OFF', '-DSDL_EXAMPLES=OFF']

@@ -1,0 +1,172 @@
+A3MX patch to SDL 3.4.16 (applied by cmake/SDL3.cmake and tools/sdl3.py with tools/apply_patch.py).
+
+The SDL3 GPU renderer's FILTER (librashader's Vulkan, Direct3D 12 and Metal runtimes) needs the
+backend's own device, queue, command buffer and textures, which SDL_GPU keeps to itself. This adds them
+as device properties: the native device and queue, and two functions that give a command buffer's and
+a texture's native object (SDL_PROP_GPU_DEVICE_NATIVE_*_FUNCTION_POINTER). No new exported functions, no
+change to anything SDL does. Upstream asks for the same in libsdl-org/SDL issue #10876; drop this patch
+when SDL has its own way. Only in this project's copy of SDL: SDL doesn't take AI-written code, so this
+is not offered upstream as it is.
+
+--- include/SDL3/SDL_gpu.h
++++ include/SDL3/SDL_gpu.h
+@@ -2594,6 +2594,38 @@ extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetGPUDeviceProperties(SDL_GPUD
+ #define SDL_PROP_GPU_DEVICE_DRIVER_VERSION_STRING     "SDL.gpu.device.driver_version"
+ #define SDL_PROP_GPU_DEVICE_DRIVER_INFO_STRING        "SDL.gpu.device.driver_info"
+ 
++/*
++ * A3MX patch (cmake/patches/sdl-gpu-native-handles.patch; SDL issue #10876): the backend's own objects,
++ * for code that draws into SDL GPU's work with the API directly (a shader library). Device properties:
++ *
++ * - Vulkan: SDL.gpu.device.vulkan.instance, .physical_device, .device, .queue (pointers: the handles),
++ *   .queue_family_index (number).
++ * - Direct3D 12: SDL.gpu.device.d3d12.device (ID3D12Device *), .command_queue (ID3D12CommandQueue *).
++ * - Metal: SDL.gpu.device.metal.device (id<MTLDevice>), .command_queue (id<MTLCommandQueue>).
++ * - Any: SDL.gpu.device.native_command_buffer_function: a SDL_GPUNativeCommandBufferFunction, which gives
++ *   a command buffer's VkCommandBuffer / ID3D12GraphicsCommandList * / id<MTLCommandBuffer>;
++ *   SDL.gpu.device.native_texture_function: a SDL_GPUNativeTextureFunction, which gives a texture's current
++ *   VkImage / ID3D12Resource * / id<MTLTexture>, and the VkImageLayout / D3D12_RESOURCE_STATES it is in
++ *   outside passes (0 on Metal).
++ *
++ * The rules: use them only outside render, compute and copy passes, on a command buffer not yet
++ * submitted; leave every texture in the layout or state it was in; don't cycle a texture whose native
++ * object you hold, and ask for it again each frame.
++ */
++typedef void *(SDLCALL *SDL_GPUNativeCommandBufferFunction)(SDL_GPUCommandBuffer *command_buffer);
++typedef void *(SDLCALL *SDL_GPUNativeTextureFunction)(SDL_GPUTexture *texture, Uint32 *layout_or_state);
++#define SDL_PROP_GPU_DEVICE_VULKAN_INSTANCE_POINTER            "SDL.gpu.device.vulkan.instance"
++#define SDL_PROP_GPU_DEVICE_VULKAN_PHYSICAL_DEVICE_POINTER     "SDL.gpu.device.vulkan.physical_device"
++#define SDL_PROP_GPU_DEVICE_VULKAN_DEVICE_POINTER              "SDL.gpu.device.vulkan.device"
++#define SDL_PROP_GPU_DEVICE_VULKAN_QUEUE_POINTER               "SDL.gpu.device.vulkan.queue"
++#define SDL_PROP_GPU_DEVICE_VULKAN_QUEUE_FAMILY_INDEX_NUMBER   "SDL.gpu.device.vulkan.queue_family_index"
++#define SDL_PROP_GPU_DEVICE_D3D12_DEVICE_POINTER               "SDL.gpu.device.d3d12.device"
++#define SDL_PROP_GPU_DEVICE_D3D12_COMMAND_QUEUE_POINTER        "SDL.gpu.device.d3d12.command_queue"
++#define SDL_PROP_GPU_DEVICE_METAL_DEVICE_POINTER               "SDL.gpu.device.metal.device"
++#define SDL_PROP_GPU_DEVICE_METAL_COMMAND_QUEUE_POINTER        "SDL.gpu.device.metal.command_queue"
++#define SDL_PROP_GPU_DEVICE_NATIVE_COMMAND_BUFFER_FUNCTION_POINTER "SDL.gpu.device.native_command_buffer_function"
++#define SDL_PROP_GPU_DEVICE_NATIVE_TEXTURE_FUNCTION_POINTER    "SDL.gpu.device.native_texture_function"
++
+ 
+ /* State Creation */
+ 
+--- src/gpu/d3d12/SDL_gpu_d3d12.c
++++ src/gpu/d3d12/SDL_gpu_d3d12.c
+@@ -1906,6 +1906,24 @@ static D3D12_RESOURCE_STATES D3D12_INTERNAL_DefaultTextureResourceState(
+     }
+ }
+ 
++/* A3MX patch (SDL issue #10876): the native objects, for SDL_PROP_GPU_DEVICE_NATIVE_*_FUNCTION_POINTER */
++static void *SDLCALL D3D12_INTERNAL_NativeCommandBuffer(SDL_GPUCommandBuffer *commandBuffer)
++{
++    return commandBuffer ? (void *)((D3D12CommandBuffer *)commandBuffer)->graphicsCommandList : NULL;
++}
++
++static void *SDLCALL D3D12_INTERNAL_NativeTexture(SDL_GPUTexture *texture, Uint32 *layoutOrState)
++{
++    D3D12TextureContainer *container = (D3D12TextureContainer *)texture;
++    if (!container || !container->activeTexture) {
++        return NULL;
++    }
++    if (layoutOrState) {
++        *layoutOrState = (Uint32)D3D12_INTERNAL_DefaultTextureResourceState(container->header.info.usage);
++    }
++    return container->activeTexture->resource;
++}
++
+ static void D3D12_INTERNAL_TextureSubresourceTransitionFromDefaultUsage(
+     D3D12CommandBuffer *commandBuffer,
+     D3D12_RESOURCE_STATES destinationUsageMode,
+@@ -9582,6 +9600,12 @@ static SDL_GPUDevice *D3D12_CreateDevice(bool debugMode, bool preferLowPower, SD
+         shaderFormats |= SDL_GPU_SHADERFORMAT_DXIL;
+     }
+ 
++    // A3MX patch (SDL issue #10876): the native objects
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_D3D12_DEVICE_POINTER, renderer->device);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_D3D12_COMMAND_QUEUE_POINTER, renderer->commandQueue);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_NATIVE_COMMAND_BUFFER_FUNCTION_POINTER, (void *)D3D12_INTERNAL_NativeCommandBuffer);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_NATIVE_TEXTURE_FUNCTION_POINTER, (void *)D3D12_INTERNAL_NativeTexture);
++
+     ASSIGN_DRIVER(D3D12)
+     result->driverData = (SDL_GPURenderer *)renderer;
+     result->shader_formats = shaderFormats;
+--- src/gpu/metal/SDL_gpu_metal.m
++++ src/gpu/metal/SDL_gpu_metal.m
+@@ -765,6 +765,21 @@ static void METAL_DestroyDevice(SDL_GPUDevice *device)
+     SDL_free(device);
+ }
+ 
++/* A3MX patch (SDL issue #10876): the native objects, for SDL_PROP_GPU_DEVICE_NATIVE_*_FUNCTION_POINTER */
++static void *SDLCALL METAL_INTERNAL_NativeCommandBuffer(SDL_GPUCommandBuffer *commandBuffer)
++{
++    return commandBuffer ? (__bridge void *)((MetalCommandBuffer *)commandBuffer)->handle : NULL;
++}
++
++static void *SDLCALL METAL_INTERNAL_NativeTexture(SDL_GPUTexture *texture, Uint32 *layoutOrState)
++{
++    MetalTextureContainer *container = (MetalTextureContainer *)texture;
++    if (layoutOrState) {
++        *layoutOrState = 0;
++    }
++    return container && container->activeTexture ? (__bridge void *)container->activeTexture->handle : NULL;
++}
++
+ static SDL_PropertiesID METAL_GetDeviceProperties(SDL_GPUDevice *device)
+ {
+     MetalRenderer *renderer = (MetalRenderer *)device->driverData;
+@@ -4583,6 +4598,12 @@ static SDL_GPUDevice *METAL_CreateDevice(bool debugMode, bool preferLowPower, SD
+             SDL_LogInfo(SDL_LOG_CATEGORY_GPU, "SDL_GPU Driver: Metal");
+         }
+ 
++        // A3MX patch (SDL issue #10876): the native objects
++        SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_METAL_DEVICE_POINTER, (__bridge void *)renderer->device);
++        SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_METAL_COMMAND_QUEUE_POINTER, (__bridge void *)renderer->queue);
++        SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_NATIVE_COMMAND_BUFFER_FUNCTION_POINTER, (void *)METAL_INTERNAL_NativeCommandBuffer);
++        SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_NATIVE_TEXTURE_FUNCTION_POINTER, (void *)METAL_INTERNAL_NativeTexture);
++
+         // Record device name
+         const char *deviceName = [device.name UTF8String];
+         SDL_SetStringProperty(
+--- src/gpu/vulkan/SDL_gpu_vulkan.c
++++ src/gpu/vulkan/SDL_gpu_vulkan.c
+@@ -5085,6 +5085,25 @@ static void VULKAN_DestroyDevice(
+     SDL_Vulkan_UnloadLibrary();
+ }
+ 
++/* A3MX patch (SDL issue #10876): the native objects, for SDL_PROP_GPU_DEVICE_NATIVE_*_FUNCTION_POINTER */
++static void *SDLCALL VULKAN_INTERNAL_NativeCommandBuffer(SDL_GPUCommandBuffer *commandBuffer)
++{
++    return commandBuffer ? (void *)((VulkanCommandBuffer *)commandBuffer)->commandBuffer : NULL;
++}
++
++static void *SDLCALL VULKAN_INTERNAL_NativeTexture(SDL_GPUTexture *texture, Uint32 *layoutOrState)
++{
++    VulkanTextureContainer *container = (VulkanTextureContainer *)texture;
++    VulkanTexture *vulkanTexture = container ? container->activeTexture : NULL;
++    if (layoutOrState) {
++        VulkanTextureUsageMode mode = vulkanTexture ? VULKAN_INTERNAL_DefaultTextureUsageMode(vulkanTexture) : VULKAN_TEXTURE_USAGE_MODE_SAMPLER;
++        *layoutOrState = (Uint32)(mode == VULKAN_TEXTURE_USAGE_MODE_COLOR_ATTACHMENT ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL :
++                                  mode == VULKAN_TEXTURE_USAGE_MODE_SAMPLER || mode == VULKAN_TEXTURE_USAGE_MODE_GRAPHICS_STORAGE_READ ?
++                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL);
++    }
++    return vulkanTexture ? (void *)vulkanTexture->image : NULL;
++}
++
+ static SDL_PropertiesID VULKAN_GetDeviceProperties(
+     SDL_GPUDevice *device)
+ {
+@@ -12910,6 +12929,15 @@ static SDL_GPUDevice *VULKAN_CreateDevice(bool debugMode, bool preferLowPower, S
+ 
+     // FIXME: just move this into this function
+     result = (SDL_GPUDevice *)SDL_calloc(1, sizeof(SDL_GPUDevice));
++
++    // A3MX patch (SDL issue #10876): the native objects
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_VULKAN_INSTANCE_POINTER, (void *)renderer->instance);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_VULKAN_PHYSICAL_DEVICE_POINTER, (void *)renderer->physicalDevice);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_VULKAN_DEVICE_POINTER, (void *)renderer->logicalDevice);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_VULKAN_QUEUE_POINTER, (void *)renderer->unifiedQueue);
++    SDL_SetNumberProperty(renderer->props, SDL_PROP_GPU_DEVICE_VULKAN_QUEUE_FAMILY_INDEX_NUMBER, renderer->queueFamilyIndex);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_NATIVE_COMMAND_BUFFER_FUNCTION_POINTER, (void *)VULKAN_INTERNAL_NativeCommandBuffer);
++    SDL_SetPointerProperty(renderer->props, SDL_PROP_GPU_DEVICE_NATIVE_TEXTURE_FUNCTION_POINTER, (void *)VULKAN_INTERNAL_NativeTexture);
+     ASSIGN_DRIVER(VULKAN)
+ 
+     result->driverData = (SDL_GPURenderer *)renderer;

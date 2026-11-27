@@ -97,6 +97,14 @@ def render(pins):
           '| What | Folder | Upstream | Folder SHA-256 |', '|---|---|---|---|']
     for p in pins['vendored']:
         L.append('| %s | `%s/` | %s | `%s` |' % (p['name'], p['path'], p['upstream'], p['tree_sha256']))
+    if pins.get('patches'):
+        L += ['', '## Patches to dependencies', '',
+              'Changes this project makes to a dependency it downloads, each a file in this repository applied when the',
+              'dependency is built (`tools/apply_patch.py`: exact, or the build stops). Each is meant to go once the',
+              'dependency has its own way.', '',
+              '| Patch | To | Why | Until | SHA-256 |', '|---|---|---|---|---|']
+        for p in pins['patches']:
+            L.append('| [`%s`](../%s) | %s | %s | %s | `%s` |' % (p['file'], p['file'], p['applies_to'], p['why'], p['until'], p['sha256']))
     L += ['', '## Nothing compiled is committed', '',
           'The repository holds no program built in advance (create-launcher.exe was the last, removed in 0.60.0).',
           'The launcher that a release download carries is built by the release pipeline from the tagged source',
@@ -131,12 +139,16 @@ def check(pins):
     for v in pins['vendored']:
         need(v['tree_sha256'] == tree_sha256(v['path']), '%s/: its files have changed since pins.json was written (tools/pins.py --write, if that was meant)' % v['path'])
     doc = open(DOC, encoding='utf-8').read() if os.path.exists(DOC) else ''
+    for p in pins.get('patches', []):
+        f = os.path.join(ROOT, *p['file'].split('/'))
+        need(os.path.isfile(f) and sha256_file(f) == p['sha256'], 'patches %s: its SHA-256 is not the file\'s (tools/pins.py --write, if the change was meant)' % p['file'])
     need(doc == render(pins), 'docs/DEPENDENCIES.md is out of date: python tools/pins.py --write')
     return bad
 
 
 def write(pins):
     for v in pins['vendored']: v['tree_sha256'] = tree_sha256(v['path'])
+    for p in pins.get('patches', []): p['sha256'] = sha256_file(os.path.join(ROOT, *p['file'].split('/')))
     with open(PINS, 'w', encoding='utf-8', newline='\n') as f:
         json.dump(pins, f, indent=2, ensure_ascii=False); f.write('\n')
     with open(DOC, 'w', encoding='utf-8', newline='\n') as f: f.write(render(pins))

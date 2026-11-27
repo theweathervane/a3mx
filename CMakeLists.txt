@@ -143,6 +143,14 @@ endforeach()
 
 # ---------------------------------------------------------------- the game
 file(GLOB PLATFORM_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/platform/*.c" "${CMAKE_SOURCE_DIR}/src/platform/*.cpp")
+# FILTER on the SDL GPU renderer (shader_sdlgpu.c): librashader.h's <vulkan/vulkan.h> is the few declarations
+# in src/platform/vk_min/ (no Vulkan SDK needed)
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/platform/shader_sdlgpu.c" PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/src/platform/vk_min")
+if(APPLE)   # FILTER with Metal (shader_sdlgpu_mtl.m): librashader's Metal API takes Objective-C objects
+  enable_language(OBJC)
+  list(APPEND PLATFORM_SRC "${CMAKE_SOURCE_DIR}/src/platform/shader_sdlgpu_mtl.m")
+  set_source_files_properties("${CMAKE_SOURCE_DIR}/src/platform/shader_sdlgpu_mtl.m" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+endif()
 file(GLOB EXT_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/extensions/*.c" "${CMAKE_SOURCE_DIR}/src/extensions/*.cpp")
 if(NOT A3MX_EXTENSIONS)
   set(EXT_SRC "")                   # src/platform/extensions_off.c stands in for the names the platform uses
@@ -207,6 +215,7 @@ target_compile_options(${GAME} PRIVATE -Wall -Wno-unused-label -Wno-unused-param
 if(APPLE)
   # ucontext (fiber.c) is deprecated on macOS but still the portable way to switch stacks there
   target_compile_options(${GAME} PRIVATE -Wno-deprecated-declarations)
+  target_link_libraries(${GAME} PRIVATE "-framework Metal")   # (FILTER with Metal: shader_sdlgpu_mtl.m)
 endif()
 if(NOT WIN32 AND NOT A3MX_DISC_FREE)
   target_link_libraries(${GAME} PRIVATE m)

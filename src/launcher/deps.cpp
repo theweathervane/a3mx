@@ -100,6 +100,7 @@ const Want WANTED[] = {
     { "llvm-mingw", "llvm-mingw", "bin/clang.exe", nullptr, true },
     { "cmake", "cmake", "bin/cmake.exe", nullptr, true },
     { "ninja", "ninja", "ninja.exe", nullptr, true },
+    { "dxc", "dxc", "bin/x64/dxcompiler.dll", "its two libraries go beside the game: FILTER with the DirectX 12 renderer compiles its shaders with them", true },
 #elif defined(__APPLE__)
 const Want WANTED[] = {
     { "cmake-macos", "cmake-macos", "CMake.app/Contents/bin/cmake", nullptr, true },

@@ -26,6 +26,8 @@ WANTED = {
                 ('llvm-mingw', '.tools/llvm-mingw', 'bin/clang.exe', None),
                 ('cmake', '.tools/cmake', 'bin/cmake.exe', None),
                 ('ninja', '.tools/ninja', 'ninja.exe', None),
+                ('dxc', '.tools/dxc', 'bin/x64/dxcompiler.dll',
+                 'its two libraries go beside the game: FILTER with the DirectX 12 renderer compiles its shaders with them'),
                 ('sdl3', SDL_DEST, None, SDL_WHEN)],
     'Darwin': [('cmake-macos', '.tools/cmake-macos', 'CMake.app/Contents/bin/cmake', None),
                ('ninja-macos', '.tools/ninja-macos', 'ninja', None),

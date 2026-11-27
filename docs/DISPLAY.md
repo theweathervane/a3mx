@@ -154,8 +154,12 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
 2. **The library:** [librashader](https://github.com/SnowflakePowered/librashader) (MPL-2.0),
    `librashader.dll` on Windows, `librashader.dylib` on macOS, `librashader.so` on Linux, in
    `.tools/librashader/` (also found in `.tools/` itself, in the checkout, beside `a3mx.exe` in
-   `build/`, or beside the launcher). Only the OpenGL runtime is built in (no Direct3D 9 / D3DX9_43
-   needed). **A release's download has it already**, and a release can't go out without it. From a
+   `build/`, or beside the launcher). Built with the OpenGL runtime and, since 0.176.0, the one the
+   Vulkan / DirectX 12 / Metal renderer needs on the system (Vulkan and Direct3D 12 on Windows, Vulkan
+   on Linux, Metal on macOS); never Direct3D 9 / 11 (no D3DX9_43 or Visual C++ runtime needed). One
+   built before 0.176.0 (OpenGL only) is built or downloaded again. With DirectX 12, FILTER also needs
+   Microsoft's shader compiler beside the game (`dxcompiler.dll`, `dxil.dll`: `build.cmd` puts them
+   in `build/` from the pinned DirectXShaderCompiler release). **A release's download has it already**, and a release can't go out without it. From a
    clone, the launcher's **Dependencies > Get librashader...** (or `build.cmd --librashader`, or
    `python tools/librashader.py`) downloads the one the project's pipeline built from librashader's
    source at the commit pinned in `pins.json` (its `prebuilt` URL, checked against its SHA-256),
@@ -167,10 +171,15 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
    (`librashader-*`) is used if it is the pinned one. Building takes ten minutes or more; `--clean`
    keeps the result. You can also put a library you have there yourself.
 
-FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL:
-the OpenGL backend of `src/platform/ge_backend.h`). With the Vulkan, DirectX 12 or Metal renderer
-(0.174.0) the picture is shown plain: SCREEN SETTING greys FILTER and PREVIEW, FILTER's value reads
-OPENGL ONLY, and the log says so; the chosen filter is kept for when OpenGL is used again.
+FILTER works with every GPU renderer: OpenGL (and the software renderer shown through OpenGL), and since
+0.176.0 Vulkan, DirectX 12 and Metal (`src/platform/shader_sdlgpu.c`, Metal in `shader_sdlgpu_mtl.m`:
+librashader's runtime for that API, drawing into the SDL3 GPU renderer's own work through the project's
+patch to SDL, `cmake/patches/sdl-gpu-native-handles.patch`). The eleven tuned filters draw the same on
+Vulkan and DirectX 12 as on OpenGL (checked frame against frame). Where it can't be had on that renderer
+(an SDL built without the patch, a librashader without the API's runtime, DirectX 12 without
+`dxcompiler.dll` / `dxil.dll` beside the game), SCREEN SETTING greys FILTER and PREVIEW, FILTER's value
+reads OPENGL ONLY, and the log says which; the chosen filter is kept. Metal is built from the same code
+but not yet tried on a Mac.
 The shader sees the picture at the game's own 480 x 272, so the scanlines are the game's rows
 whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h` and
 `shader_list.c`, the screen in `src/extensions/filterscreen.c`, the preview in `filterpreview.c`, the

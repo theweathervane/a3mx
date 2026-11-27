@@ -14,8 +14,9 @@
  * Shaders: src/platform/gpu_shaders/ (HLSL; Metal's own source), compiled once by tools/gpu_shaders.py
  * into gpu_shaders.h (DXIL, SPIR-V, MSL): no compiler at build time.
  *
- * Not here yet: FILTER (librashader needs the API's own device, which SDL_GPU doesn't hand out: the
- * picture is shown plain and SCREEN SETTING greys FILTER, "OPENGL ONLY"); the GPU-time figure in the
+ * FILTER (0.176.0): shader_sdlgpu.c, librashader's Vulkan / Direct3D 12 / Metal runtime, with the native
+ * objects the project's SDL patch hands out; where that can't be had, FILTER is greyed ("OPENGL ONLY")
+ * and the picture is shown plain. Not here yet: the GPU-time figure in the
  * perf log (SDL_GPU has no timer queries); mip-mapped presentation below half size. Metal is built
  * from the same code but untested. */
 #include "rt.h"
@@ -342,8 +343,20 @@ static SDL_GPUTexture *upload_tex;
 static int upload_w, upload_h;
 static int vsync_on = 1;
 
+SDL_GPUTexture *shader_sdlgpu_present(SDL_GPUCommandBuffer **cmd, SDL_GPUTexture *src, int src_w, int src_h, int w, int h);
+const char *shader_sdlgpu_init(SDL_GPUDevice *device, const char *driver);
+static int filter_on;                                /* shader_sdlgpu.c can draw FILTER on this device */
+
 static void draw_to_window(SDL_GPUTexture *tex, float src_w, float src_h, float uv_w, float uv_h, int sharp) {
     SDL_GPUTexture *sw = NULL; Uint32 ww = 0, wh = 0;
+    if (filter_on) {                                 /* FILTER: through the chosen preset first, in a command buffer of its own */
+        int win_w = 0, win_h = 0;
+        SDL_GetWindowSizeInPixels(win, &win_w, &win_h);
+        float fx = (float)win_w / 480.f, fy = (float)win_h / 272.f, fs = fx < fy ? fx : fy;
+        int fw = (int)(480.f * fs + 0.5f), fh = (int)(272.f * fs + 0.5f);
+        SDL_GPUTexture *ft = shader_sdlgpu_present(&cmd, tex, (int)src_w, (int)src_h, fw, fh);
+        if (ft) { tex = ft; src_w = (float)fw; src_h = (float)fh; uv_w = uv_h = 1.f; sharp = 0; }
+    }
     uint64_t t0 = perf_now_us();                     /* (the wait for the monitor: perf counts it as swap, as OpenGL's) */
     int got = SDL_WaitAndAcquireGPUSwapchainTexture(cb(), win, &sw, &ww, &wh);
     perf_swap_in_present(perf_now_us() - t0);
@@ -429,6 +442,36 @@ static int gpu_read(uint32_t fb_addr, uint8_t *rgba, int *w, int *h) {
     SDL_UnmapGPUTransferBuffer(dev, dltb);
     for (int i = 0; i < *w * *h; i++) rgba[i * 4 + 3] = 255;
     return 1;
+}
+
+/* --dump-filtered: the last frame as FILTER drew it (the filter's output texture), when it did */
+SDL_GPUTexture *shader_sdlgpu_output(int *w, int *h);
+int ge_sdlgpu_read_filtered(uint8_t *rgba, int max_w, int max_h, int *w, int *h) {
+    if (!ready) return 0;
+    int tw = 0, th = 0;
+    SDL_GPUTexture *t = shader_sdlgpu_output(&tw, &th);
+    if (!t || tw > max_w || th > max_h) return 0;
+    uint32_t bytes = (uint32_t)tw * (uint32_t)th * 4u;
+    SDL_GPUTransferBufferCreateInfo ti = { SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, bytes, 0 };
+    SDL_GPUTransferBuffer *tb = SDL_CreateGPUTransferBuffer(dev, &ti);
+    if (!tb) return 0;
+    SDL_GPUCopyPass *cp = SDL_BeginGPUCopyPass(cb());
+    SDL_GPUTextureRegion src; memset(&src, 0, sizeof src);
+    src.texture = t; src.w = (Uint32)tw; src.h = (Uint32)th; src.d = 1;
+    SDL_GPUTextureTransferInfo dst = { tb, 0, (Uint32)tw, (Uint32)th };
+    SDL_DownloadFromGPUTexture(cp, &src, &dst);
+    SDL_EndGPUCopyPass(cp);
+    SDL_GPUFence *fe = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+    cmd = NULL;
+    int ok = 0;
+    if (fe) {
+        SDL_WaitForGPUFences(dev, true, &fe, 1); SDL_ReleaseGPUFence(dev, fe);
+        const uint8_t *p = (const uint8_t *)SDL_MapGPUTransferBuffer(dev, tb, false);
+        if (p) { memcpy(rgba, p, bytes); SDL_UnmapGPUTransferBuffer(dev, tb); ok = 1; }
+    }
+    SDL_ReleaseGPUTransferBuffer(dev, tb);
+    if (ok) { for (int i = 0; i < tw * th; i++) rgba[i * 4 + 3] = 255; *w = tw; *h = th; }
+    return ok;
 }
 
 static void gpu_frame_end(void) {
@@ -557,11 +600,18 @@ static int gpu_init(const GeBackendInit *in) {
     ge_texcache_init(&tex_ops);
     host_gpu_vsync = gpu_vsync;
     { extern int rt_vsync; gpu_vsync(rt_vsync); }
-    shader_set_unavailable("OPENGL ONLY");
+    {
+        extern const char *rt_work_dir;
+        void shader_gl_init(void *(*getproc)(const char *), const char *work);
+        shader_gl_init(NULL, rt_work_dir);          /* (where librashader and the shaders are) */
+        const char *no = shader_sdlgpu_init(dev, SDL_GetGPUDeviceDriver(dev));
+        filter_on = !no;
+        if (no) { shader_set_unavailable("OPENGL ONLY"); rt_log("SDL GPU: FILTER needs the OpenGL renderer here: %s", no); }
+        else rt_log("SDL GPU: FILTER through librashader's %s runtime", SDL_GetGPUDeviceDriver(dev));
+    }
     ready = 1;
     rt_log("SDL GPU: %s (%s), %s shaders, internal resolution %dx%d (x%d, %s)", SDL_GetGPUDeviceDriver(dev), gpu_name_buf,
            f == SDL_GPU_SHADERFORMAT_DXIL ? "DXIL" : f == SDL_GPU_SHADERFORMAT_SPIRV ? "SPIR-V" : "MSL", 480 * S, 272 * S, S, scale_reason);
-    rt_log("SDL GPU: FILTER needs the OpenGL renderer: the picture is shown plain");
     return 1;
 fail:
     SDL_ReleaseWindowFromGPUDevice(dev, win);
@@ -590,4 +640,5 @@ static const char *none_str(void) { return ""; }
 const GeBackend ge_backend_sdlgpu = { "SDL GPU", none_init, none_draw, none_void, none_void, none_present, none_rgba,
                                       none_void, none_void, none_read, none_scale, none_str, none_str };
 const char *ge_sdlgpu_api(void) { return ""; }
+int ge_sdlgpu_read_filtered(uint8_t *rgba, int max_w, int max_h, int *w, int *h) { (void)rgba; (void)max_w; (void)max_h; (void)w; (void)h; return 0; }
 #endif

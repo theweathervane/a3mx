@@ -300,6 +300,13 @@ int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, 
 
 /* the FILTER screen: whether a filter can be shown at all (the window, the library, the shaders) */
 int shader_gl_ready(void) { return FEATURE(SHADERS) && gl_getproc && load_lib() && shaders_ok; }
+/* shared with the SDL GPU renderer's FILTER (shader_sdlgpu.c, 0.176.0) */
+int shader_lib_load(void) { return FEATURE(SHADERS) && load_lib(); }
+const char *shader_lib_path(void) { return lib_ok && lib_found[0] && !strstr(lib_found, "(found by") ? lib_found : NULL; }
+int shader_filter_now(void) { return filter_now(); }
+void shader_set_failed(int f, const char *why) { set_failed(f, why); }
+void shader_set_described(const char *s) { snprintf(described, sizeof described, "%s", s); }
+void shader_mark_presented(void) { presented = 1; frame_seen++; }
 
 /* --dump-filtered (main.c): the last frame as the filter drew it (the letterboxed picture, top row
    first), if it drew this frame; 0 otherwise (the dump is then the game's own picture) */
@@ -316,6 +323,12 @@ int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) {
 }
 
 #else   /* no OpenGL in this build (headless tests): nothing to draw with */
+int shader_lib_load(void) { return 0; }
+const char *shader_lib_path(void) { return NULL; }
+int shader_filter_now(void) { return filter_now(); }
+void shader_set_failed(int f, const char *why) { (void)f; (void)why; }
+void shader_set_described(const char *s) { snprintf(described, sizeof described, "%s", s); }
+void shader_mark_presented(void) { presented = 1; }
 void shader_gl_init(void *(*getproc)(const char *), const char *work) { (void)getproc; (void)work; }
 int shader_gl_ready(void) { return 0; }
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) { (void)rgba; (void)max_w; (void)max_h; (void)w; (void)h; return 0; }

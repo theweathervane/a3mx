@@ -38,8 +38,14 @@ import fetch, pins
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.environ.get('A3MX_TOOLS_DIR') or os.path.join(ROOT, '.tools')
 DEST = os.path.join(TOOLS, 'librashader')
-RUNTIMES = ['--no-default-features', '--features', 'runtime-opengl']     # cargo's: OpenGL only (librashader-capi's Cargo.toml)
-BUILD_KIND = 'opengl'                                                    # in the stamp: what was built
+# cargo's runtimes (librashader-capi's Cargo.toml): OpenGL for the OpenGL renderer, and since 0.176.0 the API
+# the SDL GPU renderer uses on this system (Vulkan; Direct3D 12 on Windows; Metal on macOS). Never D3D9 /
+# D3D11 (they need D3DX9_43 and the Visual C++ runtime). D3D12 compiles its shaders with DXC while the game
+# runs: dxcompiler.dll and dxil.dll go beside the game (tools/build.py, from the pinned dxc release).
+_FEATURES = ('runtime-opengl,runtime-vulkan,runtime-d3d12' if os.name == 'nt' else
+             'runtime-opengl,runtime-metal' if sys.platform == 'darwin' else 'runtime-opengl,runtime-vulkan')
+RUNTIMES = ['--no-default-features', '--features', _FEATURES]
+BUILD_KIND = _FEATURES.replace('runtime-', '').replace(',', '+')       # in the stamp: what was built (opengl+vk+d3d12 ...)
 RUST = os.path.join(TOOLS, 'rust')                                    # --install-rust puts Rust here (cargo/, rustup/)
 SYSTEM = ('windows-x64' if os.name == 'nt' else 'macos-arm64' if sys.platform == 'darwin' else 'linux-x64')
 SRC = os.path.join(TOOLS, 'librashader-src')
@@ -84,6 +90,7 @@ def prebuilt(pin):
     """(url, sha256) of the published library for this system, or None"""
     p = (pin.get('prebuilt') or {}).get(SYSTEM) or {}
     url, sha = p.get('url', ''), p.get('sha256', '')
+    if p.get('kind', 'opengl') != BUILD_KIND: return None      # (one built with other runtimes: built here instead)
     return (url, sha) if url and len(sha) == 64 else None
 
 

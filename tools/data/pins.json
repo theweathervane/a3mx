@@ -63,7 +63,7 @@
       "version": "v1.9.2609 (2026-09-29, Windows x64)",
       "url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/dxc_2026_09_29.zip",
       "sha256": "ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1",
-      "used_by": "tools/gpu_shaders.py only, by maintainers, into .tools/dxc/: the shaders it compiles are committed (src/platform/gpu_shaders.h), so builds never download it"
+      "used_by": "tools/build.py on Windows, into .tools/dxc/: dxcompiler.dll and dxil.dll go beside the game (FILTER with the DirectX 12 renderer, 0.176.0); and tools/gpu_shaders.py (maintainers: the SPIR-V of the committed renderer shaders)"
     }
   ],
   "sources": [
@@ -87,7 +87,7 @@
     },
     {
       "id": "librashader",
-      "name": "librashader (the FILTER setting's shader library, MPL-2.0; built from this source by the pipelines, OpenGL only)",
+      "name": "librashader (the FILTER setting's shader library, MPL-2.0; built from this source by the pipelines: OpenGL, and Vulkan / Direct3D 12 / Metal for the SDL GPU renderer)",
       "repo": "https://github.com/SnowflakePowered/librashader",
       "commit": "07ac790cdb9826f37cf8e1daf5011f03e3c4daa7",
       "files": {
@@ -96,17 +96,24 @@
         "include/librashader_ld.h": "bcffcbc854afb287c9f935c1a0e3b569f5e6775ef85914bd7f7025ad1f6bde33"
       },
       "prebuilt": {
-        "_about": "the library built from this commit with only the OpenGL runtime by the pipeline's librashader:publish jobs and put in the project's package registry: its URL and the SHA-256 of that file, per system. Empty until published: tools/librashader.py and the launcher then build it with Rust",
+        "_about": "the library built from this commit by the pipeline's librashader:publish jobs with the runtimes tools/librashader.py names for each system (kind), put in the project's package registry: its URL and the SHA-256 of that file, per system. Empty until published: tools/librashader.py and the launcher then build it with Rust",
         "windows-x64": {
-          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-opengl/librashader-windows-x64.dll",
+          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-full/librashader-windows-x64.dll",
+          "kind": "opengl+vulkan+d3d12",
           "sha256": ""
         },
         "linux-x64": {
-          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-opengl/librashader-linux-x64.so",
+          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-full/librashader-linux-x64.so",
+          "kind": "opengl+vulkan",
+          "sha256": ""
+        },
+        "macos-arm64": {
+          "url": "https://gitlab.com/api/v4/projects/theweathervane-group%2Fa3mx/packages/generic/librashader/0.12.1-full/librashader-macos-arm64.dylib",
+          "kind": "opengl+metal",
           "sha256": ""
         }
       },
-      "used_by": "tools/librashader.py, which downloads the published library (prebuilt, checked against its SHA-256) or builds it from that commit with Rust (OpenGL only); the same tag as third_party/librashader/'s headers"
+      "used_by": "tools/librashader.py, which downloads the published library (prebuilt, checked against its SHA-256) or builds it from that commit with Rust (OpenGL, Vulkan, and Direct3D 12 on Windows / Metal on macOS); the same tag as third_party/librashader/'s headers"
     }
   ],
   "vendored": [
@@ -137,6 +144,15 @@
       "path": "third_party/librashader",
       "upstream": "https://github.com/SnowflakePowered/librashader at librashader-v0.12.1 (07ac790cdb9826f37cf8e1daf5011f03e3c4daa7)",
       "tree_sha256": "d1ea1e2f3d4fdb943abab5704b8770eafedd78bec3003eca855fff018371a85f"
+    }
+  ],
+  "patches": [
+    {
+      "file": "cmake/patches/sdl-gpu-native-handles.patch",
+      "applies_to": "SDL3 3.4.16 (cmake/SDL3.cmake, tools/sdl3.py)",
+      "why": "the SDL GPU renderer's FILTER: the backend's native device, queue, command buffers and textures as device properties, for librashader's Vulkan / Direct3D 12 / Metal runtimes (0.176.0)",
+      "until": "SDL has its own way ([libsdl-org/SDL#10876](https://github.com/libsdl-org/SDL/issues/10876)); not offered upstream as it is (SDL takes no AI-written code)",
+      "sha256": "e850df4210a4b5995347d84f6c02500ccd5b4efb12788363d2b6c6947979f08e"
     }
   ]
 }

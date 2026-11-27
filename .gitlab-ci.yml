@@ -18,7 +18,7 @@
 # Built once and kept: SDL3 (tools/sdl3.py, compiled), librashader (tools/librashader.py, compiled with
 # Rust) and the FILTER shaders (tools/shaders.py, downloaded) live in .tools/ and are cached per system,
 # keyed on pins.json and the scripts, so a pipeline only makes again what has changed. Each script
-# does nothing when its folder is already right. librashader (OpenGL only) is downloaded as
+# does nothing when its folder is already right. librashader (OpenGL, and Vulkan / D3D12 / Metal for the SDL GPU renderer) is downloaded as
 # librashader:publish built it once (pins.json, its "prebuilt" URL and SHA-256), or built with Rust
 # where there is none; it goes into each download. Without it a release fails (--require-librashader);
 # any other pipeline carries on and its download goes out without it (FILTER then does nothing).
@@ -180,8 +180,10 @@ build:macos-arm64:
     expire_in: 2 weeks
 
 # librashader, published (run by hand: Build > Pipelines > New pipeline, then play this job): built once
-# from the pinned source with only the OpenGL runtime, put in the package registry as
-#   $LR_URL/librashader-<system>.dll / .so
+# from the pinned source with the runtimes tools/librashader.py names for the system (OpenGL, and the SDL GPU
+# renderer's API: Vulkan; Direct3D 12 on Windows; Metal on macOS; never D3D9 / D3D11), put in the package
+# registry as
+#   $LR_URL/librashader-<system>.dll / .so / .dylib
 # and its SHA-256 printed. That SHA-256 and URL go in pins.json (sources "librashader", "prebuilt"),
 # from then on what tools/librashader.py, the launcher and these jobs download instead of building.
 # A published file is never replaced (the registry keeps both; pins.json names the one that counts).
@@ -192,7 +194,7 @@ build:macos-arm64:
       when: manual
   allow_failure: true
   variables:
-    LR_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/librashader/0.12.1-opengl"
+    LR_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/librashader/0.12.1-full"
   artifacts:
     paths: [lr-out/]
     expire_in: 4 weeks
@@ -227,6 +229,18 @@ librashader:publish-windows-x64:
       $sha = (Get-FileHash lr-out\librashader.dll -Algorithm SHA256).Hash.ToLower()
     - |
       Write-Host "pins.json, prebuilt windows-x64: url $env:LR_URL/librashader-windows-x64.dll sha256 $sha"
+
+librashader:publish-macos-arm64:
+  <<: *lr-publish
+  tags: [saas-macos-medium-m1]
+  script:
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+    - . "$HOME/.cargo/env"
+    - python3 tools/librashader.py --build --out lr-out
+    - |
+      curl --fail --silent --show-error --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file lr-out/librashader.dylib "$LR_URL/librashader-macos-arm64.dylib"
+    - |
+      echo "pins.json, prebuilt macos-arm64: url $LR_URL/librashader-macos-arm64.dylib sha256 $(shasum -a 256 lr-out/librashader.dylib | cut -d ' ' -f 1)"
 
 # A tag v<VERSION> on main: the downloads go to the project's package registry and a release is made
 # with notes from CHANGELOG.md. Windows and Linux must have built; macOS's files are added if its job passed.

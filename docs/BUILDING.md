@@ -82,9 +82,10 @@ libraries, which come from your package manager). Anything missing is listed wit
 or **Metal** (macOS, built but not yet tried on a Mac): the same GPU renderer through SDL3's GPU API
 (`src/platform/ge_sdlgpu.c`, beside OpenGL's behind the renderer's backend interface
 `src/platform/ge_backend.h`, [ARCHITECTURE.md](ARCHITECTURE.md#3-platform-srcplatform)). They draw
-what OpenGL draws. FILTER needs OpenGL: with the others the picture is shown plain and SCREEN SETTING
-greys FILTER and PREVIEW ("OPENGL ONLY"). If the API can't be had on the PC, the game uses OpenGL and
-its log says why.
+what OpenGL draws, and since 0.176.0 FILTER too ([DISPLAY.md](DISPLAY.md#filter); with DirectX 12 it
+needs Microsoft's shader compiler, `dxcompiler.dll` and `dxil.dll`, which `build.cmd` copies into `build/`
+from the pinned DirectXShaderCompiler release, about 32 MB, downloaded into `.tools/dxc/` once). If the API
+can't be had on the PC, the game uses OpenGL and its log says why.
 
 The buttons run `build.cmd` / `build.sh` with those options (the console shows the exact command), so
 the launcher and the command line always build the same way. The choices are kept in

@@ -66,8 +66,14 @@ Carried over from the static recomp:
   `ge_gl.c` (OpenGL 3.3, the default) and `ge_sdlgpu.c` (SDL3's GPU API: Vulkan, Direct3D 12,
   Metal; 0.174.0). The latter's shaders are HLSL (and MSL for Metal) in `gpu_shaders/`, compiled
   once into `gpu_shaders.h` by `tools/gpu_shaders.py` (DXIL and SPIR-V with Microsoft's dxc, pinned
-  in `pins.json`): builds need no shader compiler. FILTER (librashader) runs with OpenGL only: SDL_GPU
-  doesn't hand out the API's own device, which librashader's Vulkan / D3D12 / Metal runtimes need.
+  in `pins.json`): builds need no shader compiler. FILTER (librashader) runs on both: `shader_gl.c`
+  for OpenGL, `shader_sdlgpu.c` (and `shader_sdlgpu_mtl.m`) for Vulkan / Direct3D 12 / Metal (0.176.0).
+  SDL_GPU doesn't hand out the API's own device, command buffers or textures, which librashader's
+  runtimes draw with; the project's patch to SDL (`cmake/patches/sdl-gpu-native-handles.patch`, applied
+  by `tools/apply_patch.py` when SDL is built; DEPENDENCIES.md) adds them as device properties, until SDL
+  has its own way (libsdl-org/SDL#10876). The FILTER pass records into SDL's command buffer outside its
+  passes, puts every texture back in the layout or state SDL left it in, and submits that command
+  buffer before SDL's own drawing goes on.
 - **Test hooks**: `--headless --fast --renderer soft --input ... --hash-log FILE --save-dir DIR`.
 
 These are the hardware abstraction layer: game code reaches them only through the PSP OS functions

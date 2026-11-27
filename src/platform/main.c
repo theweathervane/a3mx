@@ -529,7 +529,9 @@ void rt_display_vblank(void) {
         int w = 480, h = 272;
         if (!big) big = (uint8_t *)malloc((size_t)480 * 8 * 272 * 8 * 4);
         snprintf(p, sizeof p, "%s/frame_%05llu.png", dump_dir, (unsigned long long)f);
-        if (!(dump_filtered && shader_gl_read(big, 480 * 8, 272 * 8, &w, &h)) && !(ge_use_gl && ge_backend->read(rt_fb_addr(), big, &w, &h)))
+        int ge_sdlgpu_read_filtered(uint8_t *rgba, int max_w, int max_h, int *w, int *h);
+        if (!(dump_filtered && (shader_gl_read(big, 480 * 8, 272 * 8, &w, &h) || ge_sdlgpu_read_filtered(big, 480 * 8, 272 * 8, &w, &h))) &&
+            !(ge_use_gl && ge_backend->read(rt_fb_addr(), big, &w, &h)))
             ge_fb_to_rgba(rt_fb_addr(), (int)rt_fb_width(), (int)rt_fb_format(), 480, 272, big);
         png_write(p, big, w, h);
     }
