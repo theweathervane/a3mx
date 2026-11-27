@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.168.1
+### Technical
+- README.md / docs/ROADMAP.md: the progress bars brought up to 0.168.0 (`tools/progress.py --update-docs`); the 0.168.0 entry below.
+
+## 0.168.0
+### For players
+- **More of the game decompiled (325 functions, 41.46% of the program now):** every super-combo start, command and air throws with their holds and landings, the whole hit test (hit and hurt boxes, a hit landing on the defender, two hits clashing, the attacker / defender pairing), command-input steps, special jumps, special and super cancels, and more of the move starts and menus. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_moves259.c` - `batch_moves265.c`, `batch_menu263.c`, `batch_input266.c`, `batch_input267.c`, `batch_cmd268.c`, `batch_pads269.c`, `batch_target270.c`, `batch_grabs271.c`, `batch_misc272.c`, `batch_hit273.c`, `batch_holds274.c`, `batch_jumps275.c`, `batch_input276.c`, `super_start.h` (new); `batch_supers258.c` now has all 75 super-combo starts. docs/PSP_PROGRAM_MAP.md: a row for each batch.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch. About 16 small leaves (among them 0x08826260, 0x0882A410, 0x08873850, 0x088693B0, 0x08870AF8) did not run in any scenario and were checked against the original code only.
+
 ## 0.167.0
 ### For players
 - **Most extensions are switched in the game now, so everyone runs the same build:** OPTION MODE > EX. SETTING has two new pages. **EX. GAME** has Boot to the MODE MENU (off by default; from the next start), Mode Menu Shortcut (was the F2 / SELECT + START key), Shared Entry Pool (was I-ISM for both sides; on by default), 1P - 3P PRIORITY and VIRTUAL PSPS. **EX. DISPLAY** has MODE MENU icons, ISM presentation, Scaled endings and Stage Extensions. They take effect at once and are kept in `a3mx.cfg`.
