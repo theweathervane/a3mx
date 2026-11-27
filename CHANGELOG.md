@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.177.0
+### For players
+- **More of the game decompiled (20 functions, 45.05% of the program now):** the block's start and first step, an air move's way down with its attack and throw, a forward dash that can turn into a move, a reaching grab, a rolling attack with its sparks, two held projectiles' releases, three helper fighters' starts, an entrance that walks in, the taunt's wait, the side mark's start, the piece that follows characters 17 and 19, the screen object that serves each frame's requests, and the wireless link's peer and list entries. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_steps301.c` - `batch_steps306.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch; README.md / docs/ROADMAP.md progress bars updated.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch, and every one of these functions runs in a scenario.
+
 ## 0.176.0
 ### For players
 - **FILTER now works with the Vulkan and DirectX 12 renderers** (and Metal on macOS, built but not yet tried on a Mac): the same shaders, drawn by librashader's own runtime for that API. The eleven tuned filters look the same as with OpenGL. Where it can't be had (see below), SCREEN SETTING still greys FILTER with OPENGL ONLY and the log says why.

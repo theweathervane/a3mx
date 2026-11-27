@@ -19,15 +19,15 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [█████████████████░░░░░░░░░░░░░░░░░░░░░░░]  44.69% decompiled
+Overall  [██████████████████░░░░░░░░░░░░░░░░░░░░░░]  45.05% decompiled
 
-Functions                                [████░░░░░░]  40.93%  6,091 / 14,881 functions
-Instructions                             [████░░░░░░]  44.69%  216,390 / 484,213 instructions
+Functions                                [████░░░░░░]  41.07%  6,111 / 14,881 functions
+Instructions                             [████░░░░░░]  45.05%  218,132 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██████░░░░]  60.60%  123,583 / 203,929
+  game (modes, menus, fighters, battle)  [██████░░░░]  60.79%  123,974 / 203,929
   wireless (ad-hoc) VS                   [███████░░░]  75.76%  2,819 / 3,721
-  game (to be mapped)                    [███░░░░░░░]  34.59%  88,888 / 257,012
+  game (to be mapped)                    [███░░░░░░░]  35.11%  90,239 / 257,012
   system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
   system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
 ```
