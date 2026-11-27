@@ -30,8 +30,11 @@ import argparse, os, shutil, subprocess, sys, time
 
 # The features the tests run with (0.127.0): the defaults, without FILTER (the menu scripts count
 # SCREEN SETTING's rows without it) and without boot_to_menu (the inputs start from the title), and
-# with i_ism_display (off by default, but on in every test before it was split from i_ism).
-TEST_FEATURES = 'default,-shaders,-boot_to_menu,i_ism_display'
+# with i_ism_display (off by default, but on in every test before it was split from i_ism); and without
+# anthology (0.172.0): the scenarios' inputs don't step through ALPHA SELECT, and the Anthology's imported
+# files (assets/us/anthology/) aren't the disc's, so assets_in_game and stage_strips, which load assets/,
+# would play another game on a computer that has imported them.
+TEST_FEATURES = 'default,-shaders,-boot_to_menu,i_ism_display,-anthology'
 
 
 def screen_lines(sc, wide):

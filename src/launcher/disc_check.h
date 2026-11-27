@@ -43,6 +43,9 @@ public:
 
     /* the same check, here and now, without the whole-image hash (for scanning imports/psp/) */
     static DiscResult check_now(const std::string &path);
+    /* Street Fighter Alpha Anthology (PS2), the optional image: serial and program from SYSTEM.CNF */
+    static DiscResult check_anthology_now(const std::string &path);
+    void set_anthology() { anthology_ = true; }       /* this checker checks Anthology discs */
 
 private:
     void stop();
@@ -51,6 +54,7 @@ private:
     DiscResult result_;
     std::atomic<bool> cancel_{false}, running_{false};
     std::atomic<float> progress_{0};
+    bool anthology_ = false;
 };
 
 const char *region_name(Region r);

@@ -8,6 +8,7 @@
  *                      (and "PSP original": none at all)
  *   WHERE_EX_GAME      in the game, OPTION MODE > EX. SETTING's EX. GAME page, kept in a3mx.cfg
  *   WHERE_EX_DISPLAY   the same, EX. DISPLAY page
+ *   WHERE_EX_ANTHOLOGY the same, EX. ANTHOLOGY page (its first row: the whole Anthology extension)
  *   WHERE_BUILT_IN     no switch of its own: on with the extensions, and what it does is chosen by a
  *                      setting the game already has (SCREEN SIZE's WIDE NATIVE, FILTER) or by EX.
  *                      SETTING's own pages (the cheats and unlocks)
@@ -49,11 +50,12 @@ enum {
     FEAT_WIDESCREEN,     /* widescreen.c: WIDE NATIVE (rt_widescreen), chosen in SCREEN SETTING > SCREEN SIZE */
     FEAT_SHADERS,        /* platform: shader.c, chosen in SCREEN SETTING > FILTER */
     FEAT_CHEATS_UNLOCKS, /* cheats_unlocks.c, EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (exsetting.c), sysdata.c */
+    FEAT_ANTHOLOGY,      /* anthology.c: imports from Hyper Street Fighter Alpha (the Anthology disc); EX. ANTHOLOGY's ANTHOLOGY row */
     FEAT_COUNT,
     FEAT_ANY = FEAT_COUNT   /* on while any feature is: the plumbing several features share */
 };
 
-enum { WHERE_LAUNCHER, WHERE_EX_GAME, WHERE_EX_DISPLAY, WHERE_BUILT_IN, WHERE_COUNT };
+enum { WHERE_LAUNCHER, WHERE_EX_GAME, WHERE_EX_DISPLAY, WHERE_EX_ANTHOLOGY, WHERE_BUILT_IN, WHERE_COUNT };
 
 typedef struct {
     const char *name;        /* --features, last_run.txt */
@@ -98,11 +100,11 @@ static const Feature FEATURES[FEAT_COUNT] = {
     { "mode_menu_icons", "MODE MENU icons",
       "The numbered bubble for each player's controller and the FRAME TIMING badge (SMOOTH / ORIGINAL)\n"
       "on the MODE MENU's bar.", 1, -1, WHERE_EX_DISPLAY, "mode_menu_icons" },
-    { "i_ism_display", "I-ISM ranking and wipe",
-      "What the game left out on screen for entry characters (I-ISM): the I-ISM score ranking in the\n"
-      "attract mode, and their own wipe into the fight (a yellow I and a gold logo, where they had\n"
-      "their ISM's).\n"
-      "Off: no I-ISM ranking, and an entry gets its ISM's wipe, as on the PSP.", 0, -1, WHERE_EX_DISPLAY, "ism_presentation" },
+    { "i_ism_display", "Extra ISM Presentation",
+      "The I-ISM's own wipe into the fight for entry characters (a yellow I, a gold logo), and the\n"
+      "I-ISM score ranking in the attract mode. (The S-ISMs' wipes are EX. ANTHOLOGY's S-ISM\n"
+      "PRESENTATION, whatever this is.)\n"
+      "Off: an entry gets its ISM's wipe, as on the PSP, and no I-ISM ranking.", 0, -1, WHERE_EX_DISPLAY, "ism_presentation" },
     { "scaled_endings", "Scaled endings (WIDE NATIVE)",
       "The endings fill the 16:9 screen: a scene that has more of its picture shows it, the others are\n"
       "drawn 1.25 times larger, and the profile pictures move out to the screen's edges.\n"
@@ -121,6 +123,11 @@ static const Feature FEATURES[FEAT_COUNT] = {
       "Part of Extra menus: EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (the unlocks one by one, never\n"
       "written into your save; each fighter's HEALTH, GUARD and SUPER; World Tour / EDIT MODE EXP).\n"
       "Not in network battles.", 1, FEAT_MENUS, WHERE_BUILT_IN, 0 },
+    { "anthology", "Hyper Street Fighter Alpha imports",
+      "Extra content from Hyper Street Fighter Alpha on your Street Fighter Alpha Anthology (PS2) disc,\n"
+      "imported by the launcher when that disc is chosen on the Paths tab (Show optional images), and\n"
+      "switched on and off on EX. SETTING's EX. ANTHOLOGY page (its rows greyed until it is imported).\n"
+      "Experimental: off by default.", 0, -1, WHERE_EX_ANTHOLOGY, "anthology" },
 };
 
 #ifndef FEATURES_TABLE_ONLY

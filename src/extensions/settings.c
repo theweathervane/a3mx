@@ -34,6 +34,8 @@ int rt_hud_edges = 1;                         /* [screen setting] hud_messages: 
 int rt_frame_timing = 2;                     /* [screen setting] frame_timing: 2 AUTO (pacing.c picks), 1 SMOOTH (60.00 Hz), 0 ORIGINAL (59.94 Hz); AUTO when missing */
 int rt_health_gradient = 1;                   /* [ex setting] health_gradient: EX. DISPLAY's HEALTH GRADIENT (ON: the PSP's shading; OFF: solid, hud_health_solid) */
 int rt_join_in[3] = { 0, 0, 0 }, rt_virtual_psps = 1;   /* EX. SETTING: 1P / 2P / 3P PRIORITY, PLAYER (1) or COM (0): docs/PLAYERS.md */
+extern int rt_hawk_walkback;              /* anthology.c: EX. SETTING > T.HAWK WALKBACK */
+extern int rt_alpha_select, rt_sism_select, rt_sism_presentation;   /* anthology_select.c: ALPHA SELECT, S-ISM SELECT, S-ISM PRESENTATION */
 extern int rt_l2[4], rt_r2[4];
 extern uint8_t rt_p4_config[20];
 extern int rt_cheat_health[3], rt_cheat_guard[3], rt_cheat_super[3], rt_cheat_wt[4], rt_cheat_edit[4];   /* cheats_unlocks.c */
@@ -225,6 +227,10 @@ void settings_load(void) {
                 continue;
             }
             if (!strcmp(key, "virtual_psps")) { rt_virtual_psps = is_on(val); continue; }
+            if (!strcmp(key, "hawk_walkback")) { rt_hawk_walkback = is_on(val); continue; }
+            if (!strcmp(key, "alpha_select")) { rt_alpha_select = is_on(val); continue; }
+            if (!strcmp(key, "sism_select")) { rt_sism_select = is_on(val); continue; }
+            if (!strcmp(key, "sism_presentation")) { rt_sism_presentation = is_on(val); continue; }
             if (!strcmp(key, "health_gradient")) { rt_health_gradient = is_on(val); continue; }
             { int done_feat = 0;                          /* EX. GAME / EX. DISPLAY: the extensions (ext_features.h) */
               for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key && !strcmp(key, FEATURES[k].key)) { rt_feature_setting[k] = is_on(val); done_feat = 1; }
@@ -330,9 +336,13 @@ static void cfg_body(FILE *f) {
     { char l[48]; snprintf(l, sizeof l, "health_gradient=%s", off_on[!!rt_health_gradient]); fprintf(f, "%-24s # EX. DISPLAY: Health gradient. ON: the PSP's green-to-yellow health bars; OFF: solid yellow, as the arcade\n", l); }
     for (int k = 0; k < FEAT_COUNT; k++) if (FEATURES[k].key) {   /* EX. GAME / EX. DISPLAY */
         char l[48]; snprintf(l, sizeof l, "%s=%s", FEATURES[k].key, off_on[!!rt_feature_setting[k]]);
-        fprintf(f, "%-24s # %s: %s%s\n", l, FEATURES[k].where == WHERE_EX_GAME ? "EX. GAME" : "EX. DISPLAY", FEATURES[k].title,
+        fprintf(f, "%-24s # %s: %s%s\n", l, FEATURES[k].where == WHERE_EX_GAME ? "EX. GAME" : FEATURES[k].where == WHERE_EX_ANTHOLOGY ? "EX. ANTHOLOGY" : "EX. DISPLAY", FEATURES[k].title,
                 k == FEAT_BOOTMENU ? " (from the next start)" : "");
     }
+    { char l[48]; snprintf(l, sizeof l, "hawk_walkback=%s", off_on[!!rt_hawk_walkback]); fprintf(f, "%-24s # EX. ANTHOLOGY. ON: T. Hawk walks back as in Hyper Street Fighter Alpha (once the Anthology disc is imported); OFF: as on the PSP\n", l); }
+    { char l[48]; snprintf(l, sizeof l, "alpha_select=%s", off_on[!!rt_alpha_select]); fprintf(f, "%-24s # EX. ANTHOLOGY. ON: pick ALPHA, ALPHA2, ALPHA2G, ALPHA2GC or ALPHA3 after the character (once the Anthology disc is imported)\n", l); }
+    { char l[48]; snprintf(l, sizeof l, "sism_select=%s", off_on[!!rt_sism_select]); fprintf(f, "%-24s # EX. ANTHOLOGY. ON: MODE SELECT also offers the four S-ISMs (once the Anthology disc is imported)\n", l); }
+    { char l[48]; snprintf(l, sizeof l, "sism_presentation=%s", off_on[!!rt_sism_presentation]); fprintf(f, "%-24s # EX. ANTHOLOGY. ON: the S-ISMs' own wipes into the fight and S-ISM D's pink (once the Anthology disc is imported); OFF: the wipe of the ISM they play as\n", l); }
     fprintf(f, "\n[cheats and unlocks]      # EX. SETTING's UNLOCKS, FIGHTERS and EXP pages (Extra menus). Unlocks: ON forced, OFF as your save earned them (forced ones are never saved)\n");
     for (int i = 0; i < UNLOCK_COUNT; i++) { char l[48]; snprintf(l, sizeof l, "%s=%s", unlock_keys[i], off_on[!!rt_unlock[i]]); fprintf(f, "%-24s # %s\n", l, unlock_notes[i]); }
     fprintf(f, "%-24s # the fighter slots 1 - 3, every mode but network battles\n", "");

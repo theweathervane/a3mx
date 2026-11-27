@@ -1585,9 +1585,9 @@ SFA_FUNC(088A21C4, game_bselect_net_timeout) { int r; SELECT_FRAME(0x20, r = net
 SFA_FUNC(088A225C, game_bselect_cursor)      { SELECT_FRAME(0x20, fighter_cursor(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A1828, game_bselect_training_turn) { training_turn(ARG(0), ARG(1)); }
 SFA_FUNC_WRAPPED(088A5174, game_bselect_box_driver, selectscreen_box_driver) { RETURN(box_driver(ARG(0))); }
-SFA_FUNC(088A60F8, game_bselect_fighter_box) { SELECT_FRAME(0x60, fighter_box(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(088A60F8, game_bselect_fighter_box, ism_presentation_bselect_box) { SELECT_FRAME(0x60, fighter_box(c, ARG(0), ARG(1))); }
 SFA_FUNC(088A2578, game_bselect_difficulty)  { SELECT_FRAME(0x30, box_difficulty(c, ARG(0))); }
-SFA_FUNC(088A4D30, game_bselect_style_line)  { SELECT_FRAME(0x40, box_style(c, ARG(0), ARG(1) & 0xFFFF)); }
+SFA_FUNC_WRAPPED(088A4D30, game_bselect_style_line, anthology_bselect_style_line) { SELECT_FRAME(0x40, box_style(c, ARG(0), ARG(1) & 0xFFFF)); }
 SFA_FUNC_WRAPPED(088A6A10, game_bselect_grid, i_ism_select_bselect_grid) { SELECT_FRAME(0x30, bselect_grid(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A2480, game_bselect_team_lines)  { SELECT_FRAME(0x40, box_team(c, ARG(0))); }
 SFA_FUNC(088A5600, game_bselect_free_turn)  { SELECT_FRAME(0x30, free_battle_turn(c, ARG(0), ARG(1), ARG(2))); }
@@ -1612,18 +1612,19 @@ SFA_FUNC(088A507C, game_bselect_pad_pressed) { uint32_t r; SELECT_FRAME(0x30, r 
 SFA_FUNC(088A5100, game_bselect_pad_held)   { uint32_t r; SELECT_FRAME(0x30, r = driving_pad(c, ARG(0), 0)); RETURN(r); }
 SFA_FUNC(088A4E90, game_bselect_sound_choose) { SELECT_FRAME(0x20, sound_choose(c)); }
 SFA_FUNC(088A4EB4, game_bselect_box_right)  { RETURN(box_on_right(ARG(0))); }
-SFA_FUNC(088A2870, game_bselect_char_enter) { SELECT_FRAME(0x20, character_enter(c, ARG(0), ARG(1), ARG(2))); }
+/* (anthology_select.c: TYPE, MODE with the S-ISMs, MANUAL / AUTO in Survival and Training) */
+SFA_FUNC_WRAPPED(088A2870, game_bselect_char_enter, anthology_bselect_character) { SELECT_FRAME(0x20, character_enter(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A29B4, game_bselect_char_move)  { SELECT_FRAME(0x20, character_move(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A2FDC, game_bselect_char_chosen) { SELECT_FRAME(0x20, character_chosen(c, ARG(0), ARG(2))); }
 SFA_FUNC(088A2D94, game_bselect_as_himself) { SELECT_FRAME(0x30, as_himself(c, ARG(0))); }
 SFA_FUNC(088A315C, game_bselect_char_wait)  { character_wait(ARG(0), ARG(2)); }
 SFA_FUNC(088A4E30, game_bselect_style_flags) { style_flags(ARG(0)); }
-SFA_FUNC(088A34A8, game_bselect_style_enter) { SELECT_FRAME(0x30, style_enter(c, ARG(0), ARG(1), ARG(2))); }
-SFA_FUNC(088A35E4, game_bselect_style_choose) { SELECT_FRAME(0x30, style_choose(c, ARG(0))); }
+SFA_FUNC_WRAPPED(088A34A8, game_bselect_style_enter, anthology_bselect_style_enter) { SELECT_FRAME(0x30, style_enter(c, ARG(0), ARG(1), ARG(2))); }
+SFA_FUNC_WRAPPED(088A35E4, game_bselect_style_choose, anthology_bselect_style_choose) { SELECT_FRAME(0x30, style_choose(c, ARG(0))); }
 SFA_FUNC(088A373C, game_bselect_style_wait) { row_wait(ARG(0), 2); }
 SFA_FUNC(088A3AA0, game_bselect_ism_chosen) { SELECT_FRAME(0x10, ism_chosen(c, ARG(0))); }
-SFA_FUNC(088A382C, game_bselect_ism_enter)  { SELECT_FRAME(0x20, ism_enter(c, ARG(0), ARG(1), ARG(2))); }
-SFA_FUNC(088A3914, game_bselect_ism_choose) { SELECT_FRAME(0x20, ism_choose(c, ARG(0), ARG(1), ARG(2))); }
+SFA_FUNC_WRAPPED(088A382C, game_bselect_ism_enter, anthology_bselect_ism_enter) { SELECT_FRAME(0x20, ism_enter(c, ARG(0), ARG(1), ARG(2))); }
+SFA_FUNC_WRAPPED(088A3914, game_bselect_ism_choose, anthology_bselect_ism_choose) { SELECT_FRAME(0x20, ism_choose(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(088A4C68, game_bselect_ism_character) { ism_character(ARG(0), ARG(1)); }
 SFA_FUNC(088A39CC, game_bselect_shared_ism) { shared_ism(ARG(0), ARG(1)); RETURN(0); }
 SFA_FUNC(088A3B70, game_bselect_ism_wait)   { SELECT_FRAME(0x20, ism_wait(c, ARG(0), ARG(1), ARG(2))); }

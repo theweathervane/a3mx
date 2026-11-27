@@ -185,6 +185,7 @@ static void after_text(Cpu *c) {
     if (FEATURE(MULTIPLAYER)) draw_words(c);
     if (FEATURE(MODE_MENU_ICONS)) padicons_draw(c);
     if (FEATURE(MENUS)) pause_frame();
+    if (FEATURE(ANTHOLOGY)) { void anthology_select_draw(Cpu *c); anthology_select_draw(c); }
 }
 void widescreen_hud_text(int after);        /* widescreen.c: WIDE NATIVE, Survival's timer at the 16:9 edge while drawn */
 void hook_f_0880B098(Cpu *c) { widescreen_hud_text(0); orig_f_0880B098(c); widescreen_hud_text(1); after_text(c); }

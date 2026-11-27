@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.172.0
+### For players
+- **New, experimental: imports from Hyper Street Fighter Alpha** (on Street Fighter Alpha Anthology, PS2). Choose your own Anthology disc image on the launcher's Paths tab (Show optional images) and Build / Run imports what the game can use into `assets/us/anthology/`. Nothing happens without the disc. Then OPTION MODE > EX. SETTING has a new page, **EX. ANTHOLOGY**, every setting OFF until you switch it on:
+  - **ANTHOLOGY DATA**: FOUND or NOT FOUND, whether the disc has been imported (shown, not set). NOT FOUND greys every row below; what they were set to is kept for when it is found again.
+  - **ANTHOLOGY**: the whole extension, on or off at once.
+  - **T.HAWK WALKBACK**: T. Hawk walks back with Hyper's own pictures (the PSP plays his walk forward backwards).
+  - **ALPHA SELECT**: after the character, pick ALPHA, ALPHA2, ALPHA2G, ALPHA2GC or ALPHA3 (and, for the older ones, GUARD SELECT: MANUAL / AUTO), in Arcade and in Survival / Training's TYPE row. The VS screen labels each side's choice. For now every version plays by Alpha 3's rules: the older versions' rules come once the code they need is decompiled.
+  - **S-ISM SELECT**: MODE SELECT also offers the four S-ISMs (A red, B blue, C green, D pink for the SF2 fighters), with Hyper's S-ISM gauge. They also play by Alpha 3's rules for now, and S-ISM D keeps its supers.
+  - **S-ISM PRESENTATION**: the S-ISMs' own wipe into the fight (an S in the ISM's colours, S-ISM D's pink logo) and S-ISM D's pink health bar. Off: the wipe of the ISM the S-ISM plays as.
+  - Experimental: it is optional content while A3MX is before 1.0, and may change.
+- **ISM PRESENTATION (EX. DISPLAY) is only the I-ISM's now:** an entry's yellow I and gold logo in the wipe into the fight, the I-ISM ranking, and (new) an entry's ISM shown as I-ISM in yellow on the Survival / Training select. The S-ISMs' wipes are EX. ANTHOLOGY's S-ISM PRESENTATION.
+- **Fix: an entry playing CLASSIC gets X-ISM's red wipe,** as in the original game; it got the I-ISM's gold one.
+
+### Technical
+- `src/extensions/anthology.c`, `anthology_select.c` (new): wrappers (SFA_FUNC_WRAPPED) on decompiled functions only: the sprite draw and cache fills (`sprite_cache.c`), the character select's and Survival / Training select's steps (`cursor.c`, `battle_select.c`), the HUD's gauges (`runners.c`, `hud.c`). No hooks on code that isn't decompiled. `ext_features`: FEAT_ANTHOLOGY on the new EX. ANTHOLOGY page; with it off, or without the imported files, none of it runs, and EX. ANTHOLOGY's rows only check the files are there (nothing is loaded or taken from the game's memory).
+- The wipe's wrappers (`ism_presentation_logo_start`, `_fading_shape`, `_shape`) and the Survival / Training box's (`ism_presentation_bselect_box`) are on FEAT_ANY, each part checking its own switch (I-ISM: ISM PRESENTATION; S-ISM: S-ISM PRESENTATION with ANTHOLOGY). a3mx.cfg: `anthology`, `hawk_walkback`, `alpha_select`, `sism_select`, `sism_presentation`, all OFF by default. The test features leave the Anthology off (`tests/parity.py`), so assets_in_game and stage_strips play the same on a computer that has imported the disc.
+- Tools: `tools/anthology.py`, `anthology_hawk.py`, `anthology_hud.py`, `anthology_d06.py`; `tools/build.py --anthology-iso`; the launcher's Paths tab checks the Anthology image (`disc_check.cpp`). Docs: docs/HYPER_ALPHA.md, docs/ANTHOLOGY_EXTENSION.md; `tests/watch/hawk_walkback.txt`.
+- Checked (on 0.169.0, before main's 0.170.0 - 0.171.1 were merged in): parity (memory hashes) passed for the 20 tests run; with ANTHOLOGY off the game's memory and picture were the same as main's in every frame of the scenarios compared, but for EX. SETTING's page count (7 pages, not 6).
+
 ## 0.171.1
 ### For players
 - **Fix: EX. FIGHTERS GUARD OFF now draws the ISM-coloured background bar (as CLASSIC fighters have) in place of the guard gauge, 1P and 2P, instead of leaving the space empty.**

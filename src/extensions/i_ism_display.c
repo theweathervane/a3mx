@@ -22,6 +22,7 @@
  * label decides (0x08898F5C shows I-ISM, label 0x147, from the same record).
  */
 #include "rt.h"
+#include "ext_features.h"
 #include <string.h>
 
 void f_0880E434(Cpu *c);
@@ -78,10 +79,14 @@ static const uint16_t *const I_SHAPES[3] = { I_LEFT, I_MIDDLE, I_RIGHT };
 
 #define GAME_MODE     (0x08E75910u + 0x72)
 #define MODE_WORLD_TOUR 3
+static uint32_t wipe_fighter(void) {
+    return (int16_t)RH(BATTLE + 56) == 3 ? FIGHTER(2) : (int8_t)RB(BATTLE + 48) != 0 ? FIGHTER(1) : FIGHTER(0);
+}
 static int wipe_is_entry(void) {
     if ((int8_t)RB(GAME_MODE) == MODE_WORLD_TOUR) return 0;     /* there the ISM is chosen to level up */
-    uint32_t f = (int16_t)RH(BATTLE + 56) == 3 ? FIGHTER(2) : (int8_t)RB(BATTLE + 48) != 0 ? FIGHTER(1) : FIGHTER(0);
+    uint32_t f = wipe_fighter();
     int player = (int8_t)RB(f + 337);
+    if ((int8_t)RB(f + 438) == 3) return 0;      /* CLASSIC: X-ISM's red wipe and logo, as any CLASSIC (the maintainer, 2026-11-25) */
     return player >= 0 && player < 2 && RB(ENTRIES + ENTRY_SIZE * (uint32_t)player) != 0;
 }
 
@@ -89,30 +94,140 @@ static uint16_t rgb555(const uint8_t c[3]) {
     return (uint16_t)(0x8000u | (uint32_t)(c[0] >> 3) | (uint32_t)(c[1] >> 3) << 5 | (uint32_t)(c[2] >> 3) << 10);
 }
 
-/* The logo starts (screen_steps.c, 0x08885A44): after the game has loaded the ISM's palette, an entry's
-   is gold instead. */
-int i_ism_display_logo_start(Cpu *c, uint32_t a0, int after) {
+/* ---- the S-ISMs (with the anthology's S-ISM SELECT) ----
+ * The maintainer's scheme (2026-11-25): an S-ISM's wipe has a giant S, open like the X, A, V and I
+ * (no outline), in another ISM's colours, and that ISM's logo: S-ISM A (red) X-ISM's, S-ISM B (blue)
+ * V-ISM's, S-ISM C (green) A-ISM's, S-ISM D (pink) X-ISM's turned pink, its logo a pink gradient.
+ * Two transitions, two switches (the maintainer, 2026-11-27): the I-ISM's (an entry's I and gold logo)
+ * with Extra ISM Presentation (FEAT_I_ISM_DISPLAY, EX. DISPLAY), the S-ISMs' (not in the PSP game) with
+ * EX. ANTHOLOGY's S-ISM PRESENTATION (rt_sism_presentation, with ANTHOLOGY on and an S-ISM chosen),
+ * neither depending on the other. Without S-ISM PRESENTATION an S-ISM gets the wipe of the ISM it plays
+ * as, as the game draws it. The wrappers below are on FEAT_ANY ("ism_presentation_") and check each
+ * part's own switch. */
+typedef struct { int version, sism, guard; } AnthologyChoice;
+AnthologyChoice anthology_fighter_choice(uint32_t me);         /* anthology_select.c */
+int anthology_select_available(void);
+extern int rt_sism_presentation;                                /* anthology_select.c */
+enum { S_NONE, S_GREEN, S_BLUE, S_PINK, S_RED };
+static const int8_t SISM_SCHEME[5] = { 0, 0, 1, -1, -1 };       /* the ISM whose wipe it borrows: C A, B V, D X, A X */
+#define S_PINK_RGB 0xE749BEu                                    /* (as I_YELLOW: 0xRRGGBB) the hot pink of the logo's H (the maintainer's sample, 2026-11-26) */
+static const uint8_t PINK[16][3] = {
+    { 0x00, 0x00, 0x00 }, { 0xE0, 0x48, 0xB8 }, { 0x84, 0x31, 0x94 }, { 0xA5, 0x42, 0xB5 },
+    { 0xF8, 0xC8, 0xF0 }, { 0x29, 0x00, 0x21 }, { 0x42, 0x08, 0x35 }, { 0x5A, 0x10, 0x4A },
+    { 0x73, 0x18, 0x5E }, { 0x8C, 0x20, 0x73 }, { 0xA5, 0x29, 0x88 }, { 0xBD, 0x31, 0x9C },
+    { 0xCE, 0x3A, 0xA8 }, { 0xD6, 0x40, 0xB0 }, { 0xDE, 0x44, 0xB4 }, { 0xE0, 0x48, 0xB8 },
+};
+static int wipe_sism(void) {    /* the S-ISM transition's switch: S-ISM PRESENTATION, ANTHOLOGY on (and its files), an S-ISM chosen */
+    if (!rt_sism_presentation || !FEATURE(ANTHOLOGY) || (int8_t)RB(GAME_MODE) == MODE_WORLD_TOUR || !anthology_select_available()) return S_NONE;
+    int s = anthology_fighter_choice(wipe_fighter()).sism;
+    return s >= S_GREEN && s <= S_RED ? s : S_NONE;
+}
+
+/* The S: three columns of quads, 128 x 256 each like the letters', what they leave open the S. Drawn
+   as a stroke 48 wide along a line through these points (a blocky S with rounded corners, its ends cut
+   square at x 42 and 342), and sampled every 2 rows. */
+static const int16_t S_LINE[][2] = { { 342, 48 }, { 96, 48 }, { 66, 78 }, { 66, 98 }, { 96, 128 }, { 288, 128 }, { 318, 158 }, { 318, 178 }, { 288, 208 }, { 42, 208 } };
+#define S_HALF 24
+static uint16_t s_cols[3][4096];
+static int s_made;
+static int in_s(int x, int y) {
+    if (x < 42 || x > 342) return 0;
+    for (size_t i = 0; i + 1 < sizeof S_LINE / sizeof S_LINE[0]; i++) {
+        float ax = S_LINE[i][0], ay = S_LINE[i][1], bx = S_LINE[i + 1][0], by = S_LINE[i + 1][1];
+        float dx = bx - ax, dy = by - ay, t = ((float)x - ax) * dx + ((float)y - ay) * dy, l = dx * dx + dy * dy;
+        t = l > 0 ? t / l : 0; if (t < 0) t = 0; if (t > 1) t = 1;
+        float ex = ax + t * dx - (float)x, ey = ay + t * dy - (float)y;
+        if (ex * ex + ey * ey <= (float)(S_HALF * S_HALF)) return 1;
+    }
+    return 0;
+}
+static void make_s(void) {
+    for (int col = 0; col < 3; col++) {
+        uint16_t *q = s_cols[col]; int n = 0, prev_from = 0, prev_to = 0;
+        for (int y0 = 0; y0 < 256; y0 += 2) {
+            int runs[16][2], nr = 0, x = 0;
+            while (x < 128 && nr < 16) {
+                while (x < 128 && in_s(col * 128 + x, y0 + 1)) x++;
+                if (x >= 128) break;
+                int a = x;
+                while (x < 128 && !in_s(col * 128 + x, y0 + 1)) x++;
+                runs[nr][0] = a; runs[nr][1] = x; nr++;
+            }
+            int from = n;
+            for (int r = 0; r < nr; r++) {
+                int merged = 0;
+                for (int k = prev_from; k < prev_to; k += 8)     /* the same run in the band above: lengthened */
+                    if (q[k] == runs[r][0] && q[k + 2] == runs[r][1] && q[k + 5] == y0) { q[k + 5] = q[k + 7] = (uint16_t)(y0 + 2); merged = 1; break; }
+                if (merged || n + 8 >= 4095) continue;
+                uint16_t v[8] = { (uint16_t)runs[r][0], (uint16_t)y0, (uint16_t)runs[r][1], (uint16_t)y0,
+                                  (uint16_t)runs[r][1], (uint16_t)(y0 + 2), (uint16_t)runs[r][0], (uint16_t)(y0 + 2) };
+                memcpy(q + n, v, sizeof v); n += 8;
+            }
+            /* this band's quads, and those just lengthened (the band above's), for the next band */
+            prev_to = n; (void)from;
+        }
+        q[n] = 0xFFFF;
+    }
+    s_made = 1;
+}
+
+/* The logo starts (screen_steps.c, 0x08885A44). The S-ISM transition (S-ISM PRESENTATION): the wipe that of
+   the ISM the S-ISM borrows (the fighter's ISM changed during the call, put back after it), S-ISM D's
+   logo pink. The I-ISM transition (Extra ISM Presentation): an entry's palette gold, after the game has
+   loaded the ISM's. Neither: nothing. */
+static int8_t kept_ism; static uint32_t kept_at;
+int ism_presentation_logo_start(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
-    if (!after || !wipe_is_entry()) return 0;
+    if (after && kept_at) { WB(kept_at, (uint8_t)kept_ism); kept_at = 0; }
+    int s = wipe_sism();
+    if (!after) {
+        kept_at = 0;
+        if (s == S_NONE) return 0;
+        uint32_t f = wipe_fighter();
+        kept_at = f + 386; kept_ism = (int8_t)RB(kept_at);
+        WB(kept_at, (uint8_t)SISM_SCHEME[s]);
+        return 0;
+    }
+    if (s != S_NONE) {
+        if (s == S_PINK) {
+            for (uint32_t i = 1; i < 16; i++) WH(PALETTES + LOGO_PALETTE * 32u + i * 2u, rgb555(PINK[i]));
+            WW(PALETTES_DIRTY, 1);
+        }
+        rt_log("anthology: an S-ISM's wipe (%d): the S", s);
+        return 0;
+    }
+    if (!FEATURE(I_ISM_DISPLAY) || !wipe_is_entry()) return 0;
     for (uint32_t i = 1; i < 16; i++) WH(PALETTES + LOGO_PALETTE * 32u + i * 2u, rgb555(GOLD[i]));
     WW(PALETTES_DIRTY, 1);
     rt_log("i_ism_display: an entry's wipe: the I and the gold logo");
     return 0;
 }
 
-/* A fading shape of the logo's wipe (batch_large.c, 0x0880DA78): while one of an entry's is drawn,
-   A's shapes (3 - 5) are drawn as the I by i_ism_display_shape. */
-static int drawing_entry_wipe;
-int i_ism_display_fading_shape(Cpu *c, uint32_t a0, int after) {
+/* A fading shape of the logo's wipe (batch_large.c, 0x0880DA78): while an S-ISM's is drawn (S-ISM PRESENTATION)
+   the borrowed ISM's shapes are drawn as the S, while an entry's is (Extra ISM Presentation) A's shapes
+   (3 - 5) as the I, by ism_presentation_shape. */
+static int drawing_entry_wipe, drawing_sism;
+int ism_presentation_fading_shape(Cpu *c, uint32_t a0, int after) {
     (void)c; (void)a0;
-    drawing_entry_wipe = !after && RB(SINGLE) && (RB(SINGLE + 3) == LOGO_TYPE || RB(SINGLE + 3) == WIN_LOGO_TYPE) &&
-                         wipe_is_entry();
+    int logo = !after && RB(SINGLE) && (RB(SINGLE + 3) == LOGO_TYPE || RB(SINGLE + 3) == WIN_LOGO_TYPE);
+    drawing_sism = logo ? wipe_sism() : S_NONE;
+    drawing_entry_wipe = logo && drawing_sism == S_NONE && FEATURE(I_ISM_DISPLAY) && wipe_is_entry();
     return 0;
 }
 
 /* A shape drawn (shapes.c, 0x0880E434: a0 its place, a1 the shape, a2 the alpha). */
-int i_ism_display_shape(Cpu *c, uint32_t a0, int after) {
+int ism_presentation_shape(Cpu *c, uint32_t a0, int after) {
     uint32_t shape = c->r[5], alpha = c->r[6];
+    if (!after && drawing_sism != S_NONE) {
+        uint32_t base = (uint32_t)(SISM_SCHEME[drawing_sism] + 1) * 3;   /* the borrowed ISM's shapes: X 0, A 3, V 6 */
+        if (shape < base || shape > base + 2) return 0;
+        if (!s_made) make_s();
+        uint32_t rgb = drawing_sism == S_PINK ? S_PINK_RGB : RW(0x08A04B88u + 4u * (shape / 3u)) & 0xFFFFFFu;
+        c->r[29] -= 0x40;
+        shapes_draw(c, a0, s_cols[shape - base], rgb, alpha);
+        c->r[29] += 0x40;
+        return 1;
+    }
     if (after || !drawing_entry_wipe || shape < 3 || shape > 5) return 0;
     c->r[29] -= 0x40;
     shapes_draw(c, a0, I_SHAPES[shape - 3], I_YELLOW, alpha);

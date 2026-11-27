@@ -1,0 +1,405 @@
+{
+ "about": "Data runs (64 bytes or more) that are byte-identical in the PSP program's .data (US BOOT.BIN, loaded at 0x08804000) and in the Anthology's recompiled Street Fighter Alpha 3 (zero3_usa.bin, X_DATA.BIN entry 253, loaded at 0x1F0000). Found by tools/anthology.py's method in docs/HYPER_ALPHA.md. Addresses only; no game data.",
+ "psp_base": "0x08804000",
+ "zero3_base": "0x1F0000",
+ "totals": {
+  "runs": 400,
+  "bytes": 28175,
+  "runs_64_or_more": 73
+ },
+ "runs": [
+  {
+   "psp": "0x8a04348",
+   "zero3": "0x58afac",
+   "bytes": 2020
+  },
+  {
+   "psp": "0x8a0efdc",
+   "zero3": "0x59329c",
+   "bytes": 68
+  },
+  {
+   "psp": "0x8a0fba8",
+   "zero3": "0x583ec0",
+   "bytes": 481
+  },
+  {
+   "psp": "0x8a153e0",
+   "zero3": "0x589fb8",
+   "bytes": 88
+  },
+  {
+   "psp": "0x8a180d0",
+   "zero3": "0x591708",
+   "bytes": 312
+  },
+  {
+   "psp": "0x8a18218",
+   "zero3": "0x591840",
+   "bytes": 160
+  },
+  {
+   "psp": "0x8a1891c",
+   "zero3": "0x8681fe",
+   "bytes": 323
+  },
+  {
+   "psp": "0x8a18d54",
+   "zero3": "0x8684f0",
+   "bytes": 368
+  },
+  {
+   "psp": "0x8a1b5f4",
+   "zero3": "0x58a374",
+   "bytes": 124
+  },
+  {
+   "psp": "0x8a1dc58",
+   "zero3": "0x5f4fac",
+   "bytes": 8968
+  },
+  {
+   "psp": "0x8a21820",
+   "zero3": "0x584c00",
+   "bytes": 1024
+  },
+  {
+   "psp": "0x8a245ec",
+   "zero3": "0x58d164",
+   "bytes": 88
+  },
+  {
+   "psp": "0x8a246a0",
+   "zero3": "0x58d068",
+   "bytes": 248
+  },
+  {
+   "psp": "0x8a24854",
+   "zero3": "0x58d2d4",
+   "bytes": 108
+  },
+  {
+   "psp": "0x8a248f0",
+   "zero3": "0x58d348",
+   "bytes": 248
+  },
+  {
+   "psp": "0x8a24c80",
+   "zero3": "0x58f5e0",
+   "bytes": 64
+  },
+  {
+   "psp": "0x8a26e44",
+   "zero3": "0x587690",
+   "bytes": 168
+  },
+  {
+   "psp": "0x8a2a220",
+   "zero3": "0x58d6f0",
+   "bytes": 130
+  },
+  {
+   "psp": "0x8a2a478",
+   "zero3": "0x58d6f0",
+   "bytes": 130
+  },
+  {
+   "psp": "0x8a2a6d0",
+   "zero3": "0x58d6f0",
+   "bytes": 130
+  },
+  {
+   "psp": "0x8a37554",
+   "zero3": "0x58fd70",
+   "bytes": 176
+  },
+  {
+   "psp": "0x8a485c0",
+   "zero3": "0x5cf5da",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a48674",
+   "zero3": "0x5cf664",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a48728",
+   "zero3": "0x5cf6ee",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a487dc",
+   "zero3": "0x5cf664",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a4f358",
+   "zero3": "0x5d0a26",
+   "bytes": 84
+  },
+  {
+   "psp": "0x8a4f3f8",
+   "zero3": "0x5d0aa8",
+   "bytes": 80
+  },
+  {
+   "psp": "0x8a4f49c",
+   "zero3": "0x5d0b2e",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a5280c",
+   "zero3": "0x82c4a4",
+   "bytes": 92
+  },
+  {
+   "psp": "0x8a528b0",
+   "zero3": "0x82c4a4",
+   "bytes": 92
+  },
+  {
+   "psp": "0x8a52954",
+   "zero3": "0x82c4a4",
+   "bytes": 92
+  },
+  {
+   "psp": "0x8a529f8",
+   "zero3": "0x82c4a4",
+   "bytes": 92
+  },
+  {
+   "psp": "0x8a58518",
+   "zero3": "0x590090",
+   "bytes": 69
+  },
+  {
+   "psp": "0x8a6474c",
+   "zero3": "0x585eee",
+   "bytes": 246
+  },
+  {
+   "psp": "0x8a69f10",
+   "zero3": "0x83c284",
+   "bytes": 90
+  },
+  {
+   "psp": "0x8a69fc8",
+   "zero3": "0x83c312",
+   "bytes": 84
+  },
+  {
+   "psp": "0x8a6a070",
+   "zero3": "0x83c394",
+   "bytes": 88
+  },
+  {
+   "psp": "0x8a6a11c",
+   "zero3": "0x83c41c",
+   "bytes": 84
+  },
+  {
+   "psp": "0x8a70b48",
+   "zero3": "0x588650",
+   "bytes": 64
+  },
+  {
+   "psp": "0x8a71c0c",
+   "zero3": "0x5886f0",
+   "bytes": 256
+  },
+  {
+   "psp": "0x8a75578",
+   "zero3": "0x8404a0",
+   "bytes": 96
+  },
+  {
+   "psp": "0x8a756c0",
+   "zero3": "0x8405a4",
+   "bytes": 96
+  },
+  {
+   "psp": "0x8a75764",
+   "zero3": "0x840626",
+   "bytes": 96
+  },
+  {
+   "psp": "0x8a7611c",
+   "zero3": "0x8410ae",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a76214",
+   "zero3": "0x841188",
+   "bytes": 76
+  },
+  {
+   "psp": "0x8a7c644",
+   "zero3": "0x5d0a26",
+   "bytes": 84
+  },
+  {
+   "psp": "0x8a7c6e4",
+   "zero3": "0x5d0aa8",
+   "bytes": 80
+  },
+  {
+   "psp": "0x8a7c788",
+   "zero3": "0x5d0b2e",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a832e8",
+   "zero3": "0x590090",
+   "bytes": 69
+  },
+  {
+   "psp": "0x8a83f3c",
+   "zero3": "0x841fe8",
+   "bytes": 94
+  },
+  {
+   "psp": "0x8a84e4c",
+   "zero3": "0x8427be",
+   "bytes": 96
+  },
+  {
+   "psp": "0x8a85cac",
+   "zero3": "0x870510",
+   "bytes": 256
+  },
+  {
+   "psp": "0x8a85f14",
+   "zero3": "0x58ffc0",
+   "bytes": 129
+  },
+  {
+   "psp": "0x8a8d068",
+   "zero3": "0x84439e",
+   "bytes": 68
+  },
+  {
+   "psp": "0x8a8d0e0",
+   "zero3": "0x8443fe",
+   "bytes": 92
+  },
+  {
+   "psp": "0x8a8d170",
+   "zero3": "0x844476",
+   "bytes": 92
+  },
+  {
+   "psp": "0x8a8e33c",
+   "zero3": "0x860dac",
+   "bytes": 128
+  },
+  {
+   "psp": "0x8a8efc8",
+   "zero3": "0x8451c8",
+   "bytes": 76
+  },
+  {
+   "psp": "0x8a8f04c",
+   "zero3": "0x8451c8",
+   "bytes": 76
+  },
+  {
+   "psp": "0x8a8f0cc",
+   "zero3": "0x8452a8",
+   "bytes": 80
+  },
+  {
+   "psp": "0x8a941ac",
+   "zero3": "0x5864c0",
+   "bytes": 480
+  },
+  {
+   "psp": "0x8a94720",
+   "zero3": "0x5999b8",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8a953d0",
+   "zero3": "0x58eb9c",
+   "bytes": 260
+  },
+  {
+   "psp": "0x8a96990",
+   "zero3": "0x58ffc0",
+   "bytes": 128
+  },
+  {
+   "psp": "0x8a98bb0",
+   "zero3": "0x58ffc0",
+   "bytes": 128
+  },
+  {
+   "psp": "0x8aa1948",
+   "zero3": "0x5cf5da",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8aa19fc",
+   "zero3": "0x5cf664",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8aa1ab0",
+   "zero3": "0x5cf6ee",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8aa1b64",
+   "zero3": "0x5cf664",
+   "bytes": 72
+  },
+  {
+   "psp": "0x8aa3928",
+   "zero3": "0x841fe8",
+   "bytes": 94
+  },
+  {
+   "psp": "0x8ab6b34",
+   "zero3": "0x870510",
+   "bytes": 256
+  },
+  {
+   "psp": "0x8ab6ca8",
+   "zero3": "0x591548",
+   "bytes": 88
+  },
+  {
+   "psp": "0x8ab6e24",
+   "zero3": "0x58d068",
+   "bytes": 252
+  }
+ ],
+ "per_character_06_data": {
+  "note": "16-byte blocks of assets/us/characters/<nn>/fighter/data/06_data_*.bin found in zero3 / zero9 (Hyper)",
+  "00_ryu": [
+   187,
+   179,
+   1001
+  ],
+  "01_ken": [
+   240,
+   242,
+   1205
+  ],
+  "04_chunli": [
+   249,
+   251,
+   924
+  ],
+  "0f_dhalsim": [
+   143,
+   172,
+   1145
+  ],
+  "16_cammy": [
+   332,
+   331,
+   1644
+  ]
+ }
+}

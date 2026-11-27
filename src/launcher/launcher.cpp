@@ -243,6 +243,8 @@ enum { THEME_AUTO, THEME_LIGHT, THEME_DARK };   /* always the system's; --theme 
 
 struct Settings {
     std::string iso;
+    std::string anthology_iso;      /* the Paths tab: Street Fighter Alpha Anthology (PS2), for tools/build.py --anthology-iso */
+    bool show_optional = false;     /* the Paths tab: Show optional images (the PS2 ISO row) */
     int preset = 0;
     bool extract = false, tests = false, run = true;
     bool art_pack = false;          /* one go: tools/build.py --art-pack */
@@ -279,6 +281,8 @@ static void settings_load(Settings &s, const std::string &path) {
         std::string k = line.substr(0, eq), v = line.substr(eq + 1);
         int n = atoi(v.c_str());
         if (k == "iso") s.iso = v;
+        else if (k == "anthology_iso") s.anthology_iso = v;
+        else if (k == "show_optional_images") s.show_optional = n != 0;
         else if (k == "preset") s.preset = n >= 0 && n < PRESET_COUNT ? n : 0;
         else if (k == "tests") s.tests = n != 0;
         else if (k == "run") s.run = n != 0;
@@ -314,6 +318,8 @@ static void settings_save(const Settings &s, const std::string &path) {
     if (path.empty()) return;
     std::string t = "# a3mx-launcher settings\n";
     t += "iso=" + s.iso + "\n";
+    t += "anthology_iso=" + s.anthology_iso + "\n";
+    t += "show_optional_images=" + std::to_string(s.show_optional) + "\n";
     t += "preset=" + std::to_string(s.preset) + "\n";
     t += "tests=" + std::to_string(s.tests) + "\n";
     t += "run=" + std::to_string(s.run) + "\n";
@@ -514,6 +520,8 @@ struct App {
 
     /* the disc check */
     DiscCheck disc;
+    DiscCheck anthology_disc;                      /* the optional PS2 image (set_anthology in the constructor) */
+    std::string anthology_path, anthology_stamp;   /* what anthology_disc last checked */
     std::string disc_path;          /* the ISO being checked: the field, or the one found in imports/psp/ */
     std::string disc_stamp;         /* its size and time when checked */
     bool disc_from_imports = false;
@@ -522,6 +530,7 @@ struct App {
     std::string imports_key = "?", imports_pick;   /* imports/psp/'s files when last looked at, and the one picked */
 
     std::vector<char> iso_buf = std::vector<char>(4096, 0);
+    std::vector<char> anthology_buf = std::vector<char>(4096, 0);
     std::vector<char> extra_buf = std::vector<char>(1024, 0);
     /* Show advanced settings: off at every start, never saved. Off, the Build / Run tab has only the
        simplest settings and Run uses plain defaults (Release, run after building, no extra options) */
@@ -534,7 +543,7 @@ struct App {
     bool outputs_modal = false;
     int sel_addr = -1, sel_pc = -1;
     std::vector<char> addr_from_buf = std::vector<char>(16, 0), addr_to_buf = std::vector<char>(16, 0), pc_buf = std::vector<char>(16, 0);
-    int dialog_for = 0;                            /* the open file dialog: 0 the ISO, 1 a recording */
+    int dialog_for = 0;                            /* the open file dialog: 0 the ISO, 1 a recording, 2 the Anthology ISO */
 
     std::string game_exe() const {
 #ifdef _WIN32
@@ -633,6 +642,19 @@ struct App {
         }
     }
 
+    /* the optional Anthology image: checked again whenever its path or file changes */
+    void choose_anthology() {
+        std::string want = set.show_optional ? set.anthology_iso : std::string(), st = stamp(want);
+        if (want != anthology_path || st != anthology_stamp) {
+            anthology_path = want; anthology_stamp = st;
+            anthology_disc.start(want);
+        }
+    }
+    bool anthology_wanted() {
+        return set.show_optional && !set.anthology_iso.empty() &&   /* (ANTHOLOGY itself is switched in the game) */
+               anthology_disc.result().verdict == DISC_OK;
+    }
+
     /* builds allowed: a checked US disc, or nothing to check but work/ already holds the US disc */
     bool disc_allows_build(DiscResult &r) {
         r = disc.result();
@@ -698,6 +720,7 @@ struct App {
         if (!root.empty()) {
             args.push_back("--preset"); args.push_back(PRESET_ARGS[preset_now()]);
             if (!set.iso.empty()) { args.push_back("--iso"); args.push_back(set.iso); }
+            if (anthology_wanted()) { args.push_back("--anthology-iso"); args.push_back(set.anthology_iso); }
             if (advanced && set.extract) args.push_back("--extract");
             if (advanced && set.art_pack) args.push_back("--art-pack");
             if (advanced && set.tests) args.push_back("--test");
@@ -1020,12 +1043,17 @@ struct App {
         Uint64 now = SDL_GetTicks();
         if (now - work_checked > 2000) { work_checked = now; if (!child.busy()) check_work(); }
         bool changed = !got.empty() || was != child.busy() || status != status_before || closing_since || ctl_test || cap_player >= 0;
-        if (now - disc_polled > 1500) { disc_polled = now; choose_disc(); }   /* not a reason to redraw behind the game */
+        if (now - disc_polled > 1500) { disc_polled = now; choose_disc(); choose_anthology(); }   /* not a reason to redraw behind the game */
         std::lock_guard<std::mutex> lock(dialog_mutex);
         if (dialog_done) {
             changed = true;
             dialog_done = false;
             if (!dialog_result.empty() && dialog_for == 1) replay_file = dialog_result;   /* Play Output's recording */
+            else if (!dialog_result.empty() && dialog_for == 2) {
+                set.anthology_iso = dialog_result;
+                snprintf(anthology_buf.data(), anthology_buf.size(), "%s", set.anthology_iso.c_str());
+                settings_save(set, settings_path);
+            }
             else if (!dialog_result.empty()) {
                 set.iso = dialog_result;
                 snprintf(iso_buf.data(), iso_buf.size(), "%s", set.iso.c_str());
@@ -1057,6 +1085,12 @@ struct App {
         std::string where = replay_file.empty() ? join(user_dir("logs"), "recordings") : parent(replay_file);
         dialog_for = 1;
         SDL_ShowOpenFileDialog(on_dialog, this, window, filters, 2, where.c_str(), false);
+    }
+    void browse_anthology() {
+        static const SDL_DialogFileFilter filters[] = { { "PS2 disc image (*.iso)", "iso" }, { "All files", "*" } };
+        dialog_for = 2;
+        std::string where = set.anthology_iso.empty() ? (root.empty() ? base : join(root, "imports/ps2/")) : parent(set.anthology_iso);
+        SDL_ShowOpenFileDialog(on_dialog, this, window, filters, 2, where.empty() ? NULL : where.c_str(), false);
     }
     void browse() {
         static const SDL_DialogFileFilter filters[] = { { "PSP disc image (*.iso)", "iso" }, { "All files", "*" } };
@@ -1338,15 +1372,15 @@ struct App {
     void image_section(bool busy) {
         const float em = ImGui::GetFontSize(), lw = em * 7.0f, h = ImGui::GetFrameHeight();
         const bool repo = !root.empty();
-        ImGui::SeparatorText("Disc image");
+        ImGui::SeparatorText("Images");
         ImGui::BeginDisabled(busy);
-        label("Your ISO", lw);
+        label("PSP ISO", lw);
         float browse_w = em * 6.0f, fw = flag_width(h);
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - browse_w - fw - ImGui::GetStyle().ItemSpacing.x * 2);
         std::string hint = disc_from_imports ? "empty: " + base_name(disc_path) + " in imports/psp/" : repo ? "empty: the ISO in imports/psp/" : "not used: the game reads work/";
         if (ImGui::InputTextWithHint("##iso", hint.c_str(), iso_buf.data(), iso_buf.size())) { set.iso = iso_buf.data(); disc_polled = 0; }
         if (ImGui::IsItemDeactivatedAfterEdit()) settings_save(set, settings_path);
-        ImGui::SetItemTooltip("Your disc image's path. Empty: the one in imports/psp/. It is checked as you type: the flag shows whose disc it is");
+        ImGui::SetItemTooltip("Your PSP disc image's path. Empty: the one in imports/psp/. It is checked as you type: the flag shows whose disc it is");
         ImGui::SameLine();
 
         /* the flag, or the mark, as high as the field */
@@ -1382,6 +1416,63 @@ struct App {
         if (repo && !work_line.empty() && r.verdict != DISC_BAD && r.verdict != DISC_UNSUPPORTED) {
             ImGui::SetCursorPosX(lw);
             ImGui::TextColored(colour(work_region.empty() ? K_NOTE : K_CMD), "%s", work_line.c_str());
+        }
+        ImGui::PopTextWrapPos();
+        anthology_row(busy);
+    }
+
+    /* ---- the optional images: Street Fighter Alpha Anthology (PS2), for extra content the game offers in
+       EX. SETTING (tools/build.py --anthology-iso imports it at Build / Run, into assets/us/anthology/) ---- */
+    void anthology_row(bool busy) {
+        const float em = ImGui::GetFontSize(), lw = em * 7.0f, h = ImGui::GetFrameHeight();
+        const bool repo = !root.empty();
+        ImGui::SetCursorPosX(lw);
+        ImGui::BeginDisabled(busy);
+        if (ImGui::Checkbox("Show optional images", &set.show_optional)) { settings_save(set, settings_path); disc_polled = 0; }
+        ImGui::SetItemTooltip("Images of other discs the game can take extra content from. Kept ticked once ticked.");
+        ImGui::EndDisabled();
+        if (!set.show_optional) return;
+
+        ImGui::BeginDisabled(busy || !repo);
+        label("PS2 ISO", lw);
+        float browse_w = em * 6.0f, fw = flag_width(h);
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - browse_w - fw - ImGui::GetStyle().ItemSpacing.x * 2);
+        if (ImGui::InputTextWithHint("##anthology", "empty: Street Fighter Alpha Anthology not used", anthology_buf.data(), anthology_buf.size())) {
+            set.anthology_iso = anthology_buf.data(); disc_polled = 0;
+        }
+        if (ImGui::IsItemDeactivatedAfterEdit()) settings_save(set, settings_path);
+        ImGui::SetItemTooltip("Experimental: extra content from Street Fighter Alpha Anthology (PS2), available in EX. SETTING.\n"
+                              "Your disc image's path; it is checked as you type, and the flag shows whose disc it is.\n"
+                              "Build / Run imports from it into assets/us/anthology/ (once per disc image; it stays on your computer).\n"
+                              "Switched on and off in the game: OPTION MODE > EX. SETTING > EX. ANTHOLOGY.");
+        ImGui::SameLine();
+        DiscResult r = anthology_disc.result();
+        ImVec2 p = ImGui::GetCursorScreenPos();
+        ImGui::Dummy(ImVec2(fw, h));
+        ImDrawList *dl = ImGui::GetWindowDrawList();
+        if (r.verdict == DISC_CHECKING) draw_wait_mark(dl, p, h, (float)SDL_GetTicks() / 1000.0f, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+        else if (r.verdict == DISC_OK || r.verdict == DISC_UNSUPPORTED) draw_flag(dl, p, h, r.region);
+        else if (r.verdict == DISC_BAD) draw_bad_mark(dl, p, h);
+        if (ImGui::IsItemHovered() && !r.message.empty()) ImGui::SetTooltip("%s", r.message.c_str());
+        ImGui::SameLine();
+        if (ImGui::Button("Browse...##anthology", ImVec2(-1, 0))) browse_anthology();
+        ImGui::SetItemTooltip("Choose your Street Fighter Alpha Anthology disc image (.iso)");
+        ImGui::EndDisabled();
+
+        ImGui::SetCursorPosX(lw);
+        ImGui::PushTextWrapPos(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x);
+        if (r.verdict == DISC_CHECKING) ImGui::TextColored(colour(K_CMD), "Checking %s...", base_name(r.path).c_str());
+        else if (r.verdict == DISC_BAD || r.verdict == DISC_UNSUPPORTED) ImGui::TextColored(colour(K_ERROR), "%s", r.message.c_str());
+        else if (r.verdict == DISC_OK) {
+            std::string extra = r.whole_done ? (r.exact ? " The image is the known dump." : " A different dump of the same program: fine.")
+                                             : anthology_disc.busy() ? " Checking the whole image... " + std::to_string((int)(anthology_disc.whole_progress() * 100)) + "%" : "";
+            ImGui::TextColored(colour(K_GOOD), "%s%s", r.message.c_str(), extra.c_str());
+        }
+        if (repo && r.verdict != DISC_BAD && r.verdict != DISC_UNSUPPORTED) {
+            ImGui::SetCursorPosX(lw);
+            bool imported = is_dir(join(root, "assets/us/anthology"));
+            if (imported) ImGui::TextColored(colour(K_CMD), "Extra content imported (assets/us/anthology/): see EX. SETTING > EX. ANTHOLOGY in the game. Experimental.");
+            else if (r.verdict == DISC_OK) ImGui::TextColored(colour(K_NOTE), "Build or Run imports the extra content from it (experimental).");
         }
         ImGui::PopTextWrapPos();
     }
@@ -2794,6 +2885,8 @@ int main(int argc, char **argv) {
     else if (theme_arg == "dark") app.theme = THEME_DARK;
     app.show_at_start = show_arg;
     snprintf(app.iso_buf.data(), app.iso_buf.size(), "%s", app.set.iso.c_str());
+    snprintf(app.anthology_buf.data(), app.anthology_buf.size(), "%s", app.set.anthology_iso.c_str());
+    app.anthology_disc.set_anthology();
     snprintf(app.extra_buf.data(), app.extra_buf.size(), "%s", app.set.extra.c_str());
     app.folders_to_bufs();
     for (int t = 0; t < T_COUNT; t++) if (tab_arg == TAB_ARGS[t]) app.set.tab = t;

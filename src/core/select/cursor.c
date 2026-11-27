@@ -592,18 +592,19 @@ static void count_choice(gaddr me) {
 SFA_FUNC_WRAPPED(08896AA4, game_select_pad_pressed, selectscreen_pressed) { RETURN(box_pad(ARG(0), PAD_PRESSED)); }
 SFA_FUNC_WRAPPED(08896B18, game_select_pad_held, selectscreen_held)          { RETURN(box_pad(ARG(0), PAD_HELD)); }
 SFA_FUNC(0889472C, game_select_barred)          { RETURN(character_barred(ARG(0))); }
-SFA_FUNC(08894644, game_select_character_enter) { SELECT_FRAME(0x20, character_enter(c, ARG(0), ARG(1))); }
+/* (anthology_select.c: ALPHA SELECT, the MODE carousel with the S-ISMs, MANUAL / AUTO) */
+SFA_FUNC_WRAPPED(08894644, game_select_character_enter, anthology_select_character) { SELECT_FRAME(0x20, character_enter(c, ARG(0), ARG(1))); }
 SFA_FUNC(08894768, game_select_character_move)  { SELECT_FRAME(0x30, character_move(c, ARG(0), ARG(1))); }
 SFA_FUNC(08897008, game_select_character_grid)  { SELECT_FRAME(0x50, character_grid(c, ARG(0), ARG(1), ARG(2))); }
 SFA_FUNC(08897344, game_select_character_chosen) { SELECT_FRAME(0x40, character_chosen(c, ARG(0), ARG(1), ARG(2))); }
-SFA_FUNC(08894990, game_select_character_wait)  { SELECT_FRAME(0x20, character_wait(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(08894990, game_select_character_wait, anthology_select_character_wait) { SELECT_FRAME(0x20, character_wait(c, ARG(0), ARG(1))); }
 SFA_FUNC(08894FC0, game_select_style_enter)     { SELECT_FRAME(0x20, choice_enter(c, ARG(0), ARG(1), DONE_STYLE, F_STYLE, f_088951DC, f_08894C40, 0)); }
 SFA_FUNC(088A4F1C, game_select_styles_offered)  { RETURN(styles_offered(ARG(0))); }
-SFA_FUNC(0889507C, game_select_style_choose)    { SELECT_FRAME(0x20, style_choose(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(0889507C, game_select_style_choose, anthology_select_style_choose) { SELECT_FRAME(0x20, style_choose(c, ARG(0), ARG(1))); }
 SFA_FUNC(088951DC, game_select_style_chosen)    { style_chosen(ARG(0)); }
-SFA_FUNC(08895248, game_select_style_wait)      { SELECT_FRAME(0x20, style_wait(c, ARG(0), ARG(1))); }
-SFA_FUNC(08894C74, game_select_ism_enter)       { SELECT_FRAME(0x20, choice_enter(c, ARG(0), ARG(1), DONE_ISM, F_ISM, f_08894E5C, f_08895304, 1)); }
-SFA_FUNC(08894D40, game_select_ism_choose)      { SELECT_FRAME(0x20, ism_choose(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(08895248, game_select_style_wait, anthology_select_style_wait) { SELECT_FRAME(0x20, style_wait(c, ARG(0), ARG(1))); }
+SFA_FUNC_WRAPPED(08894C74, game_select_ism_enter, anthology_select_ism_enter) { SELECT_FRAME(0x20, choice_enter(c, ARG(0), ARG(1), DONE_ISM, F_ISM, f_08894E5C, f_08895304, 1)); }
+SFA_FUNC_WRAPPED(08894D40, game_select_ism_choose, anthology_select_ism_choose) { SELECT_FRAME(0x20, ism_choose(c, ARG(0), ARG(1))); }
 SFA_FUNC(08894E5C, game_select_ism_chosen)      { ism_chosen(ARG(0), ARG(1)); }
 SFA_FUNC(08895564, game_select_ism_decided)     { ism_decided_apply(ARG(0), ARG(1)); }
 SFA_FUNC(08894A84, game_select_random)          { int32_t ch; SELECT_FRAME(0x20, ch = random_character(c, ARG(0), ARG(1))); RETURN((uint32_t)ch); }

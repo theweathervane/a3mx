@@ -227,7 +227,8 @@ static void part_ten(Cpu *c, gaddr o) {
 SFA_FUNC(0880E038, hud_draw_element) { draw_element(c, ARG(0)); }
 SFA_FUNC(08810B74, hud_draw_rect)    { c->r[29] -= 0x20; draw_rect(c, ARG(0), ARG(1)); c->r[29] += 0x20; }
 SFA_FUNC(0880DC08, hud_bars)         { c->r[29] -= 0x20; part_bars(c, ARG(0)); c->r[29] += 0x20; }
-SFA_FUNC(0880DC88, hud_bottom)       { c->r[29] -= 0x40; part_bottom(c, ARG(0)); c->r[29] += 0x40; }
+/* (wrapped by extensions/anthology_select.c: an S-ISM's side is drawn as Hyper's gauge) */
+SFA_FUNC_WRAPPED(0880DC88, hud_bottom, anthology_hud_bottom) { c->r[29] -= 0x40; part_bottom(c, ARG(0)); c->r[29] += 0x40; }
 SFA_FUNC(0880DE2C, hud_guard)        { c->r[29] -= 0x30; part_guard(c, ARG(0)); c->r[29] += 0x30; }
 SFA_FUNC(0880DF98, hud_two)          { c->r[29] -= 0x20; part_two(c, ARG(0)); c->r[29] += 0x20; }
 SFA_FUNC(0880DFC8, hud_ten)          { c->r[29] -= 0x20; part_ten(c, ARG(0)); c->r[29] += 0x20; }

@@ -11,7 +11,7 @@ int rt_feature_setting[FEAT_COUNT];
 static unsigned char named[FEAT_COUNT];      /* named in --features: stays so for this run, whatever a3mx.cfg says */
 static int follow_settings;                  /* "settings" was in the list */
 static char described[256] = "none", spec[320] = "none";
-static int in_game(int f) { return FEATURES[f].where == WHERE_EX_GAME || FEATURES[f].where == WHERE_EX_DISPLAY; }
+static int in_game(int f) { return FEATURES[f].where == WHERE_EX_GAME || FEATURES[f].where == WHERE_EX_DISPLAY || FEATURES[f].where == WHERE_EX_ANTHOLOGY; }
 
 static void finish(void) {
     /* a feature whose need is off goes off with it (twice: a need can itself have just gone) */
@@ -115,10 +115,12 @@ static const struct { const char *prefix; int feature; } BY_PREFIX[] = {
     { "bootmenu_", FEAT_BOOTMENU },
     { "widescreen_", FEAT_WIDESCREEN },
     { "stagestrips_", FEAT_STAGE_EXT },
+    { "ism_presentation_", FEAT_ANY },       /* i_ism_display.c: the wipe into the fight, I-ISM (I_ISM_DISPLAY) and S-ISM (ANTHOLOGY) parts each checking its own */
     { "i_ism_display_", FEAT_I_ISM_DISPLAY },
     { "i_ism_select_", FEAT_I_ISM_SELECT },
     { "cheats_unlocks_", FEAT_CHEATS_UNLOCKS },
     { "scaled_endings_", FEAT_SCALED_ENDINGS },
+    { "anthology_", FEAT_ANTHOLOGY },
 };
 static const unsigned char always_on = 1;     /* platform code wrapping the game's functions: bootscreen.c */
 const unsigned char *feature_flag(const char *ext_name) {

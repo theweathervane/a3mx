@@ -92,7 +92,7 @@ static void draw_shape(Cpu *c, gaddr place, uint32_t shape, uint32_t alpha) {
     shapes_draw(c, place, H(p), *W(COLOURS + (uint32_t)((int32_t)shape / 3) * 4u), alpha);
 }
 
-SFA_FUNC_WRAPPED(0880E434, screen_draw_shape, i_ism_display_shape) {
+SFA_FUNC_WRAPPED(0880E434, screen_draw_shape, ism_presentation_shape) {
     gaddr place = ARG(0); uint32_t shape = ARG(1), alpha = ARG(2);
     c->r[29] -= 0x40; draw_shape(c, place, shape, alpha); c->r[29] += 0x40;
 }

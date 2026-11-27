@@ -52,8 +52,10 @@ SFA_FUNC(0888D64C, ticker_frame) {
 
 /* An object with two parts (at +12 and +32, each starting with a pointer to its fighter and with its
    own step at +4): each part's routine (table 0x08A26CBC) is called with the part, its fighter and 0 or
-   1, unless that fighter's +313 is set. */
-SFA_FUNC(0888DA7C, object_run_two_parts) {
+   1, unless that fighter's +313 is set. The HUD's super gauges are such an object (0x0888DB10 sets each
+   part's +4: 0 X-ISM's gauge, 1 A-ISM's, 2 V-ISM's, 3 an entry's: one bar with three levels inside, its
+   ISM's kind kept at +5); wrapped by extensions/anthology_select.c for the S-ISMs. */
+SFA_FUNC_WRAPPED(0888DA7C, object_run_two_parts, anthology_hud_gauges) {
     gaddr o = ARG(0), s16 = c->r[16], s17 = c->r[17];
     gaddr first = *W(o + 12), second = *W(o + 32);
     c->r[29] -= 0x20;

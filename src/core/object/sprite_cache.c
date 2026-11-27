@@ -174,7 +174,7 @@ static void fill_small(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr page) {
     CALL2(f_089E1234, *W(page + 8), *B(page + 13));
 }
 
-SFA_FUNC(0880EE34, sprite_cache_fill_small) { fill_small(c, ARG(0), ARG(1), ARG(2), ARG(3)); }
+SFA_FUNC_WRAPPED(0880EE34, sprite_cache_fill_small, anthology_fill_small) { fill_small(c, ARG(0), ARG(1), ARG(2), ARG(3)); }
 
 /* ---- 0x0880EFB8: a picture's 32-pixel cells unpacked into its pages, 4 to a page ---- */
 static void fill_big(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr page) {
@@ -206,7 +206,8 @@ static void fill_big(Cpu *c, gaddr ds, gaddr pic, gaddr base, gaddr page) {
     CALL2(f_089E1234, *W(page + 8), *B(page + 13));
 }
 
-SFA_FUNC(0880EFB8, sprite_cache_fill_big) { fill_big(c, ARG(0), ARG(1), ARG(2), ARG(3)); }
+/* (anthology.c fills its own pictures' cells itself) */
+SFA_FUNC_WRAPPED(0880EFB8, sprite_cache_fill_big, anthology_fill_big) { fill_big(c, ARG(0), ARG(1), ARG(2), ARG(3)); }
 
 /* ---- 0x0880E150: a sprite's picture drawn as a grid of cells ----
  *
@@ -246,4 +247,5 @@ static void draw_picture(Cpu *c, gaddr ds, gaddr sprite, gaddr pic, gaddr base, 
     CALL4(big ? f_088112A8 : f_08810D84, ds, pic, base, page);
 }
 
-SFA_FUNC(0880E150, sprite_draw_picture) { draw_picture(c, ARG(0), ARG(1), ARG(2), ARG(3), c->r[8]); }
+/* (anthology.c can give T. Hawk's walk-back pictures from Hyper Street Fighter Alpha instead) */
+SFA_FUNC_WRAPPED(0880E150, sprite_draw_picture, anthology_draw_picture) { draw_picture(c, ARG(0), ARG(1), ARG(2), ARG(3), c->r[8]); }

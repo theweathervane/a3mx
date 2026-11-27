@@ -326,7 +326,7 @@ static void logo_start(Cpu *c, gaddr o) {
     f_0882E0D0(c);
     *W(o + 20) = CALL2(f_08823338, 4, 2);
 }
-SFA_FUNC_WRAPPED(08885A44, logo_start_step, i_ism_display_logo_start) {
+SFA_FUNC_WRAPPED(08885A44, logo_start_step, ism_presentation_logo_start) {
     gaddr o = ARG(0);
     uint32_t s[7]; for (int i = 0; i < 7; i++) s[i] = c->r[16 + i];
     c->r[29] -= 0x40; logo_start(c, o); c->r[29] += 0x40;

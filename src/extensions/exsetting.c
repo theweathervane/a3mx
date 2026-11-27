@@ -250,6 +250,13 @@ static void symbol(Cpu *c, int sel, int id, int x, int y) {
  *                 PRIORITY and VIRTUAL PSPS
  *   EX. DISPLAY   MODE MENU ICONS, ISM PRESENTATION, SCALED ENDINGS, STAGE EXTENSIONS, and HEALTH GRADIENT (a
  *                 setting, not an extension: rt_health_gradient, object/hud.c's hud_health_solid)
+ *   EX. ANTHOLOGY ANTHOLOGY DATA first, FOUND or NOT FOUND: whether the launcher has imported the Street
+ *                 Fighter Alpha Anthology disc (read only; the maintainer, 2026-11-27). Then ANTHOLOGY (the
+ *                 Hyper Street Fighter Alpha imports, anthology.c, as a whole: the launcher's checkbox
+ *                 before 0.167.0; at once, as EX. DISPLAY's), T.HAWK WALKBACK, ALPHA SELECT, S-ISM SELECT
+ *                 and S-ISM PRESENTATION (the S-ISMs' wipes and S-ISM D's pink). All OFF by default
+ *                 (experimental). Each is greyed and shown OFF while it can't apply (NOT FOUND, ANTHOLOGY OFF;
+ *                 S-ISM SELECT also without GAME OPTION > MODE SELECT), its saved value kept for when it can.
  * The extensions on these two were the launcher's checkboxes before 0.165.0: they are kept in a3mx.cfg
  * and switched at once (ext_features.h: features_setting_changed). With Cheats and Unlocks (part of
  * Extra menus: cheats_unlocks.c), four more:
@@ -273,6 +280,19 @@ void cheats_unlocks_default_entries(void);
 static const char *const v_priority[] = { "COM", "PLAYER", NULL };
 static const char *const v_off_on[] = { "OFF", "ON", NULL };
 static int no_fighter;              /* 4P's rows: shown, not used */
+extern int rt_hawk_walkback;        /* anthology.c */
+int anthology_files_present(void);
+extern int rt_alpha_select, rt_sism_select, rt_sism_presentation;     /* anthology_select.c */
+static int anthology_data;          /* EX. ANTHOLOGY's first row: the imported files are there (read only, set each frame) */
+static const char *const v_found[] = { "NOT FOUND", "FOUND", NULL };
+/* The rows go by whether the files are there, never loading them: the page drawn with ANTHOLOGY off leaves
+   the game's memory as it was (they are loaded when the extension is used, anthology.c) */
+static int hawk_walkback_available(void) { return FEATURE(ANTHOLOGY) && anthology_files_present(); }
+/* the page's first row, the whole extension: needs the disc imported */
+static int anthology_available(void) { return anthology_files_present(); }
+/* S-ISM SELECT adds the S-ISMs to MODE SELECT's choices: with GAME OPTION > MODE SELECT off there are
+   none to add to (greyed and shown OFF; the maintainer, 2026-11-26) */
+static int sism_select_available(void) { return hawk_walkback_available() && (int8_t)RB(0x08A058A0u + 516) != 0; }
 
 /* Strings drawn by the text queue must stay in guest memory until the text pass: each host string gets a
    slot of its own, once, in a pool of ours (the same string, the same slot, every frame) */
@@ -299,8 +319,11 @@ typedef struct {
     int *value;                     /* NULL: DEFAULT or EXIT */
     const char *const *names;
     const char *what[2];            /* the description, two lines of at most 32: clear of the page number */
-    int greyed;                     /* shown in grey, its value can't be changed (4P) */
+    int greyed;                     /* 1: shown in grey, its value can't be changed (4P); 2: read only, shown as
+                                       any row (ANTHOLOGY DATA) */
+    int (*available)(void);         /* NULL, or 0 from it: greyed, and shown OFF (T.HAWK WALKBACK without the disc) */
 } Row;
+static int row_greyed(const Row *r) { return r->greyed == 1 || (r->available && !r->available()); }
 #define R_DEFAULT_ROW(w) { "DEFAULT", NULL, NULL, { "THIS PAGE BACK TO ITS DEFAULTS.", w }, 0 }
 #define R_EXIT_ROW { "EXIT", NULL, NULL, { "SAVE AND BACK TO OPTION MODE.", "" }, 0 }
 #define EARNED_ARCADE "OFF - EARNED BY BEATING ARCADE."
@@ -351,6 +374,15 @@ static const Row page_game[] = {
     { "VIRTUAL PSPS", &rt_virtual_psps, v_off_on, { "NETWORK FINDS PADS 2 AND 3 OR", "THE CPU AS OTHER PSPS HERE." }, 0 },
     R_DEFAULT_ROW("BOOT OFF - COM - THE REST ON."), R_EXIT_ROW,
 };
+static const Row page_anthology[] = {
+    { "ANTHOLOGY DATA", &anthology_data, v_found, { "THE ANTHOLOGY DISC IMPORTED BY", "THE LAUNCHER. NOT FOUND - GREY." }, 2 },
+    { "ANTHOLOGY", &rt_feature_setting[FEAT_ANTHOLOGY], v_off_on, { "ALL OF THE ANTHOLOGY IMPORTS.", "EXPERIMENTAL. NEEDS THE DISC." }, 0, anthology_available },
+    { "T.HAWK WALKBACK", &rt_hawk_walkback, v_off_on, { "T.HAWK WALKS BACK AS IN HYPER", "ALPHA. NEEDS THE ANTHOLOGY DISC." }, 0, hawk_walkback_available },
+    { "ALPHA SELECT", &rt_alpha_select, v_off_on, { "PICK ALPHA - ALPHA3 VERSIONS.", "NEEDS THE ANTHOLOGY DISC." }, 0, hawk_walkback_available },
+    { "S-ISM SELECT", &rt_sism_select, v_off_on, { "S-ISM MODES IN MODE SELECT.", "NEEDS THE DISC, MODE SELECT ON." }, 0, sism_select_available },
+    { "S-ISM PRESENTATION", &rt_sism_presentation, v_off_on, { "S-ISM WIPES INTO THE FIGHT AND", "S-ISM D PINK. NEEDS THE DISC." }, 0, hawk_walkback_available },
+    R_DEFAULT_ROW("ALL OFF."), R_EXIT_ROW,
+};
 static const Row page_display[] = {
     FEAT_ROW("MODE MENU ICONS", FEAT_MODE_MENU_ICONS, "PAD BUBBLES AND FRAME TIMING", "BADGE ON THE MODE MENU BAR."),
     FEAT_ROW("ISM PRESENTATION", FEAT_I_ISM_DISPLAY, "I-ISM WIPE INTO THE FIGHT AND", "I-ISM RANKING IN THE ATTRACT."),
@@ -359,16 +391,21 @@ static const Row page_display[] = {
     { "HEALTH GRADIENT", &rt_health_gradient, v_off_on, { "ON - THE PSP SHADED HEALTH BARS.", "OFF - SOLID YELLOW, AS ARCADE." }, 0 },
     R_DEFAULT_ROW("ICONS, ENDINGS, GRADIENT ON."), R_EXIT_ROW,
 };
-/* EX. GAME and EX. DISPLAY always; the cheats' pages after them, with Cheats and Unlocks */
-enum { PG_GAME, PG_DISPLAY, PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, N_PAGES };
+/* EX. GAME and EX. DISPLAY always; EX. ANTHOLOGY with its extension; the cheats' pages after them, with
+   Cheats and Unlocks */
+enum { PG_GAME, PG_DISPLAY, PG_ANTHOLOGY, PG_UNLOCKS, PG_FIGHTERS12, PG_FIGHTERS34, PG_ENTRIES, N_PAGES };
 #define PAGE(t, r, x) { t, r, (int)(sizeof r / sizeof *r), x }
 static const struct { const char *title; const Row *rows; int n, value_x; } pages[N_PAGES] = {
-    PAGE("EX. GAME", page_game, 0xD8), PAGE("EX. DISPLAY", page_display, 0xD8), PAGE("EX. UNLOCKS", page_unlocks, 0xD8),
+    PAGE("EX. GAME", page_game, 0xD8), PAGE("EX. DISPLAY", page_display, 0xD8), PAGE("EX. ANTHOLOGY", page_anthology, 0xD8),
+    PAGE("EX. UNLOCKS", page_unlocks, 0xD8),
     PAGE("EX. FIGHTERS", page_fighters12, 0xA0), PAGE("EX. FIGHTERS", page_fighters34, 0xA0), PAGE("EX. EXP", page_entries, 0xE0),
 };
 static int page;                    /* PG_* */
+static int page_shown(int pg) { return pg <= PG_ANTHOLOGY ? 1 : FEATURE(CHEATS_UNLOCKS); }   /* (EX. ANTHOLOGY switches itself back on) */
 static int first_page(void) { return PG_GAME; }
-static int page_count(void) { return FEATURE(CHEATS_UNLOCKS) ? N_PAGES : PG_DISPLAY + 1; }
+static int page_count(void) { int n = 0; for (int p = 0; p < N_PAGES; p++) n += page_shown(p); return n; }
+static int page_pos(int pg) { int n = 0; for (int p = 0; p < pg; p++) n += page_shown(p); return n; }   /* its place among those shown */
+static int page_at(int pos) { for (int p = 0; p < N_PAGES; p++) if (page_shown(p) && pos-- == 0) return p; return first_page(); }
 /* a row of EX. GAME / EX. DISPLAY: the extension it switches, or -1 */
 static int row_feature(const Row *r) {
     return r->value >= &rt_feature_setting[0] && r->value < &rt_feature_setting[FEAT_COUNT] ? (int)(r->value - rt_feature_setting) : -1;
@@ -386,6 +423,7 @@ static void page_defaults(int pg) {
     else if (pg == PG_FIGHTERS12) cheats_unlocks_default_fighters(0, 1);
     else if (pg == PG_FIGHTERS34) cheats_unlocks_default_fighters(2, 2);
     else if (pg == PG_ENTRIES) cheats_unlocks_default_entries();
+    else if (pg == PG_ANTHOLOGY) { page_features_default(pg); rt_hawk_walkback = rt_alpha_select = rt_sism_select = rt_sism_presentation = 0; }
     else if (pg == PG_DISPLAY) { page_features_default(pg); rt_health_gradient = 1; }
     else { page_features_default(pg); rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1; }
 }
@@ -560,15 +598,16 @@ int exsetting_grey_font(void) {
 #define B_L       0x40u
 #define B_R       0x200u
 static void turn_page(Cpu *c, int step) {
-    int n = page_count(), at = page - first_page();
+    int n = page_count(), at = page_pos(page);
     const int from_end = pages[page].n - row;                  /* DEFAULT and EXIT stay DEFAULT and EXIT */
-    page = first_page() + (at + step + n) % n;
+    page = page_at((at + step + n) % n);
     row = from_end <= 2 ? pages[page].n - from_end : row < pages[page].n - 2 ? row : pages[page].n - 3;
     sound(c, 0x38);
 }
 static void ex_screen(Cpu *c) {
     uint32_t p = pressed();
-    if (page < first_page() || page >= first_page() + page_count()) page = first_page();
+    if (page < 0 || page >= N_PAGES || !page_shown(page)) page = first_page();
+    anthology_data = anthology_files_present();             /* ANTHOLOGY DATA: FOUND / NOT FOUND (only looks for the files) */
     const Row *rows = pages[page].rows; int n = pages[page].n;
     const Row *r = &rows[row];
     int step = (p & 1) ? 1 : (p & 2) ? -1 : 0;                /* right / left */
@@ -576,7 +615,7 @@ static void ex_screen(Cpu *c) {
     if (p & 8) { row = (row + n - 1) % n; sound(c, 0x38); }
     else if (p & 4) { row = (row + 1) % n; sound(c, 0x38); }
     else if (more && (p & (B_L | B_R))) turn_page(c, (p & B_R) ? 1 : -1);
-    else if ((step || (p & B_CONFIRM)) && r->greyed) sound(c, 0x2F);   /* not there yet: nothing to change */
+    else if ((step || (p & B_CONFIRM)) && (row_greyed(r) || r->greyed == 2)) sound(c, 0x2F);   /* not there yet, or read only: nothing to change */
     else if (step && r->value) { int k = count_names(r->names); *r->value = (*r->value + step + k) % k; features_setting_changed(row_feature(r)); sound(c, 0x38); }
     else if (step && more) turn_page(c, step);
     else if ((p & B_CONFIRM) && r->value) { int k = count_names(r->names); *r->value = (*r->value + 1) % k; features_setting_changed(row_feature(r)); sound(c, 0x39); }
@@ -590,18 +629,20 @@ static void ex_screen(Cpu *c) {
         text(c, gstr(t), 2, 0xC0 - 8 * (int)strlen(t), 5, 0xB);
     }
     for (int i = 0; i < n; i++) {
-        int y = ex_row_y(i), colour = rows[i].greyed ? (i == row ? GREYED_ON : GREYED) : i == row ? 0xB : 0xA;
+        int greyed = row_greyed(&rows[i]);
+        int y = ex_row_y(i), colour = greyed ? (i == row ? GREYED_ON : GREYED) : i == row ? 0xB : 0xA;
         text(c, gstr(rows[i].label), 1, 0x30, y, colour);
         if (rows[i].value) {
-            int k = count_names(rows[i].names), v = *rows[i].value;
-            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, rows[i].greyed ? (i == row ? GREYED_ON : GREYED) : 0xB);   /* values: always yellow, as GAME OPTION */
+            int k = count_names(rows[i].names), v = greyed && rows[i].available ? 0 : *rows[i].value;   /* unavailable: OFF */
+            text(c, gstr(rows[i].names[v >= 0 && v < k ? v : 0]), 1, pages[page].value_x, y, greyed ? (i == row ? GREYED_ON : GREYED) : 0xB);   /* values: always yellow, as GAME OPTION */
         }
     }
     for (int k = 0; k < 2; k++) if (r->what[k][0]) text(c, gstr(r->what[k]), 0, 0x30, WHAT_Y + 10 * k, 9);
     {                                                         /* the page number, 1/1 too (the user, 0.127.0) */
         static const char *const numbers[N_PAGES][N_PAGES] = { { "1/1" }, { "1/2", "2/2" }, { "1/3", "2/3", "3/3" },
-            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" }, { "1/6", "2/6", "3/6", "4/6", "5/6", "6/6" } };
-        text(c, gstr(numbers[page_count() - 1][page - first_page()]), 2, 0x178 - 48, PAGE_Y, 9);
+            { "1/4", "2/4", "3/4", "4/4" }, { "1/5", "2/5", "3/5", "4/5", "5/5" }, { "1/6", "2/6", "3/6", "4/6", "5/6", "6/6" },
+            { "1/7", "2/7", "3/7", "4/7", "5/7", "6/7", "7/7" } };
+        text(c, gstr(numbers[page_count() - 1][page_pos(page)]), 2, 0x178 - 48, PAGE_Y, 9);
     }
     text(c, STR(S_VERSION), 0, VERSION_X, VERSION_Y, 0xA);   /* The project's version, bottom right in the small font: just shown */
 }

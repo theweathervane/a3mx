@@ -22,6 +22,15 @@ static const KnownDisc DISCS[] = {
       "dc789772c15b2c9e1daa41ef7cfab1b5a65f512e", REGION_EU, false },
 };
 
+/* Street Fighter Alpha Anthology (PS2), the optional second image: its program is the file SYSTEM.CNF's
+ * BOOT2 names. Only discs whose checksums are known here are imported from (tools/anthology_hawk.py
+ * reads the US layout); other Anthology / Zero Fighters Generation discs are recognised by their
+ * serial's prefix and said to be not supported yet. */
+static const KnownDisc ANTHOLOGY_DISCS[] = {
+    { "SLUS-21317", "Street Fighter Alpha Anthology", "906b23e96a591d0bdc87201dacdef1ff7c875494",
+      "d3fd9235468c8301575767b8f5878a6f85d83df5", REGION_US, true },
+};
+
 const char *region_name(Region r) {
     switch (r) {
     case REGION_US: return "US";
@@ -180,6 +189,50 @@ DiscResult DiscCheck::check_now(const std::string &path) {
     return r;
 }
 
+/* the Anthology: serial and program from SYSTEM.CNF ("BOOT2 = cdrom0:\\SLUS_213.17;1") */
+DiscResult DiscCheck::check_anthology_now(const std::string &path) {
+    DiscResult r;
+    r.path = path;
+    r.verdict = DISC_BAD;
+    Iso iso;
+    if (!iso.open(path)) { r.message = "Cannot read this file as a disc image."; return r; }
+    std::vector<uint8_t> cnf, prog;
+    if (!iso.file("SYSTEM.CNF", cnf, 4096)) { r.message = "Not a PS2 disc image (ISO 9660 with SYSTEM.CNF)."; return r; }
+    std::string text(cnf.begin(), cnf.end()), name;
+    size_t at = text.find("cdrom0:");
+    if (at != std::string::npos) {
+        at += 7;
+        while (at < text.size() && (text[at] == '\\' || text[at] == '/')) at++;
+        while (at < text.size() && text[at] != ';' && text[at] != '\r' && text[at] != '\n') name += text[at++];
+    }
+    if (name.size() < 11 || !iso.file(name.c_str(), prog, 64u << 20)) { r.message = "Not a PS2 game disc (no program in SYSTEM.CNF)."; return r; }
+    r.serial = name.substr(0, 4) + "-" + name.substr(5, 3) + name.substr(9, 2);       /* SLUS_213.17 -> SLUS-21317 */
+    Sha1 h;
+    h.update(prog.data(), prog.size());
+    std::string prog_sha = h.hex();
+    const KnownDisc *k = NULL;
+    for (const KnownDisc &d : ANTHOLOGY_DISCS) if (r.serial == d.serial) k = &d;
+    if (!k) {
+        std::string pre = r.serial.substr(0, 4);
+        r.region = pre == "SLUS" || pre == "SCUS" ? REGION_US : pre == "SLES" || pre == "SCES" ? REGION_EU :
+                   pre == "SLPM" || pre == "SLPS" || pre == "SCPS" ? REGION_JP : REGION_NONE;
+        r.verdict = DISC_UNSUPPORTED;
+        r.message = "Disc " + r.serial + " (" + region_name(r.region) + "): not a Street Fighter Alpha Anthology disc known here, "
+                    "so nothing is imported from it (the US disc, SLUS-21317, is).";
+        if (r.region == REGION_NONE) { r.verdict = DISC_BAD; r.message = "Disc " + r.serial + ": not Street Fighter Alpha Anthology."; }
+        return r;
+    }
+    r.region = k->region;
+    r.title = k->title;
+    if (prog_sha != k->boot_sha1) {
+        r.message = std::string(k->title) + " (" + k->serial + "), but its program is not the known one: another version, or a damaged dump.";
+        return r;
+    }
+    r.verdict = DISC_OK;
+    r.message = std::string(k->title) + " (" + k->serial + ", " + region_name(k->region) + "): program checked.";
+    return r;
+}
+
 DiscCheck::~DiscCheck() { stop(); }
 
 void DiscCheck::stop() {
@@ -200,12 +253,13 @@ void DiscCheck::start(const std::string &path) {
     running_ = true;
     progress_ = 0;
     thread_ = std::thread([this, path]() {
-        DiscResult r = check_now(path);
+        DiscResult r = anthology_ ? check_anthology_now(path) : check_now(path);
         { std::lock_guard<std::mutex> lock(mutex_); result_ = r; }
         if (r.verdict == DISC_OK || r.verdict == DISC_UNSUPPORTED) {
             /* the whole image, to say whether it is the exact known dump */
             const char *want = NULL;
-            for (const KnownDisc &d : DISCS) if (r.serial == d.serial) want = d.iso_sha1;
+            if (anthology_) { for (const KnownDisc &d : ANTHOLOGY_DISCS) if (r.serial == d.serial) want = d.iso_sha1; }
+            else for (const KnownDisc &d : DISCS) if (r.serial == d.serial) want = d.iso_sha1;
             SDL_IOStream *io = SDL_IOFromFile(path.c_str(), "rb");
             if (io && want) {
                 Sint64 total = SDL_GetIOSize(io), done = 0;

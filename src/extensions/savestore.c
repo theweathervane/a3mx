@@ -355,6 +355,7 @@ int store_delete_sys(void) {
     if (!have_default) return 0;
     memcpy(store_sys, default_sys, SYS_SIZE); store_have_sys = 1;
     rt_join_in[0] = rt_join_in[1] = rt_join_in[2] = 0; rt_virtual_psps = 1;
+    { extern int rt_hawk_walkback, rt_alpha_select, rt_sism_select, rt_sism_presentation; rt_hawk_walkback = rt_alpha_select = rt_sism_select = rt_sism_presentation = 0; }
     { void cheats_unlocks_default_unlocks(void), cheats_unlocks_default_fighters(int from, int to), cheats_unlocks_default_entries(void);
       cheats_unlocks_default_unlocks(); cheats_unlocks_default_fighters(0, 2); cheats_unlocks_default_entries(); }
     for (int p = 0; p < 4; p++) { rt_l2[p] = 6; rt_r2[p] = 7; }

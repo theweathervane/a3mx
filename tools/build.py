@@ -357,6 +357,31 @@ def launcher(env, cmake):
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
+def anthology_import(iso, env):
+    """Extra content from the Street Fighter Alpha Anthology disc, once per disc image, for the game's
+    EX. SETTING (tools/anthology_hawk.py: T. Hawk's walk back; tools/anthology_hud.py: the S-ISM gauge).
+    Never fails the build."""
+    out = os.path.join(ROOT, 'assets', 'us', 'anthology', 'hawk_walkback')
+    hud = os.path.join(ROOT, 'assets', 'us', 'anthology', 'hud')
+    stamp = os.path.join(out, 'imported_from.txt')
+    if not os.path.isfile(iso):
+        say('\n==> Anthology disc: %s not found, nothing imported' % iso)
+        return
+    st = os.stat(iso)
+    want = '%s\n%d %d\n' % (os.path.abspath(iso), st.st_size, int(st.st_mtime))
+    if (os.path.isfile(os.path.join(out, 'walkback.json')) and os.path.isfile(os.path.join(hud, 'sism_gauge.png'))
+            and os.path.isfile(stamp) and open(stamp).read() == want):
+        say('\n==> Anthology disc: extra content already imported')
+        return
+    step('Anthology disc: extra content from Street Fighter Alpha Anthology (tools/anthology_hawk.py)')
+    r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'anthology_hawk.py'), '--iso', iso, '--out', out], cwd=ROOT, env=env)
+    r2 = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'anthology_hud.py'), '--iso', iso, '--out', hud], cwd=ROOT, env=env)
+    if r.returncode == 0 and r2.returncode == 0:
+        with open(stamp, 'w') as f: f.write(want)
+    else:
+        say('The import failed (above): the game runs without it, its EX. SETTING options stay greyed.')
+
+
 def main():
     ap = argparse.ArgumentParser(description='Build A3MX from your disc.')
     ap.add_argument('--preset', default='release', choices=['release', 'debug', 'watch', 'headless'])
@@ -365,6 +390,8 @@ def main():
     ap.add_argument('--test', action='store_true'); ap.add_argument('--run', action='store_true')
     ap.add_argument('--tools-only', action='store_true')
     ap.add_argument('--art-pack', action='store_true', help='after building: tools/art_pack.py (stage art for artists, from your disc)')
+    ap.add_argument('--anthology-iso', help='your Street Fighter Alpha Anthology (PS2) disc: imports its art the game can use '
+                                              "(tools/anthology_hawk.py) into assets/us/anthology/, for EX. SETTING")
     ap.add_argument('--launcher', action='store_true')
     ap.add_argument('--shaders', action='store_true')
     ap.add_argument('--clean', action='store_true'); ap.add_argument('--clean-all', action='store_true')
@@ -400,6 +427,8 @@ def main():
         run(cmd, env)
     else:
         say('\n==> Your disc: already extracted into work/ (--extract to do it again)')
+
+    if a.anthology_iso: anthology_import(a.anthology_iso, env)
 
     future_dates()
     out = {'release': 'build', 'debug': 'build-debug', 'watch': 'build-watch', 'headless': 'build-headless'}[a.preset]
