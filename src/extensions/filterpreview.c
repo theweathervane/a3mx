@@ -19,7 +19,9 @@
  *   4. The fight (screen 2): player 1's fighter is the computer's (+0x175 = 1, +336 = 0, each frame,
  *      over what the select set up for a player); the held picture lets go, and SCORE RANKING's PRESS (Circle) TO
  *      EXIT is drawn above the gauges in its small yellow font, flashing. While the preview runs the pads give the game nothing
- *      (filterpreview_pad, main.c): no pause, no joining in.
+ *      (filterpreview_pad, main.c) but player 1's START once the fight is up (0.173.0): it pauses, and the
+ *      pause is the FILTER screen over the fight (pausefilter.c), player 1's buttons going to it; Cross
+ *      chooses (kept), Circle cancels, and either ends the pause. No joining in.
  *   5. Circle (any pad), at any time, or the round's end (the KO or the time, once shown: the round's
  *      part GAME + 6 at 5, the winner's pose; or the fight's step leaving 3): the game's fade to black
  *      (as its fade task draws it: fade_step, 16 frames), then, behind that black picture held up, what leaving a mode does
@@ -58,6 +60,7 @@
 #define MODE_FREE   16
 #define KIND_ARCADE 1
 #define PSP_CIRCLE  0x2000u
+#define PSP_START   0x0008u
 #define OPT         0x08E75912u             /* OPTION MODE's context: +0 state, +1 the menu's cursor, +6 in a submenu, +7 its row */
 #define OPT_STATES  0x08A37A04u             /* OPTION MODE's states by OPT + 0 */
 #define OPTION_MENU 0x088B6164u             /* the state of its menu */
@@ -118,15 +121,20 @@ void filterpreview_start(Cpu *c) {
     rt_log("filter preview: a fight with %s", filter_get(rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0)->name);
 }
 
-/* main.c, each frame, each pad (PSP bits): while the preview runs the game gets nothing; what was newly
-   pressed is kept for the task (edges) */
+/* main.c, each frame, each pad (PSP bits): while the preview runs the game gets nothing but player 1's
+   START in the fight (it pauses, and the pause is the FILTER screen: pausefilter.c), and while paused
+   player 1's buttons (that screen's); what was newly pressed is kept for the task (edges), but not while
+   paused (Circle there closes the FILTER screen, not the preview) */
+int filterscreen_in_pause(void);
 uint32_t filterpreview_pad(int i, uint32_t raw) {
     static uint32_t prev[4];
     if (i < 0 || i > 3) return raw;
     uint32_t now = raw & ~prev[i];
     prev[i] = raw;
     if (phase == P_OFF) return raw;
-    edges |= i == 0 ? now : now & PSP_CIRCLE;   /* (any pad's Circle leaves) */
+    int paused = phase == P_FIGHT && (RB(GAME + 0x59) || filterscreen_in_pause());
+    if (!paused) edges |= i == 0 ? now : now & PSP_CIRCLE;   /* (any pad's Circle leaves) */
+    if (i == 0 && phase == P_FIGHT && shown) return paused ? raw : raw & PSP_START;
     return 0;
 }
 
@@ -234,7 +242,7 @@ static void fight_frame(Cpu *c) {
         rt_log("filter preview: the round is over");
         edges |= PSP_CIRCLE;
     }
-    if (phase != P_FIGHT) return;                          /* (no prompt while fading out) */
+    if (phase != P_FIGHT || RB(GAME + 0x59) || filterscreen_in_pause()) return;   /* (no prompt while fading out, or paused: the FILTER screen) */
     if ((++blink / PROMPT_BLINK) & 1) return;              /* flashing: on, off, ... */
     text(c, PRESS_EXIT, 1, PROMPT_X, PROMPT_Y, 0xB); symbol(c, 0, PROMPT_X + 0x30, PROMPT_Y);   /* as SCORE RANKING draws it */
 }

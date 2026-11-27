@@ -195,6 +195,8 @@ void cfg_apply_pending(void) {
     pending = 0;
 }
 
+static void write_favourite(const char *key, void *f) { fprintf((FILE *)f, "favourite=%s\n", key); }
+
 void settings_load(void) {
     make_names();
     memset(&pend, 0xFF, sizeof pend);
@@ -202,7 +204,8 @@ void settings_load(void) {
     char path[1100]; store_path(path, sizeof path, "a3mx.cfg");
     FILE *f = fopen(path, "r");
     if (f) {
-        char line[256], section[64] = "ex setting";
+        char line[1400], section[64] = "ex setting";
+        int fav_read = 0;                         /* a favourite= line seen: FAVOURITES is the file's list */
         while (fgets(line, sizeof line, f)) {
             /* before 0.49.0 SMOOTH was the default and fell back by itself where it couldn't keep in step:
                that is AUTO now. Those files have this note on the line (ours since then has another) */
@@ -254,6 +257,11 @@ void settings_load(void) {
             if (!strcmp(key, "hud_messages")) {      /* SCREEN SETTING > HUD MESSAGES: EDGES or 4:3 */
                 for (char *s = val; *s; s++) *s = (char)toupper((unsigned char)*s);
                 rt_hud_edges = !strcmp(val, "EDGES");
+                continue;
+            }
+            if (!strcmp(key, "favourite") || !strcmp(key, "favourites")) {   /* FILTER's FAVOURITES: one line each (favourites=NONE: none) */
+                if (!fav_read) { filter_favourites_clear(); fav_read = 1; }
+                if (!strcmp(key, "favourite")) filter_favourite_add_key(val);
                 continue;
             }
             if (!strcmp(key, "filter")) {            /* SCREEN SETTING > FILTER: a favourite by name, others by path (shader.h); unknown: OFF */
@@ -363,6 +371,8 @@ static void cfg_body(FILE *f) {
       else snprintf(k, sizeof k, "%s", filter_kept[0] ? filter_kept : "OFF");
       snprintf(l, sizeof l, "filter=%s", k);
       fprintf(f, "%-24s # OFF, CRT CURVED / LOTTES / ROYALE / GUEST / LIGHT, SCAN LIGHT / STRONG / OSSC / DARK, XBRZ, SCALEFX, or a preset's path (docs/DISPLAY.md)\n", l); }
+    fprintf(f, "# FILTER's FAVOURITES (Triangle on the FILTER screen): one favourite= line each, named as filter= names them; favourites=NONE for none\n");
+    if (!filter_favourites_each(write_favourite, f)) fprintf(f, "favourites=NONE\n");
     { char l[48]; snprintf(l, sizeof l, "hud_messages=%s", rt_hud_edges ? "EDGES" : "4:3");
       fprintf(f, "%-24s # WIDE NATIVE: EDGES puts the fight's messages (combo, COUNTER HIT ...) and Survival's timer at the 16:9 edges; 4:3 as the game\n", l); }
     for (int p = 0; p < 4; p++) {

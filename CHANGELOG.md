@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.173.0
+### For players
+- **New: START in SCREEN SETTING > PREVIEW opens the FILTER screen over the fight.** Player 1's START pauses the preview fight with the FILTER screen up at once (no pause menu, no hint). Cross chooses a filter (in use and kept at once), Circle keeps the one you had, and either way the fight goes on, drawn through it; it is still the filter in use back on SCREEN SETTING. Circle while the screen is up only closes it.
+- **New: favourites on the FILTER screen.** Triangle stars or unstars the filter under the cursor. A starred filter has the game's own star (GAME OPTION's DIFFICULTY star) after its name in every category, and is listed in FAVOURITES, now the first category: OFF, then every starred filter. The eleven tuned filters, now also in a category of their own (TUNED), start starred on a new `a3mx.cfg`; star or unstar any filter. Kept in `a3mx.cfg` (`favourite=` lines). Left / right on SCREEN SETTING's FILTER row go through FAVOURITES when the filter in use is there.
+- **A filter that fails when chosen** (its preset unreadable, its shaders not compiling, or failing while drawing; your own CUSTOM ones are listed untested) is greyed on the FILTER screen with the reason for the rest of the run, instead of looking choosable.
+
+### Technical
+- `filterpreview.c`: player 1's START reaches the game in the preview fight, and while it is paused player 1's buttons reach the FILTER screen; Circle doesn't leave the preview while paused, and the PRESS (Circle) TO EXIT prompt is hidden then. `pausefilter.c`: in the preview the pause opens `filterscreen_open_pause` at once, and when that screen closes a START is put into the pausing player's new presses for one call of the menu (0x08834AC8, decompiled, already wrapped), then taken out again. No new hooks; no translated function touched (0x08834A04, 0x08834D00 and 0x08812520 untouched).
+- `shader_list.c`: FAVOURITES is category 0, a list of its own (`filter_category_at` / `filter_category_pos` replace the contiguous `filter_category_first`); the eleven are category TUNED. `filter_favourite`, `filter_set_favourite`, `filter_favourites_*`; `settings.c` reads and writes `favourite=` / `favourites=NONE` (a3mx.cfg lines up to 1400 characters now). `exsetting_star` (exsetting.c) puts the DIFFICULTY star (opt_u's first texture, from `assets/`; a drawn star without it) into font 1 as glyphs 0x7F / 0x80 in colour 15 on the project's own font page; the game's own font pages are unchanged. `shader_gl_failed` (shader_gl.c): why a filter couldn't be shown this run.
+- Docs: DISPLAY.md (FILTER: favourites, PREVIEW's START, failed filters greyed).
+
 ## 0.172.0
 ### For players
 - **New, experimental: imports from Hyper Street Fighter Alpha** (on Street Fighter Alpha Anthology, PS2). Choose your own Anthology disc image on the launcher's Paths tab (Show optional images) and Build / Run imports what the game can use into `assets/us/anthology/`. Nothing happens without the disc. Then OPTION MODE > EX. SETTING has a new page, **EX. ANTHOLOGY**, every setting OFF until you switch it on:

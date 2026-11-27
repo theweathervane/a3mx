@@ -11,8 +11,8 @@ tools/data/shader_catalogue.tsv: made once for the pinned commit (2026-11-26, by
 build and draw each one: 858 of them), and shipped as it is. Since 0.171.0 nothing is tested here or
 anywhere else: downloading the shaders only downloads them (before, it then tested every preset in a
 small window for several minutes, and a broken one could stop the build). The player's own presets
-(FILTER's CUSTOM) are listed as they are; one that fails when chosen is shown plain, and the game's log
-says why. A new pinned commit needs the catalogue made again by hand. Never offered: bezel/ (Mega Bezel: a layout and textures of its own),
+(FILTER's CUSTOM) are listed as they are; one that fails when chosen is shown plain and greyed on the
+FILTER screen with the reason. A new pinned commit needs the catalogue made again by hand. Never offered: bezel/ (Mega Bezel: a layout and textures of its own),
 hdr/ (an HDR display), test/, spec/, include/, stereoscopic-3d/, downsample/ and subframe-bfi/ (needs
 subframes, not drawn yet). Those folders (but include/, which the others use, and the small
 subframe-bfi/) are not even unpacked from the download, except by the git fallback.

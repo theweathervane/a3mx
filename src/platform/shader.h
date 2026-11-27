@@ -12,17 +12,20 @@
  * With either missing the picture is shown as it always was, and the log says which and where it looked.
  *
  * The filters (0.166.0, shader_list.c), by category:
- *   FAVOURITES  the table below, always: the picture's own look (OFF), five CRTs, four kinds of scanline
+ *   FAVOURITES  OFF, then the starred filters (0.173.0: Triangle on the FILTER screen stars or unstars
+ *               any filter; a3mx.cfg's favourite= lines; on a fresh a3mx.cfg the eleven below);
+ *   TUNED       the table below, always: the picture's own look (OFF), five CRTs, four kinds of scanline
  *               and two pixel smoothers, each one preset from slang-shaders, some with parameters of ours;
  *   then        the catalogue: every preset the game could load and build, by folder (CRT, SCANLINES,
  *               HANDHELD, NTSC, EDGE SMOOTHING, ...), each named after its file. The repository's
- *               tools/data/shader_catalogue.tsv (0.171.0: made once, 2026-11-26, for the pinned
- *               slang-shaders commit, and shipped as data; nothing is tested on the player's machine),
- *               or an a3mx_catalogue.tsv beside the shaders (an older download made one), which wins;
+ *               tools/data/shader_catalogue.tsv (made for the pinned slang-shaders commit), or one of
+ *               an a3mx_catalogue.tsv of the player's beside the shaders, which wins;
  *   CUSTOM      the player's own *.slangp, in shaders/ beside a3mx.cfg (<configs>/shaders/, its
- *               subfolders too).
- * a3mx.cfg holds a favourite by its name ([screen setting] filter=CRT GUEST), any other by its preset's
- * path (filter=crt/crt-geom-deluxe.slangp; custom:NAME.slangp for one of CUSTOM's). */
+ *               subfolders too), listed as they are: nothing is tested beforehand.
+ * A filter that fails when chosen (its preset unreadable, its shaders not compiling, or failing while
+ * drawing) is shown plain, and greyed on the FILTER screen with the reason for the rest of the run.
+ * a3mx.cfg holds one of the eleven by its name ([screen setting] filter=CRT GUEST), any other by its
+ * preset's path (filter=crt/crt-geom-deluxe.slangp; custom:NAME.slangp for one of CUSTOM's). */
 #pragma once
 
 typedef struct {
@@ -62,8 +65,15 @@ int filter_count(void);                      /* every filter; 0 is OFF, 1 - 11 t
 const FilterEntry *filter_get(int i);        /* NULL past the end */
 int filter_categories(void);
 const char *filter_category_name(int k);
-int filter_category_first(int k);            /* the first filter of category K (they are contiguous) */
-int filter_category_size(int k);
+int filter_category_size(int k);             /* rows of category K (0 FAVOURITES: as last refreshed) */
+int filter_category_at(int k, int j);        /* the filter on row J of category K */
+int filter_category_pos(int k, int f);       /* the row of filter F in category K, or -1 */
+int filter_favourite(int i);                 /* starred (FAVOURITES) */
+void filter_set_favourite(int i, int on);    /* (OFF is always in FAVOURITES and can't be starred) */
+void filter_favourites_refresh(void);        /* FAVOURITES' rows, as starred now */
+void filter_favourites_clear(void);          /* settings.c: a3mx.cfg has a list of its own */
+void filter_favourite_add_key(const char *key);   /* settings.c: one favourite= line */
+int filter_favourites_each(void (*each)(const char *key, void *arg), void *arg);   /* settings.c: what to write */
 int filter_find(const char *key);            /* by a3mx.cfg's value (a favourite's name, a path, custom:...); -1 */
 int filter_find_loose(const char *s);        /* --filter: as filter_find, or a favourite by letters and digits only (crt-guest), or a name */
 void filter_key(int i, char *out, size_t n); /* what a3mx.cfg keeps for filter I */
@@ -81,6 +91,7 @@ extern const char *shader_lib_arg, *shader_dir_arg;   /* main.c: --librashader F
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h);
 void shader_gl_init(void *(*getproc)(const char *), const char *work);
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h);   /* --dump-filtered: this frame as filtered */
+const char *shader_gl_failed(int f);         /* why filter F could not be shown this run, or NULL (the FILTER screen greys it) */
 extern int rt_filter_preview;                /* the FILTER screen's preview: the filter shown instead of the setting (-1: none) */
 const char *shader_describe(void);           /* last_run.txt: the filter in use, or why there is none */
 #endif

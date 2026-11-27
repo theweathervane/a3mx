@@ -63,14 +63,29 @@ under the list show when there are more rows above or below), **Cross / START** 
 the cursor: it applies at once and you are back on SCREEN SETTING (`>` marks the one in use). **Circle**
 goes back without changing anything. Under the list: what the filter is (its description or its
 preset's path), HEAVY when it wants a strong GPU, or why it can't be shown. A filter whose preset file
-is missing is greyed and can't be chosen. Left / right on the FILTER row itself still change the filter,
-within its category.
+is missing, or that failed when chosen this run (its preset unreadable, its shaders not compiling, or
+failing while drawing), is greyed with the reason under the list and can't be chosen. Left / right on the
+FILTER row itself still change the filter: through FAVOURITES when the one in use is there (OFF always
+is), else within its category.
+
+**Favourites** (0.173.0): **Triangle** stars the filter under the cursor, or unstars it. A starred
+filter has the game's own star (GAME OPTION's DIFFICULTY star) after its name, in whatever category it
+is shown, and is listed in **FAVOURITES**, the first category: OFF, then every starred filter. The
+screen opens on FAVOURITES when the filter in use is there. A filter you unstar while looking at
+FAVOURITES stays on the list until you turn away from it, so a slip is easily undone. On a new
+`a3mx.cfg` the eleven tuned filters start starred; star or unstar any of them, or any other. Kept in
+`a3mx.cfg` (`[screen setting]`, one `favourite=` line each, named as `filter=` names them;
+`favourites=NONE` when there are none) when SCREEN SETTING closes, or at once from the pause.
 
 **PREVIEW** (the row under FILTER, Cross): a real fight, HUD and all, to see the filter in use on the
 health bars and gauges: two random fighters (random ISM and colours) on a random stage, both played by
 the computer, one round. Your buttons do nothing in it except **Circle**, which fades the fight to black
-and goes straight back to SCREEN SETTING; when the round ends (after the KO or the time) it goes back
-the same way by itself. SCREEN SETTING fades in where you left it, cursor on PREVIEW, with OPTION
+and goes straight back to SCREEN SETTING, and **START** (player 1's, 0.173.0), which pauses the fight
+with the FILTER screen over it (no pause menu, no hint on screen): choose another filter (Cross: in use
+and kept at once) or Circle to keep the one you had; either way the fight goes on, now drawn through
+what you chose, and it is still the filter in use when you come back to SCREEN SETTING. Circle while the
+FILTER screen is up only closes it. When the round ends (after the KO or the time) it goes back the same
+way by itself. SCREEN SETTING fades in where you left it, cursor on PREVIEW, with OPTION
 MODE's music. It is Free Battle underneath
 (its menus answered for you), so nothing is saved or recorded: no records, unlocks or saves change.
 
@@ -80,7 +95,8 @@ through its panel: Cross chooses (kept at once), Circle cancels, both back to th
 is paused, so a heavy preset taking a moment to build is fine there. On SCREEN SETTING, a filter name
 too long for the FILTER row scrolls while the row is highlighted.
 
-**Categories.** **FAVOURITES** first, the eleven below (tuned for this game) and OFF:
+**Categories.** **FAVOURITES** first (OFF and the starred filters, above), then **TUNED**: OFF and the
+eleven below, tuned for this game (starred on a new `a3mx.cfg`):
 
 | FILTER | What it is |
 |---|---|
@@ -116,13 +132,13 @@ Windows; the launcher's Paths tab says where configs are); subfolders are read t
 its file. A preset can use the downloaded ones by a relative path (`../../...`) or have its own copies. The
 `shaders` folder isn't made for you: create it. It is read when the game starts, so a preset added
 while it runs shows after a restart. Your presets are listed as they are, untested: one that fails
-when chosen is shown plain, and the game's log says why.
+when chosen is shown plain, greyed on the FILTER screen with the reason, and the game's log says more.
 
 **ReShade** is not part of this: it is a different shader system (`.fx` files) that hooks the graphics
 API from outside the game. If you want it, install ReShade for `a3mx.exe` (OpenGL) as for any game; it
 works over the window whatever FILTER is set to.
 
-FILTER applies as you change it and is kept in `a3mx.cfg`: a favourite by its name (`[screen setting]
+FILTER applies as you change it and is kept in `a3mx.cfg`: one of the eleven by its name (`[screen setting]
 filter=CRT GUEST`), any other by its preset's path (`filter=crt/crt-geom-deluxe.slangp`, yours as
 `filter=custom:NAME.slangp`); one that isn't offered this run (its catalogue or file gone) is kept as it
 was and FILTER is OFF meanwhile. DEFAULT sets it back to OFF. `--filter crt-guest` (or a path, or a

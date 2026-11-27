@@ -15,7 +15,15 @@
  * its FILTER row showing the choice (leaving SCREEN SETTING keeps it in a3mx.cfg). Circle goes back
  * without changing it: the filter in use when the screen opened stays. (The preview fight is SCREEN
  * SETTING's own PREVIEW row: filterpreview.c.)
- * A filter whose preset file isn't there is drawn in EX. SETTING's greyed colours and can't be chosen.
+ * Triangle (0.173.0) stars or unstars the filter under the cursor (not OFF): a starred one has the game's
+ * own star (OPTION MODE's DIFFICULTY star, exsetting_star) after its name, in every category, and is in
+ * FAVOURITES, the first category (OFF, then the starred ones). FAVOURITES' rows are made when it is
+ * turned to or the screen opens, so one unstarred there stays until then. Kept in a3mx.cfg (favourite=
+ * lines) when SCREEN SETTING closes, or at once from the pause. The screen opens on FAVOURITES when the
+ * filter in use is there, else on the filter's own category.
+ * A filter whose preset file isn't there, or that failed when chosen this run (shader_gl_failed: its
+ * preset unreadable, its shaders not compiling, or failing while drawing), is drawn in EX. SETTING's
+ * greyed colours with the reason under the list, and can't be chosen.
  * Nothing here touches the game's memory but the screen's own row (+7, kept) and its text and bar.
  *
  * The fight's pause menu opens the same screen on its FILTER row (pausefilter.c, filterscreen_open_pause):
@@ -34,6 +42,9 @@
 void f_0880A6CC(Cpu *c);                    /* text: a0 string, a1 font, a2 x, a3 y, t0 colour */
 void f_0887C4CC(Cpu *c);                    /* sound effect: a0 0, a1 id, a2 0xC0 */
 int exsetting_grey_font(void);
+int exsetting_star(void);                   /* exsetting.c: the star glyphs (STAR) are in font 1, colour 15 */
+#define STAR       "\x7F\x80"              /* (two 8-wide glyphs, one 16 x 16 star) */
+#define STAR_COLOUR 15
 int shader_gl_ready(void);                  /* shader_gl.c: librashader and the shaders are there */
 
 #define SLOTS      0x08E75BA0u              /* per-slot input, 0x2C each: +4 held, +0xC new presses */
@@ -45,10 +56,12 @@ int shader_gl_ready(void);                  /* shader_gl.c: librashader and the 
 #define B_BACK     0x100u
 #define B_L        0x40u
 #define B_R        0x200u
+#define B_TRIANGLE 0x20u
 #define VISIBLE    9                        /* rows shown */
 #define LIST_X     0x30
 #define MARK_X     0x24
-#define NAME_LEN   38                       /* letters of a name on a row (font 1: 8 wide, to x 0x160) */
+#define NAME_LEN   36                       /* letters of a name on a row (font 1: 8 wide, to x 0x150) */
+#define STAR_X     (LIST_X + 8 * NAME_LEN + 4)   /* the star after it, to x 0x164 */
 #define WHAT_Y     0xCE                     /* the description, under the scroll arrows */
 #define WHAT_LEN   41                       /* letters of the description (font 0: 8 wide, to x 0x178) */
 #define PAGE_Y     0xBC                     /* the category's number, on the scroll arrows' line */
@@ -64,7 +77,7 @@ static int in_pause;                         /* opened from the pause menu: its 
 static uint32_t pause_pad;                   /* (the pausing player's input record) */   /* entry_filter: in use when the screen opened */
 static uint32_t buf;                         /* our strings in guest memory, written each frame */
 #define SLOT(i)    (buf + 64u * (uint32_t)(i))
-enum { T_TITLE, T_CAT, T_PAGE, T_WHAT1, T_WHAT2, T_MARK, T_ROWS, T_COUNT = T_ROWS + VISIBLE };
+enum { T_TITLE, T_CAT, T_PAGE, T_WHAT1, T_WHAT2, T_MARK, T_STAR, T_ROWS, T_COUNT = T_ROWS + VISIBLE };
 static int grey_ok;
 static signed char *present;                 /* per filter: 0 not looked, 1 there, 2 missing */
 static int present_n;
@@ -119,8 +132,9 @@ static uint32_t put_marquee(int i, const char *s, int n, unsigned t) {
 int filterscreen_on(void) { return on && !in_pause; }
 int filterscreen_in_pause(void) { return on && in_pause; }
 static int filter(void) { return rt_filter >= 0 && rt_filter < filter_count() ? rt_filter : 0; }
-static int there(int f) {                    /* the preset file is there (OFF always) */
+static int there(int f) {                    /* the preset file is there (OFF always), and it hasn't failed this run */
     if (f <= 0) return 1;
+    if (shader_gl_failed(f)) return 0;
     if (present_n != filter_count()) { free(present); present_n = filter_count(); present = (signed char *)calloc((size_t)present_n, 1); }
     if (!present) return 1;
     if (!present[f]) {
@@ -133,9 +147,11 @@ static int there(int f) {                    /* the preset file is there (OFF al
     }
     return present[f] == 1;
 }
+static int row_of(int f) { int at = filter_category_pos(cat, f); return at < 0 ? 0 : at; }
 static void show(int f) {                    /* the cursor on F, scrolled into view */
+    if (filter_category_pos(cat, f) < 0) f = filter_category_at(cat, 0);
     cursor = f;
-    int first = filter_category_first(cat), n = filter_category_size(cat), at = f - first;
+    int n = filter_category_size(cat), at = row_of(f);
     if (at < top) top = at;
     if (at >= top + VISIBLE) top = at - VISIBLE + 1;
     if (top > n - VISIBLE) top = n - VISIBLE;
@@ -145,8 +161,8 @@ static void turn(int step) {
     int n = filter_categories();
     cat = (cat + step + n) % n;
     top = 0;
-    const FilterEntry *e = filter_get(filter());
-    show(e && e->category == cat ? filter() : filter_category_first(cat));   /* on the one in use, if it is here */
+    if (cat == 0) filter_favourites_refresh();
+    show(filter_category_pos(cat, filter()) >= 0 ? filter() : filter_category_at(cat, 0));   /* on the one in use, if it is here */
 }
 
 static void open_screen(Cpu *c);
@@ -155,7 +171,9 @@ void filterscreen_open_pause(Cpu *c, uint32_t pad) { in_pause = 1; pause_pad = p
 static void open_screen(Cpu *c) {
     if (!buf && !(buf = rt_alloc(64u * T_COUNT, 1, 16, "filter screen"))) return;
     const FilterEntry *e = filter_get(filter());
-    on = 1; cat = e ? e->category : 0; top = 0; repeat = 0; entry_filter = rt_filter;
+    filter_favourites_refresh();
+    on = 1; top = 0; repeat = 0; entry_filter = rt_filter;
+    cat = filter_category_pos(0, filter()) >= 0 ? 0 : e ? e->category : 0;   /* FAVOURITES, if the one in use is there */
     show(filter());
     sound(c, 0x39);
     rt_log("filter screen: open (%d filters, %d categories)", filter_count(), filter_categories());
@@ -169,14 +187,23 @@ void filterscreen_close(Cpu *c, int snd) {
 void filterscreen_frame(Cpu *c) {
     uint32_t p = in_pause ? RW(pause_pad + 0xC) : RW(SLOTS + 0xC) | RW(SLOTS + 0x2C + 0xC);
     uint32_t held = in_pause ? RW(pause_pad + 4) : RW(SLOTS + 4) | RW(SLOTS + 0x2C + 4);
-    int first = filter_category_first(cat), n = filter_category_size(cat), at = cursor - first;
+    int n = filter_category_size(cat), at = row_of(cursor);
     int step = 0;
     if (p & (B_UP | B_DOWN)) { step = (p & B_UP) ? -1 : 1; repeat = 0x14; }
     else if (held & (B_UP | B_DOWN)) { if (--repeat < 0) { step = (held & B_UP) ? -1 : 1; repeat = 4; } }
     if (step) {
         if (step < 0 && at == 0 && !(p & B_UP)) step = 0;                  /* held: stops at the ends */
         else if (step > 0 && at == n - 1 && !(p & B_DOWN)) step = 0;
-        if (step) { show(first + (at + step + n) % n); sound(c, 0x38); }
+        if (step) { show(filter_category_at(cat, (at + step + n) % n)); sound(c, 0x38); }
+        return;
+    }
+    if (p & B_TRIANGLE) {                    /* star / unstar (not OFF) */
+        if (cursor <= 0) { sound(c, 0x2F); return; }
+        int now = !filter_favourite(cursor);
+        filter_set_favourite(cursor, now);
+        rt_log("filter screen: %s %s", filter_get(cursor)->name, now ? "starred" : "unstarred");
+        if (in_pause) { void settings_save(void); settings_save(); }   /* (SCREEN SETTING saves when it closes) */
+        sound(c, now ? 0x39 : 0x38);
         return;
     }
     if (p & (B_L | B_LEFT)) { turn(-1); sound(c, 0x38); return; }
@@ -204,7 +231,7 @@ void filterscreen_text(Cpu *c) {
     /* the category between EX. SETTING's side arrows; the scroll arrows when there are more rows */
     const char *cn = filter_category_name(cat);
     text(c, put(T_CAT, cn, 30), 1, 0xC0 - 4 * (int)strlen(cn), CAT_Y, 0xB);
-    int first = filter_category_first(cat), n = filter_category_size(cat);
+    int n = filter_category_size(cat), star = exsetting_star();
     if (!in_pause) exsetting_other_arrows(c, filter_categories() > 1 ? CAT_Y : -1, SCROLL_X, top > 0 ? SCROLL_Y : -1, top + VISIBLE < n ? SCROLL_Y : -1);
     else {                                        /* the game's symbols: left / right, up / down */
         if (filter_categories() > 1) { symbol(c, SYM_LEFT, LIST_X - 0x10, CAT_Y); symbol(c, SYM_RIGHT, 0x158, CAT_Y); }
@@ -213,11 +240,12 @@ void filterscreen_text(Cpu *c) {
     }
     { char s[16]; snprintf(s, sizeof s, "%d/%d", cat + 1, filter_categories()); text(c, put(T_PAGE, s, 8), 2, 0x178 - 16 * (int)strlen(s), PAGE_Y, 9); }   /* (font 2: 16 wide, as EX. SETTING's) */
     for (int i = 0; i < VISIBLE && top + i < n; i++) {
-        int f = first + top + i, y = row_y(i), cur = f == cursor;
+        int f = filter_category_at(cat, top + i), y = row_y(i), cur = f == cursor;
         const FilterEntry *e = filter_get(f);
         int colour = there(f) ? (cur ? 0xB : 0xA) : grey_ok ? (cur ? 15 : 14) : 9;
         text(c, cur ? put_marquee(T_ROWS + i, e->name, NAME_LEN, tick) : put(T_ROWS + i, e->name, NAME_LEN), 1, LIST_X, y, colour);   /* the cursor's: all of it, scrolling */
         if (f == filter()) text(c, put(T_MARK, ">", 2), 1, MARK_X, y, 0xB);
+        if (star && filter_favourite(f)) text(c, put(T_STAR, STAR, 3), 1, STAR_X, y, STAR_COLOUR);
     }
     /* what it is */
     const FilterEntry *e = filter_get(cursor);
@@ -225,7 +253,8 @@ void filterscreen_text(Cpu *c) {
     if (cursor < SHADER_BUILTIN_COUNT) snprintf(w1, sizeof w1, "%s", SHADER_FILTERS[cursor].what);
     else if (e->custom) { const char *b = e->path; for (const char *s = e->path; *s; s++) if (*s == '/' || *s == '\\') b = s + 1; snprintf(w1, sizeof w1, "YOURS: %s", b); }
     else snprintf(w1, sizeof w1, "%s", e->path);
-    if (!there(cursor)) snprintf(w2, sizeof w2, "ITS PRESET IS MISSING.");
+    if (cursor > 0 && shader_gl_failed(cursor)) snprintf(w2, sizeof w2, "NOT SHOWN: %s.", shader_gl_failed(cursor));
+    else if (!there(cursor)) snprintf(w2, sizeof w2, "ITS PRESET IS MISSING.");
     else if (cursor > 0 && !shader_gl_ready()) snprintf(w2, sizeof w2, "NO LIBRASHADER: NOT SHOWN.");
     else if (e->heavy) snprintf(w2, sizeof w2, "HEAVY - WANTS A STRONG GPU.");
     text(c, put_marquee(T_WHAT1, w1, WHAT_LEN, tick), 0, LIST_X, WHAT_Y, 9);
@@ -233,18 +262,18 @@ void filterscreen_text(Cpu *c) {
 }
 
 /* the text y of the cursor's row (pausefilter.c: the pause menu's bar there) */
-int filterscreen_bar_y(void) { return row_y(cursor - filter_category_first(cat) - top); }
+int filterscreen_bar_y(void) { return row_y(row_of(cursor) - top); }
 int filterscreen_bar_x(void) { return LIST_X - 0xC; }
-int filterscreen_bar_w(void) { return 8 * NAME_LEN + 0x18; }
+int filterscreen_bar_w(void) { return 8 * NAME_LEN + 0x28; }
 
 /* SCREEN SETTING's green bar (object kind 0xC type 0xA), after the game placed it: on our row, wide */
 #define BAR_X  (LIST_X - 0xC)
-#define BAR_W  (8 * NAME_LEN + 0x18)
+#define BAR_W  (8 * NAME_LEN + 0x28)
 static int16_t kept_x = -1, kept_w;
 void filterscreen_bar(uint32_t o) {
     if (on) {
         if (kept_x < 0) { kept_x = (int16_t)RH(o + 6); kept_w = (int16_t)RH(o + 0xE); }
-        int at = cursor - filter_category_first(cat) - top;
+        int at = row_of(cursor) - top;
         WH(o + 0xA, (uint32_t)(240 - row_y(at)));
         WH(o + 6, BAR_X); WH(o + 0xE, BAR_W);
     } else if (kept_x >= 0) { WH(o + 6, (uint32_t)kept_x); WH(o + 0xE, (uint32_t)kept_w); kept_x = -1; }

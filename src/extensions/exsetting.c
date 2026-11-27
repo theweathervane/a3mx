@@ -553,6 +553,7 @@ static void ex_close(Cpu *c, int snd) { mode = M_MENU; WB(OPT + 5, 0); WB(OPT + 
 #define FONT1_H     48
 #define FONT_SET_H  144
 #define GREY_PAGE   0x3F2
+static int grey_made;                       /* times our page was (re)made: FILTER's star goes in again after */
 static uint32_t grey_mem;                   /* our page (256 x 256 x 2), its description, the descriptors */
 #define GREY_TEX    (grey_mem)
 #define GREY_DESC   (grey_mem + 0x20000u)
@@ -587,6 +588,7 @@ static void grey_font_on(void) {
         WH(GREY_TEX + (uint32_t)(((FONT_SET_H * GREYED_ON + FONT1_Y + y - 2048) * 256 + x) * 2), !(a >> 15) ? a : bright(a) ? light : red);
     }
     WW(FONT_LIST, GREY_LIST); WW(FONT_LIST + 4, 9);
+    grey_made++;
     rt_log("exsetting: font colours 14 and 15 (greyed rows) added on page %X", GREY_PAGE);
 }
 /* SCREEN SETTING and FILTER (screensetting.c) grey their disabled rows with the same two colours: 1 when
@@ -594,6 +596,71 @@ static void grey_font_on(void) {
 int exsetting_grey_font(void) {
     grey_font_on();
     return grey_mem && RW(FONT_LIST) == GREY_LIST && RW(PAGES + 0x18u * GREY_PAGE) == GREY_TEX;
+}
+
+/* FILTER's star (filterscreen.c, 0.173.0): the game's own DIFFICULTY star (GAME OPTION's, in OPTION
+ * MODE's pictures: the archive opt_u, its first texture, 14 x 13 at 97, 66; as extracted into assets/,
+ * screens/option/textures/01_texture_10000500.png) put into font 1 as two glyphs side by side, 0x7F and
+ * 0x80 (94 and 95: x 240 - 255 of the font's third glyph row), in colour 15 on our page only: the
+ * game's own pages and colours are not touched, and no text of the game's is drawn in colour 15. The
+ * text pass (0x08812520) takes any character from '!' up as glyph character - 0x21, so the two need
+ * nothing more. The game's font has glyphs of its own in those two places (colour 10's, which our
+ * page's copy starts from, are not blank: logged once), left as they are: only our copy in colour 15,
+ * which the game never draws with, changes.
+ * Without assets/ (--no-assets) or the file, a star of our own, drawn here. 1 when the star is there. */
+#define STAR_G   94
+extern char rt_assets_root[1024];
+int asset_index_folder(const char *root, const char *stem, char *out, size_t outn);
+#include "png_decode.h"
+static uint32_t star_texel(int x, int y) {   /* x 0 - 15, y 0 - 15 of the two glyphs, colour 15 on our page */
+    int v = FONT_SET_H * GREYED_ON + FONT1_Y + 16 * (STAR_G / 32) + y;
+    return GREY_TEX + (uint32_t)(((v - 2048) * 256 + 8 * (STAR_G % 32) + x) * 2);
+}
+static int star_from_assets(uint16_t px[16][16]) {
+    char folder[1100], path[1300], err[128];
+    if (!rt_assets_root[0] || asset_index_folder(rt_assets_root, "opt_u", folder, sizeof folder) != 0) return 0;
+    snprintf(path, sizeof path, "%s/textures/01_texture_10000500.png", folder);
+    PngImage img;
+    if (png_decode_file(path, &img, err, sizeof err) != 0) { rt_log("exsetting: the star: %s: %s", path, err); return 0; }
+    int ok = img.w >= 111 && img.h >= 79;
+    for (int y = 0; ok && y < 13; y++) for (int x = 0; x < 14; x++) {
+        const uint8_t *p = img.rgba + ((66 + y) * img.w + 97 + x) * 4;
+        px[y + 1][x + 1] = p[3] >= 128 ? rgb15(p[0], p[1], p[2]) : 0;
+    }
+    png_free(&img);
+    return ok;
+}
+static void star_of_our_own(uint16_t px[16][16]) {   /* a five-pointed star, yellow to orange, dark outline */
+    static const float pt[10][2] = { { 7.5f, 1 }, { 9.3f, 5.6f }, { 14.2f, 5.9f }, { 10.4f, 9.1f }, { 11.7f, 13.9f },
+                                     { 7.5f, 11.2f }, { 3.3f, 13.9f }, { 4.6f, 9.1f }, { 0.8f, 5.9f }, { 5.7f, 5.6f } };
+    int in[16][16] = { { 0 } };
+    for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) {
+        float fx = (float)x + 0.5f, fy = (float)y + 0.5f; int c = 0;
+        for (int i = 0, j = 9; i < 10; j = i++)
+            if ((pt[i][1] > fy) != (pt[j][1] > fy) && fx < (pt[j][0] - pt[i][0]) * (fy - pt[i][1]) / (pt[j][1] - pt[i][1]) + pt[i][0]) c = !c;
+        in[y][x] = c;
+    }
+    for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) {
+        int edge = !in[y][x] && ((x > 0 && in[y][x - 1]) || (x < 15 && in[y][x + 1]) || (y > 0 && in[y - 1][x]) || (y < 15 && in[y + 1][x]));
+        px[y][x] = in[y][x] ? rgb15(0xFF, 0xF0 - y * 6, 0x40) : edge ? rgb15(0x20, 0x10, 0x30) : 0;
+    }
+}
+int exsetting_star(void) {
+    static int made_for;                       /* our page (grey_made) the star went into */
+    static int logged;
+    if (!exsetting_grey_font()) return 0;
+    if (made_for == grey_made) return 1;
+    int used = 0;                              /* colour 10's glyphs 94 and 95: anything there? */
+    for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) used |= RH(font1_texel(10, 8 * (STAR_G % 32) + x, 16 * (STAR_G / 32) + y)) >> 15;
+    uint16_t px[16][16]; memset(px, 0, sizeof px);
+    int game_star = star_from_assets(px);
+    if (!game_star) { memset(px, 0, sizeof px); star_of_our_own(px); }
+    for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) WH(star_texel(x, y), px[y][x]);
+    made_for = grey_made;
+    if (!logged++) rt_log("exsetting: FILTER's star in font 1 colour %d as 0x7F 0x80 (%s; those glyphs: %s)", GREYED_ON,
+                          game_star ? "the game's DIFFICULTY star" : "our own: no opt_u in assets/",
+                          used ? "not blank in the game's colour 10: kept there, only colour 15 changed" : "blank");
+    return 1;
 }
 #define B_L       0x40u
 #define B_R       0x200u

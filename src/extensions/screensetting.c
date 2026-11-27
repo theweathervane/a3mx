@@ -203,9 +203,11 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
         if (id == R_FILTER && (pressed & B_CONFIRM)) { filterscreen_open(c); return 1; }
         if (id == R_PREVIEW) { if (pressed & B_CONFIRM) filterpreview_start(c); return 1; }   /* (no value: left / right do nothing) */
         uint32_t keep[8], ra = c->r[31]; memcpy(keep, &c->r[4], sizeof keep);
-        const FilterEntry *fe = filter_get(filter());     /* FILTER: left / right within its category */
-        int f_first = filter_category_first(fe->category), f_size = filter_category_size(fe->category);
-        int v = id == R_VSYNC ? rt_vsync : id == R_TIMING ? timing() : id == R_HUD ? !!rt_hud_edges : filter() - f_first;
+        /* FILTER: left / right within FAVOURITES when the one in use is there (OFF always is), else within its category */
+        const FilterEntry *fe = filter_get(filter());
+        filter_favourites_refresh();
+        int f_cat = filter_category_pos(0, filter()) >= 0 ? 0 : fe->category, f_size = filter_category_size(f_cat);
+        int v = id == R_VSYNC ? rt_vsync : id == R_TIMING ? timing() : id == R_HUD ? !!rt_hud_edges : filter_category_pos(f_cat, filter());
         for (int k = 0; k < 2; k++) {
             c->r[4] = SLOTS + 0x2Cu * (uint32_t)k; c->r[5] = (uint32_t)v;
             c->r[6] = id == R_VSYNC || id == R_HUD ? 1 : id == R_TIMING ? 2 : (uint32_t)(f_size - 1);
@@ -215,7 +217,7 @@ int screensetting_frame(Cpu *c, uint32_t a0, int after) {
         if (id == R_VSYNC) vsync_set(v == 1);
         else if (id == R_HUD) { if ((v == 1) != !!rt_hud_edges) { rt_hud_edges = v == 1; rt_log("screen setting: hud messages %s", hud_names[rt_hud_edges]); } }
         else if (id == R_TIMING) { if (v >= 0 && v <= 2 && v != rt_frame_timing) { rt_frame_timing = v; rt_log("screen setting: frame timing %s", timing_names[v]); } }
-        else if (v >= 0 && v < f_size && f_first + v != rt_filter) { rt_filter = f_first + v; rt_log("screen setting: filter %s", filter_get(rt_filter)->name); }   /* (shader_gl.c sees it at the next frame) */
+        else if (v >= 0 && v < f_size && filter_category_at(f_cat, v) != rt_filter) { rt_filter = filter_category_at(f_cat, v); rt_log("screen setting: filter %s", filter_get(rt_filter)->name); }   /* (shader_gl.c sees it at the next frame) */
         return 1;
     }
     /* one of the game's rows: the game, with its own row number (no up / down this frame, so it stays) */

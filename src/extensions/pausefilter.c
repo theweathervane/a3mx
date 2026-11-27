@@ -25,6 +25,13 @@
  *     moved to the fourth (y 152), and +8 our row so the right one is lit; both put back straight after,
  *     so the game's memory is as it was. On the FILTER screen, its texts instead.
  * Whoever paused (1P, 2P, 3P: the game's +89 bits; the menu is the same for each) uses it.
+ *
+ * SCREEN SETTING > PREVIEW's fight (filterpreview.c, 0.173.0): START (player 1's, the only button the
+ * preview lets through to the game) pauses as in any fight, and the FILTER screen opens over it at once,
+ * without the menu's rows; Cross (a filter chosen, kept in a3mx.cfg) or Circle (back to the one in use)
+ * close it and the pause with it, as the menu's own START would (a START put in the pausing player's new
+ * presses for that one call of the menu, taken out again after it, so the fight's pause check never sees
+ * it). With the shaders feature only (EX. MENUS not needed: the preview needs only the shaders).
  * Without the shaders feature (and in every parity test) none of this runs: the menu is the game's. */
 #include "rt.h"
 #include "ext_features.h"
@@ -53,7 +60,11 @@ static int row;
 static long seen = -100;
 static uint32_t buf;                         /* guest memory: the FILTER row's text, the hint line */
 
-static int on(void) { return FEATURE(SHADERS) && FEATURE(MENUS); }
+int filterpreview_on(void);
+static int on(void) { return FEATURE(SHADERS) && (FEATURE(MENUS) || filterpreview_on()); }
+#define B_START    0x8000u
+static int preview_step;                     /* the preview's pause: 0 not opened yet, 1 the FILTER screen up, 2 closed: the pause ends */
+static uint32_t injected_pad;                /* the record whose START we put in (taken out after the menu) */
 static void sound(Cpu *c, int id) {
     uint32_t keep[8], ra = c->r[31], v0 = c->r[2]; memcpy(keep, &c->r[4], sizeof keep);
     c->r[4] = 6; c->r[5] = (uint32_t)id; c->r[6] = 0xC0; f_0887C4CC(c);
@@ -65,21 +76,35 @@ static void sound(Cpu *c, int id) {
 static uint32_t taken_pad, taken_bits;
 int pausefilter_options_row(Cpu *c, uint32_t a0, int after) {
     if (after) {
+        if (injected_pad) WW(injected_pad, RW(injected_pad) & ~B_START);
         if (taken_pad) WW(taken_pad, RW(taken_pad) | taken_bits);
-        taken_pad = taken_bits = 0;
+        taken_pad = taken_bits = injected_pad = 0;
         return 0;
     }
-    taken_pad = taken_bits = 0;
+    taken_pad = taken_bits = injected_pad = 0;
     if (!on()) return 0;
     uint32_t g = a0, rec = c->r[6];
     long now = (long)rt_vblank_count();
     int game_row = RB(rec + 8) <= 2 ? RB(rec + 8) : 0;
+    if (now - seen > 2) preview_step = 0;                            /* a new pause */
     if (now - seen > 2 || row != R_FILTER) row = our_row_of[game_row];   /* opened, or back from BUTTON CONFIG */
     seen = now;
-    if (!RB(rec + 1)) return 0;                                      /* (its first frame: no input) */
     int pl = 0;
     while (pl < 3 && !((int8_t)RB(g + 89) & (1 << pl))) pl++;
     uint32_t pad = PADS + 44u * (uint32_t)(pl < 3 ? pl : 0), pressed = RW(pad + 12), taken = 0;
+    if (filterpreview_on()) {                                        /* PREVIEW: the FILTER screen is the pause */
+        if (preview_step == 0) { filterscreen_open_pause(c, pad); preview_step = 1; }
+        if (!RB(rec + 1)) return 0;                                  /* (the panel still opening: no input) */
+        if (preview_step == 1) {
+            if (filterscreen_in_pause()) filterscreen_frame(c);
+            if (!filterscreen_in_pause()) preview_step = 2;
+        }
+        WW(pad + 12, preview_step == 2 ? B_START : 0);               /* the menu sees nothing, or the START that ends the pause */
+        taken_pad = pad + 12; taken_bits = pressed;
+        if (preview_step == 2) { injected_pad = pad + 12; preview_step = 3; }
+        return 0;
+    }
+    if (!RB(rec + 1)) return 0;                                      /* (its first frame: no input) */
     if (filterscreen_in_pause()) {                                   /* the FILTER screen: all of the input */
         filterscreen_frame(c);
         taken = pressed;

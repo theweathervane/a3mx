@@ -16,6 +16,7 @@
 #include "shader.h"
 #include "ext_features.h"
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 
 int rt_filter_cli = -1;                      /* main.c: --filter, for this run only (never written to a3mx.cfg) */
@@ -97,6 +98,25 @@ static int is_file(const char *p) { struct stat s; return stat(p, &s) == 0 && (s
 static int is_dir(const char *p) { struct stat s; return stat(p, &s) == 0 && (s.st_mode & S_IFMT) == S_IFDIR; }
 static const void *loader(const char *name) { return gl_getproc ? gl_getproc(name) : NULL; }
 
+/* why filter F could not be shown this run (its preset unreadable, its shaders not compiling, or failing
+   while drawing), or NULL: the FILTER screen greys it out with this (0.173.0). Nothing tests presets
+   beforehand: a filter fails, if it does, when it is chosen. */
+static char **failed_why; static int failed_n;
+static void set_failed(int f, const char *why) {
+    if (f < 0) return;
+    if (f >= failed_n) {
+        int n = filter_count() > f ? filter_count() : f + 1;
+        char **w = (char **)realloc(failed_why, sizeof *w * (size_t)n);
+        if (!w) return;
+        for (int k = failed_n; k < n; k++) w[k] = NULL;
+        failed_why = w; failed_n = n;
+    }
+    free(failed_why[f]);
+    failed_why[f] = (char *)malloc(strlen(why) + 1);
+    if (failed_why[f]) strcpy(failed_why[f], why);
+}
+const char *shader_gl_failed(int f) { return f >= 0 && f < failed_n ? failed_why[f] : NULL; }
+
 static void report(libra_error_t err, const char *doing) {
     char *msg = NULL;
     if (err && lib.error_write(err, &msg) == 0 && msg) { rt_warn("filter: %s: %s", doing, msg); lib.error_free_string(&msg); }
@@ -161,14 +181,14 @@ static int want_chain(int f) {
     if (!is_file(path)) { rt_warn("filter: %s is missing", path); snprintf(described, sizeof described, "%s: not shown (%s is missing)", sf->name, sf->path); return 0; }
     libra_shader_preset_t preset = NULL;
     libra_error_t err = lib.preset_create(path, &preset);
-    if (err || !preset) { report(err, path); snprintf(described, sizeof described, "%s: not shown (its preset could not be read)", sf->name); return 0; }
+    if (err || !preset) { report(err, path); snprintf(described, sizeof described, "%s: not shown (its preset could not be read)", sf->name); set_failed(f, "ITS PRESET COULD NOT BE READ"); return 0; }
     struct filter_chain_gl_opt_t opt;
     memset(&opt, 0, sizeof opt);
     opt.version = LIBRASHADER_CURRENT_VERSION; opt.glsl_version = 330; opt.use_dsa = false; opt.force_no_mipmaps = false; opt.disable_cache = true;
     p_glBindVertexArray(0);
     err = lib.gl_filter_chain_create(&preset, loader, &opt, &chain);
     put_back_state();
-    if (err || !chain) { report(err, sf->path); chain = NULL; snprintf(described, sizeof described, "%s: not shown (its shaders did not compile)", sf->name); return 0; }
+    if (err || !chain) { report(err, sf->path); chain = NULL; snprintf(described, sizeof described, "%s: not shown (its shaders did not compile)", sf->name); set_failed(f, "ITS SHADERS DID NOT COMPILE"); return 0; }
     /* our parameters, "NAME=value;NAME=value" */
     for (const char *p = sf->params; p && *p;) {
         char name[64]; float v = 0; int used = 0;
@@ -254,6 +274,7 @@ int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, 
         report(err, filter_get(f)->path);
         chain_failed = 1; drop_chain();
         snprintf(described, sizeof described, "%s: not shown (it failed while drawing)", fname(f));
+        set_failed(f, "IT FAILED WHILE DRAWING");
         return 0;
     }
     /* 3. into the window, turned over (OpenGL's window has row 0 at the bottom) */
@@ -291,6 +312,7 @@ int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) {
 void shader_gl_init(void *(*getproc)(const char *), const char *work) { (void)getproc; (void)work; }
 int shader_gl_ready(void) { return 0; }
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) { (void)rgba; (void)max_w; (void)max_h; (void)w; (void)h; return 0; }
+const char *shader_gl_failed(int f) { (void)f; return NULL; }
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h) {
     (void)tex; (void)tex_w; (void)tex_h; (void)src_w; (void)src_h; (void)win_w; (void)win_h; return 0;
 }
