@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.169.0
+### For players
+- **More of the game decompiled (31 functions, 41.87% of the program now):** the frame's hit pass (every fighter's and projectile's hits, hits meeting hits, a projectile's flight), guard stun with its push-back and shake, guard reactions and guard crushes, knock-ups and landing from a hit, the round's line-up (one-on-one, two-on-one and three-fighter rounds), the cpu's counter-move choice, more command-input elements and the wireless link's receive. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_hitloop277.c`, `batch_round278.c`, `batch_guard279.c`, `batch_cpu280.c`, `batch_net281.c` (new); more in `batch_input276.c` and `batch_jumps275.c`. docs/PSP_PROGRAM_MAP.md: a row for each batch; README.md / docs/ROADMAP.md progress bars updated.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch. 0x08864044, 0x08863F80, 0x0886D150, 0x0886D054 and 0x088DD134 did not run in any scenario and were checked against the original code only.
+
 ## 0.168.1
 ### Technical
 - README.md / docs/ROADMAP.md: the progress bars brought up to 0.168.0 (`tools/progress.py --update-docs`); the 0.168.0 entry below.

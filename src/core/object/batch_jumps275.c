@@ -180,3 +180,81 @@ SFA_FUNC(08938860, part_land_21) {
     } else call1(c, o, f_08861848, 0x089388ECu);
     leave(c, sv);
 }
+
+
+void f_08866A84(Cpu *c); void f_08866D4C(Cpu *c); void f_08862004(Cpu *c); void f_0887C5CC(Cpu *c);
+void f_088637CC(Cpu *c); void f_0885E9A4(Cpu *c); void f_0885EA78(Cpu *c); void f_08861724(Cpu *c);
+void f_0886E3CC(Cpu *c);
+
+/* After landing from a hit (fighter): set down by 0x08861724 0x14, or a recovery (0x0885EA78 when
+   0x0885E9A4 allows); the common part: +7 on, +73 cleared, +82 = 4, +20 = +132 (16.16), +560..+562 /
+   +586 / +587 cleared, +656 = 4 for kind 9 with +540, else cleared; a free hit slot takes 0x32 off +699
+   (cleared from 180) with +599 = 1 and +598 = 0x18; 0x0887C5CC and 0x088637CC; then 0x0886E3CC (9, 8)
+   unless +702. */
+static void land_from_hit(Cpu *c, gaddr o, const uint32_t back[6]) {
+    *B(o + 7) = (uint8_t)(*B(o + 7) + 1);
+    int32_t y = S16(o + 132);
+    *B(o + 73) = 0; *H(o + 82) = 4;
+    *W(o + 20) = (uint32_t)y << 16;
+    *B(o + 560) = 0; *B(o + 561) = 0; *B(o + 562) = 0; *B(o + 586) = 0; *B(o + 587) = 0;
+    int32_t k = S8(o + 338);
+    *B(o + 656) = 0;
+    if (k == 9 && S8(o + 540) != 0) *B(o + 656) = 4;
+    if (S16(o + 112) >= 0) {
+        uint8_t v = (uint8_t)(*B(o + 699) - 0x32);
+        *B(o + 599) = 1; *B(o + 699) = v; *B(o + 598) = 0x18;
+        if (!(*B(o + 699) < 180)) *B(o + 699) = 0;
+    }
+    call1(c, o, f_0887C5CC, back[0]);
+    call1(c, o, f_088637CC, back[1]);
+    call1(c, o, f_0885E9A4, back[2]);
+    if (c->r[2] != 0) call1(c, o, f_0885EA78, back[3]);
+    else call2(c, o, 0x14, f_08861724, back[4]);
+    if (S8(o + 702) == 0) {
+        ARG(0) = o; ARG(1) = 9; ARG(2) = 8; c->r[31] = back[5]; f_0886E3CC(c);
+    }
+}
+
+/* (fighter): a knocked-up fall: 0x08866A84 passes to 0x08866D4C; else 0x08862004 and, falling on
+   landing, the common landing from a hit; in the air ticked (unless the opponent's +251 while rising).
+   A frame keeping s0, s1 (the opponent). */
+SFA_FUNC(0885DB78, hit_fall_land) {
+    gaddr o = ARG(0);
+    uint32_t s0 = c->r[16], s1 = c->r[17], ra = c->r[31];
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = s0; c->r[16] = o;
+    *W(c->r[29] + 20) = s1; *W(c->r[29] + 24) = ra;
+    gaddr p = *W(o + 92); c->r[17] = p;
+    call1(c, o, f_08866A84, 0x0885DB94u);
+    if (c->r[2] != 0) call1(c, o, f_08866D4C, 0x0885DBA4u);
+    else {
+        call1(c, o, f_08862004, 0x0885DBB4u);
+        if (c->r[2] == 0) {
+            if (S8(p + 251) == 0 || (int32_t)*W(o + 100) < 0) call1(c, o, f_08861848, 0x0885DCD0u);
+        } else if ((int32_t)*W(o + 100) < 0) {
+            static const uint32_t b[6] = { 0x0885DC64u, 0x0885DC6Cu, 0x0885DC74u, 0x0885DC84u, 0x0885DC94u, 0x0885DCACu };
+            land_from_hit(c, o, b);
+        }
+    }
+    c->r[16] = s0; c->r[17] = s1; c->r[31] = ra; c->r[29] += 0x20;
+}
+
+
+/* (fighter): 0x08862004 and, falling on landing, the common landing from a hit; in the air ticked
+   (unless the opponent's +251 while rising). A frame keeping s0, s1 (the opponent). */
+SFA_FUNC(0885E6B0, hit_fall_land_b) {
+    gaddr o = ARG(0);
+    uint32_t s0 = c->r[16], s1 = c->r[17], ra = c->r[31];
+    c->r[29] -= 0x20;
+    *W(c->r[29] + 16) = s0; c->r[16] = o;
+    *W(c->r[29] + 20) = s1; *W(c->r[29] + 24) = ra;
+    gaddr p = *W(o + 92); c->r[17] = p;
+    call1(c, o, f_08862004, 0x0885E6CCu);
+    if (c->r[2] == 0) {
+        if (S8(p + 251) == 0 || (int32_t)*W(o + 100) < 0) call1(c, o, f_08861848, 0x0885E7E8u);
+    } else if ((int32_t)*W(o + 100) < 0) {
+        static const uint32_t b[6] = { 0x0885E77Cu, 0x0885E784u, 0x0885E78Cu, 0x0885E79Cu, 0x0885E7ACu, 0x0885E7C4u };
+        land_from_hit(c, o, b);
+    }
+    c->r[16] = s0; c->r[17] = s1; c->r[31] = ra; c->r[29] += 0x20;
+}

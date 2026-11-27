@@ -167,3 +167,64 @@ SFA_FUNC(08868184, cmd_random_wait) {
     call_s(c, s, f_08868208, 0x088681E4u);
     c->r[16] = s0; c->r[17] = s1; c->r[31] = ra; c->r[29] += 0x20;
 }
+
+
+/* (fighter, state, table): a button element: +1 cleared; with none of the element's buttons pressed
+   (+760) it ends (0x088681F8), else +0 on and, with bit 10, holds (0x08868214), otherwise a random wait
+   (0x08868184). */
+SFA_FUNC(08868514, cmd_button) {
+    gaddr o = ARG(0), s = ARG(1), t = ARG(2);
+    uint32_t ra = c->r[31];
+    c->r[29] -= 0x20;
+    c->r[7] = s;
+    *B(s + 1) = 0;
+    uint32_t e = *H(t);
+    c->r[6] = e;
+    uint32_t m = *H(o + 760) & (e & 0x3FF) & 0xFFFF;
+    c->r[8] = m; c->r[5] = o;
+    *W(c->r[29] + 16) = ra;
+    c->r[4] = s;
+    if (m == 0) { c->r[31] = 0x08868574u; f_088681F8(c); }
+    else {
+        c->r[7] = (uint32_t)*B(s) + 1;
+        c->r[6] = e & 0x400;
+        *B(s) = (uint8_t)c->r[7];
+        if (e & 0x400) { c->r[31] = 0x08868560u; f_08868214(c); }
+        else { c->r[6] = s; ARG(0) = o; ARG(1) = s; c->r[31] = 0x08868590u; f_08868184(c); }
+    }
+    c->r[31] = ra; c->r[29] += 0x20;
+}
+
+/* (fighter, state, table): a button element that must match exactly (bit 13 any of them): +1 cleared;
+   no button, or (without bit 13) not exactly the held +752 buttons, ends it (0x088681F8); else +0 on
+   and, with bit 10, holds (0x08868214), otherwise a random wait (0x08868184). */
+SFA_FUNC(088682AC, cmd_button_exact) {
+    gaddr o = ARG(0), s = ARG(1), t = ARG(2);
+    uint32_t ra = c->r[31];
+    c->r[29] -= 0x20;
+    c->r[8] = s;
+    *B(s + 1) = 0;
+    uint32_t e = *H(t);
+    c->r[7] = e;
+    uint32_t want = e & 0x3FF;
+    c->r[6] = want;
+    uint32_t m = *H(o + 760) & want & 0xFFFF;
+    c->r[9] = m; c->r[5] = o;
+    *W(c->r[29] + 16) = ra;
+    c->r[4] = s;
+    int ok = m != 0;
+    uint32_t back = 0x088682F8u;
+    if (ok && !(e & 0x2000)) {
+        c->r[8] = *H(o + 752) & 0x3FF;
+        if (want != c->r[8]) { ok = 0; back = 0x08868340u; }
+    }
+    if (!ok) { c->r[31] = back; f_088681F8(c); }
+    else {
+        c->r[6] = (uint32_t)*B(s) + 1;
+        c->r[7] = e & 0x400;
+        *B(s) = (uint8_t)c->r[6];
+        if (e & 0x400) { c->r[31] = 0x0886832Cu; f_08868214(c); }
+        else { c->r[6] = s; ARG(0) = o; ARG(1) = s; c->r[31] = 0x0886835Cu; f_08868184(c); }
+    }
+    c->r[31] = ra; c->r[29] += 0x20;
+}

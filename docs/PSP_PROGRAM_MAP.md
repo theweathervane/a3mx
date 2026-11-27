@@ -1195,8 +1195,13 @@ owner at + 88, and frame data at + 296.
 | (25 functions) | (`object/batch_misc272.c`) small dispatchers and the leaves under them: a step by count, the cpu buttons by table, crouching and heavy-lunge attack starts, a list-driven spawn, link steps, part-stick readers, special / super cancels |
 | (20 functions) | (`object/batch_hit273.c`) the hit check: which sides a hit can land on, the hit applied to the result block, the attacker/defender pairing, a throw landing and its hit, a hit landing on the defender, a hit object landing, two hits clashing, hit / hurt box tests and the hit try |
 | (20 functions) | (`object/batch_holds274.c`) throw holds: the step that lands a caught throw when the animation flags it, and the launches that follow |
-| (8 functions) | (`object/batch_jumps275.c`) special jumps that end in the common lift once +123 is set, and jumps steered by the part's stick |
-| (6 functions) | (`object/batch_input276.c`) command element steps (direction match, release, timed, held-button timers, a random wait) and a hit handler by the defender's reaction |
+| (10 functions) | (`object/batch_jumps275.c`) special jumps that end in the common lift once +123 is set, jumps steered by the part's stick, landing from a hit |
+| (8 functions) | (`object/batch_input276.c`) command element steps (direction match, release, timed, held-button timers, a random wait, button elements) and a hit handler by the defender's reaction |
+| (8 functions) | (`object/batch_hitloop277.c`) the hit loops: fighter against fighter, each projectile against the fighters, hit against hit, all fighters' hits and clashes, the frame's hit pass, a projectile's flight |
+| (3 functions) | (`object/batch_round278.c`) round set-up: one-on-one and two-on-one rounds, the round's line-up, pairing, cpu choices and hit slots |
+| (8 functions) | (`object/batch_guard279.c`) guard stun: the counter, the push-back, the shake and the stance while blocking; guard reactions, guard crushes, knock-up starts |
+| (6 functions) | (`object/batch_cpu280.c`) the cpu's counter-move choice: frames to the opponent's next hit, the answers that fit, the pick; cpu script steps that take it |
+| (2 functions) | (`object/batch_net281.c`) the wireless (ad-hoc) link's receive: PTP or PDP by the connection's kind, the sender's peer |
 | (286 step dispatchers) | (0.166.0, `object/steps_fighters.c`) the step dispatchers the fighter scenarios reach, most of them characters' own move steps: run_step by a step byte (+3 - +7, +128, ...), half-word or signed byte (+194, +236, ...), and run_step_with (the owner +88 to the handler); one line each, matched to the translations' shape |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
