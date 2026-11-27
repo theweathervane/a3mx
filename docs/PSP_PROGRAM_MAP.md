@@ -1212,6 +1212,15 @@ owner at + 88, and frame data at + 296.
 | (41 functions) | (`object/batch_tiny289.c`) small leaves: move and step starts with their speeds and animations, cpu scripts by kind, a name compare, objects shown by a player's record, new objects for a move, a piece's place by its owner's frame, the fight task's sub-step |
 | (19 functions) | (`object/batch_moves290.c`) character counter starts, move starts behind a command check, pieces and objects a move brings out, who is ahead on vitality |
 | (16 functions) | (`object/batch_moves291.c`) more move starts behind their checks, counter starts, leaps and run-ins, a call with +144 standing in for +112 |
+| (14 functions) | (`object/batch_moves292.c`) move starts behind their checks, a counter start, a fall onto the ground, the paid escape, the two play clocks |
+| (13 functions) | (`object/batch_moves293.c`) ten moves that need the guard bar broken (one shape), the stage pick stepping back through its list, a dive start, a move for choices of 0 or more |
+| (12 functions) | (`object/batch_moves294.c`) more move starts behind their checks, the stage pick stepping on, a throw check, objects two moves bring out, a step by the opponent's height |
+| (12 functions) | (`object/batch_moves295.c`) moves that need the guard bar broken (a second shape), super starts for the choice 0 |
+| (19 functions) | (`object/batch_steps296.c`) steps the new leaves freed: choosers between two handlers, a falling attack's follow-ups, a leap start, an object that wanders across, the link's record for an address, a move's step by +192 |
+| (10 functions) | (`object/batch_steps297.c`) a grab out of a move, the link's time-outs, follow-ups by button, an object that follows its owner's move, a dive's step, two characters' guard moves, two heavy-move starts |
+| (9 functions) | (`object/batch_steps298.c`) five characters' pieces that follow their fighter's frame, a held projectile's release, a third guard move, a hop's step and landing, the fight task's step |
+| (5 functions) | (`object/batch_steps299.c`) a new entry for the link's list, a move's step with a dive, a fourth guard move, a sixth piece that follows its fighter, the mark beside a fighter |
+| (4 functions) | (`object/batch_steps300.c`) a helper fighter's start, a super's start from the ground or the air, the throwing taunt, a dive kick's step with its throw |
 | (286 step dispatchers) | (0.166.0, `object/steps_fighters.c`) the step dispatchers the fighter scenarios reach, most of them characters' own move steps: run_step by a step byte (+3 - +7, +128, ...), half-word or signed byte (+194, +236, ...), and run_step_with (the owner +88 to the handler); one line each, matched to the translations' shape |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the

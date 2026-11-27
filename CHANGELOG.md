@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.175.0
+### For players
+- **More of the game decompiled (98 functions, 44.69% of the program now):** the pieces that follow a fighter's frame for six characters, four characters' guard moves, a super's start from the ground or the air, a held projectile's release, a dive kick with its throw, falling attacks' follow-ups, a helper fighter's start, the throwing taunt, the mark beside a fighter, the fight task's step, the wireless link's list entries and time-outs, the two play clocks, and many move starts behind their command checks. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: `batch_moves292.c` - `batch_moves295.c`, `batch_steps296.c` - `batch_steps300.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch; README.md / docs/ROADMAP.md progress bars updated.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each batch. Every function of `batch_steps296.c` - `batch_steps300.c` runs in a scenario; of `batch_moves292.c` - `batch_moves295.c` (moves of other ISM choices and steps no scenario plays) only 0x08984EA8 does, and the rest were checked against the original code only.
+
 ## 0.174.1
 ### Technical
 - The perf log and `last_run.txt` count the Vulkan / DirectX 12 / Metal renderer's wait for the monitor as swap, as OpenGL's: SDL3's GPU API waits while acquiring the swapchain's image (and possibly while submitting the frame), inside presenting, where OpenGL waits in the swap. Until now that wait was counted as present and as work, so `busy_ms`, `present_ms` and `slow_frames` looked worse than OpenGL's although the frames reached the screen as smoothly (seen on an M1 Pro with Metal: 701 "slow" frames against OpenGL's 5, the same `shown_p99`). `perf_swap_in_present` (perf.c), timed in `ge_sdlgpu.c`; nothing drawn or played changes.
