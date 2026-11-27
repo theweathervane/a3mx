@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.174.0
+### For players
+- **New: Vulkan and DirectX 12 renderers** (the launcher's Renderer, or `--renderer vulkan` / `d3d12`): the same GPU renderer through SDL3's GPU API, drawing what OpenGL draws. OpenGL stays the default. **Metal** (macOS) is built from the same code but hasn't been tried on a Mac yet ("Metal (untested)"). If the API can't be had on the PC, the game uses OpenGL and its log says why.
+- FILTER needs OpenGL: with Vulkan, DirectX 12 or Metal the picture is shown plain, SCREEN SETTING greys FILTER and PREVIEW and FILTER reads OPENGL ONLY. The chosen filter is kept for OpenGL.
+
+### Technical
+- `ge_state.c` (new): each GE primitive into triangles and an explicit `GeDrawState` (target, scissor, texture and its sampling, texture function, alpha test, blending as API-neutral factors, colour mask); backends no longer read the GE's registers. `GeBackend.draw` takes `(const GeDrawState *, triangles, n)`. `ge_texcache.c` (new): the texture cache (small textures hashed, big pages checked 8 rows at a time against a copy) moved out of `ge_gl.c` unchanged, shared by both backends through `GeTexOps`.
+- `ge_sdlgpu.c` (new): the SDL3 GPU backend (`ge_backend_sdlgpu`): render targets per frame buffer at 512·S × 272·S, batches recorded into one render pass per run of draws into a target, pipelines cached by blend state and colour mask, texture uploads in copy passes between them, sharp-bilinear presentation to the swapchain, readback for `--dump`, VSYNC as the present mode. `host_sdl.c`: a window without OpenGL for it (`host_init(…, 2)`, `host_window`), and the OpenGL window again if it can't start (`host_reopen_gl`). `main.c`: `--renderer vulkan|d3d12|metal`. Not there yet: FILTER (librashader needs the API's own device, which SDL_GPU doesn't hand out), the perf log's GPU time (no timer queries), mip-mapped presentation below half size.
+- Shaders: `src/platform/gpu_shaders/` (HLSL, and MSL for Metal), compiled once by `tools/gpu_shaders.py` into `src/platform/gpu_shaders.h` (DXIL with the Windows SDK's dxc, SPIR-V with Microsoft's DirectXShaderCompiler v1.9.2609, pinned in `tools/data/pins.json`, maintainers only): builds need no shader compiler.
+- Checked: OpenGL draws what 0.173.0 drew (1,400 frames compared byte for byte; only the version text on the boot screen differs) with the same game state; OpenGL, Direct3D 12 and Vulkan against the software renderer on arcade_fight and wide_fight (WIDE NATIVE) at x2: the game identical on all 6,000 frames, pictures within the gl_renderer tolerance (worst 0.40% of 4x4 squares over 32); Direct3D 12 and Vulkan byte-identical to OpenGL (800 frames each). Metal untested.
+- Launcher: Vulkan and DirectX 12 (Windows) / Metal (untested, macOS) are real choices now. Docs: ARCHITECTURE.md (platform), BUILDING.md (Renderer, `--renderer`), DISPLAY.md (FILTER needs OpenGL), DEPENDENCIES.md (dxc).
+
 ## 0.173.1
 ### Technical
 - macOS / Linux: `build.sh`, `launcher.sh` and the Docker test scripts are marked executable in git, so a fresh clone or download runs them without `chmod +x` ("permission denied" before). `.DS_Store` (macOS Finder) is in `.gitignore`.

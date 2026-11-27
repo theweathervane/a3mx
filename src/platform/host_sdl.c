@@ -28,6 +28,9 @@ static SDL_AudioDeviceID adev;
 static SDL_AudioStream *astream[8];
 static SDL_Gamepad *pads_sdl[4];
 static int headless_mode, quit_req, fullscreen, menu_req;
+static int gpu_window;                         /* the window is SDL GPU's (no OpenGL context) */
+void (*host_gpu_vsync)(int on);
+void *host_window(void) { return win; }
 
 static void open_audio(void) {
     SDL_AudioSpec spec = { SDL_AUDIO_S16, 2, 44100 };
@@ -51,6 +54,14 @@ int host_init(int headless, int want_gl) {
        Alt+Enter switch either way. The window size above is what a window gets. */
     fullscreen = host_start_fullscreen;
     SDL_WindowFlags full = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+    if (want_gl == 2) {                        /* SDL's GPU API (ge_sdlgpu.c) claims the window itself */
+        win = SDL_CreateWindow(title, 480 * mult, 272 * mult, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | full);
+        if (!win) return 0;
+        gpu_window = 1;
+        rt_log("window: %s, for SDL GPU", fullscreen ? "full screen (F11 or Alt+Enter: a window)" : "a window (F11 or Alt+Enter: full screen)");
+        open_audio();
+        return 1;
+    }
     if (want_gl) {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -90,6 +101,28 @@ int host_init(int headless, int want_gl) {
 }
 
 static void *gl_proc(const char *name) { return (void *)SDL_GL_GetProcAddress(name); }
+/* SDL GPU couldn't be had on the window made for it: the window again, with OpenGL, as host_init makes it */
+int host_reopen_gl(void) {
+    if (!gpu_window || !win) return 0;
+    int fs = fullscreen;
+    SDL_DestroyWindow(win); win = NULL; gpu_window = 0;
+    int dh = host_display_height(), mult = dh ? (dh * 3 / 4) / 272 : 2;
+    if (mult < 1) mult = 1;
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+#ifdef __APPLE__
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    win = SDL_CreateWindow("A3MX", 480 * mult, 272 * mult, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY | (fs ? SDL_WINDOW_FULLSCREEN : 0));
+    if (win) glctx = SDL_GL_CreateContext(win);
+    if (!glctx) return 0;
+    SDL_GL_MakeCurrent(win, glctx);
+    extern int rt_vsync;
+    host_set_vsync(rt_vsync);
+    return 1;
+}
 HostGetProc host_gl_getproc(void) { return glctx ? gl_proc : NULL; }
 /* Test aid: A3MX_TEST_VBLANK_HZ=60 makes every swap wait for a simulated vblank at that rate (from a
    fixed start), and host_refresh_hz report it, so FRAME TIMING SMOOTH can be measured on a machine whose
@@ -158,9 +191,9 @@ int host_compositor_wait(int on) {
 }
 
 void host_gl_swap(void) {
-    if (!glctx) return;
+    if (!glctx && !gpu_window) return;
     test_vblank_submit();
-    SDL_GL_SwapWindow(win);
+    if (glctx) SDL_GL_SwapWindow(win);          /* (SDL GPU: the backend's present submitted the frame) */
     /* FRAME TIMING SMOOTH: wait until the frame is really out, so the swap comes back at the refresh
        (pacing.c times the next frame from it) and the driver can't queue frames ahead (input lag) */
     { int pacing_swap_paced(void); if (pacing_swap_paced()) ge_backend->finish(); }
@@ -201,6 +234,11 @@ static int vsync_ok = -1;
 int host_vsync_available(void) { return vsync_ok != 0; }
 void host_set_vsync(int on) {
     test_interval = 1;
+    if (gpu_window) {                          /* the SDL GPU backend's present mode */
+        vsync_ok = 1;
+        if (host_gpu_vsync) host_gpu_vsync(on);
+        return;
+    }
     if (vsync_ok < 0 && (glctx || ren)) {
         vsync_ok = glctx ? (SDL_GL_SetSwapInterval(-1) || SDL_GL_SetSwapInterval(1)) : SDL_SetRenderVSync(ren, 1);
         if (!vsync_ok) rt_log("vsync: this display can't wait for the monitor (%s): VSYNC is greyed out in SCREEN SETTING", SDL_GetError());

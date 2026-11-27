@@ -213,17 +213,18 @@ static const char *const PRESETS[]    = { "Release", "Debug", "Record Output", "
 static const char *const PRESET_ARGS[] = { "release", "debug", "watch", "watch" };
 static const char *const PRESET_DIRS[] = { "build", "build-debug", "build-watch", "build-watch" };
 enum { PRESET_RELEASE, PRESET_DEBUG, PRESET_RECORD, PRESET_PLAY, PRESET_COUNT };
-/* The renderers the game's --renderer takes. Only OpenGL and the software one exist today: the others
- * are listed so the choice and the scripts are in place, and say plainly that OpenGL is used meanwhile. */
+/* The renderers the game's --renderer takes: OpenGL (the default), the software one, and SDL3's GPU API
+ * with Vulkan, DirectX 12 (Windows) or Metal (macOS: built, not yet tried on a Mac) since 0.174.0. If the
+ * API can't be had on this PC, the game uses OpenGL and its log says why. */
 struct RendererChoice { const char *label, *arg; bool written; };
 static const RendererChoice RENDERERS[] = {
     { "OpenGL", "opengl", true },
     { "Software", "soft", true },
-    { "Vulkan (not available yet: uses OpenGL)", "vulkan", false },
+    { "Vulkan", "vulkan", true },
 #if defined(_WIN32)
-    { "DirectX 12 (not available yet: uses OpenGL)", "d3d12", false },
+    { "DirectX 12", "d3d12", true },
 #elif defined(__APPLE__)
-    { "Metal / MoltenVK (not available yet: uses OpenGL)", "metal", false },
+    { "Metal (untested)", "metal", true },
 #endif
 };
 static const int N_RENDERERS = (int)(sizeof RENDERERS / sizeof RENDERERS[0]);
@@ -2619,8 +2620,8 @@ struct App {
                 ImGui::EndCombo();
             }
             ImGui::SetItemTooltip("--renderer. OpenGL: the GPU renderer. Software: the reference renderer, drawn on the CPU.\n"
-                                  "Vulkan, DirectX 12 (Windows) and Metal / MoltenVK (macOS) are listed for when they are written:\n"
-                                  "choosing one today runs OpenGL, and the game's log says so.");
+                                  "Vulkan, DirectX 12 (Windows), Metal (macOS, not tried on a Mac yet): the same renderer through SDL3's GPU API.\n"
+                                  "FILTER needs OpenGL: with the others the picture is shown plain. If the API can't be had, the game uses OpenGL.");
             label("Resolution", em * 5.5f);
             ImGui::SetNextItemWidth(-em);
             ImGui::BeginDisabled(set.renderer == 1);

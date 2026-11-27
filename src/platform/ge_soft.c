@@ -436,7 +436,7 @@ static void emit_sprite(const Vtx *a, const Vtx *b, int flat) {
             g[i].x = s[i]->x; g[i].y = s[i]->y; g[i].u = s[i]->u; g[i].v = s[i]->v;
             g[i].r = (uint8_t)s[i]->c.r; g[i].g = (uint8_t)s[i]->c.g; g[i].b = (uint8_t)s[i]->c.b; g[i].a = (uint8_t)s[i]->c.a;
         }
-        ge_backend->draw(6, g, 2, flat, sc_x1, sc_y1, sc_x2, sc_y2);
+        ge_draw(6, g, 2, flat, sc_x1, sc_y1, sc_x2, sc_y2);
     } else sprite(a, b);
 }
 
@@ -449,7 +449,7 @@ static void emit_strip(const Vtx q[4], int flat) {
             g[i].x = q[i].x; g[i].y = q[i].y; g[i].u = q[i].u; g[i].v = q[i].v;
             g[i].r = (uint8_t)q[i].c.r; g[i].g = (uint8_t)q[i].c.g; g[i].b = (uint8_t)q[i].c.b; g[i].a = (uint8_t)q[i].c.a;
         }
-        ge_backend->draw(4, g, 4, flat, sc_x1, sc_y1, sc_x2, sc_y2);
+        ge_draw(4, g, 4, flat, sc_x1, sc_y1, sc_x2, sc_y2);
     } else { triangle(&q[0], &q[1], &q[2], flat); triangle(&q[1], &q[2], &q[3], flat); }
 }
 
@@ -536,7 +536,7 @@ static void draw_prim(uint32_t arg) {
             gv[i].x = v[i].x; gv[i].y = v[i].y; gv[i].u = v[i].u; gv[i].v = v[i].v;
             gv[i].r = (uint8_t)v[i].c.r; gv[i].g = (uint8_t)v[i].c.g; gv[i].b = (uint8_t)v[i].c.b; gv[i].a = (uint8_t)v[i].c.a;
         }
-        ge_backend->draw(type, gv, n, flat, sc_x1, sc_y1, sc_x2, sc_y2);
+        ge_draw(type, gv, n, flat, sc_x1, sc_y1, sc_x2, sc_y2);
         if (rt_widescreen) wide_margins(v, n, type, flat);
         return;
     }

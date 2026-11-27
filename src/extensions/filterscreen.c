@@ -255,6 +255,7 @@ void filterscreen_text(Cpu *c) {
     else snprintf(w1, sizeof w1, "%s", e->path);
     if (cursor > 0 && shader_gl_failed(cursor)) snprintf(w2, sizeof w2, "NOT SHOWN: %s.", shader_gl_failed(cursor));
     else if (!there(cursor)) snprintf(w2, sizeof w2, "ITS PRESET IS MISSING.");
+    else if (cursor > 0 && shader_unavailable()) snprintf(w2, sizeof w2, "NEEDS THE OPENGL RENDERER.");
     else if (cursor > 0 && !shader_gl_ready()) snprintf(w2, sizeof w2, "NO LIBRASHADER: NOT SHOWN.");
     else if (e->heavy) snprintf(w2, sizeof w2, "HEAVY - WANTS A STRONG GPU.");
     text(c, put_marquee(T_WHAT1, w1, WHAT_LEN, tick), 0, LIST_X, WHAT_Y, 9);

@@ -12,6 +12,7 @@
 #include "rt.h"
 #include "ge.h"
 #include "ge_backend.h"
+#include "ge_texcache.h"
 #include "gl_funcs.h"
 #include "shader.h"
 #include "perf.h"
@@ -176,187 +177,39 @@ static Target *target_containing(uint32_t a, int *ox, int *oy) {
     return NULL;
 }
 
-/* ---------------------------------------------------------------- texture cache
- *
- * Textures from guest memory are decoded to RGBA8 once and kept as GL textures. The catch is knowing
- * when the guest memory under one has changed: the game can rewrite it between any two display lists,
- * and it sends most sprites as a list of their own, so a check runs for nearly every draw.
- *
- * Small textures (up to 32 KB: glyphs, palettes' worth of tiles) are keyed by a hash of their bytes,
- * palette and format, as before; hashing them is cheap.
- *
- * Large ones (the 128 KB sprite and stage pages in VRAM) are keyed by where they are and how they are
- * read (address, size, format, swizzle, stride, palette), and keep a copy of the bytes they were decoded
- * from. A draw compares only the 8-row bands its texture coordinates reach (one texel of margin, for
- * linear filtering) against that copy, and decodes and re-uploads only the bands that differ. The
- * result is the same as hashing the whole texture before every draw, for every pixel drawn: a band the
- * draw doesn't read can't change what it draws, and is checked by the next draw that reads it. */
-typedef struct { uint64_t key; GLuint tex; int w, h; uint64_t last_used; } TexEntry;
-#define TEX_CACHE 1024
-static TexEntry tcache[TEX_CACHE];
+/* ---------------------------------------------------------------- texture cache (ge_texcache.c) */
 static uint64_t frame_no;
 static void gpu_timer_begin(void), gpu_timer_end(void);   /* the frame's GPU timer (below) */
 static void flush_batch(void);                             /* draws the open batch (below) */
-static uint8_t decode_buf[1024 * 1024 * 4];
-static struct { int valid; uint32_t addr, bytes, fmt, clutfmt, size, mode; uint64_t clut_hash; TexEntry *e; } last_tex;
-
-#define SMALL_TEX 0x8000u
-#define BIG_CACHE 64
-#define BIG_SHADOW_MAX (48u << 20)      /* bytes of copies kept at most */
-typedef struct {
-    TexEntry te;                        /* te.tex, w, h, last_used as for a small texture */
-    uint32_t addr, bytes, fmt, size, mode, stride;
-    uint64_t clut;
-    uint8_t *shadow;                    /* the guest bytes the texture was decoded from */
-    uint64_t *band_checked;             /* list number each band was last compared in */
-    int nbands;
-    uint32_t band_bytes;
-} BigTex;
-static BigTex big[BIG_CACHE];
-static uint32_t big_shadow_total;
-static uint64_t list_no = 1;            /* bumped whenever guest memory may have changed */
-
-static void ge_gl_list_start(void) { last_tex.valid = 0; list_no++; }
-static void ge_gl_memory_written(void) { last_tex.valid = 0; list_no++; }
-
-static void big_free(BigTex *b) {
-    flush_batch();                      /* the open batch may still read it */
-    if (b->te.tex) p_glDeleteTextures(1, &b->te.tex);
-    big_shadow_total -= b->shadow ? b->bytes : 0;
-    free(b->shadow); free(b->band_checked);
-    memset(b, 0, sizeof *b);
-}
-
-static void upload_rows(TexEntry *e, int y0, int y1, int whole) {
-    flush_batch();                      /* the open batch must see the texture as it was */
-    ge_decode_texture_rows(decode_buf, y0, y1);
-    p_glBindTexture(GL_TEXTURE_2D, e->tex);
+static uintptr_t gl_tex_create(void) { GLuint t = 0; p_glGenTextures(1, &t); return t; }
+static void gl_tex_upload(uintptr_t t, const uint8_t *rgba, int w, int h, int y0, int y1, int whole) {
+    p_glBindTexture(GL_TEXTURE_2D, (GLuint)t);
     p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     if (whole) {
-        p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, e->w, e->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, decode_buf);
+        p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
         p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     } else {
-        p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y0, e->w, y1 - y0, GL_RGBA, GL_UNSIGNED_BYTE, decode_buf);
+        p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y0, w, y1 - y0, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
     }
 }
+static void gl_tex_destroy(uintptr_t t) { GLuint n = (GLuint)t; p_glDeleteTextures(1, &n); }
+static const GeTexOps gl_tex_ops = { gl_tex_create, gl_tex_upload, gl_tex_destroy, flush_batch };
 
-/* a large texture: rows v0 .. v1 - 1 are the ones this draw reads */
-static TexEntry *big_lookup(const uint32_t *R, uint32_t addr, uint32_t bytes, uint64_t ch, int w, int h, int v0, int v1) {
-    uint32_t fmt = R[0xC3], size = R[0xB8], mode = R[0xC2] & 1, stride = (uint32_t)ge_tex_stride();
-    BigTex *b = NULL;
-    for (int i = 0; i < BIG_CACHE && !b; i++) {
-        BigTex *c = &big[i];
-        if (c->shadow && c->addr == addr && c->bytes == bytes && c->fmt == fmt && c->size == size && c->mode == mode &&
-            c->stride == stride && c->clut == ch) b = c;
-    }
-    const uint8_t *guest = (const uint8_t *)HOST(addr);
-    if (!b) {
-        for (;;) {                                  /* a free slot within the copies' budget, dropping the least recently used */
-            BigTex *lru = NULL, *empty = NULL;
-            for (int i = 0; i < BIG_CACHE; i++) {
-                if (!big[i].shadow) { if (!empty) empty = &big[i]; }
-                else if (!lru || big[i].te.last_used < lru->te.last_used) lru = &big[i];
-            }
-            if (empty && big_shadow_total + bytes <= BIG_SHADOW_MAX) { b = empty; break; }
-            if (!lru) { b = empty; break; }
-            big_free(lru);
-        }
-        if (!b) return NULL;
-        b->addr = addr; b->bytes = bytes; b->fmt = fmt; b->size = size; b->mode = mode; b->stride = stride; b->clut = ch;
-        b->shadow = (uint8_t *)malloc(bytes);
-        b->band_bytes = bytes / (uint32_t)h * 8u;                     /* 8 rows: also one row of swizzled blocks */
-        b->nbands = (h + 7) / 8;
-        b->band_checked = (uint64_t *)calloc((size_t)b->nbands, sizeof(uint64_t));
-        if (!b->shadow || !b->band_checked) { free(b->shadow); free(b->band_checked); memset(b, 0, sizeof *b); return NULL; }
-        big_shadow_total += bytes;
-        memcpy(b->shadow, guest, bytes);
-        for (int i = 0; i < b->nbands; i++) b->band_checked[i] = list_no;
-        p_glGenTextures(1, &b->te.tex);
-        b->te.w = w; b->te.h = h;
-        upload_rows(&b->te, 0, h, 1);
-        perf_count_texture(1, bytes);
-    } else {
-        int b0 = v0 / 8, b1 = (v1 + 7) / 8;
-        if (b0 < 0) b0 = 0;
-        if (b1 > b->nbands) b1 = b->nbands;
-        uint32_t compared = 0;
-        int run = -1;                                                 /* first band of a run that changed */
-        for (int i = b0; i <= b1; i++) {
-            int changed = 0;
-            if (i < b1 && b->band_checked[i] != list_no) {
-                uint32_t off = (uint32_t)i * b->band_bytes, n = b->band_bytes;
-                if (off + n > bytes) n = bytes - off;
-                compared += n;
-                b->band_checked[i] = list_no;
-                if (memcmp(b->shadow + off, guest + off, n)) { memcpy(b->shadow + off, guest + off, n); changed = 1; }
-            }
-            if (changed && run < 0) run = i;
-            if (!changed && run >= 0) {
-                int y1 = i * 8 > h ? h : i * 8;
-                upload_rows(&b->te, run * 8, y1, 0);
-                perf_count_texture(1, 0);
-                run = -1;
-            }
-        }
-        perf_count_texture(0, compared);
-    }
-    b->te.last_used = frame_no;
-    return &b->te;
-}
+static void ge_gl_list_start(void) { ge_texcache_memory_changed(); }
+static void ge_gl_memory_written(void) { ge_texcache_memory_changed(); }
 
-static TexEntry *texture_lookup(const uint32_t *R, int v0, int v1);
-static TexEntry *texture_from_memory(const uint32_t *R, int v0, int v1) {   /* timed as the frame's texture part (perf.h) */
+static GeTexEntry *texture_from_memory(const GeTexRef *tx, int v0, int v1) {   /* timed as the frame's texture part (perf.h) */
     uint64_t t0 = perf_now_us();
-    TexEntry *e = texture_lookup(R, v0, v1);
+    GeTexEntry *e = ge_texcache_lookup(tx, v0, v1);
     perf_add(PERF_TEXTURE, perf_now_us() - t0);
     return e;
 }
-static TexEntry *texture_lookup(const uint32_t *R, int v0, int v1) {
-    uint32_t addr = ge_tex_addr(), bytes = ge_tex_bytes();
-    uint64_t ch = ge_clut_hash();
-    int w = ge_tex_w(), h = ge_tex_h();
-    if (w > 1024 || h > 1024 || bytes > 0x200000) return NULL;
-    if (bytes > SMALL_TEX && h >= 8) return big_lookup(R, addr, bytes, ch, w, h, v0, v1);
-    if (last_tex.valid && last_tex.addr == addr && last_tex.bytes == bytes && last_tex.fmt == R[0xC3] && last_tex.size == R[0xB8] &&
-        last_tex.mode == R[0xC2] && last_tex.clut_hash == ch) { last_tex.e->last_used = frame_no; return last_tex.e; }
-    uint64_t key = ge_hash(HOST(addr), bytes) ^ (ch * 31) ^ ((uint64_t)R[0xC3] << 40) ^ ((uint64_t)R[0xB8] << 48) ^
-                   ((uint64_t)(R[0xC2] & 1) << 63) ^ ((uint64_t)addr << 8) ^ ((uint64_t)ge_tex_stride() << 20);
-    TexEntry *e = NULL, *victim = &tcache[0];
-    for (int i = 0; i < TEX_CACHE; i++) {
-        if (tcache[i].tex && tcache[i].key == key) { e = &tcache[i]; break; }
-        if (!tcache[i].tex) { victim = &tcache[i]; }
-        else if (victim->tex && tcache[i].last_used < victim->last_used) victim = &tcache[i];
-    }
-    perf_count_texture(!e, bytes);
-    if (!e) {
-        e = victim;
-        if (!e->tex) p_glGenTextures(1, &e->tex);
-        e->w = w; e->h = h;
-        upload_rows(e, 0, h, 1);
-        e->key = key;
-    }
-    e->last_used = frame_no;
-    last_tex.valid = 1; last_tex.addr = addr; last_tex.bytes = bytes; last_tex.fmt = R[0xC3]; last_tex.size = R[0xB8];
-    last_tex.mode = R[0xC2]; last_tex.clut_hash = ch; last_tex.e = e;
-    return e;
-}
 
-/* ---------------------------------------------------------------- blending */
-static GLenum blend_factor(int f, int src_side, uint32_t fixed, int *use_const, float cc[3]) {
-    switch (f) {
-    case 0: return src_side ? GL_DST_COLOR : GL_SRC_COLOR;
-    case 1: return src_side ? GL_ONE_MINUS_DST_COLOR : GL_ONE_MINUS_SRC_COLOR;
-    case 2: case 6: return GL_SRC_ALPHA;
-    case 3: case 7: return GL_ONE_MINUS_SRC_ALPHA;
-    case 4: case 8: return GL_DST_ALPHA;
-    case 5: case 9: return GL_ONE_MINUS_DST_ALPHA;
-    default:
-        if ((fixed & 0xFFFFFF) == 0xFFFFFF) return GL_ONE;
-        if ((fixed & 0xFFFFFF) == 0) return GL_ZERO;
-        *use_const = 1;
-        cc[0] = (float)(fixed & 255) / 255.f; cc[1] = (float)((fixed >> 8) & 255) / 255.f; cc[2] = (float)((fixed >> 16) & 255) / 255.f;
-        return GL_CONSTANT_COLOR;
-    }
+/* ---------------------------------------------------------------- blending (GeDrawState's, ge_state.c) */
+static GLenum gl_factor(int f) {
+    static const GLenum gl[] = { GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR,
+                                 GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_COLOR };
+    return f >= 0 && f <= GE_BF_CONSTANT ? gl[f] : GL_ONE;
 }
 
 /* ---------------------------------------------------------------- drawing
@@ -381,8 +234,8 @@ typedef struct {                        /* everything a batch shares (zeroed bef
     GLuint tex; int linear, wrap_s, wrap_t; float tw, th;   /* wrap -1: a render target's (left as made) */
     int texfunc, rgba, dbl; uint32_t env;
     int atest, afunc, aref, amask;
-    int blend; uint32_t bm, fix_a, fix_b;
-    uint32_t cmask;                     /* R[0xD3] for a clear, R[0xE8] otherwise */
+    int blend, blend_eq, blend_src, blend_dst; uint32_t blend_const;
+    int write_r, write_g, write_b, write_a;
 } DrawState;
 static DrawState batch;
 static int batch_draws;                 /* the game's draws in the open batch */
@@ -391,25 +244,16 @@ static int frame_draws, frame_calls;
 static void apply_state(const DrawState *d) {
     if (d->clear || !d->blend) p_glDisable(GL_BLEND);
     else {
-        uint32_t bm = d->bm;
-        int uc = 0; float cc[3] = { 0, 0, 0 };
-        GLenum sf = blend_factor((int)(bm & 15), 1, d->fix_a, &uc, cc);
-        GLenum df = blend_factor((int)((bm >> 4) & 15), 0, d->fix_b, &uc, cc);
-        static const GLenum eqs[6] = { GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX, GL_FUNC_ADD };
+        static const GLenum eqs[5] = { GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX };
         p_glEnable(GL_BLEND);
-        uint32_t eq = (bm >> 8) & 15;
-        p_glBlendEquation(eqs[eq < 6 ? eq : 0]);
-        p_glBlendFuncSeparate(sf, df, GL_ZERO, GL_ONE);          /* frame-buffer alpha is not blended */
-        if (uc) p_glBlendColor(cc[0], cc[1], cc[2], 1.f);
+        p_glBlendEquation(eqs[d->blend_eq >= 0 && d->blend_eq < 5 ? d->blend_eq : 0]);
+        p_glBlendFuncSeparate(gl_factor(d->blend_src), gl_factor(d->blend_dst), GL_ZERO, GL_ONE);   /* frame-buffer alpha is not blended */
+        if (d->blend_src == GE_BF_CONSTANT || d->blend_dst == GE_BF_CONSTANT) {
+            uint32_t k = d->blend_const;
+            p_glBlendColor((float)(k & 255) / 255.f, (float)((k >> 8) & 255) / 255.f, (float)((k >> 16) & 255) / 255.f, 1.f);
+        }
     }
-    if (d->clear) {
-        uint32_t cm = d->cmask;
-        GLboolean c = (cm & 0x100) != 0, a = (cm & 0x200) != 0;
-        p_glColorMask(c, c, c, a);
-    } else {
-        uint32_t m = d->cmask;
-        p_glColorMask((m & 0xFF) != 0xFF, ((m >> 8) & 0xFF) != 0xFF, ((m >> 16) & 0xFF) != 0xFF, 0);
-    }
+    p_glColorMask((GLboolean)d->write_r, (GLboolean)d->write_g, (GLboolean)d->write_b, (GLboolean)d->write_a);
 }
 
 static void flush_batch(void) {
@@ -454,50 +298,24 @@ static void flush_batch(void) {
     vbn = 0; batch_draws = 0;
 }
 
-static void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int sy1, int sx2, int sy2) {
+static void ge_gl_draw(const GeDrawState *s, const GeVtx *v, int m) {
     if (!ready) return;
     gpu_timer_begin();
-    const uint32_t *R = ge_regs();
-    Target *t = target_for(ge_fb_base(), 1);
+    Target *t = target_for(s->target, 1);
     if (!t) return;
-    int clear = (R[0xD3] & 1) != 0;
-
-    /* triangles in guest pixels */
-    int m = 0;
-#define PUT(src) do { const GeVtx *s_ = (src); GlVtx *d_ = &vtmp[m++]; d_->x = s_->x; d_->y = s_->y; d_->u = s_->u; d_->v = s_->v; \
-        d_->c[0] = s_->r; d_->c[1] = s_->g; d_->c[2] = s_->b; d_->c[3] = s_->a; } while (0)
-    switch (type) {
-    case 3: for (int i = 0; i + 2 < n; i += 3) { PUT(&v[i]); PUT(&v[i + 1]); PUT(&v[i + 2]); } break;
-    case 4: for (int i = 0; i + 2 < n; i++) { PUT(&v[i]); PUT(&v[i + 1]); PUT(&v[i + 2]); } break;
-    case 5: for (int i = 1; i + 1 < n; i++) { PUT(&v[0]); PUT(&v[i]); PUT(&v[i + 1]); } break;
-    case 6:
-        for (int i = 0; i + 1 < n; i += 2) {
-            const GeVtx *a = &v[i], *b = &v[i + 1];
-            GeVtx q[4] = { *b, *b, *b, *b };                /* sprites take the second vertex's colour */
-            q[0].x = a->x; q[0].y = a->y; q[0].u = a->u; q[0].v = a->v;
-            q[1].x = b->x; q[1].y = a->y; q[1].u = b->u; q[1].v = a->v;
-            q[2].x = a->x; q[2].y = b->y; q[2].u = a->u; q[2].v = b->v;
-            q[3].x = b->x; q[3].y = b->y; q[3].u = b->u; q[3].v = b->v;
-            PUT(&q[0]); PUT(&q[1]); PUT(&q[2]); PUT(&q[1]); PUT(&q[3]); PUT(&q[2]);
-        }
-        flat = 1;
-        break;
-    default: return;
-    }
-#undef PUT
     if (!m) return;
-    if (sx2 < sx1 || sy2 < sy1) return;
+    memcpy(vtmp, v, (size_t)m * sizeof(GlVtx));   /* (GeVtx and GlVtx: the same layout) */
 
     DrawState d;
     memset(&d, 0, sizeof d);
     d.t = t;
-    d.sx = sx1 * S; d.sy = sy1 * S; d.sw = (sx2 - sx1 + 1) * S; d.sh = (sy2 - sy1 + 1) * S;
-    d.clear = clear;
-    d.tex_on = !clear && (R[0x1E] & 1);
+    d.sx = s->sx1 * S; d.sy = s->sy1 * S; d.sw = (s->sx2 - s->sx1 + 1) * S; d.sh = (s->sy2 - s->sy1 + 1) * S;
+    d.clear = s->clear;
+    d.tex_on = s->tex_on;
     if (d.tex_on) {
         int ox = 0, oy = 0;
-        Target *src = target_containing(ge_tex_addr(), &ox, &oy);
-        d.linear = (R[0xC6] >> 8) & 1;
+        Target *src = target_containing(s->tex.addr, &ox, &oy);
+        d.linear = s->linear;
         if (src && src != t) {
             /* render-to-texture: sample the upscaled target; texel (u,v) is target pixel (ox+u, oy+v) */
             d.tex = src->tex; d.wrap_s = d.wrap_t = -1;
@@ -508,29 +326,23 @@ static void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int s
                the coordinates wrap or the range is unusual */
             float vmin = vtmp[0].v, vmax = vtmp[0].v;
             for (int i = 1; i < m; i++) { if (vtmp[i].v < vmin) vmin = vtmp[i].v; if (vtmp[i].v > vmax) vmax = vtmp[i].v; }
-            int th = ge_tex_h(), v0 = 0, v1 = th;
+            int th = s->tex.h, v0 = 0, v1 = th;
             if (vmin >= 0.f && vmax <= (float)th) { v0 = (int)vmin - 1; v1 = (int)vmax + 2; if (v0 < 0) v0 = 0; if (v1 > th) v1 = th; }
-            TexEntry *e = texture_from_memory(R, v0, v1);   /* (flushes the open batch first if it uploads) */
+            GeTexEntry *e = texture_from_memory(&s->tex, v0, v1);   /* (flushes the open batch first if it uploads) */
             if (!e) return;
-            d.tex = e->tex;
-            d.wrap_s = (R[0xC7] & 1) != 0; d.wrap_t = (R[0xC7] & 0x100) != 0;
+            d.tex = (GLuint)e->tex;
+            d.wrap_s = s->clamp_s; d.wrap_t = s->clamp_t;
             d.tw = (float)e->w; d.th = (float)e->h;
         }
-        uint32_t tf = R[0xC9];
-        d.texfunc = (int)(tf & 7); d.rgba = (int)((tf >> 8) & 1); d.dbl = (int)((tf >> 16) & 1);
-        d.env = R[0xCA] & 0xFFFFFF;
+        d.texfunc = s->texfunc; d.rgba = s->tex_alpha; d.dbl = s->doubled;
+        d.env = s->env;
     }
-    d.atest = !clear && (R[0x22] & 1);
-    if (d.atest) { uint32_t a = R[0xDB]; d.afunc = (int)(a & 7); d.aref = (int)((a >> 8) & 255); d.amask = (int)((a >> 16) & 255); }
-    d.blend = !clear && (R[0x21] & 1);
-    if (d.blend) { d.bm = R[0xDF]; d.fix_a = R[0xE0] & 0xFFFFFF; d.fix_b = R[0xE1] & 0xFFFFFF; }
-    d.cmask = clear ? (R[0xD3] & 0x300) : (R[0xE8] & 0xFFFFFF);
+    d.atest = s->atest;
+    if (d.atest) { d.afunc = s->afunc; d.aref = s->aref; d.amask = s->amask; }
+    d.blend = s->blend;
+    if (d.blend) { d.blend_eq = s->blend_eq; d.blend_src = s->blend_src; d.blend_dst = s->blend_dst; d.blend_const = s->blend_const; }
+    d.write_r = s->write_r; d.write_g = s->write_g; d.write_b = s->write_b; d.write_a = s->write_a;
 
-    if (flat) {   /* flat shading: every corner gets the triangle's last vertex colour */
-        for (int i = 0; i + 2 < m; i += 3) {
-            memcpy(vtmp[i].c, vtmp[i + 2].c, 4); memcpy(vtmp[i + 1].c, vtmp[i + 2].c, 4);
-        }
-    }
     if (vbn && (vbn + m > VMAX || memcmp(&d, &batch, sizeof d))) flush_batch();
     if (!vbn) batch = d;
     memcpy(&vbuf[vbn], vtmp, (size_t)m * sizeof(GlVtx));
@@ -594,7 +406,7 @@ static int ge_gl_present(uint32_t fb_addr, int win_w, int win_h) {
     }
     p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     /* SCREEN SETTING > FILTER (shader_gl.c): through the chosen shader if there is one to draw with */
-    if (shader_gl_present(t->tex, LW * S, LH * S, 480 * S, 272 * S, win_w, win_h)) last_tex.valid = 0;
+    if (shader_gl_present(t->tex, LW * S, LH * S, 480 * S, 272 * S, win_w, win_h)) ge_texcache_forget_last();
     else draw_to_window(t->tex, 480.f * S, 272.f * S, 480.f / LW, 272.f / LH, win_w, win_h, 1);
     p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -619,7 +431,7 @@ static void ge_gl_present_rgba(const uint8_t *rgba, int w, int h, int win_w, int
     p_glBindTexture(GL_TEXTURE_2D, upload_tex);
     p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
-    if (shader_gl_present(upload_tex, w, h, w, h, win_w, win_h)) last_tex.valid = 0;   /* the software renderer's frames take the FILTER too */
+    if (shader_gl_present(upload_tex, w, h, w, h, win_w, win_h)) ge_texcache_forget_last();   /* the software renderer's frames take the FILTER too */
     else draw_to_window(upload_tex, (float)w, (float)h, 1.f, 1.f, win_w, win_h, 1);
     gpu_timer_end();
 }
@@ -681,13 +493,7 @@ static void ge_gl_frame_end(void) {
     frame_draws = frame_calls = 0;
     gpu_timer_frame();
     frame_no++;
-    /* free textures unused for 10 seconds */
-    if (frame_no % 600 == 0)
-        for (int i = 0; i < TEX_CACHE; i++)
-            if (tcache[i].tex && frame_no - tcache[i].last_used > 600) { p_glDeleteTextures(1, &tcache[i].tex); tcache[i].tex = 0; tcache[i].key = 0; }
-    if (frame_no % 600 == 0)
-        for (int i = 0; i < BIG_CACHE; i++)
-            if (big[i].shadow && frame_no - big[i].te.last_used > 600) big_free(&big[i]);
+    ge_texcache_frame_end();                       /* (frees textures unused for 10 seconds) */
 }
 
 /* ---------------------------------------------------------------- init */
@@ -739,6 +545,7 @@ static int ge_gl_init(void *(*getproc)(const char *), int scale, int display_h) 
     p_glEnableVertexAttribArray(0); p_glEnableVertexAttribArray(1); p_glEnableVertexAttribArray(2);
     p_glDisable(GL_DEPTH_TEST);
     p_glDisable(GL_CULL_FACE);
+    ge_texcache_init(&gl_tex_ops);
     ready = 1;
     rt_log("GL: %s / %s, internal resolution %dx%d (x%d, %s)", (const char *)p_glGetString(GL_VERSION),
            (const char *)p_glGetString(GL_RENDERER), 480 * S, 272 * S, S, scale_reason);

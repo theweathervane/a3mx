@@ -168,7 +168,9 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
    keeps the result. You can also put a library you have there yourself.
 
 FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL:
-the OpenGL backend of `src/platform/ge_backend.h`).
+the OpenGL backend of `src/platform/ge_backend.h`). With the Vulkan, DirectX 12 or Metal renderer
+(0.174.0) the picture is shown plain: SCREEN SETTING greys FILTER and PREVIEW, FILTER's value reads
+OPENGL ONLY, and the log says so; the chosen filter is kept for when OpenGL is used again.
 The shader sees the picture at the game's own 480 x 272, so the scanlines are the game's rows
 whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h` and
 `shader_list.c`, the screen in `src/extensions/filterscreen.c`, the preview in `filterpreview.c`, the

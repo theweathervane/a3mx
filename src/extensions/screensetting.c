@@ -93,6 +93,7 @@ int exsetting_grey_font(void);
 int host_vsync_available(void);
 static int disabled(int pos) {
     if (id_of(pos) == R_VSYNC) return !host_vsync_available();         /* the display can't sync */
+    if ((id_of(pos) == R_FILTER || id_of(pos) == R_PREVIEW) && shader_unavailable()) return 1;   /* the SDL GPU renderer: OPENGL ONLY */
     if (id_of(pos) == R_HUD) return widescreen_value() != 2;            /* only WIDE NATIVE has margins */
     return 0;
 }
@@ -298,14 +299,15 @@ int screensetting_text(Cpu *c, uint32_t a0, int after) {
     if (our_str && FEATURE(SHADERS)) {          /* the filter's name, cut to the bar (the FILTER screen shows it whole) */
         char *d = (char *)HOST(our_str + 16u * W_FILTERS);
         static unsigned tick;                   /* the cursor on FILTER: the whole name scrolls by (a marquee) */
-        const char *nm = filter_get(filter())->name;
+        const char *nm = shader_unavailable() ? shader_unavailable() : filter_get(filter())->name;
         int l = (int)strlen(nm);
         if (r == R_FILTER && l > VALUE_LEN) {
             int moves = l - VALUE_LEN, cycle = 2 * 60 + moves * 8, at = (int)(tick++ % (unsigned)cycle) - 60;
             at = at <= 0 ? 0 : at / 8 > moves ? moves : at / 8;
             memcpy(d, nm + at, VALUE_LEN); d[VALUE_LEN] = 0;
         } else { tick = 0; filter_short(nm, d, VALUE_LEN); }
-        text(c, our_str + 16u * W_FILTERS, 1, 0xDC, row_y(R_FILTER), 0xB);
+        if (shader_unavailable()) text_disabled(c, our_str + 16u * W_FILTERS, 1, 0xDC, row_y(R_FILTER), r == R_FILTER);
+        else text(c, our_str + 16u * W_FILTERS, 1, 0xDC, row_y(R_FILTER), 0xB);
     }
     if (FEATURE(SHADERS)) {                     /* Cross opens them: the game's Cross symbol after the name */
         symbol(c, SYM_CROSS, SYM_X, row_y(R_FILTER));

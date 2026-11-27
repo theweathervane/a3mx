@@ -78,10 +78,13 @@ libraries, which come from your package manager). Anything missing is listed wit
 | **About** | the version (`VERSION`, the one EX. SETTING shows), **Report a bug** (a new issue on GitLab, GitHub or Gitea, filled in: [below](#reporting-a-problem-from-the-launcher)), **Request a feature**, the project's pages and mirrors, and the licences. ![About](images/launcher-about.png) |
 | **Console** | in its own frame at the bottom on every tab: `build.py`'s and the game's output as it comes, whichever tab started it. Drag the orange bar above it to resize. Everything is also written to `logs/launcher.log` (the previous session's is `launcher.log.1`). **Log folder**, **Copy** and **Clear** are in the bottom right corner. |
 
-**Renderer:** OpenGL and Software work. Vulkan, DirectX 12 (Windows) and Metal / MoltenVK (macOS) are
-listed and say "not available yet": choosing one runs OpenGL and the game's log says so. They're
-planned as one SDL3 GPU backend, beside the OpenGL one behind the renderer's backend interface
-(`src/platform/ge_backend.h`, [ARCHITECTURE.md](ARCHITECTURE.md#3-platform-srcplatform)).
+**Renderer:** OpenGL (the default), Software, and since 0.174.0 **Vulkan** and **DirectX 12** (Windows)
+or **Metal** (macOS, built but not yet tried on a Mac): the same GPU renderer through SDL3's GPU API
+(`src/platform/ge_sdlgpu.c`, beside OpenGL's behind the renderer's backend interface
+`src/platform/ge_backend.h`, [ARCHITECTURE.md](ARCHITECTURE.md#3-platform-srcplatform)). They draw
+what OpenGL draws. FILTER needs OpenGL: with the others the picture is shown plain and SCREEN SETTING
+greys FILTER and PREVIEW ("OPENGL ONLY"). If the API can't be had on the PC, the game uses OpenGL and
+its log says why.
 
 The buttons run `build.cmd` / `build.sh` with those options (the console shows the exact command), so
 the launcher and the command line always build the same way. The choices are kept in
@@ -335,6 +338,7 @@ How to decompile a function, and what to do when parity fails: [DECOMPILING.md](
 | `--custom-assets` | before 0.60.0: the `stage_extensions` feature (the project's own art in `assets/extensions/`) |
 | `--assets DIR`, `--no-assets` | load each archive that `DIR/index.json` gives a folder from it (default: `assets/<region>` beside the work folder); or everything from the disc ([ASSET_LOADING.md](ASSET_LOADING.md)) |
 | `--renderer gl\|soft\|none\|lazy` | GPU renderer (default), software reference, nothing, or only dumped frames |
+| `--renderer vulkan\|d3d12\|metal` | the GPU renderer through SDL3's GPU API with that API (0.174.0; Metal untested); OpenGL if it can't be had (the log says why), and always when `--headless`. No FILTER |
 | `--scale N` | GPU internal resolution, N × 480×272 (1–8). Default: enough to cover the monitor's height, at most 4 (1088 rows), and 1 on a software OpenGL (llvmpipe). The GPU's work grows with N²; the game's doesn't change |
 | `--filter NAME` | overrides SCREEN SETTING > FILTER for this run (`off`, `crt-curved`, `scan-light`, `xbrz`, ...; [DISPLAY.md](DISPLAY.md)). `--librashader FILE` / `--shaders DIR` use that library / shader folder |
 | `--frame-timing auto\|smooth\|original` | overrides SCREEN SETTING > FRAME TIMING for this run ([DISPLAY.md](DISPLAY.md)) |

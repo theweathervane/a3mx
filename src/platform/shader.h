@@ -91,7 +91,9 @@ extern const char *shader_lib_arg, *shader_dir_arg;   /* main.c: --librashader F
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h);
 void shader_gl_init(void *(*getproc)(const char *), const char *work);
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h);   /* --dump-filtered: this frame as filtered */
-const char *shader_gl_failed(int f);         /* why filter F could not be shown this run, or NULL (the FILTER screen greys it) */
+const char *shader_gl_failed(int f);
+void shader_set_unavailable(const char *why);  /* FILTER can't be shown this run at all (the SDL GPU renderer: "OPENGL ONLY") */
+const char *shader_unavailable(void);         /* that reason, or NULL: SCREEN SETTING greys FILTER and PREVIEW with it */         /* why filter F could not be shown this run, or NULL (the FILTER screen greys it) */
 extern int rt_filter_preview;                /* the FILTER screen's preview: the filter shown instead of the setting (-1: none) */
 const char *shader_describe(void);           /* last_run.txt: the filter in use, or why there is none */
 #endif

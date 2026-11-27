@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+static const char *unavailable;               /* FILTER can't be shown at all this run (shader_set_unavailable) */
+void shader_set_unavailable(const char *why) { unavailable = why; }
+const char *shader_unavailable(void) { return unavailable; }
 int rt_filter_cli = -1;                      /* main.c: --filter, for this run only (never written to a3mx.cfg) */
 static char described[200] = "OFF";
 static int presented;                        /* shader_gl_present was asked at least once (there is an OpenGL window) */
@@ -29,6 +32,10 @@ static int filter_now(void) {
 }
 static const char *fname(int f) { const FilterEntry *e = filter_get(f); return e ? e->name : "OFF"; }
 const char *shader_describe(void) {
+    if (unavailable && FEATURE(SHADERS) && filter_now() > 0) {
+        snprintf(described, sizeof described, "%s: not shown (FILTER needs the OpenGL renderer)", fname(filter_now()));
+        return described;
+    }
     if (!presented && FEATURE(SHADERS) && filter_now() > 0)
         snprintf(described, sizeof described, "%s: not shown (this run had no OpenGL window)", fname(filter_now()));
     return described;

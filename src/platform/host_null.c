@@ -3,6 +3,9 @@
 #ifndef A3MX_SDL
 int  host_init(int headless, int want_gl) { (void)headless; (void)want_gl; return 1; }
 HostGetProc host_gl_getproc(void) { return 0; }
+void *host_window(void) { return 0; }
+int  host_reopen_gl(void) { return 0; }
+void (*host_gpu_vsync)(int on);
 void host_gl_swap(void) {}
 void host_set_vsync(int on) { (void)on; }
 int host_vsync_available(void) { return 1; }

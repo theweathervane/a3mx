@@ -2,7 +2,10 @@
 #pragma once
 #include <stdint.h>
 
-int  host_init(int headless, int want_gl);                     /* 0 on failure */
+int  host_init(int headless, int want_gl);                     /* 0 on failure; want_gl 2: a window for SDL's GPU API (no OpenGL) */
+void *host_window(void);                                       /* the SDL_Window (SDL GPU backend), or NULL */
+int  host_reopen_gl(void);                                     /* the window again, with OpenGL (SDL GPU wasn't to be had); 0 on failure */
+extern void (*host_gpu_vsync)(int on);                         /* SDL GPU backend: VSYNC changed (its present mode) */
 extern int host_start_fullscreen;                              /* 1 (default): the window opens full screen; --windowed: 0 */
 typedef void *(*HostGetProc)(const char *);
 HostGetProc host_gl_getproc(void);                             /* OpenGL 3.3 core context's loader, or NULL */

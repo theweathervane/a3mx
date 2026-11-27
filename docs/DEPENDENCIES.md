@@ -22,6 +22,7 @@ Each is checked against its SHA-256 before it is used; a mismatch stops the buil
 | [Ninja (macOS)](https://github.com/ninja-build/ninja/releases/download/v1.13.1/ninja-mac.zip) | 1.13.1 | tools/build.py, on macOS, into .tools/ninja-macos/ | `da7797794153629aca5570ef7c813342d0be214ba84632af886856e8f0063dd9` |
 | [Python, embeddable package (Windows)](https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip) | 3.12.10 (amd64) | build.cmd, on Windows with no usable Python of your own, into .tools/python/ (checked with certutil) | `4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3` |
 | [SDL3 (window, sound, input; source, built with the game and the launcher)](https://github.com/libsdl-org/SDL/releases/download/release-3.4.16/SDL3-3.4.16.tar.gz) | 3.4.16 | cmake/SDL3.cmake (CMake's FetchContent URL_HASH), every system | `7322236cd12090c3eb40b9728be4d49c76f66ad17d04369584d4ecad5cf77c68` |
+| [DirectX Shader Compiler (Microsoft, release v1.9.2609; MIT / LLVM licences): SPIR-V and DXIL for the SDL3 GPU renderer's shaders](https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/dxc_2026_09_29.zip) | v1.9.2609 (2026-09-29, Windows x64) | tools/gpu_shaders.py only, by maintainers, into .tools/dxc/: the shaders it compiles are committed (src/platform/gpu_shaders.h), so builds never download it | `ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1` |
 
 ## Downloaded source
 

@@ -55,14 +55,19 @@ Carried over from the static recomp:
   kernel. Vblank at 59.94 Hz drives frame pacing.
 - **Files**: `disc0:` / `umd0:` read from `work/iso/`; saves go to `a3mx.dat` / `a3mx.cfg`.
 - **Sound**: ATRAC3+ music through the vendored decoder; the SAS voice synthesiser (with reverb) in C.
-- **Graphics**: the game draws 2D only. Software renderer as reference; OpenGL 3.3 renderer up to 8×.
-  The GPU renderer sits behind a backend interface, `GeBackend` (`ge_backend.h`): the list walker
-  (`ge_soft.c`, `hle_ge.c`) hands it triangles of `GeVtx` with a scissor and tells it when guest
-  memory may have changed (its texture cache); the frame loop (`main.c`) and the window
-  (`host_sdl.c`) ask it to show a frame, read one back and wait for the GPU. It reads the rest of
-  each draw's state (blending, texture, palette, target) through `ge.h`'s accessors, which belong
-  to the list walker. `ge_gl.c` is the one backend so far (`ge_backend_gl`); the planned SDL3 GPU
-  backend (Vulkan / Direct3D 12 / Metal) and its librashader runtimes go in beside it.
+- **Graphics**: the game draws 2D only. Software renderer as reference; a GPU renderer up to 8×.
+  The GPU renderer sits behind a backend interface, `GeBackend` (`ge_backend.h`). `ge_state.c`
+  turns each GE primitive into triangles of `GeVtx` and an explicit `GeDrawState` (target, scissor,
+  texture and its sampling, texture function, alpha test, blending, colour mask), so no backend
+  reads the GE's registers; the list walker (`ge_soft.c`, `hle_ge.c`) tells it when guest memory may
+  have changed; the frame loop (`main.c`) and the window (`host_sdl.c`) ask it to show a frame, read
+  one back and wait for the GPU. The texture cache (`ge_texcache.c`: hashes, and band-by-band checks
+  of the big pages) is shared code; each backend only makes, fills and frees textures. Two backends:
+  `ge_gl.c` (OpenGL 3.3, the default) and `ge_sdlgpu.c` (SDL3's GPU API: Vulkan, Direct3D 12,
+  Metal; 0.174.0). The latter's shaders are HLSL (and MSL for Metal) in `gpu_shaders/`, compiled
+  once into `gpu_shaders.h` by `tools/gpu_shaders.py` (DXIL and SPIR-V with Microsoft's dxc, pinned
+  in `pins.json`): builds need no shader compiler. FILTER (librashader) runs with OpenGL only: SDL_GPU
+  doesn't hand out the API's own device, which librashader's Vulkan / D3D12 / Metal runtimes need.
 - **Test hooks**: `--headless --fast --renderer soft --input ... --hash-log FILE --save-dir DIR`.
 
 These are the hardware abstraction layer: game code reaches them only through the PSP OS functions

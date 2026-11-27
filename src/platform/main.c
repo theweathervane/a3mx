@@ -667,9 +667,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--palette-census") && i + 1 < argc) { extern const char *ge_census_path; ge_census_path = argv[++i]; }
         else if (!strcmp(argv[i], "--renderer") && i + 1 < argc) {
             const char *r = argv[++i];
-            /* vulkan, d3d12 and metal are taken, so the launcher's list and scripts can name them, but
-               none of them is written yet (the plan: one SDL3 GPU backend for all three). OpenGL is
-               used instead and the log says so: never a silent change of renderer. */
+            /* vulkan, d3d12 and metal: the SDL3 GPU backend (ge_sdlgpu.c, 0.174.0) with that API. If it
+               can't be had, OpenGL is used and the log says why: never a silent change of renderer. */
             if (!strcmp(r, "vulkan") || !strcmp(r, "d3d12") || !strcmp(r, "metal")) renderer_asked = r;
             else if (strcmp(r, "soft") && strcmp(r, "none") && strcmp(r, "lazy") && strcmp(r, "opengl") && strcmp(r, "gl"))
                 rt_fatal("--renderer: opengl, soft, vulkan, d3d12 or metal (tests: none, lazy), not %s", r);
@@ -815,7 +814,6 @@ int main(int argc, char **argv) {
         }
     }
     rt_log("A3MX %s", A3MX_VERSION);   /* the first thing a bug report's log says */
-    if (renderer_asked) rt_warn("renderer: %s is not available in this version (only OpenGL and the software renderer are): using OpenGL", renderer_asked);
     {   /* which features are on (ext_features.h): --features, --no-extensions, or the defaults */
         const char *bad = NULL;
         if (!features_set(features_arg, &bad)) {
@@ -861,17 +859,35 @@ int main(int argc, char **argv) {
     /* In a window the software renderer's frames are still shown through OpenGL when it is there
        (ge_backend->present_rgba: sharp bilinear, so rows and columns stay even at any window size, and the
        same VSYNC / FRAME TIMING as the GPU renderer); only the drawing is done in software. */
-    if (!host_init(headless, !want_soft || !headless)) rt_fatal("could not open the window (SDL)");
+    int sdl_gpu = renderer_asked && !headless && !want_soft;   /* --renderer vulkan / d3d12 / metal (not headless: no window) */
+    if (renderer_asked && headless) rt_warn("renderer: %s needs a window: headless runs use OpenGL", renderer_asked);
+    if (!host_init(headless, sdl_gpu ? 2 : !want_soft || !headless)) rt_fatal("could not open the window (SDL)");
+    if (sdl_gpu) {
+        const char *drv = !strcmp(renderer_asked, "d3d12") ? "direct3d12" : renderer_asked;
+        if (ge_backend_init_sdlgpu(host_window(), drv, render_scale, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 1; }
+        else {
+            rt_warn("renderer: %s could not be used (the log above says why): using OpenGL", renderer_asked);
+            if (!host_reopen_gl()) rt_fatal("could not open the window again with OpenGL (SDL)");
+        }
+    }
     if (!want_soft) {
+      if (!ge_use_gl) {
         HostGetProc gp = headless ? host_headless_gl() : host_gl_getproc();
         /* --scale N, or 0 for auto (ge_backend_init: enough to cover the monitor, at most 4) */
         if (gp && ge_backend_init(gp, render_scale, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 1; }
         else rt_log("GPU renderer unavailable: using the software renderer");
+      }
     } else if (!headless) {
         HostGetProc gp = host_gl_getproc();
         if (gp && ge_backend_init(gp, 1, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 0; rt_log("software renderer, shown through OpenGL"); }
     }
-    if (ge_use_gl) { char name[64]; snprintf(name, sizeof name, "GPU (%s)", ge_backend->name); perf_set_renderer(name, ge_backend->gpu_name(), ge_backend->scale(), ge_backend->scale_reason()); }
+    if (ge_use_gl) {
+        char name[64];
+        const char *api = ge_backend == &ge_backend_sdlgpu ? ge_sdlgpu_api() : "";
+        snprintf(name, sizeof name, "GPU (%s)", !*api ? ge_backend->name : !strcmp(api, "vulkan") ? "Vulkan" : !strcmp(api, "direct3d12") ? "Direct3D 12" :
+                                                !strcmp(api, "metal") ? "Metal" : api);
+        perf_set_renderer(name, ge_backend->gpu_name(), ge_backend->scale(), ge_backend->scale_reason());
+    }
     else perf_set_renderer(want_soft ? "software" : "software (GPU unavailable)", "", 1, "");
     if (difftest_n > 0) { int decomp_difftest(int); int failed = decomp_difftest(difftest_n); fflush(stdout); return failed ? 1 : 0; }
     rt_kernel_init(); rt_io_init(); rt_ge_init();
