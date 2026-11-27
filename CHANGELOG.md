@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.175.1
+### For players
+- **The I-ISM and S-ISM wipes reach the 4:3 edges, as the X-ISM's X does:** the points of the I's serifs now touch the 4:3 picture's sides (they stopped 16 short) and its stem is as wide as the VS screen's middle bar behind it; the S (every S-ISM, each in its colours) is redrawn: its ends and the outsides of its curves meet the sides (it ran from x 42 to 342) and its middle slopes down from left to right instead of lying flat. In WIDE NATIVE the margins stay the wipe's colour beside the S's ends. The logo's line spacing is unchanged (the game's own, as in the X-, A- and V-ISM wipes into a fight).
+
+### Technical
+- `i_ism_display.c`: `I_LEFT` / `I_RIGHT` serif points at x 0 / 384, `I_MIDDLE`'s stem 160 - 224 (was 168 - 216); `S_LINE` (384,48), (54,48), (24,78), (24,92), (360,164), (360,178), (330,208), (0,208), cut at 0 and 384; `make_s` ends columns 0 and 2 with an empty quad on the 4:3 edge so `shapes.c`'s WIDE NATIVE rule fills the margin at the column's full height. Compiled; not run (a small shape change, the maintainer's call).
+
 ## 0.175.0
 ### For players
 - **More of the game decompiled (98 functions, 44.69% of the program now):** the pieces that follow a fighter's frame for six characters, four characters' guard moves, a super's start from the ground or the air, a held projectile's release, a dive kick with its throw, falling attacks' follow-ups, a helper fighter's start, the throwing taunt, the mark beside a fighter, the fight task's step, the wireless link's list entries and time-outs, the two play clocks, and many move starts behind their command checks. Nothing plays differently.

@@ -8,7 +8,8 @@
  *    plays as its ISM underneath (an A-ISM entry got A's wipe), so I-ISM had none of its own. Now an
  *    entry gets an I: the same rolling columns (A's animation) with I shapes in yellow, and a gold logo.
  *    The I was measured from Dan's WIDE NATIVE mock-up: a serifed I across the 4:3 picture (its serifs
- *    from x 16 to 368, 32 high, 8 in from the top and the bottom as X's are; its stem 168 - 216), the
+ *    from x 0 to 384, their points on the 4:3 edges as X's are, 32 high, 8 in from the top and the bottom as X's are; its stem 160 - 224, as wide as the
+ *    VS screen's middle bar behind it (the maintainer, 2026-11-27)), the
  *    yellow around it; the margins of WIDE NATIVE are filled by shapes.c's rule as for the other
  *    letters. NORMAL and WIDE draw the same shapes.
  *
@@ -68,11 +69,11 @@ static const uint8_t GOLD[16][3] = {
 #define BAND_BOTTOM 0, 232, 128, 232, 128, 256, 0, 256
 #define MIDDLE      0, 56, 128, 56, 128, 200, 0, 200
 static const uint16_t I_LEFT[] = {
-    BAND_TOP, 0, 24, 16, 24, 64, 56, 0, 56, MIDDLE, 0, 200, 64, 200, 16, 232, 0, 232, BAND_BOTTOM, 0xFFFF };
+    BAND_TOP, 0, 24, 0, 24, 64, 56, 0, 56, MIDDLE, 0, 200, 64, 200, 0, 232, 0, 232, BAND_BOTTOM, 0xFFFF };
 static const uint16_t I_MIDDLE[] = {
-    BAND_TOP, 0, 56, 40, 56, 40, 200, 0, 200, 88, 56, 128, 56, 128, 200, 88, 200, BAND_BOTTOM, 0xFFFF };
+    BAND_TOP, 0, 56, 32, 56, 32, 200, 0, 200, 96, 56, 128, 56, 128, 200, 96, 200, BAND_BOTTOM, 0xFFFF };
 static const uint16_t I_RIGHT[] = {
-    BAND_TOP, 112, 24, 128, 24, 128, 56, 64, 56, MIDDLE, 64, 200, 128, 200, 128, 232, 112, 232, BAND_BOTTOM, 0xFFFF };
+    BAND_TOP, 128, 24, 128, 24, 128, 56, 64, 56, MIDDLE, 64, 200, 128, 200, 128, 232, 128, 232, BAND_BOTTOM, 0xFFFF };
 static const uint16_t *const I_SHAPES[3] = { I_LEFT, I_MIDDLE, I_RIGHT };
 
 /* ---- which fighter ---- */
@@ -124,14 +125,16 @@ static int wipe_sism(void) {    /* the S-ISM transition's switch: S-ISM PRESENTA
 }
 
 /* The S: three columns of quads, 128 x 256 each like the letters', what they leave open the S. Drawn
-   as a stroke 48 wide along a line through these points (a blocky S with rounded corners, its ends cut
-   square at x 42 and 342), and sampled every 2 rows. */
-static const int16_t S_LINE[][2] = { { 342, 48 }, { 96, 48 }, { 66, 78 }, { 66, 98 }, { 96, 128 }, { 288, 128 }, { 318, 158 }, { 318, 178 }, { 288, 208 }, { 42, 208 } };
+   as a stroke 48 wide along a line through these points (a blocky S with rounded corners and a sloping
+   middle (the maintainer's pick, 2026-11-27), its ends cut
+   square at the 4:3 edges, x 0 and 384, where the outsides of its curves also reach (the maintainer,
+   2026-11-27)), and sampled every 2 rows. */
+static const int16_t S_LINE[][2] = { { 384, 48 }, { 54, 48 }, { 24, 78 }, { 24, 92 }, { 360, 164 }, { 360, 178 }, { 330, 208 }, { 0, 208 } };
 #define S_HALF 24
 static uint16_t s_cols[3][4096];
 static int s_made;
 static int in_s(int x, int y) {
-    if (x < 42 || x > 342) return 0;
+    if (x < 0 || x > 384) return 0;
     for (size_t i = 0; i + 1 < sizeof S_LINE / sizeof S_LINE[0]; i++) {
         float ax = S_LINE[i][0], ay = S_LINE[i][1], bx = S_LINE[i + 1][0], by = S_LINE[i + 1][1];
         float dx = bx - ax, dy = by - ay, t = ((float)x - ax) * dx + ((float)y - ay) * dy, l = dx * dx + dy * dy;
@@ -165,6 +168,13 @@ static void make_s(void) {
             }
             /* this band's quads, and those just lengthened (the band above's), for the next band */
             prev_to = n; (void)from;
+        }
+        if (col != 1 && n + 8 < 4095) {     /* WIDE NATIVE: an empty quad on the 4:3 edge, the column's height, so
+                                                shapes.c fills the margin beside it in the colour even where the
+                                                S's ends meet the edge */
+            uint16_t e = col == 0 ? 0 : 128;
+            uint16_t v[8] = { e, 0, e, 0, e, 256, e, 256 };
+            memcpy(q + n, v, sizeof v); n += 8;
         }
         q[n] = 0xFFFF;
     }
