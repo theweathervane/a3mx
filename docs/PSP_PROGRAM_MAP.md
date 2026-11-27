@@ -1178,7 +1178,25 @@ owner at + 88, and frame data at + 296.
 | (1 functions) | (`object/batch_moves255.c`) a mashed hold throw: holds the opponent while a count runs, presses keep it going and change its strength |
 | (1 functions) | (`object/batch_menu256.c`) a grid cursor: column and row moved by a pad's press or held repeat, wrapping round |
 | (3 functions) | (`object/batch_moves257.c`) the meter gain at strength 2 picked by distance and two special starts that use it with +81 |
-| (12 functions) | (`object/batch_supers258.c`) super-combo starts: choice / distance / gauge checks, the super state, its number and the start through 0x0886D2EC / 0x0886D3E0 |
+| (75 functions) | (`object/batch_supers258.c`, helper `object/super_start.h`) super-combo starts: choice / distance / gauge checks, the super state, its number and the start through 0x0886D2EC / 0x0886D3E0 |
+| (5 functions) | (`object/batch_moves259.c`) the buttons-to-special check (allowed list, button bit, mode cue) and the attack step that ends or starts it |
+| (16 functions) | (`object/batch_moves260.c`) characters' attack steps that are the shared one under their own address, and three with a step of their own first |
+| (9 functions) | (`object/batch_moves261.c`) normal-attack starts and steps around the shared attack step: face, meter, move by strength or distance; a hit counter; a stance table |
+| (7 functions) | (`object/batch_moves262.c`) normal-attack starts that pick their move by button or distance before the shared attack step |
+| (2 functions) | (`object/batch_menu263.c`) a menu on the grid cursor and its start: pick / cancel counted with their cues, or the cursor moved; its column drawn by 0x0883A6E0 |
+| (2 functions) | (`object/batch_moves264.c`) normal attacks with steps of their own around the shared attack step: a rush and a crouching attack with a push |
+| (4 functions) | (`object/batch_moves265.c`) normal attacks by stance with their own push step (one body at two addresses), a stance dispatcher and a charge use |
+| (16 functions) | (`object/batch_input266.c`) a fighter's command input check: the layout's command table entry, new presses merged into +760, else the command's checker; a button-set match; the alternate setting, the random input waits and the computer's direction timers |
+| (27 functions) | (`object/batch_input267.c`) command checks by number, the command check over six more checker tables, held-all-buttons checks (one pad or both), a command-9 state and the escape check |
+| (38 functions) | (`object/batch_cmd268.c`) special moves started from a command: command check, choice / busy test, condition, preparation, number, facing and start; command and held-button wrappers |
+| (20 functions) | (`object/batch_pads269.c`) whether a pad pressed a menu button: per player slot, by the game's pad flags, the plain checks (menu buttons or bit 15); screens that move on or skip on a press |
+| (4 functions) | (`object/batch_target270.c`) picking the opponent in two-on-one fights, and the ground / air throw checks |
+| (33 functions) | (`object/batch_grabs271.c`) command throws: the throw checks with a move on a catch and another on a miss |
+| (25 functions) | (`object/batch_misc272.c`) small dispatchers and the leaves under them: a step by count, the cpu buttons by table, crouching and heavy-lunge attack starts, a list-driven spawn, link steps, part-stick readers, special / super cancels |
+| (20 functions) | (`object/batch_hit273.c`) the hit check: which sides a hit can land on, the hit applied to the result block, the attacker/defender pairing, a throw landing and its hit, a hit landing on the defender, a hit object landing, two hits clashing, hit / hurt box tests and the hit try |
+| (20 functions) | (`object/batch_holds274.c`) throw holds: the step that lands a caught throw when the animation flags it, and the launches that follow |
+| (8 functions) | (`object/batch_jumps275.c`) special jumps that end in the common lift once +123 is set, and jumps steered by the part's stick |
+| (6 functions) | (`object/batch_input276.c`) command element steps (direction match, release, timed, held-button timers, a random wait) and a hit handler by the defender's reaction |
 | (286 step dispatchers) | (0.166.0, `object/steps_fighters.c`) the step dispatchers the fighter scenarios reach, most of them characters' own move steps: run_step by a step byte (+3 - +7, +128, ...), half-word or signed byte (+194, +236, ...), and run_step_with (the owner +88 to the handler); one line each, matched to the translations' shape |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
