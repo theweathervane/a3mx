@@ -11,6 +11,7 @@
  */
 #include "rt.h"
 #include "ge.h"
+#include "ge_backend.h"
 #include "gl_funcs.h"
 #include "shader.h"
 #include "perf.h"
@@ -215,8 +216,8 @@ static BigTex big[BIG_CACHE];
 static uint32_t big_shadow_total;
 static uint64_t list_no = 1;            /* bumped whenever guest memory may have changed */
 
-void ge_gl_list_start(void) { last_tex.valid = 0; list_no++; }
-void ge_gl_memory_written(void) { last_tex.valid = 0; list_no++; }
+static void ge_gl_list_start(void) { last_tex.valid = 0; list_no++; }
+static void ge_gl_memory_written(void) { last_tex.valid = 0; list_no++; }
 
 static void big_free(BigTex *b) {
     flush_batch();                      /* the open batch may still read it */
@@ -453,7 +454,7 @@ static void flush_batch(void) {
     vbn = 0; batch_draws = 0;
 }
 
-void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int sy1, int sx2, int sy2) {
+static void ge_gl_draw(int type, const GeVtx *v, int n, int flat, int sx1, int sy1, int sx2, int sy2) {
     if (!ready) return;
     gpu_timer_begin();
     const uint32_t *R = ge_regs();
@@ -575,7 +576,7 @@ static void draw_to_window(GLuint tex, float src_w, float src_h, float uv_w, flo
     p_glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-int ge_gl_present(uint32_t fb_addr, int win_w, int win_h) {
+static int ge_gl_present(uint32_t fb_addr, int win_w, int win_h) {
     if (!ready) return 0;
     flush_batch();
     Target *t = target_for(fb_addr, 0);
@@ -601,7 +602,7 @@ int ge_gl_present(uint32_t fb_addr, int win_w, int win_h) {
     return 1;
 }
 
-void ge_gl_present_rgba(const uint8_t *rgba, int w, int h, int win_w, int win_h) {
+static void ge_gl_present_rgba(const uint8_t *rgba, int w, int h, int win_w, int win_h) {
     if (!ready) return;
     flush_batch();
     if (!upload_tex || upload_w != w || upload_h != h) {
@@ -623,7 +624,7 @@ void ge_gl_present_rgba(const uint8_t *rgba, int w, int h, int win_w, int win_h)
     gpu_timer_end();
 }
 
-int ge_gl_read(uint32_t fb_addr, uint8_t *rgba, int *w, int *h) {
+static int ge_gl_read(uint32_t fb_addr, uint8_t *rgba, int *w, int *h) {
     if (!ready) return 0;
     flush_batch();
     Target *t = target_for(fb_addr, 0);
@@ -637,8 +638,8 @@ int ge_gl_read(uint32_t fb_addr, uint8_t *rgba, int *w, int *h) {
     return 1;
 }
 
-int ge_gl_scale(void) { return S; }
-const char *ge_gl_gpu_name(void) { const char *r = ready ? (const char *)p_glGetString(GL_RENDERER) : NULL; return r ? r : ""; }
+static int ge_gl_scale(void) { return S; }
+static const char *ge_gl_gpu_name(void) { const char *r = ready ? (const char *)p_glGetString(GL_RENDERER) : NULL; return r ? r : ""; }
 
 /* the GPU's time for each frame: a ring of timer queries, read back a few frames later so the CPU
  * never waits for them. A query starts at the frame's first draw and ends when the frame has been
@@ -674,7 +675,7 @@ static void gpu_timer_frame(void) {
     }
 }
 
-void ge_gl_frame_end(void) {
+static void ge_gl_frame_end(void) {
     flush_batch();
     perf_count_draws(frame_draws, frame_calls);
     frame_draws = frame_calls = 0;
@@ -696,13 +697,13 @@ void ge_gl_frame_end(void) {
  * gains little. --scale asks for any size from 1 to 8. */
 #define AUTO_SCALE_MAX 4
 static const char *scale_reason = "auto";
-const char *ge_gl_scale_reason(void) { return scale_reason; }
-void ge_gl_finish(void) { if (ready) flush_batch(); if (ready && p_glFinish) p_glFinish(); }   /* host_sdl.c: FRAME TIMING SMOOTH */
+static const char *ge_gl_scale_reason(void) { return scale_reason; }
+static void ge_gl_finish(void) { if (ready) flush_batch(); if (ready && p_glFinish) p_glFinish(); }   /* host_sdl.c (through ge_backend): FRAME TIMING SMOOTH */
 static int software_gl(const char *r) {
     return r && (strstr(r, "llvmpipe") || strstr(r, "softpipe") || strstr(r, "SwiftShader") || strstr(r, "GDI Generic") ||
                  strstr(r, "Microsoft Basic Render"));
 }
-int ge_gl_init(void *(*getproc)(const char *), int scale, int display_h) {
+static int ge_gl_init(void *(*getproc)(const char *), int scale, int display_h) {
     if (!gl_load(getproc)) return 0;
     { extern const char *rt_work_dir; shader_gl_init(getproc, rt_work_dir); }
     if (scale > 0) { S = scale > 8 ? 8 : scale; scale_reason = "--scale"; }
@@ -743,3 +744,13 @@ int ge_gl_init(void *(*getproc)(const char *), int scale, int display_h) {
            (const char *)p_glGetString(GL_RENDERER), 480 * S, 272 * S, S, scale_reason);
     return 1;
 }
+
+/* ---------------------------------------------------------------- the backend (ge_backend.h) */
+static int gl_backend_init(const GeBackendInit *in) { return ge_gl_init(in->gl_getproc, in->scale, in->display_h); }
+const GeBackend ge_backend_gl = {
+    "OpenGL",
+    gl_backend_init,
+    ge_gl_draw, ge_gl_list_start, ge_gl_memory_written,
+    ge_gl_present, ge_gl_present_rgba, ge_gl_frame_end, ge_gl_finish, ge_gl_read,
+    ge_gl_scale, ge_gl_gpu_name, ge_gl_scale_reason,
+};

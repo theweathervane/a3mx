@@ -1,0 +1,865 @@
+# A3MX: the presets SCREEN SETTING > FILTER offers besides its own eleven, for libretro slang-shaders at
+# 2345ee91602a7404d3a1a6a5df6108d7305fdad4 (tools/data/pins.json). Made by tools/shaders.py --catalogue on 2026-11-26:
+# each was loaded, built and drawn by the game (a3mx --filter-test) on the maintainer's Windows PC (RTX 4070 Laptop GPU),
+# and any that failed was left out. heavy: a frame slower than 3.0 ms at 1904 x 1080 there, or 10 passes or more.
+# The game reads this when there is no a3mx_catalogue.tsv beside the shaders. When the pinned commit changes:
+#   python tools/shaders.py --catalogue --out tools/data/shader_catalogue.tsv
+# Tab-separated: category, name, preset (under the shaders folder), flags, passes, build ms, frame ms
+CRT	ADVANCED CRT WHKRMRGKS0	crt/advanced_crt_whkrmrgks0.slangp	heavy	1	44	5.68
+CRT	CATHODE-RETRO NO-SIGNAL	crt/cathode-retro_no-signal.slangp	heavy	11	235	5.91
+CRT	CATHODE-RETRO SIGNAL TEST	crt/shaders/cathode-retro/signal_test.slangp	heavy	18	305	6.95
+CRT	CRT-1TAP	crt/crt-1tap.slangp		1	17	0.85
+CRT	CRT-1TAP-BLOOM	crt/crt-1tap-bloom.slangp	heavy	26	181	4.75
+CRT	CRT-1TAP-BLOOM FAST	crt/crt-1tap-bloom_fast.slangp	heavy	20	120	3.42
+CRT	CRT-2TAP	crt/crt-2tap.slangp		1	27	0.66
+CRT	CRT-APERTURE	crt/crt-aperture.slangp		1	54	2.97
+CRT	CRT-BEANS-FAST	crt/crt-beans-fast.slangp		3	140	1.37
+CRT	CRT-BEANS-RGB	crt/crt-beans-rgb.slangp	heavy	12	260	3.33
+CRT	CRT-BEANS-VGA	crt/crt-beans-vga.slangp	heavy	11	209	2.49
+CRT	CRT-BLURPI-SHARP	crt/crt-blurPi-sharp.slangp		1	22	0.51
+CRT	CRT-BLURPI-SOFT	crt/crt-blurPi-soft.slangp		1	10	0.48
+CRT	CRT-CALIGARI	crt/crt-caligari.slangp		1	26	0.98
+CRT	CRT-CGWG-FAST	crt/crt-cgwg-fast.slangp		1	35	1.45
+CRT	CRT-CONSUMER	crt/crt-consumer.slangp	heavy	1	28	4.00
+CRT	CRT-CONSUMER-1W-NTSC-XL	crt/crt-consumer-1w-ntsc-XL.slangp		3	84	1.28
+CRT	CRT-CREATIVEFORCE-ARCADE	crt/crt-CreativeForce-Arcade.slangp		2	55	2.64
+CRT	CRT-CREATIVEFORCE-SHARPSMOOTH	crt/crt-CreativeForce-SharpSmooth.slangp		2	17	2.51
+CRT	CRT-CYCLON	crt/crt-Cyclon.slangp		3	102	1.32
+CRT	CRT-EASYMODE	crt/crt-easymode.slangp		1	17	1.16
+CRT	CRT-EASYMODE-HALATION	crt/crt-easymode-halation.slangp		5	121	2.13
+CRT	CRT-EFFECTS ANALOG-SERVICE-MENU	crt/crt-effects/analog-service-menu.slangp		1	1368	0.38
+CRT	CRT-EFFECTS CRT-BLACK CRUSH-KOKO	crt/crt-effects/crt-black_crush-koko.slangp		2	41	0.53
+CRT	CRT-EFFECTS CRT-RESSWITCH-GLITCH-KOKO	crt/crt-effects/crt-resswitch-glitch-koko.slangp		1	54	0.98
+CRT	CRT-EFFECTS GLOW TRAILS	crt/crt-effects/glow_trails.slangp		5	182	0.99
+CRT	CRT-EFFECTS PHOSPHOR-PERSISTENCE	crt/crt-effects/phosphor-persistence.slangp		3	55	0.63
+CRT	CRT-EFFECTS PHOSPHORLUT	crt/crt-effects/phosphorlut.slangp		5	242	1.92
+CRT	CRT-EFFECTS RASTER BLOOM	crt/crt-effects/raster_bloom.slangp		3	63	1.67
+CRT	CRT-EFFECTS RAY TRACED CURVATURE	crt/crt-effects/ray_traced_curvature.slangp		2	110	1.44
+CRT	CRT-EFFECTS RAY TRACED CURVATURE APPEND	crt/crt-effects/ray_traced_curvature_append.slangp		1	35	0.94
+CRT	CRT-EFFECTS ROYALE-CURVE-APPEND	crt/crt-effects/royale-curve-append.slangp		1	226	0.57
+CRT	CRT-EFFECTS VECTOR-GLOW	crt/crt-effects/vector-glow.slangp	heavy	10	301	1.45
+CRT	CRT-EFFECTS VECTOR-GLOW-ALT-RENDER	crt/crt-effects/vector-glow-alt-render.slangp		4	287	1.67
+CRT	CRT-FRUTBUNN	crt/crt-frutbunn.slangp		1	27	0.60
+CRT	CRT-GDV-MINI	crt/crt-gdv-mini.slangp		1	64	1.51
+CRT	CRT-GDV-MINI-ULTRA-TRINITRON	crt/crt-gdv-mini-ultra-trinitron.slangp		1	120	1.59
+CRT	CRT-GEOM	crt/crt-geom.slangp	heavy	1	47	4.35
+CRT	CRT-GEOM-DELUXE	crt/crt-geom-deluxe.slangp	heavy	5	270	4.36
+CRT	CRT-GEOM-MINI	crt/crt-geom-mini.slangp		2	39	0.95
+CRT	CRT-GEOM-TATE	crt/crt-geom-tate.slangp	heavy	1	47	3.60
+CRT	CRT-GUEST-ADVANCED	crt/crt-guest-advanced.slangp	heavy	12	751	5.48
+CRT	CRT-GUEST-ADVANCED-FAST	crt/crt-guest-advanced-fast.slangp	heavy	9	638	3.62
+CRT	CRT-GUEST-ADVANCED-FASTEST	crt/crt-guest-advanced-fastest.slangp		5	684	2.23
+CRT	CRT-GUEST-ADVANCED-HD	crt/crt-guest-advanced-hd.slangp	heavy	12	1035	4.95
+CRT	CRT-GUEST-ADVANCED-NTSC	crt/crt-guest-advanced-ntsc.slangp	heavy	19	1309	8.14
+CRT	CRT-GUEST-ADVANCED-PAL	crt/crt-guest-advanced-pal.slangp	heavy	19	348	6.97
+CRT	CRT-HYLLIAN	crt/crt-hyllian.slangp		5	161	2.18
+CRT	CRT-HYLLIAN-3D	crt/crt-hyllian-3d.slangp		1	59	1.59
+CRT	CRT-HYLLIAN-FAST	crt/crt-hyllian-fast.slangp		1	42	0.81
+CRT	CRT-HYLLIAN-NTSC	crt/crt-hyllian-ntsc.slangp		5	61	2.56
+CRT	CRT-HYLLIAN-NTSC-RAINBOW	crt/crt-hyllian-ntsc-rainbow.slangp		5	209	2.41
+CRT	CRT-HYLLIAN-SINC-COMPOSITE	crt/crt-hyllian-sinc-composite.slangp		3	65	1.26
+CRT	CRT-INTERLACED-HALATION	crt/crt-interlaced-halation.slangp		5	117	1.98
+CRT	CRT-LOTTES	crt/crt-lottes.slangp	heavy	1	602	6.74
+CRT	CRT-LOTTES-FAST	crt/crt-lottes-fast.slangp		1	56	1.66
+CRT	CRT-LOTTES-MULTIPASS	crt/crt-lottes-multipass.slangp	heavy	3	169	3.28
+CRT	CRT-LOTTES-MULTIPASS-GLOW	crt/crt-lottes-multipass-glow.slangp		7	333	1.94
+CRT	CRT-MATTIAS	crt/crt-mattias.slangp	heavy	1	232	8.54
+CRT	CRT-MAXIMUS-ROYALE	crt/crt-maximus-royale.slangp	heavy	25	1263	9.86
+CRT	CRT-MAXIMUS-ROYALE-FAST-MODE	crt/crt-maximus-royale-fast-mode.slangp	heavy	22	1283	7.70
+CRT	CRT-MAXIMUS-ROYALE-HALF-RES-MODE	crt/crt-maximus-royale-half-res-mode.slangp	heavy	22	969	7.95
+CRT	CRT-NES-MINI	crt/crt-nes-mini.slangp		1	22	0.31
+CRT	CRT-NOBODY	crt/crt-nobody.slangp		1	105	0.65
+CRT	CRT-PI	crt/crt-pi.slangp		1	34	0.38
+CRT	CRT-POCKET	crt/crt-pocket.slangp		2	94	1.92
+CRT	CRT-POTATO-BVM	crt/crt-potato-BVM.slangp		1	20	1.41
+CRT	CRT-POTATO-COOL	crt/crt-potato-cool.slangp		1	18	0.31
+CRT	CRT-POTATO-WARM	crt/crt-potato-warm.slangp		1	11	0.22
+CRT	CRT-ROYALE	crt/crt-royale.slangp	heavy	12	886	5.41
+CRT	CRT-ROYALE-FAKE-BLOOM	crt/crt-royale-fake-bloom.slangp	heavy	9	717	3.28
+CRT	CRT-ROYALE-FAKE-BLOOM-INTEL	crt/crt-royale-fake-bloom-intel.slangp	heavy	7	1373	3.59
+CRT	CRT-ROYALE-FAST	crt/crt-royale-fast.slangp	heavy	8	622	3.75
+CRT	CRT-ROYALE-INTEL	crt/crt-royale-intel.slangp	heavy	10	961	4.92
+CRT	CRT-SIMPLE	crt/crt-simple.slangp		1	37	2.04
+CRT	CRT-SINES	crt/crt-sines.slangp		2	51	2.02
+CRT	CRT-SLANGTEST-CUBIC	crt/crt-slangtest-cubic.slangp		3	60	0.62
+CRT	CRT-SLANGTEST-LANCZOS	crt/crt-slangtest-lanczos.slangp		3	40	0.58
+CRT	CRT-SUPER-XBR	crt/crt-super-xbr.slangp	heavy	11	518	15.82
+CRT	CRT-TORRIDGRISTLE	crt/crt-torridgristle.slangp		7	102	2.53
+CRT	CRT-YAH	crt/crt-yah.slangp	heavy	13	1206	4.88
+CRT	CRT-YAH BASE-LITE	crt/shaders/crt-yah/presets/base-lite.slangp	heavy	13	238	13.51
+CRT	CRT-YAH BASE-MEDIUM	crt/shaders/crt-yah/presets/base-medium.slangp	heavy	13	172	13.49
+CRT	CRT-YAH BASE-STRONG	crt/shaders/crt-yah/presets/base-strong.slangp	heavy	13	169	10.03
+CRT	CRT-YAH CRT-YAH	crt/shaders/crt-yah/crt-yah.slangp	heavy	13	236	18.35
+CRT	CRT-YAH CRT-YAH-SINGLE-PASS	crt/shaders/crt-yah/crt-yah-single-pass.slangp	heavy	1	84	24.50
+CRT	CRT-YAH PURE-CRT	crt/shaders/crt-yah/presets/pure-crt.slangp	heavy	13	178	10.92
+CRT	CRT-YAH PURE-LCD	crt/shaders/crt-yah/presets/pure-lcd.slangp	heavy	13	214	8.80
+CRT	CRT-YAH PURE-MASK	crt/shaders/crt-yah/presets/pure-mask.slangp	heavy	13	189	9.05
+CRT	CRT-YAH PURE-NTSC	crt/shaders/crt-yah/presets/pure-ntsc.slangp	heavy	13	182	10.09
+CRT	CRT-YAH PURE-SCANLINES	crt/shaders/crt-yah/presets/pure-scanlines.slangp	heavy	13	254	9.24
+CRT	CRT-YAH-SINGLE-PASS	crt/crt-yah-single-pass.slangp	heavy	1	345	19.28
+CRT	CRT-YO6-FLAT-TRINITRON-TV	crt/crt-yo6-flat-trinitron-tv.slangp		1	23	0.58
+CRT	CRT-YO6-KV-21CL10B	crt/crt-yo6-KV-21CL10B.slangp		1	83	0.18
+CRT	CRT-YO6-KV-M1420B	crt/crt-yo6-KV-M1420B.slangp		3	64	0.64
+CRT	CRT-YO6-KV-M1420B-SHARP	crt/crt-yo6-KV-M1420B-sharp.slangp		3	146	0.54
+CRT	CRTGLOW GAUSS	crt/crtglow_gauss.slangp		7	159	1.19
+CRT	CRTGLOW LANCZOS	crt/crtglow_lanczos.slangp		7	84	1.18
+CRT	CRTSIM	crt/crtsim.slangp		5	125	0.92
+CRT	FAKE-CRT-GEOM	crt/fake-crt-geom.slangp		2	44	0.34
+CRT	FAKE-CRT-GEOM-POTATO	crt/fake-crt-geom-potato.slangp		2	34	0.27
+CRT	FAKELOTTES	crt/fakelottes.slangp		1	29	0.22
+CRT	GIZMO-CRT	crt/gizmo-crt.slangp		1	50	1.46
+CRT	GIZMO-SLOTMASK-CRT	crt/gizmo-slotmask-crt.slangp		1	61	0.59
+CRT	GRITSSCANLINES	crt/GritsScanlines.slangp		2	25	0.62
+CRT	GTU-V050	crt/gtu-v050.slangp		3	81	0.71
+CRT	MAME HLSL	crt/mame_hlsl.slangp	heavy	11	395	1.37
+CRT	METACRT	crt/metacrt.slangp	heavy	4	474	20.54
+CRT	MONOCRT	crt/monoCRT.slangp		1	89	0.56
+CRT	NEWPIXIE-CRT	crt/newpixie-crt.slangp		4	125	0.66
+CRT	NEWPIXIE-MINI	crt/newpixie-mini.slangp		1	45	1.05
+CRT	OLD MAME HLSL	crt/shaders/mame_hlsl/shaders/old/mame_hlsl.slangp	heavy	12	351	2.44
+CRT	PRE-SCALER-PRESETS SCALEFX	crt/shaders/guest/pre-scaler-presets/scalefx.slangp		6	58	0.98
+CRT	PRE-SCALER-PRESETS SCALEFX-HORIZONTAL	crt/shaders/guest/pre-scaler-presets/scalefx-horizontal.slangp		6	288	0.51
+CRT	PRE-SCALER-PRESETS SUPER-XBR-SHARP	crt/shaders/guest/pre-scaler-presets/super-xbr-sharp.slangp		5	193	0.47
+CRT	PRE-SCALER-PRESETS SUPER-XBR-SMOOTH	crt/shaders/guest/pre-scaler-presets/super-xbr-smooth.slangp		4	50	0.59
+CRT	PRE-SCALER-PRESETS XBR-LV2	crt/shaders/guest/pre-scaler-presets/xbr-lv2.slangp		1	114	0.83
+CRT	PRE-SCALER-PRESETS XBR-LV3	crt/shaders/guest/pre-scaler-presets/xbr-lv3.slangp		1	20	1.07
+CRT	PRE-SCALER-PRESETS XBR-LV3-HORIZONTAL	crt/shaders/guest/pre-scaler-presets/xbr-lv3-horizontal.slangp		1	159	1.03
+CRT	SIMPLE-CRT	crt/simple-crt.slangp		2	30	0.40
+CRT	SIMPLE-CRT-FXAA	crt/simple-crt-fxaa.slangp		3	151	0.86
+CRT	TVOUT-TWEAKS	crt/tvout-tweaks.slangp		1	29	0.63
+CRT	VT220	crt/vt220.slangp	heavy	6	685	11.73
+CRT	YEE64	crt/yee64.slangp		1	44	1.21
+CRT	YEETRON	crt/yeetron.slangp		1	28	0.29
+CRT	ZFAST-CRT	crt/zfast-crt.slangp		1	30	0.36
+CRT	ZFAST-CRT-COMPOSITE	crt/zfast-crt-composite.slangp		1	42	0.34
+CRT	ZFAST-CRT-CURVATURE	crt/zfast-crt-curvature.slangp		1	30	0.33
+CRT	ZFAST-CRT-GEO	crt/zfast-crt-geo.slangp		1	35	0.92
+CRT	ZFAST-CRT-GEO-SVIDEO	crt/zfast-crt-geo-svideo.slangp		1	34	0.35
+CRT	ZFAST-CRT-HDMASK	crt/zfast-crt-hdmask.slangp		1	35	0.37
+SCANLINES	INTEGER-SCALING-SCANLINES	scanlines/integer-scaling-scanlines.slangp		1	32	0.28
+SCANLINES	OSSC	scanlines/ossc.slangp		1	46	0.34
+SCANLINES	OSSC SLOT	scanlines/ossc_slot.slangp		5	97	0.47
+SCANLINES	RES-INDEPENDENT-SCANLINES	scanlines/res-independent-scanlines.slangp		1	244	0.70
+SCANLINES	SCANLINE	scanlines/scanline.slangp		1	12	0.22
+SCANLINES	SCANLINE-FRACT	scanlines/scanline-fract.slangp		1	24	0.25
+SCANLINES	SCANLINES-MODERN	scanlines/scanlines-Modern.slangp		1	31	0.16
+SCANLINES	SCANLINES-RERE	scanlines/scanlines-rere.slangp		1	30	0.43
+SCANLINES	SCANLINES-SINE-ABS	scanlines/scanlines-sine-abs.slangp		1	21	0.16
+HANDHELD	3DS-LCD-GRID-V2	handheld/3ds-lcd-grid-v2.slangp		3	29	2.19
+HANDHELD	AGB001	handheld/agb001.slangp		2	18	0.69
+HANDHELD	AGS001	handheld/ags001.slangp		2	24	0.75
+HANDHELD	AUTHENTIC GBC	handheld/authentic_gbc.slangp	heavy	2	142	7.63
+HANDHELD	AUTHENTIC GBC FAST	handheld/authentic_gbc_fast.slangp		2	36	0.74
+HANDHELD	AUTHENTIC GBC SINGLE PASS	handheld/authentic_gbc_single_pass.slangp	heavy	1	147	7.50
+HANDHELD	BEVEL	handheld/bevel.slangp		1	14	0.56
+HANDHELD	COLOR-MOD DSLITE-COLOR	handheld/color-mod/dslite-color.slangp		2	21	0.15
+HANDHELD	COLOR-MOD GBA-COLOR	handheld/color-mod/gba-color.slangp		2	28	0.27
+HANDHELD	COLOR-MOD GBA-FAST-COLOR-FIX	handheld/color-mod/gba-fast-color-fix.slangp		1	12	0.16
+HANDHELD	COLOR-MOD GBC-COLOR	handheld/color-mod/gbc-color.slangp		2	23	0.23
+HANDHELD	COLOR-MOD GBC-GAMBATTE-COLOR	handheld/color-mod/gbc-gambatte-color.slangp		1	11	0.15
+HANDHELD	COLOR-MOD GBMICRO-COLOR	handheld/color-mod/gbMicro-color.slangp		2	32	0.21
+HANDHELD	COLOR-MOD NDS-COLOR	handheld/color-mod/nds-color.slangp		2	14	0.22
+HANDHELD	COLOR-MOD NSO-GBA-COLOR	handheld/color-mod/NSO-gba-color.slangp		1	14	0.23
+HANDHELD	COLOR-MOD NSO-GBC-COLOR	handheld/color-mod/NSO-gbc-color.slangp		1	15	0.27
+HANDHELD	COLOR-MOD PALM-COLOR	handheld/color-mod/palm-color.slangp		1	16	0.16
+HANDHELD	COLOR-MOD PSP-COLOR	handheld/color-mod/psp-color.slangp		2	24	0.36
+HANDHELD	COLOR-MOD SP101-COLOR	handheld/color-mod/sp101-color.slangp		2	28	0.33
+HANDHELD	COLOR-MOD SWITCHOLED-COLOR	handheld/color-mod/SwitchOLED-color.slangp		2	27	0.21
+HANDHELD	COLOR-MOD VBA-COLOR	handheld/color-mod/vba-color.slangp		2	33	0.41
+HANDHELD	CONSOLE-BORDER 3DS-AUTO-GAP	handheld/console-border/3ds-auto-gap.slangp		4	112	1.06
+HANDHELD	CONSOLE-BORDER DMG	handheld/console-border/dmg.slangp		6	112	1.20
+HANDHELD	CONSOLE-BORDER GB-DMG-ALT	handheld/console-border/gb-dmg-alt.slangp		8	131	1.64
+HANDHELD	CONSOLE-BORDER GB-LIGHT-ALT	handheld/console-border/gb-light-alt.slangp		8	137	1.57
+HANDHELD	CONSOLE-BORDER GB-POCKET	handheld/console-border/gb-pocket.slangp		6	50	1.26
+HANDHELD	CONSOLE-BORDER GB-POCKET-ALT	handheld/console-border/gb-pocket-alt.slangp		8	123	2.08
+HANDHELD	CONSOLE-BORDER GBA	handheld/console-border/gba.slangp		4	39	0.79
+HANDHELD	CONSOLE-BORDER GBA-AGB001-COLOR-MOTIONBLUR	handheld/console-border/gba-agb001-color-motionblur.slangp		4	49	0.76
+HANDHELD	CONSOLE-BORDER GBA-AGS001-COLOR-MOTIONBLUR	handheld/console-border/gba-ags001-color-motionblur.slangp		5	42	0.93
+HANDHELD	CONSOLE-BORDER GBA-DMG	handheld/console-border/gba-dmg.slangp		9	130	1.84
+HANDHELD	CONSOLE-BORDER GBA-LCD-GRID-V2	handheld/console-border/gba-lcd-grid-v2.slangp		4	69	1.20
+HANDHELD	CONSOLE-BORDER GBC	handheld/console-border/gbc.slangp		4	45	1.24
+HANDHELD	CONSOLE-BORDER GBC-DMG	handheld/console-border/gbc-dmg.slangp		8	119	1.64
+HANDHELD	CONSOLE-BORDER GBC-FRONTLIT	handheld/console-border/gbc-frontlit.slangp		4	68	0.91
+HANDHELD	CONSOLE-BORDER GBC-LCD-GRID-V2	handheld/console-border/gbc-lcd-grid-v2.slangp		4	47	1.41
+HANDHELD	CONSOLE-BORDER GG	handheld/console-border/gg.slangp		2	35	0.61
+HANDHELD	CONSOLE-BORDER NDS-AUTO-GAP	handheld/console-border/nds-auto-gap.slangp		4	69	1.07
+HANDHELD	CONSOLE-BORDER NGPC	handheld/console-border/ngpc.slangp		2	41	0.64
+HANDHELD	CONSOLE-BORDER PSP	handheld/console-border/psp.slangp		2	33	0.71
+HANDHELD	DOT	handheld/dot.slangp		1	9	0.59
+HANDHELD	DS-HYBRID-SABR	handheld/ds-hybrid-sabr.slangp	heavy	3	33	6.73
+HANDHELD	DS-HYBRID-SCALEFX	handheld/ds-hybrid-scalefx.slangp		7	40	1.42
+HANDHELD	GAMEBOY	handheld/gameboy.slangp		7	87	2.94
+HANDHELD	GAMEBOY-ADVANCE-DOT-MATRIX	handheld/gameboy-advance-dot-matrix.slangp	heavy	7	1232	21.09
+HANDHELD	GAMEBOY-COLOR-DOT-MATRIX	handheld/gameboy-color-dot-matrix.slangp		7	94	2.76
+HANDHELD	GAMEBOY-COLOR-DOT-MATRIX-WHITE-BG	handheld/gameboy-color-dot-matrix-white-bg.slangp		7	98	2.79
+HANDHELD	GAMEBOY-DARK-MODE	handheld/gameboy-dark-mode.slangp		8	107	2.85
+HANDHELD	GAMEBOY-LIGHT	handheld/gameboy-light.slangp		7	106	2.81
+HANDHELD	GAMEBOY-LIGHT-MODE	handheld/gameboy-light-mode.slangp		7	107	2.81
+HANDHELD	GAMEBOY-POCKET	handheld/gameboy-pocket.slangp		7	101	2.80
+HANDHELD	GAMEBOY-POCKET-HIGH-CONTRAST	handheld/gameboy-pocket-high-contrast.slangp		7	108	2.81
+HANDHELD	GB-PALETTE-DMG	handheld/gb-palette-dmg.slangp		1	12	0.10
+HANDHELD	GB-PALETTE-LIGHT	handheld/gb-palette-light.slangp		1	6	0.07
+HANDHELD	GB-PALETTE-POCKET	handheld/gb-palette-pocket.slangp		1	6	0.11
+HANDHELD	GBC-DEV	handheld/gbc-dev.slangp		1	11	0.09
+HANDHELD	GLARE	handheld/glare.slangp		1	19	0.12
+HANDHELD	LCD-GRID	handheld/lcd-grid.slangp		1	26	0.29
+HANDHELD	LCD-GRID-V2	handheld/lcd-grid-v2.slangp		1	9	0.24
+HANDHELD	LCD-SHADER	handheld/lcd-shader.slangp		4	51	0.51
+HANDHELD	LCD1X	handheld/lcd1x.slangp		1	12	0.10
+HANDHELD	LCD1X NDS	handheld/lcd1x_nds.slangp		1	12	0.10
+HANDHELD	LCD1X PSP	handheld/lcd1x_psp.slangp		1	12	0.10
+HANDHELD	LCD3X	handheld/lcd3x.slangp		1	11	0.18
+HANDHELD	MEGA-BLOCKS-BRICK	handheld/mega-blocks-brick.slangp		1	15	0.17
+HANDHELD	MEGA-BLOCKS-DOME	handheld/mega-blocks-dome.slangp		1	12	0.16
+HANDHELD	MEGA-TETRIX	handheld/mega-Tetrix.slangp		1	35	0.12
+HANDHELD	NDS-LCD-GRID-V2	handheld/nds-lcd-grid-v2.slangp		4	37	0.55
+HANDHELD	PIXEL TRANSPARENCY	handheld/pixel_transparency.slangp		6	207	0.46
+HANDHELD	RETRO-TILES	handheld/retro-tiles.slangp		1	19	0.15
+HANDHELD	RETRO-V2	handheld/retro-v2.slangp		1	12	0.08
+HANDHELD	RETRO-V3	handheld/retro-v3.slangp		1	13	0.11
+HANDHELD	SAMEBOY-LCD	handheld/sameboy-lcd.slangp		1	21	0.11
+HANDHELD	SIMPLETEX LCD	handheld/simpletex_lcd.slangp		1	58	0.12
+HANDHELD	SIMPLETEX LCD 720P	handheld/simpletex_lcd_720p.slangp		1	56	0.11
+HANDHELD	SIMPLETEX LCD-4K	handheld/simpletex_lcd-4k.slangp		1	186	0.10
+HANDHELD	SUNLIGHT SHIMMER	handheld/sunlight_shimmer.slangp		8	129	0.93
+HANDHELD	ZFAST-LCD	handheld/zfast-lcd.slangp		1	14	0.10
+NTSC	AFTERGLOW0-UPDATE	ntsc/shaders/patchy-ntsc/afterglow0-update/afterglow0-update.slangp		3	91	1.08
+NTSC	ARTIFACT-COLORS	ntsc/artifact-colors.slangp		5	103	0.67
+NTSC	BLARGG	ntsc/blargg.slangp		3	61	1.74
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC 0-SVIDEO	ntsc/decoupled-guest-advanced-ntsc 0-Svideo.slangp	heavy	10	499	1.85
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC 1-COMPOSITE	ntsc/shaders/decoupled-guest/decoupled-guest-advanced-ntsc 1-Composite.slangp	heavy	10	255	2.49
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC 2-RF	ntsc/decoupled-guest-advanced-ntsc 2-RF.slangp	heavy	10	256	1.74
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC 3	ntsc/shaders/decoupled-guest/decoupled-guest-advanced-ntsc 3.slangp	heavy	10	275	2.51
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC 4	ntsc/shaders/decoupled-guest/decoupled-guest-advanced-ntsc 4.slangp	heavy	10	277	2.86
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC 5	ntsc/shaders/decoupled-guest/decoupled-guest-advanced-ntsc 5.slangp	heavy	10	287	2.13
+NTSC	DECOUPLED-GUEST-ADVANCED-NTSC GUEST-DEFAULTS	ntsc/shaders/decoupled-guest/decoupled-guest-advanced-ntsc Guest-Defaults.slangp	heavy	10	272	4.00
+NTSC	MAME-NTSC	ntsc/mame-ntsc.slangp		2	177	0.83
+NTSC	NTSC-256PX-COMPOSITE	ntsc/ntsc-256px-composite.slangp		2	88	0.64
+NTSC	NTSC-256PX-COMPOSITE-SCANLINE	ntsc/ntsc-256px-composite-scanline.slangp		4	101	0.90
+NTSC	NTSC-256PX-SVIDEO	ntsc/ntsc-256px-svideo.slangp		2	34	0.63
+NTSC	NTSC-256PX-SVIDEO-SCANLINE	ntsc/ntsc-256px-svideo-scanline.slangp		4	72	0.79
+NTSC	NTSC-320PX-COMPOSITE	ntsc/ntsc-320px-composite.slangp		2	51	0.60
+NTSC	NTSC-320PX-COMPOSITE-SCANLINE	ntsc/ntsc-320px-composite-scanline.slangp		4	85	0.48
+NTSC	NTSC-320PX-SVIDEO	ntsc/ntsc-320px-svideo.slangp		2	24	0.75
+NTSC	NTSC-320PX-SVIDEO-SCANLINE	ntsc/ntsc-320px-svideo-scanline.slangp		4	44	0.49
+NTSC	NTSC-ADAPTIVE	ntsc/ntsc-adaptive.slangp		4	49	1.64
+NTSC	NTSC-ADAPTIVE-4X	ntsc/ntsc-adaptive-4x.slangp		4	54	0.77
+NTSC	NTSC-ADAPTIVE-OLD	ntsc/ntsc-adaptive-old.slangp	heavy	2	49	4.75
+NTSC	NTSC-ADAPTIVE-OLD-4X	ntsc/ntsc-adaptive-old-4x.slangp	heavy	2	214	4.39
+NTSC	NTSC-ADAPTIVE-TATE	ntsc/ntsc-adaptive-tate.slangp	heavy	2	235	4.05
+NTSC	NTSC-MD-RAINBOWS	ntsc/ntsc-md-rainbows.slangp	heavy	2	29	8.45
+NTSC	NTSC-SIMPLE	ntsc/ntsc-simple.slangp		2	56	1.60
+NTSC	NTSC-XOT	ntsc/ntsc-xot.slangp	heavy	2	671	4.07
+NTSC	PATCHY-BLASTEM	ntsc/patchy-blastem.slangp	heavy	8	626	24.91
+NTSC	PATCHY-GENPLUSGX	ntsc/patchy-genplusgx.slangp	heavy	8	657	17.18
+NTSC	PATCHY-SNES	ntsc/patchy-snes.slangp	heavy	8	469	3.69
+NTSC	TINY NTSC	ntsc/tiny_ntsc.slangp		1	81	1.57
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 0-SCART	pal/decoupled-guest-advanced-pal 0-SCART.slangp	heavy	10	248	3.02
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 1-S-VIDEO	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 1-S-Video.slangp	heavy	10	202	3.23
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 1-S-VIDEO-CLEAN	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 1-S-Video-Clean.slangp	heavy	10	176	3.29
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 2-COMPOSITE	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 2-Composite.slangp	heavy	10	110	3.02
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 2-COMPOSITE-CLEAN	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 2-Composite-Clean.slangp	heavy	10	134	3.18
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 2-COMPOSITE-DIRTY	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 2-Composite-Dirty.slangp	heavy	10	104	3.07
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 3-RF	pal/decoupled-guest-advanced-pal 3-RF.slangp	heavy	10	215	3.20
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 3-RF-CLEAN	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 3-RF-Clean.slangp	heavy	10	172	3.36
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 3-RF-DIRTY	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 3-RF-Dirty.slangp	heavy	10	222	3.69
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 3-RF-DIRTY2	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 3-RF-Dirty2.slangp	heavy	10	191	3.39
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 3-RF-DIRTY3	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 3-RF-Dirty3.slangp	heavy	10	205	3.02
+PAL	DECOUPLED-GUEST-ADVANCED-PAL 3-RF-DIRTY4	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal 3-RF-Dirty4.slangp	heavy	10	215	3.06
+PAL	DECOUPLED-GUEST-ADVANCED-PAL GUEST-DEFAULTS	pal/shaders/decoupled-guest/decoupled-guest-advanced-pal Guest-Defaults.slangp	heavy	10	157	2.90
+PAL	PAL-R57SHELL	pal/pal-r57shell.slangp	heavy	1	28	5.58
+PAL	PAL-R57SHELL-MOIRE-ONLY	pal/pal-r57shell-moire-only.slangp		1	57	0.61
+PAL	PAL-SINGLEPASS	pal/pal-singlepass.slangp		1	92	2.28
+VHS	GRISTLEVHS	vhs/gristleVHS.slangp		5	73	0.79
+VHS	MUDLORD-PAL-VHS	vhs/mudlord-pal-vhs.slangp		1	55	0.77
+VHS	NTSC-VCR	vhs/ntsc-vcr.slangp		5	98	1.66
+VHS	VHS	vhs/vhs.slangp		2	112	0.66
+VHS	VHS MPALKO	vhs/vhs_mpalko.slangp		3	123	1.92
+VHS	VHSPRO	vhs/VHSPro.slangp		6	459	1.46
+EDGE SMOOTHING	2XBRZ-LINEAR	edge-smoothing/xbrz/2xbrz-linear.slangp		3	130	0.36
+EDGE SMOOTHING	2XSAL	edge-smoothing/xsal/2xsal.slangp		3	22	1.51
+EDGE SMOOTHING	2XSAL-LEVEL2-CRT	edge-smoothing/xsal/2xsal-level2-crt.slangp		2	38	0.59
+EDGE SMOOTHING	2XSCALEHQ	edge-smoothing/scalehq/2xScaleHQ.slangp		3	32	0.26
+EDGE SMOOTHING	4XBRZ-LINEAR	edge-smoothing/xbrz/4xbrz-linear.slangp		2	152	0.91
+EDGE SMOOTHING	4XSAL-LEVEL2	edge-smoothing/xsal/4xsal-level2.slangp		3	15	1.29
+EDGE SMOOTHING	4XSAL-LEVEL2-CRT	edge-smoothing/xsal/4xsal-level2-crt.slangp		3	26	1.42
+EDGE SMOOTHING	4XSAL-LEVEL2-HQ	edge-smoothing/xsal/4xsal-level2-hq.slangp		3	34	1.46
+EDGE SMOOTHING	4XSCALEHQ	edge-smoothing/scalehq/4xScaleHQ.slangp		3	37	0.30
+EDGE SMOOTHING	4XSOFT	edge-smoothing/xsoft/4xsoft.slangp		4	31	1.61
+EDGE SMOOTHING	4XSOFTSDB	edge-smoothing/xsoft/4xsoftSdB.slangp		4	35	1.69
+EDGE SMOOTHING	5XBRZ-LINEAR	edge-smoothing/xbrz/5xbrz-linear.slangp		2	199	1.64
+EDGE SMOOTHING	6XBRZ-LINEAR	edge-smoothing/xbrz/6xbrz-linear.slangp		2	236	2.43
+EDGE SMOOTHING	ARTCNN-C4F16-2X-LUMA	edge-smoothing/artcnn/artcnn-c4f16-2x-luma.slangp	heavy	12	2943	7.51
+EDGE SMOOTHING	ARTCNN-C4F16-DN-2X-LUMA	edge-smoothing/artcnn/artcnn-c4f16-dn-2x-luma.slangp	heavy	12	2519	7.42
+EDGE SMOOTHING	ARTCNN-C4F16-DS-2X-LUMA	edge-smoothing/artcnn/artcnn-c4f16-ds-2x-luma.slangp	heavy	12	1552	7.25
+EDGE SMOOTHING	ARTCNN-C4F32-DN-2X-LUMA	edge-smoothing/artcnn/artcnn-c4f32-dn-2x-luma.slangp	heavy	12	7998	6.01
+EDGE SMOOTHING	ARTCNN-C4F32-DS-2X-LUMA	edge-smoothing/artcnn/artcnn-c4f32-ds-2x-luma.slangp	heavy	12	7857	33.24
+EDGE SMOOTHING	CLEANEDGE-SCALE	edge-smoothing/cleanEdge/cleanEdge-scale.slangp		1	1026	0.66
+EDGE SMOOTHING	CUNNY-3X12-NVL-2X-RGB	edge-smoothing/cunny/CuNNy-3x12-nvl-2x-rgb.slangp		7	544	0.68
+EDGE SMOOTHING	CUNNY-4X12-NVL-2X-RGB	edge-smoothing/cunny/CuNNy-4x12-nvl-2x-rgb.slangp	heavy	8	708	3.04
+EDGE SMOOTHING	CUNNY-4X16-NVL-2X-RGB	edge-smoothing/cunny/CuNNy-4x16-nvl-2x-rgb.slangp	heavy	8	1289	5.77
+EDGE SMOOTHING	CUNNY-4X24-NVL-2X-RGB	edge-smoothing/cunny/CuNNy-4x24-nvl-2x-rgb.slangp	heavy	8	3087	8.92
+EDGE SMOOTHING	CUNNY-4X32-NVL-2X-RGB	edge-smoothing/cunny/CuNNy-4x32-nvl-2x-rgb.slangp	heavy	8	6866	13.33
+EDGE SMOOTHING	CUNNY-8X32-NVL-2X-RGB	edge-smoothing/cunny/CuNNy-8x32-nvl-2x-rgb.slangp	heavy	12	11497	20.54
+EDGE SMOOTHING	CUNNY-FAST-NVL-2X-LUMA	edge-smoothing/cunny/CuNNy-fast-nvl-2x-luma.slangp		6	425	2.40
+EDGE SMOOTHING	CUNNY-FASTER-NVL-2X-LUMA	edge-smoothing/cunny/CuNNy-faster-nvl-2x-luma.slangp		6	239	2.26
+EDGE SMOOTHING	CUNNY-VERYFAST-NVL-2X-LUMA	edge-smoothing/cunny/CuNNy-veryfast-nvl-2x-luma.slangp		6	175	1.89
+EDGE SMOOTHING	DDT	edge-smoothing/ddt/ddt.slangp		1	27	0.55
+EDGE SMOOTHING	DDT 3-POINT	edge-smoothing/ddt/3-point.slangp		1	17	0.25
+EDGE SMOOTHING	DDT CUT	edge-smoothing/ddt/cut.slangp		1	25	0.46
+EDGE SMOOTHING	DDT-EXTENDED	edge-smoothing/ddt/ddt-extended.slangp		1	32	0.64
+EDGE SMOOTHING	DDT-JINC	edge-smoothing/ddt/ddt-jinc.slangp		1	15	1.73
+EDGE SMOOTHING	DDT-JINC-LINEAR	edge-smoothing/ddt/ddt-jinc-linear.slangp		3	71	2.03
+EDGE SMOOTHING	DDT-XBR-LV1	edge-smoothing/ddt/ddt-xbr-lv1.slangp		1	44	0.98
+EDGE SMOOTHING	EAGLE 2XSAI	edge-smoothing/eagle/2xsai.slangp		3	26	0.89
+EDGE SMOOTHING	EAGLE 2XSAI-FIX-PIXEL-SHIFT	edge-smoothing/eagle/2xsai-fix-pixel-shift.slangp		2	92	1.74
+EDGE SMOOTHING	EAGLE SUPER-2XSAI	edge-smoothing/eagle/super-2xsai.slangp		3	20	0.78
+EDGE SMOOTHING	EAGLE SUPER-2XSAI-FIX-PIXEL-SHIFT	edge-smoothing/eagle/super-2xsai-fix-pixel-shift.slangp		2	45	1.66
+EDGE SMOOTHING	FAST-BILATERAL-NEDI	edge-smoothing/nedi/fast-bilateral-nedi.slangp	heavy	5	197	3.17
+EDGE SMOOTHING	FSR-EASU	edge-smoothing/fsr/fsr-easu.slangp		1	81	1.03
+EDGE SMOOTHING	HQX HQ2X	edge-smoothing/hqx/hq2x.slangp		5	58	0.90
+EDGE SMOOTHING	HQX HQ2X-HALPHON	edge-smoothing/hqx/hq2x-halphon.slangp		3	68	0.74
+EDGE SMOOTHING	HQX HQ3X	edge-smoothing/hqx/hq3x.slangp		5	49	0.97
+EDGE SMOOTHING	HQX HQ4X	edge-smoothing/hqx/hq4x.slangp		5	37	1.23
+EDGE SMOOTHING	HYBRID-JINC2-XBR-LV2	edge-smoothing/xbr/hybrid-jinc2-xbr-lv2.slangp		7	374	2.44
+EDGE SMOOTHING	NEDI	edge-smoothing/nedi/nedi.slangp		4	36	2.93
+EDGE SMOOTHING	NEDI BILATERAL-VARIANT2	edge-smoothing/nedi/presets/bilateral-variant2.slangp	heavy	6	52	3.83
+EDGE SMOOTHING	NEDI-HYBRID	edge-smoothing/nedi/nedi-hybrid.slangp		4	46	2.68
+EDGE SMOOTHING	NEDI-HYBRID-SHARPER	edge-smoothing/nedi/nedi-hybrid-sharper.slangp		5	247	2.96
+EDGE SMOOTHING	NEDI-SHARPER	edge-smoothing/nedi/nedi-sharper.slangp	heavy	5	44	3.07
+EDGE SMOOTHING	NIS	edge-smoothing/nis/nis.slangp		3	127	2.84
+EDGE SMOOTHING	NNEDI3-NNS16-2X-LUMA	edge-smoothing/nnedi3/nnedi3-nns16-2x-luma.slangp	heavy	9	322	3.58
+EDGE SMOOTHING	NNEDI3-NNS16-4X-LUMA	edge-smoothing/nnedi3/nnedi3-nns16-4x-luma.slangp	heavy	13	200	9.13
+EDGE SMOOTHING	OLD SCALEFX	edge-smoothing/scalefx/shaders/old/scalefx.slangp		5	40	0.26
+EDGE SMOOTHING	OLD SCALEFX-9X	edge-smoothing/scalefx/shaders/old/scalefx-9x.slangp		9	82	0.89
+EDGE SMOOTHING	OMNISCALE	edge-smoothing/omniscale/omniscale.slangp		1	139	1.83
+EDGE SMOOTHING	OMNISCALE-LEGACY	edge-smoothing/omniscale/omniscale-legacy.slangp		1	79	2.36
+EDGE SMOOTHING	OTHER PRESETS 2XBR-LV1-MULTIPASS	edge-smoothing/xbr/other presets/2xBR-lv1-multipass.slangp		4	60	0.60
+EDGE SMOOTHING	OTHER PRESETS 4XBR-HYBRID-CRT	edge-smoothing/xbr/other presets/4xbr-hybrid-crt.slangp		1	112	1.70
+EDGE SMOOTHING	OTHER PRESETS SUPER-2XBR-3D-2P	edge-smoothing/xbr/other presets/super-2xbr-3d-2p.slangp		4	116	1.12
+EDGE SMOOTHING	OTHER PRESETS SUPER-2XBR-3D-3P-SMOOTHER	edge-smoothing/xbr/other presets/super-2xbr-3d-3p-smoother.slangp		5	68	1.30
+EDGE SMOOTHING	OTHER PRESETS SUPER-4XBR-3D-4P	edge-smoothing/xbr/other presets/super-4xbr-3d-4p.slangp		6	147	1.47
+EDGE SMOOTHING	OTHER PRESETS SUPER-4XBR-3D-6P-SMOOTHER	edge-smoothing/xbr/other presets/super-4xbr-3d-6p-smoother.slangp		8	118	0.93
+EDGE SMOOTHING	OTHER PRESETS SUPER-8XBR-3D-6P	edge-smoothing/xbr/other presets/super-8xbr-3d-6p.slangp		8	239	1.81
+EDGE SMOOTHING	OTHER PRESETS XBR-HYBRID	edge-smoothing/xbr/other presets/xbr-hybrid.slangp		3	88	2.15
+EDGE SMOOTHING	OTHER PRESETS XBR-LV1-STANDALONE	edge-smoothing/xbr/other presets/xbr-lv1-standalone.slangp		1	55	1.69
+EDGE SMOOTHING	OTHER PRESETS XBR-LV2-HD	edge-smoothing/xbr/other presets/xbr-lv2-hd.slangp		1	90	1.56
+EDGE SMOOTHING	OTHER PRESETS XBR-LV2-MULTIPASS	edge-smoothing/xbr/other presets/xbr-lv2-multipass.slangp		3	23	1.30
+EDGE SMOOTHING	OTHER PRESETS XBR-LV2-STANDALONE	edge-smoothing/xbr/other presets/xbr-lv2-standalone.slangp		1	13	2.19
+EDGE SMOOTHING	OTHER PRESETS XBR-LV3-9X-MULTIPASS	edge-smoothing/xbr/other presets/xbr-lv3-9x-multipass.slangp	heavy	8	47	9.38
+EDGE SMOOTHING	OTHER PRESETS XBR-LV3-9X-STANDALONE	edge-smoothing/xbr/other presets/xbr-lv3-9x-standalone.slangp	heavy	4	36	6.04
+EDGE SMOOTHING	OTHER PRESETS XBR-LV3-MULTIPASS	edge-smoothing/xbr/other presets/xbr-lv3-multipass.slangp		5	31	0.35
+EDGE SMOOTHING	OTHER PRESETS XBR-LV3-STANDALONE	edge-smoothing/xbr/other presets/xbr-lv3-standalone.slangp		3	21	0.46
+EDGE SMOOTHING	OTHER PRESETS XBR-MLV4-MULTIPASS	edge-smoothing/xbr/other presets/xbr-mlv4-multipass.slangp		5	267	0.61
+EDGE SMOOTHING	SABR	edge-smoothing/sabr/sabr.slangp		1	50	1.73
+EDGE SMOOTHING	SABR-HYBRID-DEPOSTERIZE	edge-smoothing/sabr/sabr-hybrid-deposterize.slangp		1	65	2.05
+EDGE SMOOTHING	SCALEFX	edge-smoothing/scalefx/scalefx.slangp		6	41	0.28
+EDGE SMOOTHING	SCALEFX+RAA	edge-smoothing/scalefx/scalefx+rAA.slangp	heavy	9	126	27.15
+EDGE SMOOTHING	SCALEFX-9X	edge-smoothing/scalefx/scalefx-9x.slangp		9	229	0.85
+EDGE SMOOTHING	SCALEFX-HYBRID	edge-smoothing/scalefx/scalefx-hybrid.slangp		6	61	0.34
+EDGE SMOOTHING	SCALENX EPX	edge-smoothing/scalenx/epx.slangp		2	29	0.17
+EDGE SMOOTHING	SCALENX MMPX	edge-smoothing/scalenx/mmpx.slangp		2	143	0.25
+EDGE SMOOTHING	SCALENX SCALE2X	edge-smoothing/scalenx/scale2x.slangp		2	27	0.20
+EDGE SMOOTHING	SCALENX SCALE2XPLUS	edge-smoothing/scalenx/scale2xplus.slangp		2	28	0.18
+EDGE SMOOTHING	SCALENX SCALE2XSFX	edge-smoothing/scalenx/scale2xSFX.slangp		2	53	0.20
+EDGE SMOOTHING	SCALENX SCALE3X	edge-smoothing/scalenx/scale3x.slangp		2	33	0.19
+EDGE SMOOTHING	SCALENX SCALE3XSFX	edge-smoothing/scalenx/scale3xSFX.slangp		2	55	0.27
+EDGE SMOOTHING	SUPER-XBR	edge-smoothing/xbr/super-xbr.slangp		6	49	1.58
+EDGE SMOOTHING	SUPER-XBR-FAST	edge-smoothing/xbr/super-xbr-fast.slangp		6	114	1.49
+EDGE SMOOTHING	SUPEREAGLE	edge-smoothing/eagle/supereagle.slangp		1	37	0.54
+EDGE SMOOTHING	XBR-LV2	edge-smoothing/xbr/xbr-lv2.slangp		6	40	0.92
+EDGE SMOOTHING	XBR-LV2-SHARP	edge-smoothing/xbr/xbr-lv2-sharp.slangp		6	46	1.18
+EDGE SMOOTHING	XBR-LV3	edge-smoothing/xbr/xbr-lv3.slangp		6	42	1.10
+EDGE SMOOTHING	XBR-LV3-SHARP	edge-smoothing/xbr/xbr-lv3-sharp.slangp	heavy	8	181	6.07
+EDGE SMOOTHING	XBRZ-CRISP	edge-smoothing/xbrz/xbrz-crisp.slangp		4	2830	1.62
+EDGE SMOOTHING	XBRZ-FREESCALE	edge-smoothing/xbrz/xbrz-freescale.slangp	heavy	1	113	4.46
+EDGE SMOOTHING	XBRZ-FREESCALE-MULTIPASS	edge-smoothing/xbrz/xbrz-freescale-multipass.slangp		4	1275	2.43
+PIXEL ART	AANN	pixel-art-scaling/aann.slangp		1	54	1.36
+PIXEL ART	BANDLIMIT-PIXEL	pixel-art-scaling/bandlimit-pixel.slangp		2	64	0.86
+PIXEL ART	BILINEAR-ADJUSTABLE	pixel-art-scaling/bilinear-adjustable.slangp		1	33	0.72
+PIXEL ART	BOX FILTER AA XFORM	pixel-art-scaling/box_filter_aa_xform.slangp		1	81	0.60
+PIXEL ART	CLEANEDGE-ROTATE	pixel-art-scaling/cleanEdge-rotate.slangp	heavy	1	2427	4.84
+PIXEL ART	CONTROLLED SHARPNESS	pixel-art-scaling/controlled_sharpness.slangp		1	30	0.75
+PIXEL ART	EDGE1PIXEL	pixel-art-scaling/edge1pixel.slangp		1	32	0.56
+PIXEL ART	EDGENPIXELS	pixel-art-scaling/edgeNpixels.slangp		1	31	1.32
+PIXEL ART	GRID-BLEND-HYBRID	pixel-art-scaling/grid-blend-hybrid.slangp		1	35	1.23
+PIXEL ART	PIXEL AA	pixel-art-scaling/pixel_aa.slangp		2	74	1.17
+PIXEL ART	PIXEL AA FAST	pixel-art-scaling/pixel_aa_fast.slangp		2	39	1.13
+PIXEL ART	PIXEL AA SINGLE PASS	pixel-art-scaling/pixel_aa_single_pass.slangp		1	72	0.98
+PIXEL ART	PIXEL AA XFORM	pixel-art-scaling/pixel_aa_xform.slangp		2	116	1.04
+PIXEL ART	PIXELLATE	pixel-art-scaling/pixellate.slangp		1	46	1.07
+PIXEL ART	SHARP-BILINEAR	pixel-art-scaling/sharp-bilinear.slangp		1	13	0.64
+PIXEL ART	SHARP-BILINEAR-2X-PRESCALE	pixel-art-scaling/sharp-bilinear-2x-prescale.slangp		2	24	0.73
+PIXEL ART	SHARP-BILINEAR-SCANLINES	pixel-art-scaling/sharp-bilinear-scanlines.slangp		1	36	0.54
+PIXEL ART	SHARP-BILINEAR-SIMPLE	pixel-art-scaling/sharp-bilinear-simple.slangp		1	25	0.50
+PIXEL ART	SHARP-SHIMMERLESS	pixel-art-scaling/sharp-shimmerless.slangp		1	24	0.78
+PIXEL ART	SMOOTHESTSTEP	pixel-art-scaling/smootheststep.slangp		1	20	0.55
+PIXEL ART	SMUBERSTEP	pixel-art-scaling/smuberstep.slangp		1	23	0.70
+PIXEL ART	SOFT-PIXEL-ART	pixel-art-scaling/soft-pixel-art.slangp		3	60	1.75
+PIXEL ART	UNIFORM-NEAREST	pixel-art-scaling/uniform-nearest.slangp		1	29	1.34
+INTERPOLATION	B-SPLINE-4-TAPS	interpolation/b-spline-4-taps.slangp		1	13	0.24
+INTERPOLATION	B-SPLINE-4-TAPS-FAST	interpolation/b-spline-4-taps-fast.slangp		2	23	0.23
+INTERPOLATION	B-SPLINE-FAST	interpolation/b-spline-fast.slangp		2	10	0.25
+INTERPOLATION	BICUBIC	interpolation/bicubic.slangp		1	9	0.41
+INTERPOLATION	BICUBIC-5-TAPS	interpolation/bicubic-5-taps.slangp		1	17	0.23
+INTERPOLATION	BICUBIC-6-TAPS-FAST	interpolation/bicubic-6-taps-fast.slangp		2	26	0.36
+INTERPOLATION	BICUBIC-CUSTOM-B-BLUR	interpolation/Bicubic-Custom-B-Blur.slangp		1	24	0.91
+INTERPOLATION	BICUBIC-FAST	interpolation/bicubic-fast.slangp		2	15	0.24
+INTERPOLATION	CATMULL-ROM	interpolation/catmull-rom.slangp		1	15	0.33
+INTERPOLATION	CATMULL-ROM-4-TAPS	interpolation/catmull-rom-4-taps.slangp		2	24	0.32
+INTERPOLATION	CATMULL-ROM-5-TAPS	interpolation/catmull-rom-5-taps.slangp		1	17	0.21
+INTERPOLATION	CATMULL-ROM-6-TAPS-FAST	interpolation/catmull-rom-6-taps-fast.slangp		2	29	0.28
+INTERPOLATION	CATMULL-ROM-FAST	interpolation/catmull-rom-fast.slangp		2	29	0.35
+INTERPOLATION	CUBIC	interpolation/cubic.slangp		1	20	0.54
+INTERPOLATION	CUBIC-GAMMA-CORRECT	interpolation/cubic-gamma-correct.slangp		2	20	0.70
+INTERPOLATION	EWA-CUBICS	interpolation/EWA-Cubics.slangp		1	9	0.81
+INTERPOLATION	EWA-CUSTOM-B-BLUR	interpolation/EWA-Custom-B-Blur.slangp		1	22	0.81
+INTERPOLATION	HANN-5-TAPS	interpolation/hann-5-taps.slangp		1	22	0.38
+INTERPOLATION	HERMITE	interpolation/hermite.slangp		1	11	0.28
+INTERPOLATION	JINC2	interpolation/jinc2.slangp		1	16	0.76
+INTERPOLATION	JINC2-SHARP	interpolation/jinc2-sharp.slangp		1	13	0.74
+INTERPOLATION	JINC2-SHARPER	interpolation/jinc2-sharper.slangp		1	12	0.76
+INTERPOLATION	LANCZOS16-AR	interpolation/lanczos16-AR.slangp		1	35	0.70
+INTERPOLATION	LANCZOS2	interpolation/lanczos2.slangp		2	31	0.51
+INTERPOLATION	LANCZOS2-5-TAPS	interpolation/lanczos2-5-taps.slangp		1	22	0.42
+INTERPOLATION	LANCZOS2-6-TAPS-FAST	interpolation/lanczos2-6-taps-fast.slangp		2	29	0.45
+INTERPOLATION	LANCZOS2-FAST	interpolation/lanczos2-fast.slangp		2	35	0.52
+INTERPOLATION	LANCZOS3-FAST	interpolation/lanczos3-fast.slangp		2	39	1.40
+INTERPOLATION	LANCZOS4	interpolation/lanczos4.slangp		2	45	0.68
+INTERPOLATION	LANCZOS6	interpolation/lanczos6.slangp		2	47	0.68
+INTERPOLATION	LANCZOS8	interpolation/lanczos8.slangp		2	47	0.98
+INTERPOLATION	LINEAR-GAMMA-PRESETS B-SPLINE-FAST	interpolation/linear-gamma-presets/b-spline-fast.slangp		2	13	0.49
+INTERPOLATION	LINEAR-GAMMA-PRESETS BICUBIC-FAST	interpolation/linear-gamma-presets/bicubic-fast.slangp		2	12	0.42
+INTERPOLATION	LINEAR-GAMMA-PRESETS CATMULL-ROM-FAST	interpolation/linear-gamma-presets/catmull-rom-fast.slangp		2	14	0.42
+INTERPOLATION	LINEAR-GAMMA-PRESETS LANCZOS2-FAST	interpolation/linear-gamma-presets/lanczos2-fast.slangp		2	13	0.70
+INTERPOLATION	LINEAR-GAMMA-PRESETS LANCZOS3-FAST	interpolation/linear-gamma-presets/lanczos3-fast.slangp		2	14	0.71
+INTERPOLATION	LINEAR-GAMMA-PRESETS SPLINE16-FAST	interpolation/linear-gamma-presets/spline16-fast.slangp		2	14	0.58
+INTERPOLATION	LINEAR-GAMMA-PRESETS SPLINE36-FAST	interpolation/linear-gamma-presets/spline36-fast.slangp		2	14	0.74
+INTERPOLATION	QUILEZ	interpolation/quilez.slangp		1	12	0.26
+INTERPOLATION	SPLINE100	interpolation/spline100.slangp		2	82	0.78
+INTERPOLATION	SPLINE144	interpolation/spline144.slangp		2	95	1.06
+INTERPOLATION	SPLINE16-FAST	interpolation/spline16-fast.slangp		2	39	0.50
+INTERPOLATION	SPLINE256	interpolation/spline256.slangp		2	149	1.69
+INTERPOLATION	SPLINE36-FAST	interpolation/spline36-fast.slangp		2	49	0.62
+INTERPOLATION	SPLINE64	interpolation/spline64.slangp		2	58	0.66
+ANTI-ALIASING	AA-SHADER-4.0	anti-aliasing/aa-shader-4.0.slangp		2	126	0.60
+ANTI-ALIASING	AA-SHADER-4.0-LEVEL2	anti-aliasing/aa-shader-4.0-level2.slangp		2	52	0.17
+ANTI-ALIASING	ADVANCED-AA	anti-aliasing/advanced-aa.slangp		3	82	0.59
+ANTI-ALIASING	FXAA	anti-aliasing/fxaa.slangp		1	22	0.50
+ANTI-ALIASING	FXAA+LINEAR	anti-aliasing/fxaa+linear.slangp		2	131	0.53
+ANTI-ALIASING	REVERSE-AA	anti-aliasing/reverse-aa.slangp		2	92	0.64
+ANTI-ALIASING	SMAA	anti-aliasing/smaa.slangp		4	139	1.07
+ANTI-ALIASING	SMAA+LINEAR	anti-aliasing/smaa+linear.slangp		5	319	1.85
+ANTI-ALIASING	SMAA+SHARPEN	anti-aliasing/smaa+sharpen.slangp		5	131	0.92
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-aperture.slangp	heavy	12	318	7.25
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-GENESIS	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-aperture-genesis.slangp	heavy	12	439	7.38
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-GENESIS-RAINBOW-EFFECT	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-aperture-genesis-rainbow-effect.slangp	heavy	12	362	7.20
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-PSX	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-aperture-psx.slangp	heavy	12	403	7.18
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-SNES	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-aperture-snes.slangp	heavy	12	419	7.23
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-slotmask.slangp	heavy	12	467	7.51
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-GENESIS	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-slotmask-genesis.slangp	heavy	12	500	7.37
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-GENESIS-RAINBOW-EFFECT	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-slotmask-genesis-rainbow-effect.slangp	heavy	12	333	7.19
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-PSX	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-slotmask-psx.slangp	heavy	12	329	7.09
+PRESETS	4K CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-SNES	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-composite-slotmask-snes.slangp	heavy	12	278	7.65
+PRESETS	4K CRT-ROYALE-FAST-NTSC-RF-SLOTMASK-NES	presets/crt-royale-fast/4k/crt-royale-fast-ntsc-rf-slotmask-nes.slangp	heavy	12	438	7.21
+PRESETS	4K CRT-ROYALE-FAST-RGB-APERTURE	presets/crt-royale-fast/4k/crt-royale-fast-rgb-aperture.slangp	heavy	8	395	4.41
+PRESETS	4K CRT-ROYALE-FAST-RGB-SLOT	presets/crt-royale-fast/4k/crt-royale-fast-rgb-slot.slangp	heavy	8	359	3.75
+PRESETS	4K CRT-ROYALE-PVM-NTSC-COMPOSITE	presets/crt-royale-fast/4k/crt-royale-pvm-ntsc-composite.slangp	heavy	12	437	7.30
+PRESETS	4K CRT-ROYALE-PVM-NTSC-COMPOSITE-GENESIS	presets/crt-royale-fast/4k/crt-royale-pvm-ntsc-composite-genesis.slangp	heavy	12	363	7.35
+PRESETS	4K CRT-ROYALE-PVM-NTSC-COMPOSITE-GENESIS-RAINBOW-EFFECT	presets/crt-royale-fast/4k/crt-royale-pvm-ntsc-composite-genesis-rainbow-effect.slangp	heavy	12	482	7.59
+PRESETS	4K CRT-ROYALE-PVM-NTSC-COMPOSITE-PSX	presets/crt-royale-fast/4k/crt-royale-pvm-ntsc-composite-psx.slangp	heavy	12	543	7.30
+PRESETS	4K CRT-ROYALE-PVM-NTSC-COMPOSITE-SNES	presets/crt-royale-fast/4k/crt-royale-pvm-ntsc-composite-snes.slangp	heavy	12	455	7.50
+PRESETS	4K CRT-ROYALE-PVM-RGB	presets/crt-royale-fast/4k/crt-royale-pvm-rgb.slangp	heavy	8	355	3.87
+PRESETS	4K CRT-ROYALE-PVM-RGB-BLEND	presets/crt-royale-fast/4k/crt-royale-pvm-rgb-blend.slangp	heavy	8	332	4.49
+PRESETS	4K CRT-ROYALE-PVM-RGB-SHMUP	presets/crt-royale-fast/4k/crt-royale-pvm-rgb-shmup.slangp	heavy	8	346	4.19
+PRESETS	APPLE-MONITOR-II	presets/apple-monitor-II.slangp	heavy	10	3989	4.16
+PRESETS	AUTHENTIC-GBC-FRONTLIT	presets/authentic-gbc-frontlit.slangp	heavy	8	153	3.53
+PRESETS	BLACK-AND-WHITE-TV	presets/black-and-white-tv.slangp	heavy	10	569	4.82
+PRESETS	CRT-BEAM-SIMULATOR-CRT-FAST-BILATERAL-SUPER-XBR	presets/crt-beam-simulator/crt-beam-simulator-crt-fast-bilateral-super-xbr.slangp		8	105	2.74
+PRESETS	CRT-BEAM-SIMULATOR-CRT-FAST-BILATERAL-SUPER-XBR-COLOR-MANGLER-COLORIMETRY	presets/crt-beam-simulator/crt-beam-simulator-crt-fast-bilateral-super-xbr-color-mangler-colorimetry.slangp	heavy	10	174	2.79
+PRESETS	CRT-BEAM-SIMULATOR-CRTROYALE-NTSC-SVIDEO	presets/crt-beam-simulator/crt-beam-simulator-crtroyale-ntsc-svideo.slangp	heavy	17	1111	8.94
+PRESETS	CRT-GEOM-SIMPLE	presets/crt-geom-simple.slangp		3	70	2.04
+PRESETS	CRT-GUEST-PHILIPS-27PS55-SYBOXEZ	presets/crt-guest-philips-27ps55-syboxez.slangp	heavy	12	204	5.80
+PRESETS	CRT-HYLLIAN-SINC-SMARTBLUR-SGENPT	presets/crt-hyllian-sinc-smartblur-sgenpt.slangp		6	73	1.65
+PRESETS	CRT-HYLLIAN-SMARTBLUR-SGENPT	presets/crt-hyllian-smartblur-sgenpt.slangp		6	67	1.58
+PRESETS	CRT-LOTTES-MULTIPASS-INTERLACED-GLOW	presets/crt-lottes-multipass-interlaced-glow.slangp	heavy	11	409	2.18
+PRESETS	CRT-NTSC-SHARP COMPOSITE	presets/crt-ntsc-sharp/composite.slangp	heavy	6	194	4.20
+PRESETS	CRT-NTSC-SHARP COMPOSITE-GLOW	presets/crt-ntsc-sharp/composite-glow.slangp	heavy	31	531	14.07
+PRESETS	CRT-NTSC-SHARP SVIDEO-NTSC X4	presets/crt-ntsc-sharp/svideo-ntsc_x4.slangp		6	181	2.98
+PRESETS	CRT-NTSC-SHARP SVIDEO-NTSC X4-GLOW	presets/crt-ntsc-sharp/svideo-ntsc_x4-glow.slangp	heavy	31	546	11.77
+PRESETS	CRT-NTSC-SHARP SVIDEO-NTSC X5	presets/crt-ntsc-sharp/svideo-ntsc_x5.slangp	heavy	6	136	3.18
+PRESETS	CRT-NTSC-SHARP SVIDEO-NTSC X5-GLOW	presets/crt-ntsc-sharp/svideo-ntsc_x5-glow.slangp	heavy	31	424	10.92
+PRESETS	CRT-NTSC-SHARP SVIDEO-NTSC X6	presets/crt-ntsc-sharp/svideo-ntsc_x6.slangp	heavy	6	175	3.30
+PRESETS	CRT-NTSC-SHARP SVIDEO-NTSC X6-GLOW	presets/crt-ntsc-sharp/svideo-ntsc_x6-glow.slangp	heavy	31	423	7.12
+PRESETS	CRT-NTSC-SHARP TATE-COMPOSITE	presets/crt-ntsc-sharp/tate-composite.slangp		6	170	2.67
+PRESETS	CRT-NTSC-SHARP TATE-COMPOSITE-GLOW	presets/crt-ntsc-sharp/tate-composite-glow.slangp	heavy	31	392	6.39
+PRESETS	CRT-NTSC-SHARP TATE-SVIDEO-NTSC X4	presets/crt-ntsc-sharp/tate-svideo-ntsc_x4.slangp		6	106	2.84
+PRESETS	CRT-NTSC-SHARP TATE-SVIDEO-NTSC X4-GLOW	presets/crt-ntsc-sharp/tate-svideo-ntsc_x4-glow.slangp	heavy	31	523	12.56
+PRESETS	CRT-NTSC-SHARP TATE-SVIDEO-NTSC X5	presets/crt-ntsc-sharp/tate-svideo-ntsc_x5.slangp	heavy	6	209	3.12
+PRESETS	CRT-NTSC-SHARP TATE-SVIDEO-NTSC X5-GLOW	presets/crt-ntsc-sharp/tate-svideo-ntsc_x5-glow.slangp	heavy	31	418	11.52
+PRESETS	CRT-NTSC-SHARP TATE-SVIDEO-NTSC X6	presets/crt-ntsc-sharp/tate-svideo-ntsc_x6.slangp		6	161	2.50
+PRESETS	CRT-NTSC-SHARP TATE-SVIDEO-NTSC X6-GLOW	presets/crt-ntsc-sharp/tate-svideo-ntsc_x6-glow.slangp	heavy	31	550	12.78
+PRESETS	CRT-PLUS-SIGNAL C64-MONITOR	presets/crt-plus-signal/c64-monitor.slangp	heavy	5	88	3.67
+PRESETS	CRT-PLUS-SIGNAL CRT-BEANS-S-VIDEO	presets/crt-plus-signal/crt-beans-s-video.slangp	heavy	12	157	1.83
+PRESETS	CRT-PLUS-SIGNAL CRT-GEOM-DELUXE-NTSC-ADAPTIVE	presets/crt-plus-signal/crt-geom-deluxe-ntsc-adaptive.slangp	heavy	7	180	3.48
+PRESETS	CRT-PLUS-SIGNAL CRT-ROYALE-FAST-NTSC-COMPOSITE	presets/crt-plus-signal/crt-royale-fast-ntsc-composite.slangp	heavy	12	351	3.51
+PRESETS	CRT-PLUS-SIGNAL CRT-ROYALE-NTSC-COMPOSITE	presets/crt-plus-signal/crt-royale-ntsc-composite.slangp	heavy	16	1166	8.88
+PRESETS	CRT-PLUS-SIGNAL CRT-ROYALE-NTSC-SVIDEO	presets/crt-plus-signal/crt-royale-ntsc-svideo.slangp	heavy	16	1613	8.31
+PRESETS	CRT-PLUS-SIGNAL CRT-ROYALE-PAL-R57SHELL	presets/crt-plus-signal/crt-royale-pal-r57shell.slangp	heavy	13	1246	5.79
+PRESETS	CRT-PLUS-SIGNAL CRTGLOW GAUSS NTSC	presets/crt-plus-signal/crtglow_gauss_ntsc.slangp		8	111	2.71
+PRESETS	CRT-PLUS-SIGNAL FAKELOTTES-NTSC-COMPOSITE	presets/crt-plus-signal/fakelottes-ntsc-composite.slangp		2	76	0.87
+PRESETS	CRT-PLUS-SIGNAL FAKELOTTES-NTSC-SVIDEO	presets/crt-plus-signal/fakelottes-ntsc-svideo.slangp		2	39	0.79
+PRESETS	CRT-PLUS-SIGNAL MY OLD TV	presets/crt-plus-signal/my_old_tv.slangp		1	54	1.93
+PRESETS	CRT-PLUS-SIGNAL NTSC-PHOSPHORLUT	presets/crt-plus-signal/ntsc-phosphorlut.slangp	heavy	9	305	6.01
+PRESETS	CRT-PLUS-SIGNAL NTSCLUT-PHOSPHORLUT	presets/crt-plus-signal/ntsclut-phosphorlut.slangp		6	190	2.22
+PRESETS	CRT-POTATO-COLORIMETRY-CONVERGENCE	presets/crt-potato/crt-potato-colorimetry-convergence.slangp		3	50	1.47
+PRESETS	CRT-ROYALE-DOWNSAMPLE	presets/crt-royale-downsample.slangp	heavy	14	1413	7.55
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-NTSC-COMPOSITE	presets/crt-royale-fast/crt-royale-pvm-ntsc-composite.slangp	heavy	12	393	7.50
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-NTSC-COMPOSITE-GENESIS	presets/crt-royale-fast/crt-royale-pvm-ntsc-composite-genesis.slangp	heavy	12	406	7.27
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-NTSC-COMPOSITE-GENESIS-RAINBOW-EFFECT	presets/crt-royale-fast/crt-royale-pvm-ntsc-composite-genesis-rainbow-effect.slangp	heavy	12	359	7.10
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-NTSC-COMPOSITE-PSX	presets/crt-royale-fast/crt-royale-pvm-ntsc-composite-psx.slangp	heavy	12	408	7.46
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-NTSC-COMPOSITE-SNES	presets/crt-royale-fast/crt-royale-pvm-ntsc-composite-snes.slangp	heavy	12	365	7.48
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-RGB	presets/crt-royale-fast/crt-royale-pvm-rgb.slangp	heavy	8	356	3.84
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-RGB-BLEND	presets/crt-royale-fast/crt-royale-pvm-rgb-blend.slangp	heavy	8	338	4.47
+PRESETS	CRT-ROYALE-FAST CRT-ROYALE-PVM-RGB-SHMUP	presets/crt-royale-fast/crt-royale-pvm-rgb-shmup.slangp	heavy	8	396	4.20
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-aperture.slangp	heavy	12	377	7.35
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-GENESIS	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-aperture-genesis.slangp	heavy	12	448	7.41
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-GENESIS-RAINBOW-EFFECT	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-aperture-genesis-rainbow-effect.slangp	heavy	12	483	7.32
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-PSX	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-aperture-psx.slangp	heavy	12	407	11.67
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-APERTURE-SNES	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-aperture-snes.slangp	heavy	12	405	7.29
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-slotmask.slangp	heavy	12	420	7.48
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-GENESIS	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-slotmask-genesis.slangp	heavy	12	300	7.23
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-GENESIS-RAINBOW-EFFECT	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-slotmask-genesis-rainbow-effect.slangp	heavy	12	360	7.13
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-PSX	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-slotmask-psx.slangp	heavy	12	280	7.14
+PRESETS	CRT-ROYALE-FAST-NTSC-COMPOSITE-SLOTMASK-SNES	presets/crt-royale-fast/crt-royale-fast-ntsc-composite-slotmask-snes.slangp	heavy	12	363	7.33
+PRESETS	CRT-ROYALE-FAST-NTSC-RF-SLOTMASK-NES	presets/crt-royale-fast/crt-royale-fast-ntsc-rf-slotmask-nes.slangp	heavy	12	350	7.22
+PRESETS	CRT-ROYALE-FAST-RGB-APERTURE	presets/crt-royale-fast/crt-royale-fast-rgb-aperture.slangp	heavy	8	229	3.70
+PRESETS	CRT-ROYALE-FAST-RGB-SLOT	presets/crt-royale-fast/crt-royale-fast-rgb-slot.slangp	heavy	8	211	3.68
+PRESETS	CRT-ROYALE-KUROZUMI	presets/crt-royale-kurozumi.slangp	heavy	13	1381	5.37
+PRESETS	CRT-ROYALE-SMOOTH	presets/crt-royale-smooth.slangp	heavy	19	1484	8.43
+PRESETS	CRT-ROYALE-XM29PLUS	presets/crt-royale-xm29plus.slangp	heavy	13	1506	5.54
+PRESETS	CRTSIM-GRUNGY	presets/crtsim-grungy.slangp		5	80	1.08
+PRESETS	GAMEBOY-ADVANCE-DOT-MATRIX-SEPIA	presets/gameboy-advance-dot-matrix-sepia.slangp	heavy	7	257	21.84
+PRESETS	GIZMO-CRT-CURVATOR	presets/gizmo-crt/gizmo-crt-curvator.slangp		1	16	0.97
+PRESETS	GIZMO-CRT-MEGADRIVE	presets/gizmo-crt/gizmo-crt-megadrive.slangp		1	18	1.01
+PRESETS	GIZMO-CRT-MEGADRIVE-CURVATOR	presets/gizmo-crt/gizmo-crt-megadrive-curvator.slangp		1	22	0.90
+PRESETS	GIZMO-CRT-N64	presets/gizmo-crt/gizmo-crt-n64.slangp		1	22	1.34
+PRESETS	GIZMO-CRT-N64-CURVATOR	presets/gizmo-crt/gizmo-crt-n64-curvator.slangp		1	19	1.34
+PRESETS	GIZMO-CRT-PSX	presets/gizmo-crt/gizmo-crt-psx.slangp		1	24	0.92
+PRESETS	GIZMO-CRT-PSX-CURVATOR	presets/gizmo-crt/gizmo-crt-psx-curvator.slangp		1	23	1.48
+PRESETS	GIZMO-CRT-SNES-4K	presets/gizmo-crt/gizmo-crt-snes-4k.slangp		1	17	0.73
+PRESETS	GIZMO-CRT-SNES-CURVATOR-4K	presets/gizmo-crt/gizmo-crt-snes-curvator-4k.slangp		1	16	0.82
+PRESETS	GIZMO-CRT-SNES-DARK	presets/gizmo-crt/gizmo-crt-snes-dark.slangp		1	15	0.91
+PRESETS	GIZMO-CRT-SNES-DARK-CURVATOR	presets/gizmo-crt/gizmo-crt-snes-dark-curvator.slangp		1	19	0.75
+PRESETS	HANDHELD-PLUS-COLOR-MOD AGB001-GBA-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/agb001-gba-color-motionblur.slangp		3	23	1.48
+PRESETS	HANDHELD-PLUS-COLOR-MOD AGS001-GBA-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/ags001-gba-color-motionblur.slangp		4	32	1.80
+PRESETS	HANDHELD-PLUS-COLOR-MOD BANDLIMIT-PIXEL-GBA-COLOR	presets/handheld-plus-color-mod/bandlimit-pixel-gba-color.slangp		3	37	0.66
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-DSLITE-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-dslite-color.slangp		3	38	2.18
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-DSLITE-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-dslite-color-motionblur.slangp		4	39	2.83
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-GBA-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-gba-color.slangp		3	52	2.21
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-GBA-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-gba-color-motionblur.slangp	heavy	4	50	3.13
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-GBC-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-gbc-color.slangp		3	61	2.71
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-GBC-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-gbc-color-motionblur.slangp	heavy	4	69	3.60
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-GBMICRO-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-gbMicro-color.slangp		3	38	2.82
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-GBMICRO-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-gbMicro-color-motionblur.slangp		4	46	2.92
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-NDS-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-nds-color.slangp		3	43	2.36
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-NDS-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-nds-color-motionblur.slangp	heavy	4	58	3.07
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-PALM-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-palm-color.slangp		2	49	2.31
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-PALM-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-palm-color-motionblur.slangp	heavy	3	38	3.44
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-PSP-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-psp-color.slangp		3	49	2.77
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-PSP-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-psp-color-motionblur.slangp	heavy	4	60	3.66
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-SP101-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-sp101-color.slangp		3	60	2.46
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-SP101-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-sp101-color-motionblur.slangp	heavy	4	62	3.41
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-VBA-COLOR	presets/handheld-plus-color-mod/lcd-grid-v2-vba-color.slangp		2	32	2.56
+PRESETS	HANDHELD-PLUS-COLOR-MOD LCD-GRID-V2-VBA-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/lcd-grid-v2-vba-color-motionblur.slangp	heavy	3	47	3.43
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2+GBA-COLOR	presets/handheld-plus-color-mod/retro-v2+gba-color.slangp		2	30	0.83
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2+GBC-COLOR	presets/handheld-plus-color-mod/retro-v2+gbc-color.slangp		2	25	0.95
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2+IMAGE-ADJUSTMENT	presets/handheld-plus-color-mod/retro-v2+image-adjustment.slangp		2	38	0.58
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2+NDS-COLOR	presets/handheld-plus-color-mod/retro-v2+nds-color.slangp		2	26	1.08
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2+PSP-COLOR	presets/handheld-plus-color-mod/retro-v2+psp-color.slangp		2	30	0.77
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2+VBA-COLOR	presets/handheld-plus-color-mod/retro-v2+vba-color.slangp		2	29	0.90
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V2-NDS-COLOR	presets/handheld-plus-color-mod/retro-v2-nds-color.slangp		2	29	0.96
+PRESETS	HANDHELD-PLUS-COLOR-MOD RETRO-V3-NDS-COLOR	presets/handheld-plus-color-mod/retro-v3-nds-color.slangp		2	31	0.73
+PRESETS	HANDHELD-PLUS-COLOR-MOD SAMEBOY-LCD-GBC-COLOR-MOTIONBLUR	presets/handheld-plus-color-mod/sameboy-lcd-gbc-color-motionblur.slangp		4	63	2.06
+PRESETS	HANDHELD-PLUS-COLOR-MOD SIMPLETEX LCD 720P+GBA-COLOR	presets/handheld-plus-color-mod/simpletex_lcd_720p+gba-color.slangp		1	105	0.65
+PRESETS	HANDHELD-PLUS-COLOR-MOD SIMPLETEX LCD 720P+GBC-COLOR	presets/handheld-plus-color-mod/simpletex_lcd_720p+gbc-color.slangp		1	107	0.76
+PRESETS	HANDHELD-PLUS-COLOR-MOD SIMPLETEX LCD+GBA-COLOR	presets/handheld-plus-color-mod/simpletex_lcd+gba-color.slangp		1	120	0.86
+PRESETS	HANDHELD-PLUS-COLOR-MOD SIMPLETEX LCD+GBA-COLOR-4K	presets/handheld-plus-color-mod/simpletex_lcd+gba-color-4k.slangp		1	391	0.70
+PRESETS	HANDHELD-PLUS-COLOR-MOD SIMPLETEX LCD+GBC-COLOR	presets/handheld-plus-color-mod/simpletex_lcd+gbc-color.slangp		1	120	0.76
+PRESETS	HANDHELD-PLUS-COLOR-MOD SIMPLETEX LCD+GBC-COLOR-4K	presets/handheld-plus-color-mod/simpletex_lcd+gbc-color-4k.slangp		1	397	1.82
+PRESETS	IMGBORDER-ROYALE-KUROZUMI	presets/imgborder-royale-kurozumi.slangp	heavy	13	1223	2.07
+PRESETS	INTERPOLATION BSPLINE-4TAPS-AA-LV2	presets/interpolation/bspline-4taps-aa-lv2.slangp	heavy	3	34	3.67
+PRESETS	MDAPT+FAST-BILATERAL+SUPER-4XBR+SCANLINES	presets/mdapt+fast-bilateral+super-4xbr+scanlines.slangp	heavy	16	288	1.11
+PRESETS	NEDI-POWERVR-SHARPEN	presets/nedi-powervr-sharpen.slangp		7	106	1.00
+PRESETS	NES-COLOR-DECODER+COLORIMETRY+PIXELLATE	presets/nes-color-decoder+colorimetry+pixellate.slangp		3	35	0.46
+PRESETS	NES-COLOR-DECODER+PIXELLATE	presets/nes-color-decoder+pixellate.slangp		2	32	0.48
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-ACCURATE	presets/pixel_transparency/sunlight_shimmer-accurate.slangp	heavy	8	105	3.32
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-AUTHENTIC GBC FAST	presets/pixel_transparency/sunlight_shimmer-authentic_gbc_fast.slangp	heavy	8	119	3.02
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-LCD-GRID-V2	presets/pixel_transparency/sunlight_shimmer-lcd-grid-v2.slangp		7	233	2.81
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-LCD1X	presets/pixel_transparency/sunlight_shimmer-lcd1x.slangp		5	215	2.50
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-LCD3X	presets/pixel_transparency/sunlight_shimmer-lcd3x.slangp		5	227	2.47
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-SIMPLETEX LCD	presets/pixel_transparency/sunlight_shimmer-simpletex_lcd.slangp		5	312	2.28
+PRESETS	PIXEL TRANSPARENCY SUNLIGHT SHIMMER-ZFAST LCD	presets/pixel_transparency/sunlight_shimmer-zfast_lcd.slangp		5	236	2.49
+PRESETS	PIXEL TRANSPARENCY-ACCURATE	presets/pixel_transparency/pixel_transparency-accurate.slangp	heavy	6	104	3.02
+PRESETS	PIXEL TRANSPARENCY-AUTHENTIC GBC FAST	presets/pixel_transparency/pixel_transparency-authentic_gbc_fast.slangp	heavy	6	124	3.03
+PRESETS	PIXEL TRANSPARENCY-LCD-GRID-V2	presets/pixel_transparency/pixel_transparency-lcd-grid-v2.slangp	heavy	5	274	3.05
+PRESETS	PIXEL TRANSPARENCY-LCD1X	presets/pixel_transparency/pixel_transparency-lcd1x.slangp		3	175	2.03
+PRESETS	PIXEL TRANSPARENCY-LCD3X	presets/pixel_transparency/pixel_transparency-lcd3x.slangp		3	168	1.93
+PRESETS	PIXEL TRANSPARENCY-SIMPLETEX LCD	presets/pixel_transparency/pixel_transparency-simpletex_lcd.slangp	heavy	3	247	4.36
+PRESETS	PIXEL TRANSPARENCY-ZFAST LCD	presets/pixel_transparency/pixel_transparency-zfast_lcd.slangp		3	128	1.82
+PRESETS	SCALEFX-PLUS-SMOOTHING SCALEFX+RAA+AA	presets/scalefx-plus-smoothing/scalefx+rAA+aa.slangp	heavy	12	128	8.18
+PRESETS	SCALEFX-PLUS-SMOOTHING SCALEFX+RAA+AA-FAST	presets/scalefx-plus-smoothing/scalefx+rAA+aa-fast.slangp	heavy	11	147	5.83
+PRESETS	SCALEFX-PLUS-SMOOTHING SCALEFX-AA	presets/scalefx-plus-smoothing/scalefx-aa.slangp	heavy	10	103	5.56
+PRESETS	SCALEFX-PLUS-SMOOTHING SCALEFX-AA-FAST	presets/scalefx-plus-smoothing/scalefx-aa-fast.slangp	heavy	9	105	3.68
+PRESETS	SCALEFX-PLUS-SMOOTHING SCALEFX9-AA-BLUR-HAZY-NTSC-SH1NRA358	presets/scalefx-plus-smoothing/scalefx9-aa-blur-hazy-ntsc-sh1nra358.slangp	heavy	17	326	14.14
+PRESETS	SCALEFX-PLUS-SMOOTHING SCALEFX9-AA-BLUR-HAZY-VIBRANCE-SH1NRA358	presets/scalefx-plus-smoothing/scalefx9-aa-blur-hazy-vibrance-sh1nra358.slangp	heavy	17	281	13.69
+PRESETS	SCALEFX-PLUS-SMOOTHING XSOFT+SCALEFX-LEVEL2AA	presets/scalefx-plus-smoothing/xsoft+scalefx-level2aa.slangp	heavy	9	124	4.31
+PRESETS	SCALEFX-PLUS-SMOOTHING XSOFT+SCALEFX-LEVEL2AA+SHARPSMOOTHER	presets/scalefx-plus-smoothing/xsoft+scalefx-level2aa+sharpsmoother.slangp	heavy	10	186	4.79
+PRESETS	TVOUT	presets/tvout/tvout.slangp		2	61	1.10
+PRESETS	TVOUT+INTERLACING	presets/tvout+interlacing/tvout+interlacing.slangp		3	69	0.82
+PRESETS	TVOUT+INTERLACING TVOUT+NES-COLOR-DECODER+INTERLACING	presets/tvout+interlacing/tvout+nes-color-decoder+interlacing.slangp		4	94	1.46
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-256PX-COMPOSITE+INTERLACING	presets/tvout+interlacing/tvout+ntsc-256px-composite+interlacing.slangp		5	96	1.45
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-256PX-SVIDEO+INTERLACING	presets/tvout+interlacing/tvout+ntsc-256px-svideo+interlacing.slangp		5	99	1.43
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-2PHASE-COMPOSITE+INTERLACING	presets/tvout+interlacing/tvout+ntsc-2phase-composite+interlacing.slangp		5	100	2.41
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-2PHASE-SVIDEO+INTERLACING	presets/tvout+interlacing/tvout+ntsc-2phase-svideo+interlacing.slangp		5	79	2.30
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-320PX-COMPOSITE+INTERLACING	presets/tvout+interlacing/tvout+ntsc-320px-composite+interlacing.slangp		5	114	1.77
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-320PX-SVIDEO+INTERLACING	presets/tvout+interlacing/tvout+ntsc-320px-svideo+interlacing.slangp		5	106	1.89
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-3PHASE-COMPOSITE+INTERLACING	presets/tvout+interlacing/tvout+ntsc-3phase-composite+interlacing.slangp		5	105	1.57
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-3PHASE-SVIDEO+INTERLACING	presets/tvout+interlacing/tvout+ntsc-3phase-svideo+interlacing.slangp		5	108	2.13
+PRESETS	TVOUT+INTERLACING TVOUT+NTSC-NES+INTERLACING	presets/tvout+interlacing/tvout+ntsc-nes+interlacing.slangp		6	120	1.41
+PRESETS	TVOUT+INTERLACING TVOUT-JINC-SHARPEN+INTERLACING	presets/tvout+interlacing/tvout-jinc-sharpen+interlacing.slangp		4	77	1.41
+PRESETS	TVOUT+NES-COLOR-DECODER	presets/tvout/tvout+nes-color-decoder.slangp		3	91	1.00
+PRESETS	TVOUT+NTSC-256PX-COMPOSITE	presets/tvout/tvout+ntsc-256px-composite.slangp		4	91	1.18
+PRESETS	TVOUT+NTSC-256PX-SVIDEO	presets/tvout/tvout+ntsc-256px-svideo.slangp		4	78	1.34
+PRESETS	TVOUT+NTSC-2PHASE-COMPOSITE	presets/tvout/tvout+ntsc-2phase-composite.slangp		4	84	1.72
+PRESETS	TVOUT+NTSC-2PHASE-SVIDEO	presets/tvout/tvout+ntsc-2phase-svideo.slangp		4	90	2.03
+PRESETS	TVOUT+NTSC-320PX-COMPOSITE	presets/tvout/tvout+ntsc-320px-composite.slangp		4	77	1.74
+PRESETS	TVOUT+NTSC-320PX-SVIDEO	presets/tvout/tvout+ntsc-320px-svideo.slangp		4	94	1.66
+PRESETS	TVOUT+NTSC-3PHASE-COMPOSITE	presets/tvout/tvout+ntsc-3phase-composite.slangp		4	92	1.39
+PRESETS	TVOUT+NTSC-3PHASE-SVIDEO	presets/tvout/tvout+ntsc-3phase-svideo.slangp		4	67	1.76
+PRESETS	TVOUT+NTSC-NES	presets/tvout/tvout+ntsc-nes.slangp		5	101	1.50
+PRESETS	TVOUT+SNES-HIRES-BLEND	presets/tvout/tvout+snes-hires-blend.slangp		3	78	0.86
+PRESETS	TVOUT-JINC-SHARPEN	presets/tvout/tvout-jinc-sharpen.slangp		3	65	2.08
+PRESETS	TVOUT-PIXELSHARP	presets/tvout/tvout-pixelsharp.slangp		3	55	1.34
+PRESETS	XBR-XSAL XBR-LV3-2XSAL-LV2-AA	presets/xbr-xsal/xbr-lv3-2xsal-lv2-aa.slangp	heavy	6	76	5.65
+PRESETS	XBR-XSAL XBR-LV3-2XSAL-LV2-AA-SOFT	presets/xbr-xsal/xbr-lv3-2xsal-lv2-aa-soft.slangp	heavy	6	117	4.58
+PRESETS	XBR-XSAL XBR-LV3-AA-FAST	presets/xbr-xsal/xbr-lv3-aa-fast.slangp	heavy	4	70	4.13
+PRESETS	XBR-XSAL XBR-LV3-AA-SOFT-FAST	presets/xbr-xsal/xbr-lv3-aa-soft-fast.slangp	heavy	4	66	3.43
+BORDER	AMBIENT-GLOW	border/ambient-glow.slangp		2	47	0.26
+BORDER	AUTOCROP-KOKO	border/autocrop-koko.slangp		3	106	0.41
+BORDER	AVERAGE FILL	border/average_fill.slangp		7	263	1.51
+BORDER	BIGBLUR	border/bigblur.slangp		9	113	1.43
+BORDER	BLUR FILL	border/blur_fill.slangp	heavy	12	335	0.90
+BORDER	BLUR FILL STRONGER BLUR	border/blur_fill_stronger_blur.slangp	heavy	12	185	1.10
+BORDER	BLUR FILL WEAKER BLUR	border/blur_fill_weaker_blur.slangp	heavy	12	131	0.83
+BORDER	EFFECT-BORDER-IQ	border/effect-border-iq.slangp		1	298	0.25
+BORDER	GAMEBOY-PLAYER	border/gameboy-player/gameboy-player.slangp		1	16	0.20
+BORDER	GAMEBOY-PLAYER-CRT-EASYMODE	border/gameboy-player/gameboy-player-crt-easymode.slangp		2	52	0.32
+BORDER	GAMEBOY-PLAYER-CRT-GEOM-1X	border/gameboy-player/gameboy-player-crt-geom-1x.slangp		2	481	0.57
+BORDER	GAMEBOY-PLAYER-CRT-ROYALE	border/gameboy-player/gameboy-player-crt-royale.slangp	heavy	13	2316	1.43
+BORDER	GAMEBOY-PLAYER-GBA-COLOR	border/gameboy-player/gameboy-player-gba-color.slangp		2	27	0.27
+BORDER	GAMEBOY-PLAYER-GBA-COLOR+CRT-EASYMODE	border/gameboy-player/gameboy-player-gba-color+crt-easymode.slangp		3	39	0.42
+BORDER	GAMEBOY-PLAYER-TVOUT	border/gameboy-player/gameboy-player-tvout.slangp		4	65	0.30
+BORDER	GAMEBOY-PLAYER-TVOUT+INTERLACING	border/gameboy-player/gameboy-player-tvout+interlacing.slangp		5	170	0.45
+BORDER	GAMEBOY-PLAYER-TVOUT-GBA-COLOR	border/gameboy-player/gameboy-player-tvout-gba-color.slangp		5	66	0.41
+BORDER	GAMEBOY-PLAYER-TVOUT-GBA-COLOR+INTERLACING	border/gameboy-player/gameboy-player-tvout-gba-color+interlacing.slangp		6	69	0.45
+BORDER	HANDHELD-NEBULA-GB	border/handheld-nebula/handheld-nebula-gb.slangp		1	13	0.27
+BORDER	HANDHELD-NEBULA-GB+CRT-CONSUMER	border/handheld-nebula/handheld-nebula-gb+crt-consumer.slangp		2	141	0.46
+BORDER	HANDHELD-NEBULA-GB+DOT	border/handheld-nebula/handheld-nebula-gb+dot.slangp		2	51	0.23
+BORDER	HANDHELD-NEBULA-GB+LCD-GRID-V2	border/handheld-nebula/handheld-nebula-gb+lcd-grid-v2.slangp		2	75	0.57
+BORDER	HANDHELD-NEBULA-GBA	border/handheld-nebula/handheld-nebula-gba.slangp		1	11	0.26
+BORDER	HANDHELD-NEBULA-GBA+CRT-CONSUMER	border/handheld-nebula/handheld-nebula-gba+crt-consumer.slangp		2	32	0.45
+BORDER	HANDHELD-NEBULA-GBA+DOT	border/handheld-nebula/handheld-nebula-gba+dot.slangp		2	24	0.30
+BORDER	HANDHELD-NEBULA-GBA+LCD-GRID-V2	border/handheld-nebula/handheld-nebula-gba+lcd-grid-v2.slangp		2	20	0.41
+BORDER	HANDHELD-NEBULA-GG	border/handheld-nebula/handheld-nebula-gg.slangp		1	17	0.14
+BORDER	HANDHELD-NEBULA-GG+CRT-CONSUMER	border/handheld-nebula/handheld-nebula-gg+crt-consumer.slangp		2	35	0.47
+BORDER	HANDHELD-NEBULA-GG+DOT	border/handheld-nebula/handheld-nebula-gg+dot.slangp		2	26	0.18
+BORDER	HANDHELD-NEBULA-GG+LCD-GRID-V2	border/handheld-nebula/handheld-nebula-gg+lcd-grid-v2.slangp		2	28	0.66
+BORDER	IMGBORDER	border/imgborder.slangp		1	39	0.15
+BORDER	LIGHTGUN-BORDER	border/lightgun-border.slangp		1	27	0.16
+BORDER	SGB	border/sgb/sgb.slangp		1	16	0.46
+BORDER	SGB+CRT-EASYMODE	border/sgb/sgb+crt-easymode.slangp		2	23	0.44
+BORDER	SGB-CRT-GEOM-1X	border/sgb/sgb-crt-geom-1x.slangp		2	46	0.94
+BORDER	SGB-CRT-ROYALE	border/sgb/sgb-crt-royale.slangp	heavy	13	1023	4.12
+BORDER	SGB-GBC-COLOR	border/sgb/sgb-gbc-color.slangp		2	33	0.79
+BORDER	SGB-GBC-COLOR-TVOUT+INTERLACING	border/sgb/sgb-gbc-color-tvout+interlacing.slangp		6	125	1.01
+BORDER	SGB-TVOUT+INTERLACING	border/sgb/sgb-tvout+interlacing.slangp		5	75	0.94
+BORDER	SGBA	border/sgba/sgba.slangp		1	13	1.19
+BORDER	SGBA-GBA-COLOR	border/sgba/sgba-gba-color.slangp		2	22	0.65
+BORDER	SGBA-TVOUT+INTERLACING	border/sgba/sgba-tvout+interlacing.slangp		5	74	0.96
+BORDER	SGBA-TVOUT-GBA-COLOR+INTERLACING	border/sgba/sgba-tvout-gba-color+interlacing.slangp		6	68	0.91
+BLUR	DUAL FILTER 2 PASS	blurs/dual_filter_2_pass.slangp		4	75	0.30
+BLUR	DUAL FILTER 4 PASS	blurs/dual_filter_4_pass.slangp		6	52	0.65
+BLUR	DUAL FILTER 6 PASS	blurs/dual_filter_6_pass.slangp		8	101	1.55
+BLUR	DUAL FILTER BLOOM	blurs/dual_filter_bloom.slangp	heavy	24	217	1.61
+BLUR	DUAL FILTER BLOOM FAST	blurs/dual_filter_bloom_fast.slangp	heavy	18	129	1.46
+BLUR	DUAL FILTER BLOOM FASTEST	blurs/dual_filter_bloom_fastest.slangp		8	83	0.56
+BLUR	GAUSS 4TAP	blurs/gauss_4tap.slangp		2	39	0.32
+BLUR	GAUSSIAN BLUR	blurs/gaussian_blur.slangp		1	25	0.97
+BLUR	GAUSSIAN BLUR 2 PASS	blurs/gaussian_blur_2_pass.slangp		2	37	0.26
+BLUR	GAUSSIAN BLUR 2 PASS-SHARP	blurs/gaussian_blur_2_pass-sharp.slangp		2	53	0.30
+BLUR	GAUSSIAN BLUR-SHARP	blurs/gaussian_blur-sharp.slangp		1	46	1.04
+BLUR	GIZMO-COMPOSITE-BLUR	blurs/gizmo-composite-blur.slangp		1	48	0.18
+BLUR	KAWASE BLUR 5PASS	blurs/kawase_blur_5pass.slangp		7	84	0.55
+BLUR	KAWASE BLUR 9PASS	blurs/kawase_blur_9pass.slangp	heavy	11	101	0.60
+BLUR	KAWASE GLOW	blurs/kawase_glow.slangp		9	85	0.91
+BLUR	SHARPSMOOTHER	blurs/sharpsmoother.slangp		1	39	0.39
+BLUR	SMART-BLUR	blurs/smart-blur.slangp		1	37	0.34
+SHARPEN	ADAPTIVE-SHARPEN	sharpen/adaptive-sharpen.slangp		1	32	1.18
+SHARPEN	ADAPTIVE-SHARPEN-MULTIPASS	sharpen/adaptive-sharpen-multipass.slangp		2	244	1.58
+SHARPEN	ANIME4K	sharpen/Anime4k.slangp		4	124	0.31
+SHARPEN	CHEAP-SHARPEN	sharpen/cheap-sharpen.slangp		1	14	0.25
+SHARPEN	RCA SHARPEN	sharpen/rca_sharpen.slangp		1	14	0.30
+SHARPEN	SUPER-XBR-SUPER-RES	sharpen/super-xbr-super-res.slangp	heavy	10	211	1.02
+DITHERING	BAYER 4X4	dithering/bayer_4x4.slangp		1	74	0.22
+DITHERING	BAYER-MATRIX-DITHERING	dithering/bayer-matrix-dithering.slangp		1	24	0.23
+DITHERING	BLUE NOISE	dithering/blue_noise.slangp		1	74	0.43
+DITHERING	BLUE NOISE DYNAMIC 4BIT	dithering/blue_noise_dynamic_4Bit.slangp		1	86	0.21
+DITHERING	BLUE NOISE DYNAMIC MONOCHROME	dithering/blue_noise_dynamic_monochrome.slangp		1	19	0.22
+DITHERING	CBOD V1	dithering/cbod_v1.slangp		2	39	0.29
+DITHERING	CHECKERBOARD-DEDITHER	dithering/checkerboard-dedither.slangp		4	93	0.59
+DITHERING	G-SHARP RESAMPLER	dithering/g-sharp_resampler.slangp		1	28	0.71
+DITHERING	GDAPT	dithering/gdapt.slangp		2	52	0.19
+DITHERING	GENDITHER	dithering/gendither.slangp		1	20	0.12
+DITHERING	JINC2-DEDITHER	dithering/jinc2-dedither.slangp		1	62	0.28
+DITHERING	MDAPT	dithering/mdapt.slangp		6	248	0.45
+DITHERING	PS1-DEDITHER-BOXBLUR	dithering/ps1-dedither-boxblur.slangp		1	21	0.17
+DITHERING	PS1-DEDITHER-COMPARISON	dithering/ps1-dedither-comparison.slangp		2	32	0.49
+DITHERING	PS1-DITHER	dithering/ps1-dither.slangp		1	9	0.10
+DITHERING	SGENPT-MIX	dithering/sgenpt-mix.slangp		1	37	0.17
+DITHERING	SGENPT-MIX-MULTIPASS	dithering/sgenpt-mix-multipass.slangp		6	132	0.47
+DEINTERLACING	BOB-DEINTERLACING	deinterlacing/bob-deinterlacing.slangp		1	31	0.37
+DEINTERLACING	DEINTERLACE	deinterlacing/deinterlace.slangp		1	24	0.75
+DEINTERLACING	GTU-V050-DEINTERLACED	deinterlacing/gtu-v050-deinterlaced.slangp		3	72	0.87
+DEINTERLACING	INTERPOLATION-DEINTERLACER	deinterlacing/interpolation-deinterlacer.slangp		1	46	0.37
+DEINTERLACING	MOTION-ADAPTIVE-DEINTERLACING	deinterlacing/motion-adaptive-deinterlacing.slangp		1	26	0.41
+DEINTERLACING	REINTERLACING	deinterlacing/reinterlacing.slangp		1	10	0.65
+DENOISE	BILATERAL	denoisers/bilateral.slangp	heavy	1	40	3.13
+DENOISE	BILATERAL-2P	denoisers/bilateral-2p.slangp		2	49	1.63
+DENOISE	CRT-FAST-BILATERAL-SUPER-XBR	denoisers/crt-fast-bilateral-super-xbr.slangp		8	209	2.22
+DENOISE	FAST-BILATERAL	denoisers/fast-bilateral.slangp		1	21	2.02
+DENOISE	MEDIAN 3X3	denoisers/median_3x3.slangp		1	29	0.67
+DENOISE	MEDIAN 5X5	denoisers/median_5x5.slangp		1	72	2.57
+DENOISE	SLOW-BILATERAL	denoisers/slow-bilateral.slangp	heavy	1	52	30.47
+MOTION BLUR	BRAID-REWIND	motionblur/braid-rewind.slangp		1	32	2.04
+MOTION BLUR	FEEDBACK	motionblur/feedback.slangp		1	18	0.83
+MOTION BLUR	MIX FRAMES	motionblur/mix_frames.slangp		1	24	0.56
+MOTION BLUR	MIX FRAMES SMART	motionblur/mix_frames_smart.slangp		1	45	1.82
+MOTION BLUR	MOTION INTERPOLATION	motion-interpolation/motion_interpolation.slangp	heavy	2	59	8.04
+MOTION BLUR	MOTIONBLUR-BLUE	motionblur/motionblur-blue.slangp		1	32	1.76
+MOTION BLUR	MOTIONBLUR-COLOR	motionblur/motionblur-color.slangp		1	31	1.59
+MOTION BLUR	MOTIONBLUR-SIMPLE	motionblur/motionblur-simple.slangp		1	27	1.66
+MOTION BLUR	RESPONSE-TIME	motionblur/response-time.slangp		1	20	2.17
+NES PALETTE	CGWG-FAMICOM-GEOM	nes_raw_palette/cgwg-famicom-geom.slangp	heavy	5	428	5.11
+NES PALETTE	GTU-FAMICOM	nes_raw_palette/gtu-famicom.slangp	heavy	5	156	4.16
+NES PALETTE	NTSC-NES	nes_raw_palette/ntsc-nes.slangp		3	184	2.50
+NES PALETTE	PAL-R57SHELL-RAW	nes_raw_palette/pal-r57shell-raw.slangp	heavy	1	124	5.84
+NES PALETTE	PATCHY-MESEN-RAW-PALETTE	nes_raw_palette/patchy-mesen-raw-palette.slangp	heavy	8	5685	24.77
+RESHADE PORTS	BLENDOVERLAY	reshade/blendoverlay.slangp		1	13	0.62
+RESHADE PORTS	BLOOM	reshade/bloom.slangp	heavy	9	416	3.39
+RESHADE PORTS	BSNES-GAMMA-RAMP	reshade/bsnes-gamma-ramp.slangp		1	18	0.74
+RESHADE PORTS	FILMGRAIN	reshade/FilmGrain.slangp		1	74	0.74
+RESHADE PORTS	HALFTONE-PRINT	reshade/halftone-print.slangp		2	28	1.10
+RESHADE PORTS	HANDHELD-COLOR-LUTS DSLITE-2020	reshade/handheld-color-LUTs/DSLite-2020.slangp		1	21	0.19
+RESHADE PORTS	HANDHELD-COLOR-LUTS DSLITE-P3	reshade/handheld-color-LUTs/DSLite-P3.slangp		1	14	0.21
+RESHADE PORTS	HANDHELD-COLOR-LUTS DSLITE-SRGB	reshade/handheld-color-LUTs/DSLite-sRGB.slangp		1	17	0.27
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA GBC-2020	reshade/handheld-color-LUTs/GBA_GBC-2020.slangp		1	17	0.27
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA GBC-P3	reshade/handheld-color-LUTs/GBA_GBC-P3.slangp		1	13	0.28
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA GBC-SRGB	reshade/handheld-color-LUTs/GBA_GBC-sRGB.slangp		1	13	0.18
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-2020	reshade/handheld-color-LUTs/GBA-2020.slangp		1	17	0.24
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-P3	reshade/handheld-color-LUTs/GBA-P3.slangp		1	16	0.34
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-P3-DARK	reshade/handheld-color-LUTs/GBA-P3-dark.slangp		1	14	0.42
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-REC2020	reshade/handheld-color-LUTs/GBA-rec2020.slangp		1	16	0.24
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-REC2020-DARK	reshade/handheld-color-LUTs/GBA-rec2020-dark.slangp		1	17	0.20
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-SRGB	reshade/handheld-color-LUTs/GBA-sRGB.slangp		1	15	0.46
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBA-SRGB-DARK	reshade/handheld-color-LUTs/GBA-sRGB-dark.slangp		1	15	0.26
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBC DEV COLORSPACE	reshade/handheld-color-LUTs/GBC Dev Colorspace.slangp		1	13	0.42
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBC-2020	reshade/handheld-color-LUTs/GBC-2020.slangp		1	17	0.29
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBC-P3	reshade/handheld-color-LUTs/GBC-P3.slangp		1	15	0.30
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBC-REC2020	reshade/handheld-color-LUTs/GBC-rec2020.slangp		1	17	0.65
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBC-SRGB	reshade/handheld-color-LUTs/GBC-sRGB.slangp		1	19	0.28
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBMICRO-2020	reshade/handheld-color-LUTs/GBMicro-2020.slangp		1	17	0.22
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBMICRO-P3	reshade/handheld-color-LUTs/GBMicro-P3.slangp		1	15	0.33
+RESHADE PORTS	HANDHELD-COLOR-LUTS GBMICRO-SRGB	reshade/handheld-color-LUTs/GBMicro-sRGB.slangp		1	15	0.18
+RESHADE PORTS	HANDHELD-COLOR-LUTS NDS-2020	reshade/handheld-color-LUTs/NDS-2020.slangp		1	15	0.34
+RESHADE PORTS	HANDHELD-COLOR-LUTS NDS-P3	reshade/handheld-color-LUTs/NDS-P3.slangp		1	15	0.29
+RESHADE PORTS	HANDHELD-COLOR-LUTS NDS-REC2020	reshade/handheld-color-LUTs/NDS-rec2020.slangp		1	15	0.19
+RESHADE PORTS	HANDHELD-COLOR-LUTS NDS-SRGB	reshade/handheld-color-LUTs/NDS-sRGB.slangp		1	14	0.37
+RESHADE PORTS	HANDHELD-COLOR-LUTS NSO-GBA	reshade/handheld-color-LUTs/NSO-GBA.slangp		1	14	0.24
+RESHADE PORTS	HANDHELD-COLOR-LUTS NSO-GBC	reshade/handheld-color-LUTs/NSO-GBC.slangp		1	17	0.20
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-2020	reshade/handheld-color-LUTs/PSP-2020.slangp		1	15	0.24
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-P3	reshade/handheld-color-LUTs/PSP-P3.slangp		1	18	0.23
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-P3(PURE-GAMMA2.2)	reshade/handheld-color-LUTs/PSP-P3(pure-gamma2.2).slangp		1	13	0.31
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-REC2020	reshade/handheld-color-LUTs/PSP-rec2020.slangp		1	16	0.22
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-REC2020(SRGB-GAMMA2.2)	reshade/handheld-color-LUTs/PSP-rec2020(sRGB-gamma2.2).slangp		1	15	0.25
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-SRGB	reshade/handheld-color-LUTs/PSP-sRGB.slangp		1	18	0.37
+RESHADE PORTS	HANDHELD-COLOR-LUTS PSP-SRGB(SRGB-GAMMA2.2)	reshade/handheld-color-LUTs/PSP-sRGB(sRGB-gamma2.2).slangp		1	16	0.26
+RESHADE PORTS	HANDHELD-COLOR-LUTS SP101-2020	reshade/handheld-color-LUTs/SP101-2020.slangp		1	15	0.20
+RESHADE PORTS	HANDHELD-COLOR-LUTS SP101-P3	reshade/handheld-color-LUTs/SP101-P3.slangp		1	19	0.26
+RESHADE PORTS	HANDHELD-COLOR-LUTS SP101-SRGB	reshade/handheld-color-LUTs/SP101-sRGB.slangp		1	19	0.27
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWITCHOLED-P3	reshade/handheld-color-LUTs/SwitchOLED-P3.slangp		1	17	0.19
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWITCHOLED-P3(SRGB-GAMMA2.2)	reshade/handheld-color-LUTs/SwitchOLED-P3(sRGB-gamma2.2).slangp		1	19	0.26
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWITCHOLED-REC2020	reshade/handheld-color-LUTs/SwitchOLED-rec2020.slangp		1	13	0.26
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWITCHOLED-REC2020(SRGB-GAMMA2.2)	reshade/handheld-color-LUTs/SwitchOLED-rec2020(sRGB-gamma2.2).slangp		1	17	0.34
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWITCHOLED-SRGB	reshade/handheld-color-LUTs/SwitchOLED-sRGB.slangp		1	15	0.40
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWITCHOLED-SRGB(SRGB-GAMMA2.2)	reshade/handheld-color-LUTs/SwitchOLED-sRGB(sRGB-Gamma2.2).slangp		1	15	0.28
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWOLED-2020	reshade/handheld-color-LUTs/SWOLED-2020.slangp		1	16	0.30
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWOLED-P3	reshade/handheld-color-LUTs/SWOLED-P3.slangp		1	18	0.53
+RESHADE PORTS	HANDHELD-COLOR-LUTS SWOLED-SRGB	reshade/handheld-color-LUTs/SWOLED-sRGB.slangp		1	16	0.34
+RESHADE PORTS	HANDHELD-COLOR-LUTS VBA COLORSPACE	reshade/handheld-color-LUTs/VBA Colorspace.slangp		1	17	0.40
+RESHADE PORTS	LUT	reshade/lut.slangp		1	17	0.88
+RESHADE PORTS	MAGICBLOOM	reshade/magicbloom.slangp	heavy	12	451	24.18
+RESHADE PORTS	NORMALSDISPLACEMENT	reshade/NormalsDisplacement.slangp		1	22	0.53
+MISC	ACCESSIBILITY MODS	misc/accessibility_mods.slangp		1	15	0.20
+MISC	ANTI-FLICKER	misc/anti-flicker.slangp		1	18	0.56
+MISC	ASCII	misc/ascii.slangp		1	17	0.20
+MISC	BEAD	misc/bead.slangp		1	17	0.28
+MISC	BILINEAR	bilinear.slangp		1	362	0.19
+MISC	CHROMA	misc/chroma.slangp		1	18	0.38
+MISC	CHROMATICITY	misc/chromaticity.slangp		1	37	0.54
+MISC	CMYK-HALFTONE-DOT	misc/cmyk-halftone-dot.slangp		1	17	0.38
+MISC	COCKTAIL-CABINET	misc/cocktail-cabinet.slangp		1	14	0.19
+MISC	COLOR-MANGLER	misc/color-mangler.slangp		1	16	0.40
+MISC	COLORIMETRY	misc/colorimetry.slangp		1	29	0.22
+MISC	CONVERGENCE	misc/convergence.slangp		1	14	0.24
+MISC	DEBAND	misc/deband.slangp		1	20	0.45
+MISC	EDGE-DETECT	misc/edge-detect.slangp		1	15	0.26
+MISC	EGA	misc/ega.slangp		1	21	1.49
+MISC	GEOM	misc/geom.slangp		2	18	1.40
+MISC	GEOM-APPEND	misc/geom-append.slangp		1	44	0.64
+MISC	GLASS	misc/glass.slangp		1	86	2.34
+MISC	GRADE	misc/grade.slangp	heavy	1	207	3.22
+MISC	GRADE-NO-LUT	misc/grade-no-LUT.slangp		1	125	1.89
+MISC	HALF RES	misc/half_res.slangp		1	8	0.35
+MISC	IMAGE-ADJUSTMENT	misc/image-adjustment.slangp		1	17	0.65
+MISC	IMG MOD	misc/img_mod.slangp	heavy	1	478	20.37
+MISC	NATURAL-VISION	misc/natural-vision.slangp		1	30	0.73
+MISC	NEAREST	nearest.slangp		1	8	0.28
+MISC	NIGHT-MODE	misc/night-mode.slangp	heavy	1	41	4.61
+MISC	NTSC-COLORS	misc/ntsc-colors.slangp		1	81	1.20
+MISC	PATCHY-COLOR	misc/patchy-color.slangp		3	843	1.11
+MISC	PIXEL-WEAVE-4X2	misc/pixel-weave-4x2.slangp		1	47	0.58
+MISC	PIXEL-WEAVE-SYNC	misc/pixel-weave-sync.slangp		1	47	0.60
+MISC	PRINT-RESOLUTION	misc/print-resolution.slangp		2	4280	1.19
+MISC	RELIEF	misc/relief.slangp		1	35	0.45
+MISC	RETRO-PALETTES	misc/retro-palettes.slangp		1	25	0.57
+MISC	SIMPLE COLOR CONTROLS	misc/simple_color_controls.slangp		1	61	0.62
+MISC	SS-GAMMA-RAMP	misc/ss-gamma-ramp.slangp		1	35	0.75
+MISC	TEST-PATTERN-APPEND	misc/test-pattern-append.slangp		1	94	0.63
+MISC	TEST-PATTERN-PREPEND	misc/test-pattern-prepend.slangp		1	65	0.52
+MISC	TONEMAPPING	misc/tonemapping.slangp		1	64	0.53
+MISC	WHITE POINT	misc/white_point.slangp		1	61	0.65
+MISC	YIQ-HUE-ADJUSTMENT	misc/yiq-hue-adjustment.slangp		1	57	1.21
+GPU	3DFX 4X1	gpu/3dfx_4x1.slangp		6	45	0.62
+GPU	OLD 3DFX 4X1	gpu/shaders/3dfx/old/3dfx_4x1.slangp		6	43	1.11
+GPU	POWERVR2	gpu/powervr2.slangp		1	26	2.81
+CEL	ADVCARTOON	cel/advcartoon.slangp		1	35	0.38
+CEL	MMJ CEL SHADER	cel/MMJ_Cel_Shader.slangp		1	52	1.56
+CEL	MMJ CEL SHADER MP	cel/MMJ_Cel_Shader_MP.slangp		5	105	0.66
+FILM	FILM-GRAIN	film/film-grain.slangp		1	31	0.68
+FILM	TECHNICOLOR	film/technicolor.slangp		2	40	0.47
+DEBLUR	DEBLUR	deblur/deblur.slangp		1	33	0.58
+DEBLUR	DEBLUR-LUMA	deblur/deblur-luma.slangp		1	41	1.14
+WARP	DILATION	warp/dilation.slangp		1	45	0.75
+ANAMORPHIC	ANAMORPHIC	anamorphic/anamorphic.slangp		1	29	0.21
+LINEAR	LINEAR-GAMMA-CORRECT	linear/linear-gamma-correct.slangp		2	15	0.24

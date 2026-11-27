@@ -80,7 +80,8 @@ libraries, which come from your package manager). Anything missing is listed wit
 
 **Renderer:** OpenGL and Software work. Vulkan, DirectX 12 (Windows) and Metal / MoltenVK (macOS) are
 listed and say "not available yet": choosing one runs OpenGL and the game's log says so. They're
-planned as one SDL3 GPU backend.
+planned as one SDL3 GPU backend, beside the OpenGL one behind the renderer's backend interface
+(`src/platform/ge_backend.h`, [ARCHITECTURE.md](ARCHITECTURE.md#3-platform-srcplatform)).
 
 The buttons run `build.cmd` / `build.sh` with those options (the console shows the exact command), so
 the launcher and the command line always build the same way. The choices are kept in

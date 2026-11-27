@@ -1,11 +1,12 @@
 /* Every filter SCREEN SETTING > FILTER offers (0.166.0; shader.h says what is in it): the favourites
- * (SHADER_FILTERS), the catalogue tools/shaders.py writes beside the shaders (a3mx_catalogue.tsv: one
- * line a preset, tab-separated: category, name, path, flags, ...), and the player's own *.slangp in
- * <configs>/shaders/ (CUSTOM). Read once, the first time anything asks (settings_load, --filter, the
+ * (SHADER_FILTERS), the catalogue (one line a preset, tab-separated: category, name, path, flags, ...:
+ * the repository's tools/data/shader_catalogue.tsv, made once for the pinned slang-shaders commit, or an
+ * a3mx_catalogue.tsv beside the shaders, which an older download made), and the player's own *.slangp
+ * in <configs>/shaders/ (CUSTOM). Read once, the first time anything asks (settings_load, --filter, the
  * first frame): file reads only, nothing the game itself sees, so the game plays the same with any of
  * it there or not.
  *
- * Without a catalogue (the shaders not downloaded, or the game not built when they were) the list is
+ * Without the shaders downloaded no catalogue is read (nothing in it could be drawn), and the list is
  * the favourites, as before 0.166.0. A preset that turns out not to load is reported when chosen and
  * the picture is shown plain (shader_gl.c). */
 #include "rt.h"
@@ -30,7 +31,7 @@ static FilterEntry *list;
 static int n_list, cap_list, loaded, n_catalogued;
 static char cats[MAX_CATS][32];
 static int n_cats, cat_first[MAX_CATS], cat_size[MAX_CATS];
-static char shaders_dir[1100], custom_dir[1100];
+static char shaders_dir[1100], custom_dir[1100], repo_catalogue[1100];
 
 static int is_dir(const char *p) { struct stat s; return stat(p, &s) == 0 && (s.st_mode & S_IFMT) == S_IFDIR; }
 
@@ -66,14 +67,18 @@ static void find_dirs(void) {
     if (shader_dir_arg) snprintf(shaders_dir, sizeof shaders_dir, "%s", shader_dir_arg);
     else if (senv && *senv) snprintf(shaders_dir, sizeof shaders_dir, "%s", senv);
     else snprintf(shaders_dir, sizeof shaders_dir, "%s.tools/slang-shaders", beside);
+    snprintf(repo_catalogue, sizeof repo_catalogue, "%stools/data/shader_catalogue.tsv", beside);
     if (rt_config_dir[0]) snprintf(custom_dir, sizeof custom_dir, "%s/shaders", rt_config_dir);
     else custom_dir[0] = 0;
 }
 
 static void read_catalogue(void) {
+    if (!is_dir(shaders_dir)) return;                     /* (no shaders: nothing in it could be drawn) */
     char p[1200]; snprintf(p, sizeof p, "%s/a3mx_catalogue.tsv", shaders_dir);
-    FILE *f = fopen(p, "r");
-    if (!f) { if (is_dir(shaders_dir)) rt_log("filter: no catalogue in %s (python tools/shaders.py --catalogue makes it): the favourites only", shaders_dir); return; }
+    FILE *f = fopen(p, "r");                              /* one an older download made (before 0.171.0) */
+    if (!f && (f = fopen(repo_catalogue, "r"))) snprintf(p, sizeof p, "%s", repo_catalogue);   /* the repository's */
+    if (!f) { rt_log("filter: no catalogue (%s): the favourites only", repo_catalogue); return; }
+    rt_log("filter: catalogue %s", p);
     char line[2048];
     while (fgets(line, sizeof line, f)) {
         if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;

@@ -287,75 +287,10 @@ int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) {
     return 1;
 }
 
-/* --filter-test LIST OUT (tools/shaders.py --catalogue): each preset LIST names (one a line, under the
-   shaders folder) loaded, built and drawn for a few frames into a 1904 x 1080 picture, a line to OUT
-   for each as it is done: "path<TAB>ok<TAB>build ms<TAB>frame ms", or "path<TAB>fail<TAB>why"; a
-   line "*<TAB>why" if nothing can be tested. The game itself does not start. Returns the exit code. */
-#include "perf.h"
-void rt_log_flush(void);
-int shader_gl_test(const char *list_path, const char *out_path) {
-    FILE *in = fopen(list_path, "r"), *out = fopen(out_path, "w");
-    if (!out) { rt_warn("--filter-test: cannot write %s", out_path); if (in) fclose(in); return 2; }
-    if (!in) { fprintf(out, "*\tcannot read %s\n", list_path); fclose(out); return 2; }
-    if (!gl_getproc) { fprintf(out, "*\tno OpenGL window\n"); fclose(out); fclose(in); return 2; }
-    if (!load_lib()) { fprintf(out, "*\tthe game did not find librashader (--librashader FILE)\n"); fclose(out); fclose(in); return 2; }
-    const int W = 1904, H = 1080;
-    if (!in_tex) make_tex(&in_tex, &in_fbo, 480, 272);
-    make_tex(&out_tex, &out_fbo, W, H); out_w = W; out_h = H;
-    {   /* a picture to draw: bands of colour */
-        static uint8_t px[480 * 272 * 4];
-        for (int y = 0; y < 272; y++) for (int x = 0; x < 480; x++) {
-            uint8_t *p = px + (y * 480 + x) * 4; p[0] = (uint8_t)(x * 255 / 479); p[1] = (uint8_t)(y * 255 / 271); p[2] = (uint8_t)((x ^ y) & 0xFF); p[3] = 255;
-        }
-        p_glBindTexture(GL_TEXTURE_2D, in_tex);
-        p_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 480, 272, GL_RGBA, GL_UNSIGNED_BYTE, px);
-    }
-    char line[1200]; int n = 0, ok = 0;
-    while (fgets(line, sizeof line, in)) {
-        line[strcspn(line, "\r\n")] = 0;
-        if (!line[0]) continue;
-        char path[2400]; snprintf(path, sizeof path, "%s/%s", shaders_dir, line);
-        rt_log("filter-test: %s", line); rt_log_flush();
-        double t0 = (double)perf_now_us();
-        libra_shader_preset_t preset = NULL;
-        libra_error_t err = lib.preset_create(path, &preset);
-        if (err || !preset) { if (err) lib.error_free(&err); fprintf(out, "%s\tfail\tnot read\n", line); fflush(out); n++; continue; }
-        struct filter_chain_gl_opt_t opt; memset(&opt, 0, sizeof opt);
-        opt.version = LIBRASHADER_CURRENT_VERSION; opt.glsl_version = 330; opt.disable_cache = true;
-        libra_gl_filter_chain_t ch = NULL;
-        err = lib.gl_filter_chain_create(&preset, loader, &opt, &ch);
-        if (err || !ch) { if (err) lib.error_free(&err); fprintf(out, "%s\tfail\tnot built\n", line); fflush(out); n++; continue; }
-        p_glFinish();
-        double t1 = (double)perf_now_us(), t2 = t1;
-        struct libra_image_gl_t src = { in_tex, GL_RGBA8, 480, 272 }, dst = { out_tex, GL_RGBA8, (uint32_t)W, (uint32_t)H };
-        struct libra_viewport_t vp = { 0, 0, (uint32_t)W, (uint32_t)H };
-        int good = 1;
-        for (int k = 0; k < 8 && good; k++) {
-            if (k == 3) { p_glFinish(); t2 = (double)perf_now_us(); }   /* (the first frames make what they need) */
-            err = lib.gl_filter_chain_frame(&ch, (size_t)k, src, dst, &vp, NULL, NULL);
-            if (err) { lib.error_free(&err); good = 0; }
-        }
-        p_glFinish();
-        double t3 = (double)perf_now_us();
-        if (good) { fprintf(out, "%s\tok\t%.0f\t%.2f\n", line, (t1 - t0) / 1000.0, (t3 - t2) / 5000.0); ok++; }
-        else fprintf(out, "%s\tfail\tfailed while drawing\n", line);
-        fflush(out);
-        libra_error_t e = lib.gl_filter_chain_free(&ch); if (e) lib.error_free(&e);
-        n++;
-    }
-    fclose(in); fclose(out);
-    rt_log("filter-test: %d presets, %d drawn", n, ok);
-    return 0;
-}
 #else   /* no OpenGL in this build (headless tests): nothing to draw with */
 void shader_gl_init(void *(*getproc)(const char *), const char *work) { (void)getproc; (void)work; }
 int shader_gl_ready(void) { return 0; }
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h) { (void)rgba; (void)max_w; (void)max_h; (void)w; (void)h; return 0; }
-int shader_gl_test(const char *list_path, const char *out_path) {
-    FILE *out = fopen(out_path, "w");
-    if (out) { fprintf(out, "*\tthis build has no OpenGL\n"); fclose(out); }
-    (void)list_path; return 2;
-}
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h) {
     (void)tex; (void)tex_w; (void)tex_h; (void)src_w; (void)src_h; (void)win_w; (void)win_h; return 0;
 }

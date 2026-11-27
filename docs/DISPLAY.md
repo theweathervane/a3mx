@@ -98,21 +98,25 @@ too long for the FILTER row scrolls while the row is highlighted.
 Then every other preset of libretro's slang-shaders that the game could load and build, by the folder
 it is in: CRT, SCANLINES, HANDHELD, NTSC, PAL, VHS, EDGE SMOOTHING, PIXEL ART, INTERPOLATION,
 ANTI-ALIASING, PRESETS, BORDER, BLUR, ... (858 presets in 28 categories at the pinned commit), each
-named after its file. They come from the **catalogue** `tools/shaders.py` makes after downloading the
-shaders (`.tools/slang-shaders/a3mx_catalogue.tsv`): it has the game load, build and draw each preset
-for a few frames (`a3mx --filter-test`, a small window for a few minutes) and leaves out any that fails.
+named after its file. They come from the **catalogue**, `tools/data/shader_catalogue.tsv` in the
+repository (0.171.0): made once, on 2026-11-26, for the pinned slang-shaders commit (the game loaded,
+built and drew each preset, and any that failed was left out), and shipped as it is. Nothing is tested
+on your machine: downloading the shaders only downloads them (before 0.171.0 it then tested every
+preset in a small window for several minutes). A catalogue an older download left beside the shaders
+(`.tools/slang-shaders/a3mx_catalogue.tsv`) is read instead while it is there. A new pinned commit
+needs the repository's catalogue made again.
 Never offered: `bezel/` (Mega Bezel needs its own layout and textures), `hdr/` (an HDR display),
 `subframe-bfi/` (subframes, not drawn yet), `test/`, `spec/`, `include/`, `stereoscopic-3d/` and
-`downsample/`; the download doesn't even unpack most of those. If the shaders were downloaded before the
-game was built, there's no catalogue yet: `python tools/shaders.py --catalogue` makes it (`--game EXE`,
-`--librashader FILE` if they aren't where it looks). Without a catalogue FILTER offers the favourites.
+`downsample/`; the download doesn't even unpack most of those. Without the shaders downloaded FILTER
+offers the favourites only (nothing else could be drawn).
 
 **CUSTOM**, last: your own presets. Put `*.slangp` files (with the shaders they use) in a `shaders`
 folder beside `a3mx.cfg`, that is in your configs folder (`%APPDATA%\a3mx\configs\shaders\` on
 Windows; the launcher's Paths tab says where configs are); subfolders are read too. Each is named after
 its file. A preset can use the downloaded ones by a relative path (`../../...`) or have its own copies. The
 `shaders` folder isn't made for you: create it. It is read when the game starts, so a preset added
-while it runs shows after a restart.
+while it runs shows after a restart. Your presets are listed as they are, untested: one that fails
+when chosen is shown plain, and the game's log says why.
 
 **ReShade** is not part of this: it is a different shader system (`.fx` files) that hooks the graphics
 API from outside the game. If you want it, install ReShade for `a3mx.exe` (OpenGL) as for any game; it
@@ -129,8 +133,8 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
 
 1. **The shaders:** libretro's slang-shaders. The launcher's **Dependencies** tab has a **Download the
    FILTER shaders** button (or `python tools/shaders.py`): the commit pinned in `tools/data/pins.json`,
-   about 55 MB unpacked, into `.tools/slang-shaders/`, kept only if the presets match their SHA-256;
-   then the catalogue (above).
+   about 55 MB unpacked, into `.tools/slang-shaders/`, kept only if the presets match their SHA-256.
+   FILTER then offers what the repository's catalogue lists (above); nothing is tested.
 2. **The library:** [librashader](https://github.com/SnowflakePowered/librashader) (MPL-2.0),
    `librashader.dll` on Windows, `librashader.dylib` on macOS, `librashader.so` on Linux, in
    `.tools/librashader/` (also found in `.tools/` itself, in the checkout, beside `a3mx.exe` in
@@ -147,7 +151,8 @@ shown plain (the log and `last_run.txt`'s `filter=` line say which is missing an
    (`librashader-*`) is used if it is the pinned one. Building takes ten minutes or more; `--clean`
    keeps the result. You can also put a library you have there yourself.
 
-FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL).
+FILTER needs the OpenGL window (the GPU renderer, or the software renderer shown through OpenGL:
+the OpenGL backend of `src/platform/ge_backend.h`).
 The shader sees the picture at the game's own 480 x 272, so the scanlines are the game's rows
 whatever Resolution is set to. Implementation: `src/platform/shader_gl.c`, the list in `shader.h` and
 `shader_list.c`, the screen in `src/extensions/filterscreen.c`, the preview in `filterpreview.c`, the

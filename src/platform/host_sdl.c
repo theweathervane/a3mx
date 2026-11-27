@@ -18,6 +18,7 @@
 void rt_log(const char *fmt, ...);
 #include <string.h>
 #include "controls.h"
+#include "ge_backend.h"
 
 static SDL_Window *win;
 static SDL_GLContext glctx;
@@ -162,7 +163,7 @@ void host_gl_swap(void) {
     SDL_GL_SwapWindow(win);
     /* FRAME TIMING SMOOTH: wait until the frame is really out, so the swap comes back at the refresh
        (pacing.c times the next frame from it) and the driver can't queue frames ahead (input lag) */
-    { int pacing_swap_paced(void); if (pacing_swap_paced()) { void ge_gl_finish(void); ge_gl_finish(); } }
+    { int pacing_swap_paced(void); if (pacing_swap_paced()) ge_backend->finish(); }
 #ifdef _WIN32
     if (compositor_wait && dwm_flush) dwm_flush();
 #endif

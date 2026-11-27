@@ -56,6 +56,13 @@ Carried over from the static recomp:
 - **Files**: `disc0:` / `umd0:` read from `work/iso/`; saves go to `a3mx.dat` / `a3mx.cfg`.
 - **Sound**: ATRAC3+ music through the vendored decoder; the SAS voice synthesiser (with reverb) in C.
 - **Graphics**: the game draws 2D only. Software renderer as reference; OpenGL 3.3 renderer up to 8×.
+  The GPU renderer sits behind a backend interface, `GeBackend` (`ge_backend.h`): the list walker
+  (`ge_soft.c`, `hle_ge.c`) hands it triangles of `GeVtx` with a scissor and tells it when guest
+  memory may have changed (its texture cache); the frame loop (`main.c`) and the window
+  (`host_sdl.c`) ask it to show a frame, read one back and wait for the GPU. It reads the rest of
+  each draw's state (blending, texture, palette, target) through `ge.h`'s accessors, which belong
+  to the list walker. `ge_gl.c` is the one backend so far (`ge_backend_gl`); the planned SDL3 GPU
+  backend (Vulkan / Direct3D 12 / Metal) and its librashader runtimes go in beside it.
 - **Test hooks**: `--headless --fast --renderer soft --input ... --hash-log FILE --save-dir DIR`.
 
 These are the hardware abstraction layer: game code reaches them only through the PSP OS functions

@@ -3,6 +3,7 @@
 #include "rt.h"
 #include <string.h>
 #include "ge.h"
+#include "ge_backend.h"
 #include "perf.h"
 
 #define EDRAM 0x04000000u
@@ -28,7 +29,7 @@ static int ge_run(Cpu *c, GeList *l) {     /* timed as the frame's render part (
 }
 static int ge_run_list(Cpu *c, GeList *l) {
     int steps = 0;
-    if (ge_use_gl) ge_gl_list_start();
+    if (ge_use_gl) ge_backend->list_start();
     while (!l->done) {
         if (l->stall && (l->pc & 0x0FFFFFFF) == (l->stall & 0x0FFFFFFF)) return 0;
         if (++steps > 2000000) { rt_warn("GE: list %u ran away at %08X", l->id, l->pc); l->done = 1; break; }

@@ -45,8 +45,6 @@
  *   --filter NAME        SCREEN SETTING > FILTER for this run: off, crt-curved, crt-lottes, crt-royale, crt-guest,
  *                        crt-light, scan-light, scan-strong, scan-ossc, scan-dark, xbrz, scalefx (shader.h), or
  *                        any other FILTER offers, by its preset's path (crt/crt-geom-deluxe.slangp) or name
- *   --filter-test LIST OUT  load, build and draw each preset LIST names, a line each to OUT, then quit
- *                        (tools/shaders.py --catalogue: no game, a small window)
  *   --dump-filtered      --dump saves the picture as FILTER drew it, when it did (screenshots)
  *   --librashader FILE, --shaders DIR   the shader library and libretro's slang-shaders, if they are not where
  *                        the game looks (beside it, and .tools/ beside the work folder: shader.h)
@@ -81,6 +79,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "ge.h"
+#include "ge_backend.h"
 #include "host.h"
 #include "net_link.h"
 #include "version.h"
@@ -505,11 +504,11 @@ void rt_display_vblank(void) {
         int ww, wh;
         host_window_size(&ww, &wh);
         uint64_t swap_t0 = 0;
-        if (have_gl && ge_use_gl && ge_gl_present(rt_fb_addr(), ww, wh)) {
+        if (have_gl && ge_use_gl && ge_backend->present(rt_fb_addr(), ww, wh)) {
             swap_t0 = perf_now_us(); host_gl_swap();
         } else {
             if (rt_fb_addr()) ge_fb_to_rgba(rt_fb_addr(), (int)rt_fb_width(), (int)rt_fb_format(), 480, 272, rgba);
-            if (have_gl) { ge_gl_present_rgba(rgba, 480, 272, ww, wh); swap_t0 = perf_now_us(); host_gl_swap(); }
+            if (have_gl) { ge_backend->present_rgba(rgba, 480, 272, ww, wh); swap_t0 = perf_now_us(); host_gl_swap(); }
             else { swap_t0 = perf_now_us(); host_present(rgba, 480, 272); }   /* (SDL's renderer: draws and swaps) */
         }
         uint64_t shown = perf_now_us();
@@ -518,7 +517,7 @@ void rt_display_vblank(void) {
         perf_shown();
     }
     { void pacing_frame(int presented, int frame); pacing_frame(!headless && !held, (int)f); }
-    if (have_gl) ge_gl_frame_end();
+    if (have_gl) ge_backend->frame_end();
     perf_add(PERF_PRESENT, perf_now_us() - present_t0);
     if (f <= 5 || f % 60 == 0)
         rt_log("frame %llu: %llu display lists, framebuffer %08X, %llu prims so far", (unsigned long long)f,
@@ -529,7 +528,7 @@ void rt_display_vblank(void) {
         int w = 480, h = 272;
         if (!big) big = (uint8_t *)malloc((size_t)480 * 8 * 272 * 8 * 4);
         snprintf(p, sizeof p, "%s/frame_%05llu.png", dump_dir, (unsigned long long)f);
-        if (!(dump_filtered && shader_gl_read(big, 480 * 8, 272 * 8, &w, &h)) && !(ge_use_gl && ge_gl_read(rt_fb_addr(), big, &w, &h)))
+        if (!(dump_filtered && shader_gl_read(big, 480 * 8, 272 * 8, &w, &h)) && !(ge_use_gl && ge_backend->read(rt_fb_addr(), big, &w, &h)))
             ge_fb_to_rgba(rt_fb_addr(), (int)rt_fb_width(), (int)rt_fb_format(), 480, 272, big);
         png_write(p, big, w, h);
     }
@@ -606,7 +605,7 @@ char rt_config_dir[1024];                   /* where a3mx.cfg is kept (savestore
 int rt_custom_assets;                        /* --custom-assets: assets/extensions/ (the launcher's Custom Assets, off by default) */
 
 int main(int argc, char **argv) {
-    const char *work = "work", *log_path = NULL, *assets = NULL, *user_dir = NULL, *features_arg = NULL, *renderer_asked = NULL, *dir_saves = NULL, *dir_configs = NULL, *dir_logs = NULL, *filter_arg = NULL, *filter_test_list = NULL, *filter_test_out = NULL;
+    const char *work = "work", *log_path = NULL, *assets = NULL, *user_dir = NULL, *features_arg = NULL, *renderer_asked = NULL, *dir_saves = NULL, *dir_configs = NULL, *dir_logs = NULL, *filter_arg = NULL;
     int no_assets = 0;
     setvbuf(stdout, NULL, _IOFBF, 1 << 16);   /* written once a frame (rt_log_flush), not line by line */
     atexit(rt_log_flush);
@@ -658,7 +657,6 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--librashader") && i + 1 < argc) { extern const char *shader_lib_arg; shader_lib_arg = argv[++i]; }
         else if (!strcmp(argv[i], "--shaders") && i + 1 < argc) { extern const char *shader_dir_arg; shader_dir_arg = argv[++i]; }
         else if (!strcmp(argv[i], "--filter") && i + 1 < argc) filter_arg = argv[++i];
-        else if (!strcmp(argv[i], "--filter-test") && i + 2 < argc) { filter_test_list = argv[++i]; filter_test_out = argv[++i]; }
         else if (!strcmp(argv[i], "--dump-filtered")) dump_filtered = 1;
         else if (!strcmp(argv[i], "--dir-saves") && i + 1 < argc) dir_saves = argv[++i];
         else if (!strcmp(argv[i], "--dir-configs") && i + 1 < argc) dir_configs = argv[++i];
@@ -848,19 +846,6 @@ int main(int argc, char **argv) {
                                 "or a preset FILTER offers (its path under the shaders, or its name), not %s", filter_arg);
         rt_filter_cli = found;
     }
-    if (filter_test_list) {                   /* --filter-test: the presets, in a small window; no game */
-        host_start_fullscreen = 0;
-        if (!host_init(0, 1)) rt_fatal("--filter-test: could not open the window (SDL)");
-        HostGetProc gp = host_gl_getproc();
-        if (!gp || !ge_gl_init(gp, 1, host_display_height())) {
-            FILE *o = fopen(filter_test_out, "w"); if (o) { fprintf(o, "*\tno OpenGL 3.3\n"); fclose(o); }
-            return 2;
-        }
-        int r = shader_gl_test(filter_test_list, filter_test_out);
-        rt_log_flush();
-        return r;
-    }
-
     if (!rt_mem_init()) rt_fatal("could not reserve guest memory");
     snprintf(path, sizeof path, "%s/analysis.image.bin", work);
     long n = file_size(path);
@@ -874,19 +859,19 @@ int main(int argc, char **argv) {
     rt_reserve(USER_LO, (0x08804000u + (uint32_t)n + 0xFFFF) & ~0xFFFFu, "program");
 
     /* In a window the software renderer's frames are still shown through OpenGL when it is there
-       (ge_gl_present_rgba: sharp bilinear, so rows and columns stay even at any window size, and the
+       (ge_backend->present_rgba: sharp bilinear, so rows and columns stay even at any window size, and the
        same VSYNC / FRAME TIMING as the GPU renderer); only the drawing is done in software. */
     if (!host_init(headless, !want_soft || !headless)) rt_fatal("could not open the window (SDL)");
     if (!want_soft) {
         HostGetProc gp = headless ? host_headless_gl() : host_gl_getproc();
-        /* --scale N, or 0 for auto (ge_gl_init: enough to cover the monitor, at most 4) */
-        if (gp && ge_gl_init(gp, render_scale, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 1; }
+        /* --scale N, or 0 for auto (ge_backend_init: enough to cover the monitor, at most 4) */
+        if (gp && ge_backend_init(gp, render_scale, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 1; }
         else rt_log("GPU renderer unavailable: using the software renderer");
     } else if (!headless) {
         HostGetProc gp = host_gl_getproc();
-        if (gp && ge_gl_init(gp, 1, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 0; rt_log("software renderer, shown through OpenGL"); }
+        if (gp && ge_backend_init(gp, 1, host_display_height())) { renderer_gl_ready = 1; ge_use_gl = 0; rt_log("software renderer, shown through OpenGL"); }
     }
-    if (ge_use_gl) perf_set_renderer("GPU (OpenGL)", ge_gl_gpu_name(), ge_gl_scale(), ge_gl_scale_reason());
+    if (ge_use_gl) { char name[64]; snprintf(name, sizeof name, "GPU (%s)", ge_backend->name); perf_set_renderer(name, ge_backend->gpu_name(), ge_backend->scale(), ge_backend->scale_reason()); }
     else perf_set_renderer(want_soft ? "software" : "software (GPU unavailable)", "", 1, "");
     if (difftest_n > 0) { int decomp_difftest(int); int failed = decomp_difftest(difftest_n); fflush(stdout); return failed ? 1 : 0; }
     rt_kernel_init(); rt_io_init(); rt_ge_init();

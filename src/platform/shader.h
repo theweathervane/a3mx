@@ -14,9 +14,11 @@
  * The filters (0.166.0, shader_list.c), by category:
  *   FAVOURITES  the table below, always: the picture's own look (OFF), five CRTs, four kinds of scanline
  *               and two pixel smoothers, each one preset from slang-shaders, some with parameters of ours;
- *   then        the catalogue tools/shaders.py makes after the download (<shaders>/a3mx_catalogue.tsv):
- *               every preset the game could load and build there, by folder (CRT, SCANLINES, HANDHELD,
- *               NTSC, EDGE SMOOTHING, ...), each named after its file;
+ *   then        the catalogue: every preset the game could load and build, by folder (CRT, SCANLINES,
+ *               HANDHELD, NTSC, EDGE SMOOTHING, ...), each named after its file. The repository's
+ *               tools/data/shader_catalogue.tsv (0.171.0: made once, 2026-11-26, for the pinned
+ *               slang-shaders commit, and shipped as data; nothing is tested on the player's machine),
+ *               or an a3mx_catalogue.tsv beside the shaders (an older download made one), which wins;
  *   CUSTOM      the player's own *.slangp, in shaders/ beside a3mx.cfg (<configs>/shaders/, its
  *               subfolders too).
  * a3mx.cfg holds a favourite by its name ([screen setting] filter=CRT GUEST), any other by its preset's
@@ -79,7 +81,6 @@ extern const char *shader_lib_arg, *shader_dir_arg;   /* main.c: --librashader F
 int shader_gl_present(unsigned tex, int tex_w, int tex_h, int src_w, int src_h, int win_w, int win_h);
 void shader_gl_init(void *(*getproc)(const char *), const char *work);
 int shader_gl_read(uint8_t *rgba, int max_w, int max_h, int *w, int *h);   /* --dump-filtered: this frame as filtered */
-int shader_gl_test(const char *list_path, const char *out_path);          /* --filter-test (tools/shaders.py --catalogue) */
 extern int rt_filter_preview;                /* the FILTER screen's preview: the filter shown instead of the setting (-1: none) */
 const char *shader_describe(void);           /* last_run.txt: the filter in use, or why there is none */
 #endif
