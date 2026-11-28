@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.178.1
+### For players
+- Nothing changes in the game. The software renderer draws exactly the same pictures, about a quarter faster, so the full test suite finishes sooner.
+
+### Technical
+- **Nightly CI fixed (`tools/pins.py --check`):** the pin of `cmake/patches/sdl-gpu-native-handles.patch` (0.176.0) was taken from a Windows checkout, where the patch had CRLF line endings. Git stores it with LF, so the Linux runners got other bytes and another SHA-256. `.gitattributes`: `*.patch text eol=lf`, so every checkout has the stored bytes; the pin (tools/data/pins.json, docs/DEPENDENCIES.md) is now the LF file's `135150...ffd4`. The patch itself is unchanged. On Windows, SDL3 in `.tools` is built once more (cmake/SDL3.cmake stamps the patch's SHA-256).
+- `src/platform/ge_soft.c`: the drawing registers are decoded once per primitive (`st_load`) instead of for every pixel and texel. A triangle's covered pixels in each row are found by halving: each edge's value rises or falls with x through monotonic rounding steps, so the covered pixels form one run. The per-pixel helpers are always inlined, and `(int)floorf` is replaced with `ifloor`, which gives the same integer for every float without the library call. Texels and frame buffer pixels are still read from memory for every pixel, so a texture drawn from the frame buffer being drawn behaves as before.
+- Why `ctest` was ~10x slower than the decomp's own parity runs: rendering was 85% of a test's frame time (12.4 of 14.6 ms in arcade_fight), and the decomp runs skip it (`--renderer lazy`, memory hashes only, 4 scenarios at once). ctest keeps the picture check. On a desktop, raise `-j` as docs/TESTS.md says (about half the core count).
+- Checked: all 89 scenarios (both screen sizes for the 3 wide ones) run with the 0.178.0 and the new build gave byte-identical `--hash-log` files, with memory, picture and fighters hashes for every frame. The total run time went from 16,788 s to 12,694 s (x1.32). arcade_fight: busy render 12.4 ms down to about 8 ms a frame.
+
 ## 0.178.0
 ### For players
 - **Much more of the game decompiled (761 functions, 52.03% of the program now):** the judge of a round and the fight's frame, a round's start and end, the pause menu, the attract mode's script, the save screen with its waits and the settings saved and loaded by the game itself, the fight's status display laid out, the cpu's choices, 29 characters' move inputs, a fighter's walk, names drawn with the system's font, and the link play's rooms, player lists, requests and course. For the first time the library the game is built on is decompiled too: the frame's start and its drawing lists, the drawing hardware's set-up and commands, the sound's voices, banks, sequences and requests, the music stream's thread, the save dialog, the frame's memory pools, its own arithmetic for doubles, and the program's entry. Nothing plays differently.

@@ -11,6 +11,7 @@
 #include "ge_backend.h"
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 static uint32_t R[256];          /* last value of every GE register (24-bit argument) */
 static uint32_t clut[1024];      /* loaded palette, as raw 32-bit words (16-bit entries packed two per word) */
@@ -20,7 +21,8 @@ uint64_t ge_prims_drawn, ge_pixels_drawn;
 /* ---------------------------------------------------------------- colour helpers (ABGR8888 = R in low byte) */
 typedef struct { int r, g, b, a; } Col;
 
-static Col unpack(uint32_t v, int fmt) {
+#define HOT static inline __attribute__((always_inline))   /* the per-pixel helpers, kept in their loops */
+HOT Col unpack(uint32_t v, int fmt) {
     Col c;
     switch (fmt) {
     case 0: c.r = (v & 31) << 3 | (v & 31) >> 2; c.g = ((v >> 5) & 63) << 2 | ((v >> 5) & 63) >> 4;
@@ -32,7 +34,7 @@ static Col unpack(uint32_t v, int fmt) {
     }
     return c;
 }
-static uint32_t pack(Col c, int fmt) {
+HOT uint32_t pack(Col c, int fmt) {
     switch (fmt) {
     case 0: return (uint32_t)((c.r >> 3) | (c.g >> 2) << 5 | (c.b >> 3) << 11);
     case 1: return (uint32_t)((c.r >> 3) | (c.g >> 3) << 5 | (c.b >> 3) << 10 | (c.a >= 128) << 15);
@@ -54,6 +56,63 @@ static int tex_stride(void) { return (int)(R[0xA8] & 0x7FF); }
 static int tex_w(void) { return 1 << (R[0xB8] & 0xF); }
 static int tex_h(void) { return 1 << ((R[0xB8] >> 8) & 0xF); }
 
+/* The registers the per-pixel code reads, decoded once per primitive (st_load) instead of once per
+   pixel or texel. Registers can't change inside a primitive; memory can (a texture drawn from the frame
+   buffer being drawn), so texels and frame buffer pixels are still read from memory each time. Every
+   expression is the one the per-pixel code used, so the pixels come out bit for bit the same. */
+typedef struct {
+    int tex_on, tw, th, clamp_u, clamp_v, tfmt, bpp4, bytes, swz, rowb, bilinear;
+    uint32_t tbase;
+    int cfmt, cshift, cmask, cstart;
+    int tf, tf_rgba, tf_dbl; Col env;
+    int fmt, bpp, stride; uint32_t fbase;
+    int clear; uint32_t clear_mode;
+    int atest, afunc, aref, amask;
+    int blend_on, sf, df, eq; Col fa, fb;
+    uint32_t keep, keep_m;
+} St;
+static St st;
+static void st_load_tex(void) {
+    st.tw = tex_w(); st.th = tex_h();
+    st.clamp_u = (int)(R[0xC7] & 1); st.clamp_v = (int)(R[0xC7] & 0x100);
+    st.tfmt = (int)(R[0xC3] & 0xF);
+    st.bpp4 = st.tfmt == 4 ? 1 : 0;
+    st.bytes = (st.tfmt == 3 || st.tfmt == 7) ? 4 : (st.tfmt <= 2 || st.tfmt == 6) ? 2 : 1;
+    st.tbase = tex_addr();
+    int stride = tex_stride();
+    st.swz = (int)(R[0xC2] & 1);
+    st.rowb = st.bpp4 ? stride / 2 : stride * st.bytes;
+    uint32_t cf = R[0xC5];
+    st.cshift = (cf >> 2) & 31; st.cmask = (cf >> 8) & 255; st.cstart = ((cf >> 16) & 31) << 4;
+    st.cfmt = (int)(cf & 3);
+}
+static void st_load(void) {
+    st.tex_on = (int)(R[0x1E] & 1);
+    st_load_tex();
+    st.bilinear = (int)((R[0xC6] >> 8) & 1);
+    uint32_t tf = R[0xC9];
+    st.tf = (int)(tf & 7); st.tf_rgba = (tf >> 8) & 1; st.tf_dbl = (tf >> 16) & 1;
+    st.env = unpack(R[0xCA] | 0xFF000000u, 3);
+    st.fmt = fb_fmt(); st.bpp = st.fmt == 3 ? 4 : 2; st.stride = fb_stride(); st.fbase = fb_base();
+    st.clear_mode = R[0xD3]; st.clear = (int)(R[0xD3] & 1);
+    uint32_t t = R[0xDB];
+    st.atest = (int)(R[0x22] & 1); st.afunc = (int)(t & 7);
+    st.amask = (int)((t >> 16) & 255); st.aref = (int)((t >> 8) & 255) & st.amask;
+    uint32_t bm = R[0xDF];
+    st.blend_on = (int)(R[0x21] & 1); st.sf = bm & 15; st.df = (bm >> 4) & 15; st.eq = (bm >> 8) & 15;
+    st.fa = unpack(R[0xE0] | 0xFF000000u, 3); st.fb = unpack(R[0xE1] | 0xFF000000u, 3);
+    st.keep = R[0xE8] & 0xFFFFFF;
+    st.keep_m = st.keep ? pack(unpack(st.keep | 0xFF000000u, 3), st.fmt) & (st.fmt == 3 ? 0x00FFFFFFu : 0xFFFFu) : 0;
+}
+/* clut_entry with the palette registers from st */
+HOT uint32_t st_clut(uint32_t index) {
+    uint32_t i = (((index >> st.cshift) & (uint32_t)st.cmask) | (uint32_t)st.cstart);
+    if (st.cfmt == 3) return clut[i & 255];
+    i &= 511;
+    uint32_t w = clut[i >> 1];
+    return (i & 1) ? w >> 16 : w & 0xFFFF;
+}
+
 static uint32_t clut_entry(uint32_t index) {
     uint32_t cf = R[0xC5];
     int shift = (cf >> 2) & 31, mask = (cf >> 8) & 255, start = ((cf >> 16) & 31) << 4;
@@ -65,73 +124,64 @@ static uint32_t clut_entry(uint32_t index) {
     return (i & 1) ? w >> 16 : w & 0xFFFF;
 }
 
-static Col texel(int u, int v) {
-    int w = tex_w(), h = tex_h();
-    if (R[0xC7] & 1) u = u < 0 ? 0 : u >= w ? w - 1 : u; else u &= w - 1;
-    if (R[0xC7] & 0x100) v = v < 0 ? 0 : v >= h ? h - 1 : v; else v &= h - 1;
-    int tfmt = (int)(R[0xC3] & 0xF);
-    int bpp4 = tfmt == 4 ? 1 : 0;                      /* 4-bit texels */
-    int bytes = (tfmt == 3 || tfmt == 7) ? 4 : (tfmt <= 2 || tfmt == 6) ? 2 : 1;
-    uint32_t base = tex_addr();
-    int stride = tex_stride();
+HOT Col texel(int u, int v) {                       /* st_load_tex() first */
+    int w = st.tw, h = st.th;
+    if (st.clamp_u) u = u < 0 ? 0 : u >= w ? w - 1 : u; else u &= w - 1;
+    if (st.clamp_v) v = v < 0 ? 0 : v >= h ? h - 1 : v; else v &= h - 1;
+    int tfmt = st.tfmt;
     uint32_t off;
-    int xb2 = bpp4 ? u : u * bytes * 2;                 /* x in half-bytes */
-    if (R[0xC2] & 1) {                                  /* swizzled: 16-byte x 8-row blocks */
-        int rowb = (bpp4 ? stride / 2 : stride * bytes);
+    int xb2 = st.bpp4 ? u : u * st.bytes * 2;           /* x in half-bytes */
+    if (st.swz) {                                       /* swizzled: 16-byte x 8-row blocks */
         int xb = xb2 / 2;
-        off = (uint32_t)(((v >> 3) * (rowb >> 4) + (xb >> 4)) * 128 + (v & 7) * 16 + (xb & 15));
+        off = (uint32_t)(((v >> 3) * (st.rowb >> 4) + (xb >> 4)) * 128 + (v & 7) * 16 + (xb & 15));
     } else {
-        off = (uint32_t)(v * (bpp4 ? stride / 2 : stride * bytes) + xb2 / 2);
+        off = (uint32_t)(v * st.rowb + xb2 / 2);
     }
-    uint32_t a = base + off, raw;
-    int cfmt = (int)(R[0xC5] & 3);
+    uint32_t a = st.tbase + off, raw;
     switch (tfmt) {
     case 0: case 1: case 2: return unpack(RH(a), tfmt);
     case 3: return unpack(RW(a), 3);
-    case 4: raw = (RB(a) >> ((u & 1) * 4)) & 15; return unpack(clut_entry(raw), cfmt);
-    case 5: return unpack(clut_entry(RB(a)), cfmt);
-    case 6: return unpack(clut_entry(RH(a)), cfmt);
-    case 7: return unpack(clut_entry(RW(a)), cfmt);
+    case 4: raw = (RB(a) >> ((u & 1) * 4)) & 15; return unpack(st_clut(raw), st.cfmt);
+    case 5: return unpack(st_clut(RB(a)), st.cfmt);
+    case 6: return unpack(st_clut(RH(a)), st.cfmt);
+    case 7: return unpack(st_clut(RW(a)), st.cfmt);
     default: { Col m = { 255, 0, 255, 255 }; return m; }      /* DXT: not used by this game */
     }
 }
 
 /* ---------------------------------------------------------------- per-pixel pipeline */
-static int alpha_test(int a) {
-    if (!(R[0x22] & 1)) return 1;
-    uint32_t t = R[0xDB]; int ref = (int)((t >> 8) & 255), mask = (int)((t >> 16) & 255);
-    int x = a & mask; ref &= mask;
-    switch (t & 7) {
+HOT int alpha_test(int a) {
+    if (!st.atest) return 1;
+    int x = a & st.amask, ref = st.aref;
+    switch (st.afunc) {
     case 0: return 0; case 1: return 1; case 2: return x == ref; case 3: return x != ref;
     case 4: return x < ref; case 5: return x <= ref; case 6: return x > ref; default: return x >= ref;
     }
 }
 
-static Col tex_func(Col tex, Col col) {
-    uint32_t tf = R[0xC9];
-    int rgba = (tf >> 8) & 1, dbl = (tf >> 16) & 1;
+HOT Col tex_func(Col tex, Col col) {
+    int rgba = st.tf_rgba, dbl = st.tf_dbl, tf = st.tf;
     Col o;
-    switch (tf & 7) {
+    switch (tf) {
     case 0: o.r = tex.r * col.r / 255; o.g = tex.g * col.g / 255; o.b = tex.b * col.b / 255;
             o.a = rgba ? tex.a * col.a / 255 : col.a; break;                                       /* modulate */
     case 1: o.r = (tex.r * tex.a + col.r * (255 - tex.a)) / 255; o.g = (tex.g * tex.a + col.g * (255 - tex.a)) / 255;
             o.b = (tex.b * tex.a + col.b * (255 - tex.a)) / 255; o.a = col.a; break;                /* decal */
-    case 2: { Col e = unpack(R[0xCA] | 0xFF000000u, 3);                                            /* blend */
+    case 2: { Col e = st.env;                                                                     /* blend */
             o.r = (col.r * (255 - tex.r) + e.r * tex.r) / 255; o.g = (col.g * (255 - tex.g) + e.g * tex.g) / 255;
             o.b = (col.b * (255 - tex.b) + e.b * tex.b) / 255; o.a = rgba ? tex.a * col.a / 255 : col.a; break; }
     case 3: o.r = tex.r; o.g = tex.g; o.b = tex.b; o.a = rgba ? tex.a : col.a; break;              /* replace */
     default: o.r = tex.r + col.r; o.g = tex.g + col.g; o.b = tex.b + col.b;                       /* add */
             o.a = rgba ? tex.a * col.a / 255 : col.a; break;
     }
-    if (dbl && (tf & 7) != 3) { o.r *= 2; o.g *= 2; o.b *= 2; }
+    if (dbl && tf != 3) { o.r *= 2; o.g *= 2; o.b *= 2; }
     o.r = clamp255(o.r); o.g = clamp255(o.g); o.b = clamp255(o.b); o.a = clamp255(o.a);
     return o;
 }
 
-static Col blend(Col s, Col d) {
-    uint32_t bm = R[0xDF];
-    int sf = bm & 15, df = (bm >> 4) & 15, eq = (bm >> 8) & 15;
-    Col fa = unpack(R[0xE0] | 0xFF000000u, 3), fb = unpack(R[0xE1] | 0xFF000000u, 3);
+HOT Col blend(Col s, Col d) {
+    int sf = st.sf, df = st.df, eq = st.eq;
+    Col fa = st.fa, fb = st.fb;
     Col A, B;
     switch (sf) {
     case 0: A = d; break;
@@ -172,15 +222,14 @@ static Col blend(Col s, Col d) {
 
 static int sc_x1, sc_y1, sc_x2, sc_y2;   /* inclusive scissor */
 
-static void put_pixel(int x, int y, Col c) {
+HOT void put_pixel(int x, int y, Col c) {
     if (x < sc_x1 || x > sc_x2 || y < sc_y1 || y > sc_y2) return;
-    int fmt = fb_fmt(), bpp = fmt == 3 ? 4 : 2;
-    uint32_t a = fb_base() + (uint32_t)((y * fb_stride() + x) * bpp);
+    int fmt = st.fmt, bpp = st.bpp;
+    uint32_t a = st.fbase + (uint32_t)((y * st.stride + x) * bpp);
     uint32_t old = bpp == 4 ? RW(a) : RH(a);
     Col d = unpack(old, fmt);
-    int clear = R[0xD3] & 1;
-    if (clear) {
-        uint32_t cm = R[0xD3];
+    if (st.clear) {
+        uint32_t cm = st.clear_mode;
         Col o = d;
         if (cm & 0x100) { o.r = c.r; o.g = c.g; o.b = c.b; }
         if (cm & 0x200) o.a = c.a;
@@ -190,12 +239,11 @@ static void put_pixel(int x, int y, Col c) {
         return;
     }
     if (!alpha_test(c.a)) return;
-    Col o = (R[0x21] & 1) ? blend(c, d) : c;
+    Col o = st.blend_on ? blend(c, d) : c;
     o.a = d.a;                                   /* frame buffer alpha holds stencil; leave it alone */
     uint32_t v = pack(o, fmt);
-    uint32_t keep = R[0xE8] & 0xFFFFFF;          /* MASKRGB: set bits are not written */
-    if (keep) {
-        uint32_t m = pack(unpack(keep | 0xFF000000u, 3), fmt) & (fmt == 3 ? 0x00FFFFFFu : 0xFFFFu);
+    if (st.keep) {                               /* MASKRGB: set bits are not written */
+        uint32_t m = st.keep_m;
         v = (v & ~m) | (old & m);
     }
     if (bpp == 4) WW(a, v); else WH(a, v);
@@ -241,10 +289,13 @@ static int vtx_decode(uint32_t addr, uint32_t vt, Vtx *out, int n) {
    reads it): nearest, or bilinear between the four texels around it, as the PSP does. The game turns
    bilinear on for art it draws scaled (the CPS2-sized backgrounds and menus, drawn larger than their
    textures); without it, nearest repeats every fourth or fifth texel, which shows as doubled lines. */
-static Col sample(float u, float v) {
-    if (!((R[0xC6] >> 8) & 1)) return texel((int)floorf(u), (int)floorf(v));
+/* (int)floorf(f) without the library call (x86-64 has no floor instruction before SSE4.1): the same
+   integer for every float, out-of-range and NaN ones included (both give INT_MIN) */
+HOT int ifloor(float f) { int i = (int)f; return i == INT_MIN ? i : i - (f < (float)i); }
+HOT Col sample(float u, float v) {
+    if (!st.bilinear) return texel(ifloor(u), ifloor(v));
     float fu = u - 0.5f, fv = v - 0.5f;
-    int u0 = (int)floorf(fu), v0 = (int)floorf(fv);
+    int u0 = ifloor(fu), v0 = ifloor(fv);
     int wu = (int)((fu - (float)u0) * 256.f), wv = (int)((fv - (float)v0) * 256.f);
     Col t00 = texel(u0, v0), t10 = texel(u0 + 1, v0), t01 = texel(u0, v0 + 1), t11 = texel(u0 + 1, v0 + 1), o;
 #define MIX(ch) do { int top = t00.ch * (256 - wu) + t10.ch * wu, bot = t01.ch * (256 - wu) + t11.ch * wu; \
@@ -254,9 +305,9 @@ static Col sample(float u, float v) {
     return o;
 }
 
-static Col shade(const Vtx *v, float u, float vv, Col c) {
+HOT Col shade(const Vtx *v, float u, float vv, Col c) {
     (void)v;
-    if (R[0x1E] & 1) return tex_func(sample(u, vv), c);
+    if (st.tex_on) return tex_func(sample(u, vv), c);
     return c;
 }
 
@@ -292,9 +343,33 @@ static void triangle(const Vtx *a, const Vtx *b, const Vtx *c, int flat) {
     if (miny < sc_y1) miny = sc_y1;
     if (maxx > sc_x2 + 1) maxx = sc_x2 + 1;
     if (maxy > sc_y2 + 1) maxy = sc_y2 + 1;
+    /* Each row's covered pixels, found by halving instead of testing the whole bounding box. Along a
+       row each edge's value only rises or only falls with x (every rounding step is monotonic), so
+       each edge passes on one side of a single column, and the pixels all three pass on are one run.
+       Only for finite coordinates small enough that no product overflows (else: every pixel tested). */
+    const Vtx *ea[3] = { b, c, a }, *eb[3] = { c, a, b };
+    int tl[3] = { (c->y == b->y && c->x < b->x) || c->y < b->y, (a->y == c->y && a->x < c->x) || a->y < c->y,
+                  (b->y == a->y && b->x < a->x) || b->y < a->y };
+    int spans = 1;
+    for (int i = 0; i < 3; i++)
+        if (!(fabsf(ea[i]->x) < 1e6f && fabsf(ea[i]->y) < 1e6f)) spans = 0;
     for (int y = miny; y < maxy; y++) {
         float py = (float)y + 0.5f;
-        for (int x = minx; x < maxx; x++) {
+        int x0 = minx, x1 = maxx;
+        if (spans) {
+            for (int i = 0; i < 3 && x0 < x1; i++) {
+                const Vtx *p = ea[i], *q = eb[i];
+                float k = q->y - p->y;                     /* the edge falls with x when k > 0, rises when k < 0 */
+#define PASS(X) (w_ = edge(p->x, p->y, q->x, q->y, (float)(X) + 0.5f, py), !(w_ < 0) && !(w_ == 0 && !tl[i]))
+                float w_;
+                if (k == 0) { if (!PASS(x0)) x0 = x1; continue; }
+                int l = x0, h = x1;
+                if (k < 0) { while (l < h) { int m = l + (h - l) / 2; if (PASS(m)) h = m; else l = m + 1; } x0 = l; }
+                else       { while (l < h) { int m = l + (h - l) / 2; if (!PASS(m)) h = m; else l = m + 1; } x1 = l; }
+#undef PASS
+            }
+        }
+        for (int x = x0; x < x1; x++) {
             float px = (float)x + 0.5f;
             float w0 = edge(b->x, b->y, c->x, c->y, px, py);
             float w1 = edge(c->x, c->y, a->x, a->y, px, py);
@@ -530,6 +605,7 @@ static void draw_prim(uint32_t arg) {
     ge_prims_drawn++;
     if (ge_census_path) census_draw(v, n, type);
     if (ge_no_draw) return;
+    if (!ge_use_gl) st_load();
     if (ge_use_gl) {
         static GeVtx gv[65536];
         for (int i = 0; i < n; i++) {
@@ -568,7 +644,8 @@ uint32_t ge_tex_bytes(void) {
 }
 void ge_decode_texture(uint8_t *rgba) { ge_decode_texture_rows(rgba, 0, tex_h()); }
 void ge_decode_texture_rows(uint8_t *rgba, int y0, int y1) {     /* rows y0 .. y1 - 1, written from rgba's first row */
-    int w = tex_w();
+    st_load_tex();
+    int w = st.tw;
     rgba -= (size_t)y0 * (size_t)w * 4;
     for (int y = y0; y < y1; y++)
         for (int x = 0; x < w; x++) {

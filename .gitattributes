@@ -7,3 +7,5 @@
 *.ico binary
 *.png binary
 *.yml text eol=lf
+# pinned by SHA-256 (tools/data/pins.json, cmake/SDL3.cmake): the same bytes on every system
+*.patch text eol=lf

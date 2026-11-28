@@ -64,7 +64,7 @@ dependency has its own way.
 
 | Patch | To | Why | Until | SHA-256 |
 |---|---|---|---|---|
-| [`cmake/patches/sdl-gpu-native-handles.patch`](../cmake/patches/sdl-gpu-native-handles.patch) | SDL3 3.4.16 (cmake/SDL3.cmake, tools/sdl3.py) | the SDL GPU renderer's FILTER: the backend's native device, queue, command buffers and textures as device properties, for librashader's Vulkan / Direct3D 12 / Metal runtimes (0.176.0) | SDL has its own way ([libsdl-org/SDL#10876](https://github.com/libsdl-org/SDL/issues/10876)); not offered upstream as it is (SDL takes no AI-written code) | `e850df4210a4b5995347d84f6c02500ccd5b4efb12788363d2b6c6947979f08e` |
+| [`cmake/patches/sdl-gpu-native-handles.patch`](../cmake/patches/sdl-gpu-native-handles.patch) | SDL3 3.4.16 (cmake/SDL3.cmake, tools/sdl3.py) | the SDL GPU renderer's FILTER: the backend's native device, queue, command buffers and textures as device properties, for librashader's Vulkan / Direct3D 12 / Metal runtimes (0.176.0) | SDL has its own way ([libsdl-org/SDL#10876](https://github.com/libsdl-org/SDL/issues/10876)); not offered upstream as it is (SDL takes no AI-written code) | `135150810c59d49f0a4c80a8367d42c34753fa64e90ef10cb5341c67f610ffd4` |
 
 ## Nothing compiled is committed
 
