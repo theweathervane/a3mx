@@ -1227,6 +1227,98 @@ owner at + 88, and frame data at + 296.
 | (2 functions) | (`object/batch_steps304.c`) a reaching grab's step, an entrance that walks in |
 | (2 functions) | (`object/batch_steps305.c`) a second held projectile's release (by distance for the cpu), a rolling attack's step with its sparks |
 | (7 functions) | (`object/batch_steps306.c`) starts for a following piece, a move's object and the side mark, the taunt's wait, the block's first step, a chooser by the animation's flags, the link's entry for an address |
+| (4 functions) | (`object/batch_net307.c`) the link play's upper layers: the check that every peer answered alike, a message's send by kind, the thread that brings the wireless link up, and the settings exchange before a match |
+| (20 functions) | (`object/batch_tiny308.c`) small ones whose callees are all done: the link play's wait for every peer's answer and two of its wrappers, and moves' starts and steps that pass on to one of two others |
+| (19 functions) | (`object/batch_tiny309.c`) more small ones: moves' starts behind their checks, a few steps, the objects they make, and a link message's dispatch |
+| (28 functions) | (`object/batch_supers310.c`) moves' starts behind their checks: nineteen super moves of two shapes, and a few near them |
+| (15 functions) | (`object/batch_tiny311.c`) more small ones: the two boss partners' set-up, a cursor's moves, a table byte, the stored block, an object's copy, and more moves' starts and steps |
+| (19 functions) | (`object/batch_tiny312.c`) more small ones: the next opponents out of a list, an object's steps, and more moves' starts and steps |
+| (12 functions) | (`object/batch_tiny313.c`) more small ones: the two partners' downs in a two-on-one fight, a random opponent, a time written out as text, three trail objects, and more moves' starts and steps |
+| (12 functions) | (`object/batch_mixed314.c`) middle-sized ones: the two-on-one fight's first partner and its round's end, who leads on vitality, a list of opponents, a record's comparison, a link peer's removal, two follower pieces, a leap's start and a few moves' starts |
+| (8 functions) | (`object/batch_mixed315.c`) middle-sized ones: who leads on vitality with a handicap, the combo count's text, how long a block's push lasts, a round's winner in the fights through a list of opponents, a result's place in a ranking, and three sets of objects |
+| (1 functions) | (`object/batch_net316.c`) the link play's connection to one peer, a step at a time |
+| (18 functions) | (`object/batch_inputs317.c`) the characters' move inputs, looked at every frame a fighter is free to act: eighteen characters' chains of checks, each a plain list |
+| (15 functions) | (`object/batch_steps318.c`) what the small ones set free: steps that pass on by kind, strength or chance, a grid menu's cursor and choice, and the combo and time texts |
+| (11 functions) | (`object/batch_inputs319.c`) eleven more characters' move inputs, chains with a turn in them: another order for one form, an input counted instead of checked, or a start that takes a number |
+| (10 functions) | (`object/batch_steps320.c`) a round's start by the kind of fight, the link's incoming messages, two characters' follower pieces, and moves' starts |
+| (8 functions) | (`object/batch_steps321.c`) the next opponent a list allows, a menu's own thread, the link's match-up steps, and moves' steps in the air and on the way down |
+| (3 functions) | (`object/batch_steps322.c`) the block's second step, a character's punch move by its kind, and a held move's player side |
+| (2 functions) | (`object/batch_steps323.c`) a round's end for the winner (one on one, and the fights with partners), and the link play's own frame for a peer |
+| (14 functions) | (`object/batch_tiny324.c`) more small ones: who leads by the mode, a random partner, and moves' starts by the choice |
+| (14 functions) | (`object/batch_steps325.c`) the link's work every frame, a throw's input for four characters, entrances and picks by who the opponent is, a hit landing, and a few moves' steps |
+| (4 functions) | (`object/batch_inputs326.c`) four more characters' move inputs: three plain chains, and one whose starts answer the other way round |
+| (6 functions) | (`object/batch_mixed327.c`) a partner's wait before coming back, three random opponents, a fighter's stored block at a round's start, a link peer's node freed, and two moves' steps |
+| (5 functions) | (`object/batch_mixed328.c`) four ways a list of opponents is made (at random, from a mode's table, in pairs, and in random pairs), and a result's place among a mode's ten best |
+| (1 functions) | (`object/batch_hud329.c`) the run's own line on screen in the modes with a list of opponents: the time, and a row of marks or the number left |
+| (7 functions) | (`object/batch_steps330.c`) Seven steps the tiny pieces set free |
+| (6 functions) | (`object/batch_mixed331.c`) Six mixed pieces around lists and links |
+| (5 functions) | (`object/batch_steps332.c`) The round's judge and four steps beside it |
+| (6 functions) | (`object/batch_steps333.c`) Next opponent by mode, the fight's frame and a script reader |
+| (8 functions) | (`object/batch_lib334.c`) Library: event flag wrappers, sound tempo and two callback tables |
+| (9 functions) | (`object/batch_steps335.c`) A fight's way out, a round's last frames and four callers of the callback tables |
+| (3 functions) | (`object/batch_steps336.c`) The callback tables' reset, a round's last frames by kind, a screen piece's start |
+| (13 functions) | (`object/batch_lib337.c`) Library: fade colour, sound thread flags, entries given back, a callback by hand |
+| (12 functions) | (`object/batch_tiny338.c`) The game's doors to the sound thread's flags and the lists a screen loads |
+| (9 functions) | (`object/batch_steps339.c`) Two characters' flashes, a screen's start, the fight's flash, the cpu's two choices |
+| (12 functions) | (`object/batch_steps340.c`) A round's end by its screen, a pause's start and end, the attract mode's and the link's start |
+| (4 functions) | (`object/batch_steps341.c`) A round's winner marked, the pause menu's frame, the link's fighters set up again |
+| (15 functions) | (`object/batch_lib342.c`) Library: the frame's pools, a strip drawn, the save dialog's small ends, memory stick check |
+| (9 functions) | (`object/batch_mixed343.c`) The strips drawn every frame, the save screen's small ends, the menus' frame by mode |
+| (9 functions) | (`object/batch_save344.c`) The save screen's loop, a save's start, the link's step back into a fight |
+| (10 functions) | (`object/batch_lib345.c`) A save from the save screen; library: the sound thread stopped and started, a record taken |
+| (4 functions) | (`object/batch_mixed346.c`) A sound request by its kind, a pair made partners, the sound thread's restart |
+| (10 functions) | (`object/batch_mixed347.c`) Callers of the hand-written pieces: the save screen's question, a fighter waiting and coming back, a challenger |
+| (5 functions) | (`object/batch_mixed348.c`) The cpu's team, a fighter beaten, the attract mode's script, a partner called in |
+| (1 functions) | (`object/batch_menu349.c`) The link's menu of three questions |
+| (3 functions) | (`object/batch_steps350.c`) The attract mode's frame, a round's start once ready, a standing fighter's next move |
+| (4 functions) | (`object/batch_steps351.c`) Four more of a fighter's choices of what to do next |
+| (5 functions) | (`object/batch_steps352.c`) A fighter's walk and its choice, the attract mode's whole frame |
+| (12 functions) | (`object/batch_text353.c`) Names drawn with the system's font, and the link's lines of players |
+| (13 functions) | (`object/batch_link354.c`) The link: a room joined, lists under a semaphore, a port opened, a packet's record |
+| (2 functions) | (`object/batch_link355.c`) The link: a room made, and the list of its players |
+| (8 functions) | (`object/batch_link356.c`) The link: a room shown and waiting, kept names looked after, packets sent |
+| (1 functions) | (`object/batch_link357.c`) The link's request to another player |
+| (3 functions) | (`object/batch_link358.c`) The link: two small packets, the menu's frame while a room is shown |
+| (42 functions) | (`object/batch_tails359.c`) Library: the ends of longer routines and one-line leaves |
+| (21 functions) | (`object/batch_lib360.c`) Library: drawing list commands, callback tables cleared, an event flag polled |
+| (27 functions) | (`object/batch_lib361.c`) Library: the sound voices behind their guard, drawing list commands, more ends |
+| (14 functions) | (`object/batch_lib362.c`) Library: the frame's pools turned over, the sound core's output, a track's number |
+| (10 functions) | (`object/batch_lib363.c`) Library: the memory stick's free room, the display's buffer, voice volumes and envelopes |
+| (18 functions) | (`object/batch_lib364.c`) Library: a sound bank's chunks, the scissor and texture commands, loops over the voices |
+| (7 functions) | (`object/batch_lib365.c`) The frame's start; library: system callbacks, the display's mode, a voice reset |
+| (5 functions) | (`object/batch_lib366.c`) Library: the frame's list run by layer, a primitive, a sequence started and reset |
+| (15 functions) | (`object/batch_lib367.c`) Library: drawing list commands for the list in use, a sound bank's entries, a volume's pan |
+| (7 functions) | (`object/batch_lib368.c`) Library: the sound's voices set up and gathered, sound requests carried out, the drawing buffer |
+| (8 functions) | (`object/batch_lib369.c`) Library: the drawing state reset, a sound bank's instruments, a voice's hold, a note's start |
+| (5 functions) | (`object/batch_lib370.c`) Library: a sound effect asked for, a drawing list finished, a sequence file opened, a voice let go |
+| (9 functions) | (`object/batch_lib371.c`) Library: the drawing hardware set up, voices let go or held by a mask, a sequence loaded, a note's pitch |
+| (7 functions) | (`object/batch_lib372.c`) Library: the voices kept up to date, notes let go and held, a voice taken, a note made ready |
+| (4 functions) | (`object/batch_lib373.c`) Library: a drawing state switched, a sequence stopped, a record's sequence loaded |
+| (10 functions) | (`object/batch_float374.c`) Library: the leaves that work with floating point |
+| (2 functions) | (`object/batch_lib375.c`) Library: the system's font opened, the sound core's voices made neutral |
+| (7 functions) | (`object/batch_lib376.c`) Library: drawing states enabled and disabled, the viewport, the sound core's start |
+| (1 functions) | (`object/batch_lib377.c`) Library: the sound's loader callback |
+| (9 functions) | (`object/batch_lib378.c`) Library: records of the frame's list drawn, the fade, the screen and its background, music requests |
+| (6 functions) | (`object/batch_lib379.c`) Library: a drawing list handed over, the waits for drawing, the sequences made ready, the save dialog's step |
+| (1 functions) | (`object/batch_save380.c`) The step of a save or load in progress, with what was read put in its place |
+| (4 functions) | (`object/batch_save381.c`) The save screen's waits for the job, the card's check and its free space; all drawing waited for |
+| (2 functions) | (`object/batch_save382.c`) The settings loaded at the start and saved by the game itself |
+| (8 functions) | (`object/batch_float383.c`) Library arithmetic: a float taken apart, a double put together, a float widened; the fade by it |
+| (7 functions) | (`object/batch_float384.c`) Library arithmetic: a double taken apart, a whole number to a double and back |
+| (5 functions) | (`object/batch_float385.c`) Library arithmetic: doubles divided, a double's sign turned |
+| (8 functions) | (`object/batch_float386.c`) Library arithmetic: a float put together, a double narrowed |
+| (1 functions) | (`object/batch_steps387.c`) A marker set up by its kind, its places scaled |
+| (3 functions) | (`object/batch_steps388.c`) The marker's start and step, the frame's fade request |
+| (2 functions) | (`object/batch_lib389.c`) Library: the music stream's thread, a file read whole |
+| (8 functions) | (`object/batch_lib390.c`) Library: the output channels reserved and let go, the sound system started, the music stream opened |
+| (3 functions) | (`object/batch_lib391.c`) The game's sound started, the music stream's thread, a character read in the locale's encoding |
+| (1 functions) | (`object/batch_hud392.c`) The fight's status display laid out |
+| (4 functions) | (`object/batch_boot393.c`) The module's entry, the heap's block asked of the system, the waits for the disc and the first load |
+| (1 functions) | (`object/batch_link394.c`) The link play's course picked |
+| (3 functions) | (`object/batch_mixed395.c`) The heap's growing, two objects' starts that pick the link play's course |
+| (3 functions) | (`object/batch_lib396.c`) Library: a drawing list begun, the display set up at the start |
+| (4 functions) | (`object/batch_frame397.c`) Each frame's drawing, the game's start, two of the link play's main loops |
+| (2 functions) | (`object/batch_lib398.c`) Library: memory asked for, a routine noted for the program's end |
 | (286 step dispatchers) | (0.166.0, `object/steps_fighters.c`) the step dispatchers the fighter scenarios reach, most of them characters' own move steps: run_step by a step byte (+3 - +7, +128, ...), half-word or signed byte (+194, +236, ...), and run_step_with (the owner +88 to the handler); one line each, matched to the translations' shape |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the

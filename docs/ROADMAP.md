@@ -19,17 +19,17 @@ function is verified by the tests before it is merged.
 
 <!-- progress:start -->
 ```
-Overall  [██████████████████░░░░░░░░░░░░░░░░░░░░░░]  45.05% decompiled
+Overall  [████████████████████░░░░░░░░░░░░░░░░░░░░]  52.03% decompiled
 
-Functions                                [████░░░░░░]  41.07%  6,111 / 14,881 functions
-Instructions                             [████░░░░░░]  45.05%  218,132 / 484,213 instructions
+Functions                                [████░░░░░░]  46.18%  6,872 / 14,881 functions
+Instructions                             [█████░░░░░]  52.03%  251,951 / 484,213 instructions
 
 By area (instructions):
-  game (modes, menus, fighters, battle)  [██████░░░░]  60.79%  123,974 / 203,929
-  wireless (ad-hoc) VS                   [███████░░░]  75.76%  2,819 / 3,721
-  game (to be mapped)                    [███░░░░░░░]  35.11%  90,239 / 257,012
-  system: save data, graphics, music     [░░░░░░░░░░]   0.16%  4 / 2,574
-  system: C library, sound, OS glue      [░░░░░░░░░░]   6.46%  1,096 / 16,977
+  game (modes, menus, fighters, battle)  [██████░░░░]  67.11%  136,862 / 203,929
+  wireless (ad-hoc) VS                   [█████████░]  97.58%  3,631 / 3,721
+  game (to be mapped)                    [████░░░░░░]  40.21%  103,340 / 257,012
+  system: save data, graphics, music     [████████░░]  83.53%  2,150 / 2,574
+  system: C library, sound, OS glue      [███░░░░░░░]  35.15%  5,968 / 16,977
 ```
 <!-- progress:end -->
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.178.0
+### For players
+- **Much more of the game decompiled (761 functions, 52.03% of the program now):** the judge of a round and the fight's frame, a round's start and end, the pause menu, the attract mode's script, the save screen with its waits and the settings saved and loaded by the game itself, the fight's status display laid out, the cpu's choices, 29 characters' move inputs, a fighter's walk, names drawn with the system's font, and the link play's rooms, player lists, requests and course. For the first time the library the game is built on is decompiled too: the frame's start and its drawing lists, the drawing hardware's set-up and commands, the sound's voices, banks, sequences and requests, the music stream's thread, the save dialog, the frame's memory pools, its own arithmetic for doubles, and the program's entry. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: batches 307 to 398, `batch_net307.c` - `batch_lib398.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch; README.md / docs/ROADMAP.md progress bars updated.
+- The library (0x089E347C on) is written the same way as the game's code. Its routines' shared ends and mid-loop entries, which the analysis lists as functions of their own, are small functions the bodies end in (`tail_...`).
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each group of batches. Of batches 379 to 398, 21 small library pieces (shared ends, parts of the arithmetic, the channels let go) are not run by any scenario.
+
 ## 0.177.1
 ### For players
 - **FILTER's library built before 0.176.0 (OpenGL only) is now noticed:** the launcher's Dependencies tab no longer counts it as there and offers **Get librashader...** again, which makes it with the runtimes FILTER needs on the other renderers (Metal on macOS, Vulkan and Direct3D 12 on Windows, Vulkan on Linux). A build ends with a note saying the same. Before, the launcher showed it as found and hid the button, so FILTER stayed OPENGL ONLY on Metal (found on a Mac). Until it is made again the old one is still used, so FILTER works on OpenGL as before.
