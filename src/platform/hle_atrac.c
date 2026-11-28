@@ -1,5 +1,6 @@
-/* sceAtrac3plus: the game hands over a whole .at3 file in memory; it is decoded once to PCM and then
- * served 2048 samples per DecodeData call, honouring the loop points and loop count. */
+/* sceAtrac3plus: the game hands over a whole .at3 file in memory; it is decoded to PCM as it is played
+ * (atrac_decode.cpp: the samples a whole-file decode gives, kept for the loop) and served 2048 samples
+ * per DecodeData call, honouring the loop points and loop count. */
 #include "rt.h"
 #include "atrac_decode.h"
 #include <string.h>
@@ -15,7 +16,7 @@
 typedef struct {
     int used;
     AtracTrack t;
-    int16_t *pcm; int pcm_samples;
+    AtracStream *s;     /* the decoded samples so far */
     int cur;            /* next logical sample */
     int loop_num;
     int ended;
@@ -32,15 +33,15 @@ void hle_sceAtracSetDataAndGetID(Cpu *c) {
     Atrac *a = &at[id];
     memset(a, 0, sizeof *a);
     if (atrac_parse(HOST(buf), size, &a->t) < 0) RET(ERR_ATRAC_UNKNOWN_FMT);
-    a->pcm = atrac_decode_all(HOST(buf), &a->t, &a->pcm_samples);
+    a->s = atrac_stream_open(HOST(buf), size, &a->t);
+    if (!a->s) RET(ERR_ATRAC_NO_ID);
     a->used = 1;
-    TRACE("Atrac %d: codec %X, %d samples, loop %d..%d, %d decoded", id, a->t.codec, a->t.total_samples,
-          a->t.loop_start, a->t.loop_end, a->pcm_samples);
+    TRACE("Atrac %d: codec %X, %d samples, loop %d..%d", id, a->t.codec, a->t.total_samples, a->t.loop_start, a->t.loop_end);
     RET(id);
 }
 void hle_sceAtracReleaseAtracID(Cpu *c) {
     Atrac *a = get(ARG(0)); if (!a) RET(ERR_ATRAC_BAD_ID);
-    free(a->pcm); memset(a, 0, sizeof *a); RET(0);
+    atrac_stream_close(a->s); memset(a, 0, sizeof *a); RET(0);
 }
 void hle_sceAtracDecodeData(Cpu *c) {
     Atrac *a = get(ARG(0)); uint32_t out = ARG(1), nsamp = ARG(2), finish = ARG(3), remain = ARG(4);
@@ -57,9 +58,11 @@ void hle_sceAtracDecodeData(Cpu *c) {
     if (looping && a->cur <= a->t.loop_end) limit = a->t.loop_end + 1;
     int n = limit - a->cur; if (n > 2048) n = 2048;
     int16_t *dst = (int16_t *)HOST(out);
+    long decoded = atrac_stream_decode(a->s, (long)a->cur + n + a->t.skip);   /* (only what this call needs) */
+    const int16_t *pcm = atrac_stream_pcm(a->s);
     for (int i = 0; i < n; i++) {
         long k = (long)a->cur + i + a->t.skip;
-        if (k >= 0 && k < a->pcm_samples) { dst[2 * i] = a->pcm[2 * k]; dst[2 * i + 1] = a->pcm[2 * k + 1]; }
+        if (k >= 0 && k < decoded) { dst[2 * i] = pcm[2 * k]; dst[2 * i + 1] = pcm[2 * k + 1]; }
         else dst[2 * i] = dst[2 * i + 1] = 0;
     }
     a->cur += n;

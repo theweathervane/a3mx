@@ -25,4 +25,4 @@ void ge_texcache_init(const GeTexOps *ops);
 GeTexEntry *ge_texcache_lookup(const GeTexRef *tx, int v0, int v1);
 void ge_texcache_memory_changed(void);                   /* a display list starts, or a transfer wrote memory */
 void ge_texcache_forget_last(void);                     /* the last texture is looked up again next time (after FILTER drew) */
-void ge_texcache_frame_end(void);                        /* ages the cache: textures unused for 10 seconds are freed */
+void ge_texcache_frame_end(void);                        /* ages the cache: textures unused for 10 seconds are freed, a few a frame */

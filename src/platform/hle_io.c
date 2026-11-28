@@ -7,6 +7,7 @@
  * loaders make the same calls either way, so their timing is unchanged. */
 #include "rt.h"
 #include "asset_pac.h"
+#include "perf.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -144,12 +145,85 @@ static int asset_archive(const char *psp, const char *disc_path, PacImage *img) 
     return 1;
 }
 
+/* Opening assets/ ahead (0.179.1). The first time a file is opened after the computer starts, or
+ * after the virus scanner's definitions change, Windows scans it (Defender: about 2 - 3 ms a file on
+ * the RTX 4070 laptop), and an archive's folder holds 15 to 100 files (raw entries, .pad files, PNGs).
+ * So the first time a fighter or stage was built from assets/ the game's thread stood still for 50 -
+ * 300 ms as its fight began, though every byte was already on the disk. A thread of low priority now
+ * opens (and closes: nothing is read, nothing kept) each file under assets/ that a build always opens
+ * once at the start, the fighters' and stages' folders first, so the scan is done before the game
+ * asks. Left out: PNGs and TXTs (opened only when edited after their raw file) and sprites/ folders
+ * (tools/sprites.py: thousands of PNGs, the same). It touches nothing the game uses: what the game is
+ * given and when stay the same. Not with --fast (tests). */
+#ifdef A3MX_SDL
+#include <SDL3/SDL.h>
+static SDL_Thread *warm_thread;
+static SDL_AtomicInt warm_stop;
+static int warm_files;                       /* (read by the main thread only after the thread has ended) */
+static uint64_t warm_us;
+static void warm_dir(const char *dir);
+static SDL_EnumerationResult SDLCALL warm_entry(void *ud, const char *dirname, const char *fname) {
+    (void)ud;
+    if (SDL_GetAtomicInt(&warm_stop)) return SDL_ENUM_FAILURE;
+    char path[1400];
+    snprintf(path, sizeof path, "%s%s", dirname, fname);     /* (dirname ends with a separator) */
+    SDL_PathInfo info;
+    if (!SDL_GetPathInfo(path, &info)) return SDL_ENUM_CONTINUE;
+    size_t n = strlen(fname);
+    if (info.type == SDL_PATHTYPE_DIRECTORY) { if (SDL_strcasecmp(fname, "sprites")) warm_dir(path); }
+    else if (info.type == SDL_PATHTYPE_FILE && !(n > 4 && (!SDL_strcasecmp(fname + n - 4, ".png") || !SDL_strcasecmp(fname + n - 4, ".txt")))) {
+        SDL_IOStream *f = SDL_IOFromFile(path, "rb");
+        if (f) { SDL_CloseIO(f); warm_files++; }
+    }
+    return SDL_GetAtomicInt(&warm_stop) ? SDL_ENUM_FAILURE : SDL_ENUM_CONTINUE;
+}
+static void warm_dir(const char *dir) { SDL_EnumerateDirectory(dir, warm_entry, NULL); }
+/* characters/<fighter>/fighter: each fighter's own folder */
+static SDL_EnumerationResult SDLCALL warm_fighter(void *ud, const char *dirname, const char *fname) {
+    (void)ud;
+    char path[1400];
+    snprintf(path, sizeof path, "%s%s/fighter", dirname, fname);
+    SDL_PathInfo info;
+    if (SDL_GetPathInfo(path, &info) && info.type == SDL_PATHTYPE_DIRECTORY) warm_dir(path);
+    return SDL_GetAtomicInt(&warm_stop) ? SDL_ENUM_FAILURE : SDL_ENUM_CONTINUE;
+}
+static int SDLCALL warm_main(void *ud) {
+    (void)ud;
+    uint64_t t0 = perf_now_us();
+    SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_LOW);
+    char path[1100];
+    snprintf(path, sizeof path, "%s/characters", rt_assets_root);
+    SDL_EnumerateDirectory(path, warm_fighter, NULL);       /* what a fight opens first */
+    snprintf(path, sizeof path, "%s/stages", rt_assets_root);
+    warm_dir(path);
+    warm_dir(rt_assets_root);                               /* then the rest (opened again: quick) */
+    warm_us = perf_now_us() - t0;
+    return 0;
+}
+static void warm_start(void) {
+    extern int rt_realtime;
+    if (!rt_realtime) return;
+    warm_thread = SDL_CreateThread(warm_main, "assets ahead", NULL);
+}
+static void warm_end(void) {
+    if (!warm_thread) return;
+    SDL_SetAtomicInt(&warm_stop, 1);
+    SDL_WaitThread(warm_thread, NULL); warm_thread = NULL;
+    if (warm_us) rt_log("assets: %d files opened ahead in %.1f s", warm_files, (double)warm_us / 1e6);
+    else rt_log("assets: %d files opened ahead before the end (stopped)", warm_files);
+}
+#else
+static void warm_start(void) {}
+static void warm_end(void) {}
+#endif
+
 void rt_io_report(void) {
     if (rt_assets_root[0]) rt_log("assets: %u archive opens served from %s, %u from the disc instead", asset_opens, rt_assets_root, asset_fallbacks);
+    warm_end();
 }
 
 void rt_io_init(void) {
-    if (rt_assets_root[0]) rt_log("assets: archives with a folder in %s (index.json) are loaded from it", rt_assets_root);
+    if (rt_assets_root[0]) { rt_log("assets: archives with a folder in %s (index.json) are loaded from it", rt_assets_root); warm_start(); }
 }
 
 /* The folder of the last archive the game opened from the disc's data folder (disc0:/PSP_GAME/USRDIR/<r>/data),

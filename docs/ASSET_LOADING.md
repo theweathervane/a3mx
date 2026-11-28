@@ -45,6 +45,14 @@ stay exactly as the originals, and plain files could be overridden the same way 
 If a folder cannot be used (manifest missing or broken, a raw file missing, an entry the loaders
 cannot take), the reason is logged and the archive comes from the disc.
 
+**Opened ahead (0.179.1).** The first time Windows opens a file after it starts, or after the virus
+scanner's definitions change, it scans it: about 2 - 3 ms a file on a fast laptop, and a folder has 15
+to 100 files, so a fighter or stage built for the first time held the game's thread for 50 - 300 ms as
+its fight began. A thread of low priority (`hle_io.c`, `warm_start`) opens and closes once every file
+a build always reads (not PNGs, TXTs or `sprites/`), the fighters' and stages' folders first; the log
+ends with `assets: N files opened ahead in T s`. It reads nothing for the game, so what the game gets
+and when is the same. Not with `--fast`.
+
 ## Edited PNGs
 
 Each texture and palette entry has a PNG beside its raw file (`manifest.json` names it). When the PNG

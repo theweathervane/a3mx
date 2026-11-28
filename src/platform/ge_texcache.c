@@ -142,13 +142,28 @@ GeTexEntry *ge_texcache_lookup(const GeTexRef *tx, int v0, int v1) {
     return e;
 }
 
+/* Textures unused for 10 seconds (600 frames) are freed a few at a time (0.179.1): each frame looks at
+   the next SWEEP_SMALL slots of the small cache, and every BIG_EVERY frames at the next large one, so
+   every slot is looked at once in 512 frames and at most two small textures and one large one go in a
+   frame. Until 0.179.0 the whole cache was swept on every 600th frame: in a fight that freed hundreds
+   at once, and Direct3D 12 (SDL GPU, a committed resource for each texture) took 20 - 100 ms
+   destroying them in the next frame's submit: a hitch at frames 1801, 2401, 3001 ... */
+#define SWEEP_SMALL 2
+#define BIG_EVERY   8
+static int sweep_small, sweep_big;
 void ge_texcache_frame_end(void) {
     frame_no++;
-    /* free textures unused for 10 seconds */
-    if (frame_no % 600 == 0)
-        for (int i = 0; i < TEX_CACHE; i++)
-            if (tcache[i].tex && frame_no - tcache[i].last_used > 600) { ops.destroy(tcache[i].tex); tcache[i].tex = 0; tcache[i].key = 0; }
-    if (frame_no % 600 == 0)
-        for (int i = 0; i < BIG_CACHE; i++)
-            if (big[i].shadow && frame_no - big[i].te.last_used > 600) big_free(&big[i]);
+    for (int n = 0; n < SWEEP_SMALL; n++) {
+        GeTexEntry *e = &tcache[sweep_small];
+        sweep_small = (sweep_small + 1) % TEX_CACHE;
+        if (e->tex && frame_no - e->last_used > 600) {
+            if (last_tex.valid && last_tex.e == e) last_tex.valid = 0;
+            ops.destroy(e->tex); e->tex = 0; e->key = 0;
+        }
+    }
+    if (frame_no % BIG_EVERY == 0) {
+        BigTex *b = &big[sweep_big];
+        sweep_big = (sweep_big + 1) % BIG_CACHE;
+        if (b->shadow && frame_no - b->te.last_used > 600) big_free(b);
+    }
 }

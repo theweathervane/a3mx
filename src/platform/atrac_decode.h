@@ -1,4 +1,4 @@
-/* Whole-file ATRAC3/ATRAC3+ decoding (C interface to the vendored C++ decoder). */
+/* ATRAC3/ATRAC3+ decoding (C interface to the vendored C++ decoder). */
 #pragma once
 #include <stdint.h>
 #ifdef __cplusplus
@@ -14,7 +14,12 @@ typedef struct {
     int loop_start, loop_end;   /* logical samples, -1 if none */
 } AtracTrack;
 int      atrac_parse(const uint8_t *file, uint32_t size, AtracTrack *t);
-int16_t *atrac_decode_all(const uint8_t *file, const AtracTrack *t, int *out_samples);   /* stereo s16, free() */
+/* decoding as the samples are wanted (atrac_decode.cpp): open copies the file */
+typedef struct AtracStream AtracStream;
+AtracStream   *atrac_stream_open(const uint8_t *file, uint32_t size, const AtracTrack *t);
+long           atrac_stream_decode(AtracStream *s, long upto);   /* samples decoded (up to `upto`, unless the file ends first) */
+const int16_t *atrac_stream_pcm(const AtracStream *s);           /* stereo s16, as far as decoded */
+void           atrac_stream_close(AtracStream *s);
 #ifdef __cplusplus
 }
 #endif

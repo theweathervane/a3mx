@@ -1,4 +1,4 @@
-// Decode a whole ATRAC3 / ATRAC3+ RIFF file to 16-bit stereo PCM, using the vendored FFmpeg-derived
+// Decode an ATRAC3 / ATRAC3+ RIFF file to 16-bit stereo PCM as it is played, using the vendored FFmpeg-derived
 // decoder (third_party/at3_standalone). Offsets follow the PSP's rules (see hle_atrac.c).
 #include "atrac_decode.h"
 #include "at3_decoders.h"
@@ -45,31 +45,62 @@ extern "C" int atrac_parse(const uint8_t *f, uint32_t size, AtracTrack *t) {
     return 0;
 }
 
-extern "C" int16_t *atrac_decode_all(const uint8_t *f, const AtracTrack *t, int *out_samples) {
-    int ch = t->channels ? t->channels : 2, block = t->block_align;
-    int frames = (int)(t->data_size / (uint32_t)block);
-    int per = t->codec == 0x1000 ? 2048 : 1024;
-    long cap = (long)frames * per;
-    int16_t *pcm = (int16_t *)calloc((size_t)cap + per, 4);
+/* Decoded as it is played (0.179.1), frame after frame in order through one decoder, so the samples are
+   the ones a decode of the whole file gives, and kept, so a loop back reads them again. Until 0.179.0
+   the whole file was decoded when the game handed it over: 15 - 65 ms on the game's thread for a
+   fight's music, a hitch as the fight started. */
+struct AtracStream {
+    uint8_t *file;                  /* a copy of what the game handed over (it may reuse its buffer) */
+    AtracTrack t;
+    int ch, frames, per, next;      /* next: the next frame to decode */
+    long cap, pos;                  /* samples the buffer holds at most; decoded so far */
+    int16_t *pcm;                   /* stereo s16 */
+    ATRAC3PContext *p3; ATRAC3Context *a3;
+};
+
+extern "C" AtracStream *atrac_stream_open(const uint8_t *f, uint32_t size, const AtracTrack *t) {
+    AtracStream *s = (AtracStream *)calloc(1, sizeof *s);
+    if (!s) return nullptr;
+    s->t = *t;
+    s->ch = t->channels ? t->channels : 2;
+    int block = t->block_align;
+    s->frames = (int)(t->data_size / (uint32_t)block);
+    s->per = t->codec == 0x1000 ? 2048 : 1024;
+    s->cap = (long)s->frames * s->per;
+    s->file = (uint8_t *)malloc(size ? size : 1);
+    s->pcm = (int16_t *)calloc((size_t)s->cap + s->per, 4);
+    if (!s->file || !s->pcm) { free(s->file); free(s->pcm); free(s); return nullptr; }
+    memcpy(s->file, f, size);
+    if (t->codec == 0x1000) s->p3 = atrac3p_alloc(s->ch, &block);
+    else s->a3 = atrac3_alloc(s->ch, &block, s->file + t->extra_off, (int)t->extra_size);
+    return s;
+}
+
+/* decodes until sample `upto` (exclusive) is there or the file ends; returns the samples decoded */
+extern "C" long atrac_stream_decode(AtracStream *s, long upto) {
     float l[2048], r[2048]; float *planes[2] = { l, r };
-    ATRAC3PContext *p3 = nullptr; ATRAC3Context *a3 = nullptr;
-    if (t->codec == 0x1000) p3 = atrac3p_alloc(ch, &block);
-    else a3 = atrac3_alloc(ch, &block, f + t->extra_off, (int)t->extra_size);
-    long pos = 0;
-    for (int i = 0; i < frames; i++) {
+    const AtracTrack *t = &s->t;
+    while (s->pos < upto && s->next < s->frames) {
         int n = 0;
-        const uint8_t *src = f + t->data_off + (uint32_t)i * (uint32_t)t->block_align;
-        int ok = p3 ? atrac3p_decode_frame(p3, planes, &n, src, t->block_align) : atrac3_decode_frame(a3, planes, &n, src, t->block_align);
-        if (ok < 0) n = per, memset(l, 0, sizeof l), memset(r, 0, sizeof r);
-        for (int k = 0; k < n && pos < cap; k++, pos++) {
-            float a = l[k], b = ch > 1 ? r[k] : l[k];
+        const uint8_t *src = s->file + t->data_off + (uint32_t)s->next * (uint32_t)t->block_align;
+        int ok = s->p3 ? atrac3p_decode_frame(s->p3, planes, &n, src, t->block_align) : atrac3_decode_frame(s->a3, planes, &n, src, t->block_align);
+        if (ok < 0) n = s->per, memset(l, 0, sizeof l), memset(r, 0, sizeof r);
+        for (int k = 0; k < n && s->pos < s->cap; k++, s->pos++) {
+            float a = l[k], b = s->ch > 1 ? r[k] : l[k];
             int x = (int)lrintf(a * 32767.f), y = (int)lrintf(b * 32767.f);
-            pcm[2 * pos] = (int16_t)(x < -32768 ? -32768 : x > 32767 ? 32767 : x);
-            pcm[2 * pos + 1] = (int16_t)(y < -32768 ? -32768 : y > 32767 ? 32767 : y);
+            s->pcm[2 * s->pos] = (int16_t)(x < -32768 ? -32768 : x > 32767 ? 32767 : x);
+            s->pcm[2 * s->pos + 1] = (int16_t)(y < -32768 ? -32768 : y > 32767 ? 32767 : y);
         }
+        s->next++;
     }
-    if (p3) atrac3p_free(p3);
-    if (a3) atrac3_free(a3);
-    *out_samples = (int)pos;
-    return pcm;
+    return s->pos;
+}
+
+extern "C" const int16_t *atrac_stream_pcm(const AtracStream *s) { return s->pcm; }
+
+extern "C" void atrac_stream_close(AtracStream *s) {
+    if (!s) return;
+    if (s->p3) atrac3p_free(s->p3);
+    if (s->a3) atrac3_free(s->a3);
+    free(s->file); free(s->pcm); free(s);
 }
