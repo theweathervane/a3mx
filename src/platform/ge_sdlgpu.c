@@ -342,6 +342,7 @@ static void gpu_draw(const GeDrawState *s, const GeVtx *v, int m) {
 static SDL_GPUTexture *upload_tex;
 static int upload_w, upload_h;
 static int vsync_on = 1;
+static const char *present_mode = "VSYNC";   /* the swapchain is made with VSYNC (SDL) */
 
 SDL_GPUTexture *shader_sdlgpu_present(SDL_GPUCommandBuffer **cmd, SDL_GPUTexture *src, int src_w, int src_h, int w, int h);
 const char *shader_sdlgpu_init(SDL_GPUDevice *device, const char *driver);
@@ -496,9 +497,17 @@ static void gpu_vsync(int on) {
     SDL_GPUPresentMode m = SDL_GPU_PRESENTMODE_VSYNC;
     if (!on) m = SDL_WindowSupportsGPUPresentMode(dev, win, SDL_GPU_PRESENTMODE_IMMEDIATE) ? SDL_GPU_PRESENTMODE_IMMEDIATE :
                  SDL_WindowSupportsGPUPresentMode(dev, win, SDL_GPU_PRESENTMODE_MAILBOX) ? SDL_GPU_PRESENTMODE_MAILBOX : SDL_GPU_PRESENTMODE_VSYNC;
-    SDL_SetGPUSwapchainParameters(dev, win, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, m);
-    rt_log("SDL GPU: vsync %s", on ? "on" : "off");
+    /* (0.179.3) what was asked for and whether it was granted, for the log and last_run.txt: a refusal
+       leaves the swapchain as it was, which was silent before */
+    static const char *const names[] = { "VSYNC", "IMMEDIATE", "MAILBOX" };
+    const char *want = (int)m >= 0 && (int)m < 3 ? names[m] : "?";
+    if (SDL_SetGPUSwapchainParameters(dev, win, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, m)) present_mode = want;
+    else rt_warn("SDL GPU: present mode %s refused (%s): the swapchain keeps %s", want, SDL_GetError(), present_mode);
+    rt_log("SDL GPU: vsync %s, present mode %s", on ? "on" : "off", present_mode);
 }
+/* the swapchain's present mode now (last_run.txt): VSYNC waits for the refresh and never tears (Vulkan
+   FIFO, Direct3D 12 Present(1, 0), Metal displaySyncEnabled); IMMEDIATE may tear; MAILBOX doesn't wait */
+const char *ge_sdlgpu_present_mode(void) { return dev ? present_mode : ""; }
 
 /* ---------------------------------------------------------------- init */
 #define AUTO_SCALE_MAX 4
@@ -640,5 +649,6 @@ static const char *none_str(void) { return ""; }
 const GeBackend ge_backend_sdlgpu = { "SDL GPU", none_init, none_draw, none_void, none_void, none_present, none_rgba,
                                       none_void, none_void, none_read, none_scale, none_str, none_str };
 const char *ge_sdlgpu_api(void) { return ""; }
+const char *ge_sdlgpu_present_mode(void) { return ""; }
 int ge_sdlgpu_read_filtered(uint8_t *rgba, int max_w, int max_h, int *w, int *h) { (void)rgba; (void)max_w; (void)max_h; (void)w; (void)h; return 0; }
 #endif

@@ -265,9 +265,16 @@ int widescreen_edge_copy(uint32_t sp, int n) {
     /* the bottom one (STREET FIGHTER ALPHA3, y 24) scrolls the other way and jumps back by 480 */
     if (RB(GAME + 2) == 1 && kind == 16 && type == 5 && (int16_t)RH(sp + 22) < 200) return n ? -480 : 480;
     /* the 1P / 2P name rows ("1P RYU 1P RYU ...", kind 16 type 6 drawn by drawer 2: player 1's at the top,
-       player 2's at the foot): they scroll and jump back by 64, filling just the 4:3 picture; they stay
-       where they are (not moved out as the other type 6 pieces) and are drawn a period further each way */
-    if (RB(GAME + 2) == 1 && kind == 16 && type == 6 && RW(sp + 148) == 2) return n ? -64 : 64;
+       player 2's at the foot): they scroll and jump back by one period, filling just the 4:3 picture; they
+       stay where they are (not moved out as the other type 6 pieces) and are drawn a period further each
+       way. The period is the name's: + 76, 8.8 fixed point, 0x4000 (64) for "1P RYU", 0x5000 (80) for
+       "1P BLANKA", up to 0x7000 (112) (0.179.3; 0.166.1 - 0.179.2 drew every name 64 apart, so a name of
+       more than three letters was drawn over its own copies: a garbled row) */
+    if (RB(GAME + 2) == 1 && kind == 16 && type == 6 && RW(sp + 148) == 2) {
+        int period = RH(sp + 76) >> 8;
+        if (period <= 0) period = 64;
+        return n ? -period : period;
+    }
     return 0;
 }
 

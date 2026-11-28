@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.179.3
+### For players
+- **WIDE NATIVE: the character select screen's "1P RYU 1P RYU ..." row is readable again for every fighter.** A name of more than three letters (BIRDIE, E.HONDA, KARIN, BLANKA ...) was drawn over copies of itself, a garbled row, from 0.166.1 on. RYU, KEN, DAN and GUY looked right, which is why it went unnoticed.
+
+### Technical
+- `src/extensions/widescreen.c` (`widescreen_edge_copy`): the 1P / 2P name rows (kind 16 type 6, drawer 2) are drawn again one period to each side. The period was taken as 64 units, which is the period of a three-letter name only. The game keeps the row's own period in the sprite's + 76 (8.8 fixed point): 0x4000 (64) for "1P RYU", 0x5000 (80) for "1P BLANKA", and so on. Measured from the row's jump back as the cursor moved: 63 / 64 at 0x4000, 78 / 79 at 0x5000. That value is used now, with 64 if it is ever 0.
+- The renderers and the 0.179.1 texture cache are not involved: the software renderer drew the same garbled row, and so did a build with 0.179.0's texture cache.
+- `last_run.txt` (and the log) now say which present mode the Vulkan / Direct3D 12 / Metal renderers' swapchain has: `present_mode=VSYNC` (waits for the refresh, never tears: Vulkan FIFO, Direct3D 12 `Present(1, 0)`, Metal `displaySyncEnabled`) or `IMMEDIATE` with VSYNC off (may tear; MAILBOX if IMMEDIATE is not offered). If SDL refuses a mode, a warning now says so and the old mode is kept; before, the refusal was silent (`ge_sdlgpu.c` `gpu_vsync`, `perf.c`). Measured on the RTX 4070 laptop: VSYNC ON gets VSYNC and OFF gets IMMEDIATE, on Vulkan and Direct3D 12, windowed and full screen.
+- Looked into on the way, not changed:
+  - The ~870 ms pause on going back to the MODE MENU from a mode is the settings' auto-save. The picture is held, paced, while the save runs its own frames (`sysdata.c`, `rt_hold_display_paced`); no frame takes longer than 23 ms. It is the same on OpenGL, Direct3D 12 and 0.179.0.
+  - Direct3D 12 in fights: a 14,000-frame run of preview fights showed no hitch over 151 ms, and none in the fights. The 100 - 470 ms and 2.8 s fight hitches in a 19-minute session were not reproduced.
+  - SCREEN SIZE NORMAL (also after switching from WIDE NATIVE in SCREEN SETTING, or through WIDE): the bands' pictures as drawn are whole. The STREET FIGHTER ALPHA3 band over the portrait lines up with the rest in every frame, measured on the software renderer and on Direct3D 12 at x4, fresh and switched. Just after the cursor moves, the new "1P NAME" row drops in through the PLAYER SELECT band for a few frames; the original game does the same (pixel-identical with `--reference` and few extensions).
+  - VSYNC: the "the swap doesn't wait" fallback (pacing.c) can trip on Vulkan / Direct3D 12 when a held picture ends (OPTION MODE, SCREEN SETTING, a save). The frames held back go into the swapchain's queue without waiting, and more than a quarter of a 120-frame check comes back early. Pacing then moves to the 60.00 Hz timer until the window changes. The present mode stays VSYNC, so nothing tears; only how frames are timed changes. That is why one Direct3D 12 log said "timer" and another "the monitor".
+- Checked: `--hash-log` of arcade_fight identical before and after in NORMAL and in WIDE NATIVE (both built as 0.179.2). On a select screen where the cursor moves over the fighters (WIDE NATIVE), the fighters' hash is identical. The memory and picture hashes differ from the first move off RYU (frame 1963), as the row is drawn in other places. The select screen was checked by eye on Direct3D 12 before and after (RYU, CODY, VEGA, KEN, E.HONDA, KARIN, BLANKA).
+
 ## 0.179.2
 ### For players
 - **The S-ISM wipe's S, redrawn with a steeper, cleaner middle:** the S (every S-ISM, each in its colours) keeps its rounded bends, but its middle now slopes as steeply as the Z of the Japanese version's Z-ISM wipe, and its open ends are cut at a slant to points on the 4:3 picture's corners, as the I-ISM's I's serifs reach the sides. The edges step evenly, one row at a time, instead of the big uneven steps of 0.175.1's shallow middle. In WIDE NATIVE the margins stay the wipe's colour.

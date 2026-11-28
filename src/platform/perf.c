@@ -189,6 +189,7 @@ void perf_report(const char *work) {      /* (the folder last_run.txt goes to: t
     double hz = host_refresh_hz();
     const char *pacing_describe(void); const char *pacing_setting_name(void); int pacing_given(void); double pacing_audio_ratio(void);
     fprintf(o, "frame_timing=%s\nframe_timing_given=%s\npacing=%s\naudio_ratio=%.4f\n", pacing_setting_name(), pacing_given() ? "SMOOTH" : "ORIGINAL", pacing_describe(), pacing_audio_ratio());
+    { const char *ge_sdlgpu_present_mode(void); const char *pm = ge_sdlgpu_present_mode(); if (pm[0]) fprintf(o, "present_mode=%s\n", pm); }   /* SDL GPU renderers (0.179.3) */
     fprintf(o, "vsync=%s\nrefresh_hz=%.2f\nswap_ms=%.2f\nshown_p99_ms=%.1f\nshown_max_ms=%.1f\nhitches=%llu\n", rt_vsync ? "ON" : "OFF", hz,
             avg_ms(all.part[PERF_SWAP], f), hist_percentile_ms(all.gaps, all.shown, 0.99), (double)all.gap_max / 1000.0,
             (unsigned long long)all.hitches);
