@@ -71,9 +71,69 @@ static void gen_round_digits(Rng *r, Cpu *c, gaddr s, uint8_t *m) {
     c->r[4] = s + 0x201; c->r[5] = below(r, 8) == 0 ? (uint32_t)-(int32_t)below(r, 3) : len;
 }
 
-typedef struct { uint32_t addr; const char *name; GuestFn decomp, orig; Gen gen; } Case;
+/* a float worth trying: any bits, a special value, a small whole number, or something near 1 */
+static uint32_t some_float(Rng *r) {
+    static const uint32_t special[] = { 0, 0x80000000u, 0x3F800000u, 0xBF800000u, 0x7F800000u, 0xFF800000u,
+        0x7FC00000u, 0x00000001u, 0x007FFFFFu, 0x00800000u, 0x7F7FFFFFu, 0x3F000000u, 0x40000000u, 0x40400000u,
+        0x4B800000u, 0x4D000001u, 0x3F7FFFF7u, 0x3F800008u, 0x43000000u, 0xC3160000u };
+    float f; uint32_t b;
+    switch (below(r, 6)) {
+    case 0: return rnd(r);
+    case 1: return special[below(r, sizeof special / sizeof special[0])];
+    case 2: f = (float)((int32_t)below(r, 41) - 20); break;
+    case 3: f = 1.0f + (float)((int32_t)below(r, 2001) - 1000) / 1.0e6f; break;
+    case 4: f = (float)((int32_t)below(r, 200001) - 100000) / 256.0f; break;
+    default: return (rnd(r) & 0x807FFFFFu) | ((0x70 + below(r, 0x20)) << 23);   /* middling exponents */
+    }
+    memcpy(&b, &f, 4); return b;
+}
+static void gen_floats(Rng *r, Cpu *c, gaddr s, uint8_t *m) {
+    (void)s; (void)m;
+    c->f[12] = some_float(r); c->f[13] = some_float(r);
+    c->r[4] = below(r, 4) == 0 ? rnd(r) : (uint32_t)((int32_t)below(r, 601) - 300);
+    if (below(r, 16) == 0) c->r[4] = (uint32_t)((int32_t)below(r, 120001) - 60000);
+}
+/* powf with the library's way of reporting errors (a word of its own, -1 in the game: none) set to
+   each of its four values, so the reporting is compared too */
+static void gen_powf(Rng *r, Cpu *c, gaddr s, uint8_t *m) {
+    gen_floats(r, c, s, m);
+    *(uint32_t *)guest_ptr(0x08AD8E58u) = below(r, 4) - 1;
+}
 
-#define CASE(addr, name, gen) { 0x##addr##u, name, f_##addr, orig_f_##addr, gen }
+/* a double worth trying, as two words: any bits, a special value, a float's value, or one whose
+   exponent is near the last one's (so sums cancel and round) */
+static void some_double(Rng *r, uint32_t *lo, uint32_t *hi) {
+    static uint32_t last_exp = 0x3FF;
+    static const uint32_t special[][2] = { {0, 0}, {0, 0x80000000u}, {0, 0x3FF00000u}, {0, 0xBFF00000u},
+        {0, 0x7FF00000u}, {0, 0xFFF00000u}, {0, 0x7FF80000u}, {1, 0x7FF00000u}, {1, 0}, {0xFFFFFFFFu, 0x000FFFFFu},
+        {0, 0x00100000u}, {0xFFFFFFFFu, 0x7FEFFFFFu}, {0, 0x43300000u}, {0, 0xC3300000u}, {0, 0x3FE00000u} };
+    double d; uint64_t b;
+    switch (below(r, 6)) {
+    case 0: *lo = rnd(r); *hi = rnd(r); break;
+    case 1: { uint32_t k = below(r, sizeof special / sizeof special[0]); *lo = special[k][0]; *hi = special[k][1]; break; }
+    case 2: d = (double)((int32_t)below(r, 200001) - 100000) / 4.0; memcpy(&b, &d, 8); *lo = (uint32_t)b; *hi = (uint32_t)(b >> 32); break;
+    case 3: { uint32_t f = some_float(r); float x; memcpy(&x, &f, 4); d = x; memcpy(&b, &d, 8); *lo = (uint32_t)b; *hi = (uint32_t)(b >> 32); break; }
+    default:
+        *lo = below(r, 3) ? rnd(r) : below(r, 3);
+        *hi = (rnd(r) & 0x800FFFFFu) | (((last_exp + below(r, 131) - 65) & 0x7FF) << 20);
+        if (below(r, 3) == 0) *hi &= 0xFFF00000u | below(r, 4);
+        break;
+    }
+    last_exp = (*hi >> 20) & 0x7FF;
+}
+static void gen_doubles(Rng *r, Cpu *c, gaddr s, uint8_t *m) {
+    (void)s; (void)m;
+    some_double(r, &c->r[4], &c->r[5]);
+    some_double(r, &c->r[6], &c->r[7]);
+    if (below(r, 12) == 0) { c->r[6] = c->r[4]; c->r[7] = c->r[5] ^ (below(r, 2) << 31); }
+}
+
+/* what a case compares besides memory: the result in v0, in v1 too (a double), or in f0 (a float) */
+enum { R_V0 = 1, R_V1 = 2, R_F0 = 4 };
+typedef struct { uint32_t addr; const char *name; GuestFn decomp, orig; Gen gen; int result; } Case;
+
+#define CASE(addr, name, gen) { 0x##addr##u, name, f_##addr, orig_f_##addr, gen, R_V0 }
+#define CASE_AS(addr, name, gen, result) { 0x##addr##u, name, f_##addr, orig_f_##addr, gen, result }
 void f_089F3430(Cpu *); void orig_f_089F3430(Cpu *);
 void f_089F3470(Cpu *); void orig_f_089F3470(Cpu *);
 void f_089F34A4(Cpu *); void orig_f_089F34A4(Cpu *);
@@ -84,6 +144,23 @@ void f_089F3540(Cpu *); void orig_f_089F3540(Cpu *);
 void f_089F3604(Cpu *); void orig_f_089F3604(Cpu *);
 void f_089F3670(Cpu *); void orig_f_089F3670(Cpu *);
 void f_089F35A0(Cpu *); void orig_f_089F35A0(Cpu *);
+void f_089F9F84(Cpu *); void orig_f_089F9F84(Cpu *);
+void f_089F94CC(Cpu *); void orig_f_089F94CC(Cpu *);
+void f_089FAB48(Cpu *); void orig_f_089FAB48(Cpu *);
+void f_089FACCC(Cpu *); void orig_f_089FACCC(Cpu *);
+void f_089FAE88(Cpu *); void orig_f_089FAE88(Cpu *);
+void f_089FB254(Cpu *); void orig_f_089FB254(Cpu *);
+void f_089FB2BC(Cpu *); void orig_f_089FB2BC(Cpu *);
+void f_089F9CC0(Cpu *); void orig_f_089F9CC0(Cpu *);
+void f_089FB6A8(Cpu *); void orig_f_089FB6A8(Cpu *);
+void f_089FBAD8(Cpu *); void orig_f_089FBAD8(Cpu *);
+void f_089FAEC0(Cpu *); void orig_f_089FAEC0(Cpu *);
+void f_089FBB50(Cpu *); void orig_f_089FBB50(Cpu *);
+void f_089FB928(Cpu *); void orig_f_089FB928(Cpu *);
+void f_089FBA04(Cpu *); void orig_f_089FBA04(Cpu *);
+void f_089F9F64(Cpu *); void orig_f_089F9F64(Cpu *);
+void f_089FAC88(Cpu *); void orig_f_089FAC88(Cpu *);
+void f_089FACA0(Cpu *); void orig_f_089FACA0(Cpu *);
 
 static const Case CASES[] = {
     CASE(089F3430, "memcpy", gen_memcpy),
@@ -96,6 +173,23 @@ static const Case CASES[] = {
     CASE(089F3604, "strrev", gen_one_string),
     CASE(089F3670, "itoa", gen_itoa),
     CASE(089F35A0, "round_digits", gen_round_digits),
+    CASE_AS(089F9F84, "powf_core", gen_floats, R_F0),
+    CASE_AS(089F94CC, "powf", gen_powf, R_F0),
+    CASE_AS(089FAB48, "sqrtf", gen_floats, R_F0),
+    CASE_AS(089FACCC, "scalbnf", gen_floats, R_F0),
+    CASE_AS(089FAE88, "copysignf", gen_floats, R_F0),
+    CASE_AS(089FB254, "double add", gen_doubles, R_V0 | R_V1),
+    CASE_AS(089FB2BC, "double subtract", gen_doubles, R_V0 | R_V1),
+    CASE_AS(089F9CC0, "rint", gen_doubles, R_V0 | R_V1),
+    CASE_AS(089FB6A8, "double divide", gen_doubles, R_V0 | R_V1),
+    CASE_AS(089FBAD8, "double negate", gen_doubles, R_V0 | R_V1),
+    CASE_AS(089FAEC0, "float to double", gen_floats, R_V0 | R_V1),
+    CASE_AS(089FBB50, "double to float", gen_doubles, R_F0),
+    CASE_AS(089FB928, "int to double", gen_doubles, R_V0 | R_V1),
+    CASE_AS(089FBA04, "double to int", gen_doubles, R_V0),
+    CASE_AS(089F9F64, "float finite", gen_floats, R_V0),
+    CASE_AS(089FAC88, "float abs", gen_floats, R_F0),
+    CASE_AS(089FACA0, "float nan", gen_floats, R_V0),
 };
 
 /* Returns the number of failing functions. */
@@ -122,17 +216,23 @@ int decomp_difftest(int iterations) {
             memcpy(mem, before, SCRATCH_SIZE);
             Cpu b = c0; t->decomp(&b);
 
-            if (a.r[2] != b.r[2] || memcmp(after_orig, mem, SCRATCH_SIZE) != 0) {
+            int differs = ((t->result & R_V0) && a.r[2] != b.r[2]) || ((t->result & R_V1) && a.r[3] != b.r[3])
+                          || ((t->result & R_F0) && a.f[0] != b.f[0]);
+            if (differs || memcmp(after_orig, mem, SCRATCH_SIZE) != 0) {
                 uint32_t at = 0; while (at < SCRATCH_SIZE && after_orig[at] == mem[at]) at++;
                 char where[64] = "";
                 if (at < SCRATCH_SIZE) snprintf(where, sizeof where, "; memory differs at +%X (%02X vs %02X)", at, after_orig[at], mem[at]);
-                rt_log("difftest FAIL %08X %-14s case %d: args %08X %08X %08X; result %08X vs %08X%s",
-                       t->addr, t->name, i, c0.r[4], c0.r[5], c0.r[6], a.r[2], b.r[2], where);
+                if (t->result & R_F0)
+                    rt_log("difftest FAIL %08X %-15s case %d: floats %08X %08X, arg %08X; result %08X vs %08X%s",
+                           t->addr, t->name, i, c0.f[12], c0.f[13], c0.r[4], a.f[0], b.f[0], where);
+                else
+                    rt_log("difftest FAIL %08X %-15s case %d: args %08X %08X %08X %08X; result %08X %08X vs %08X %08X%s",
+                           t->addr, t->name, i, c0.r[4], c0.r[5], c0.r[6], c0.r[7], a.r[2], a.r[3], b.r[2], b.r[3], where);
                 bad = 1;
             }
         }
         if (bad) failed++;
-        else rt_log("difftest ok   %08X %-14s %d cases", t->addr, t->name, iterations);
+        else rt_log("difftest ok   %08X %-15s %d cases", t->addr, t->name, iterations);
     }
     rt_log("difftest: %d of %d functions failed", failed, (int)(sizeof CASES / sizeof CASES[0]));
     return failed;

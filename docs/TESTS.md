@@ -148,7 +148,7 @@ screen; it must never change the fight. What it draws is checked by eye.
 
 | Test | Checks | Why | Time |
 |---|---|---|---|
-| `difftest` | every decompiled function against its original on 20,000 random inputs each | covers code paths no scenario reaches | 1 to 3 min |
+| `difftest` | each listed decompiled function (string, memory, number, float and double routines) against its original on 20,000 random inputs each | covers code paths no scenario reaches | 1 to 3 min |
 | `asset_pac` | archives rebuilt from `assets/` are byte-identical to the disc's (also with every texture, palette and sprite PNG read back); edited PNGs, sprites included, come back exactly | unedited assets must change nothing, and edits must arrive | 1 to 2 min |
 | `pac_roundtrip` | every `.pac` unpacked and packed again is identical | the archive format is understood completely | 1 min |
 | `assets_in_game` | the game run from `assets/` matches the run from the disc, frame for frame | loading from folders must not change the game | 5 to 10 min |

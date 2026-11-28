@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.179.0
+### For players
+- **More of the game decompiled (166 functions, 54.17% of the program now), and with it every function the test scenarios run:** the sound engine's sequencer (a track's events read and carried out, notes started and bent, voices found for them, and the tick that plays it all), the sound's own thread and its queue of requests, a round's set-up and what follows a fight by the kind of game, a mode's start, the practice mode's menu and dummy, the lobby's screens of the link play (a player picked, a match asked for and agreed, the rules set and shown, the game made ready), the frame's text drawn and the screens swapped, the library's printing of numbers into text, its power routine, square root and more of its arithmetic for doubles, and the program's start and exit. Nothing plays differently.
+
+### Technical
+- `src/core/object/`: batches 399 to 435, `batch_train399.c` - `batch_float435.c` (new). docs/PSP_PROGRAM_MAP.md: a row for each batch; README.md / docs/ROADMAP.md progress bars updated.
+- Every function a parity scenario runs now has a decompiled body, apart from three the analysis has no listing for (0x088888E8, 0x088889A0, 0x08834AC8). What is left is only checked by reading until scenarios reach more of the game (the practice mode, more of the link play).
+- `batch_lib433.c`: the library's `powf` keeps the original's order of float operations in its expressions and turns the compiler's fused multiply-add off for the file.
+- `src/core/difftest.c`: float and double routines can be tested now (generators for floats and doubles; a case says whether its result is in v0, v0/v1 or f0). 17 new cases: `powf` and its core (with the library's way of reporting errors set to each of its four values), the square root, scaling, sign copy, the doubles' add, subtract, divide, negate and rounding, and the conversions between floats, doubles and whole numbers. It found one wrong branch in the new `powf` (a number below the usual form was not read back after being scaled up), fixed before release. docs/TESTS.md.
+- Checked: parity (memory hashes, lazy renderer) passed for all 89 scenarios after each group of batches; the difftest's 27 routines match their originals on 2,000,000 inputs each. 102 of these functions are not run by any scenario: 11 of the practice mode, 53 of the sound sequencer (events and settings the game's music does not use), the 17 maths routines of batches 434 and 435 (under the difftest instead), and small pieces of the library, the lobby and the engine's other game kinds.
+
 ## 0.178.1
 ### For players
 - Nothing changes in the game. The software renderer draws exactly the same pictures, about a quarter faster, so the full test suite finishes sooner.

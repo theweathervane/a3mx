@@ -104,7 +104,7 @@ function at a time, each one proven identical before it goes in.
 inputs (`--difftest N`, the `difftest` test), comparing the result and the scratch memory around the
 arguments. It suits string, memory and number routines; it is how functions no scenario reaches, and
 corner cases no scenario hits, get checked. Adding a function: a generator that fills the scratch area
-and sets the arguments, and a `CASE(...)` line.
+and sets the arguments, and a `CASE(...)` line (`CASE_AS(...)` for a result in v0/v1 or f0: doubles and floats).
 
 ## Scenarios
 

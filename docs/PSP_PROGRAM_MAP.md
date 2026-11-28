@@ -1319,6 +1319,43 @@ owner at + 88, and frame data at + 296.
 | (3 functions) | (`object/batch_lib396.c`) Library: a drawing list begun, the display set up at the start |
 | (4 functions) | (`object/batch_frame397.c`) Each frame's drawing, the game's start, two of the link play's main loops |
 | (2 functions) | (`object/batch_lib398.c`) Library: memory asked for, a routine noted for the program's end |
+| (7 functions) | (`object/batch_train399.c`) Practice mode (no scenario runs it): numbers written as text and drawn, five checks of a fighter's settings |
+| (2 functions) | (`object/batch_train400.c`) Practice mode (no scenario runs it): a fighter's numbers followed, the shortcut buttons turned into buttons |
+| (1 functions) | (`object/batch_train401.c`) Practice mode (no scenario runs it): what a fighter set to act by itself does |
+| (1 functions) | (`object/batch_train402.c`) Practice mode (no scenario runs it): the frame for a fighter, with recording and playing back |
+| (2 functions) | (`object/batch_engine403.c`) The fighters' frame, a fight's frame that runs it |
+| (2 functions) | (`object/batch_engine404.c`) The usual fight frame, a wait with a message that runs one |
+| (7 functions) | (`object/batch_lib405.c`) Library: sprintf, the choice of printing, the printing without floating point, output to a file |
+| (4 functions) | (`object/batch_lib406.c`) The music changed and read ahead, a module loaded from the disc |
+| (7 functions) | (`object/batch_steps407.c`) Seven steps that start music, the modules loaded at the start |
+| (2 functions) | (`object/batch_steps408.c`) A fight's set-up, the link play's lobby set up |
+| (2 functions) | (`object/batch_steps409.c`) A pair's game started, a fight won |
+| (1 functions) | (`object/batch_link410.c`) The lobby's list of players drawn |
+| (2 functions) | (`object/batch_link411.c`) The lobby's loop, a fight's step that sets it up |
+| (5 functions) | (`object/batch_menu412.c`) A menu screen's pieces: start, step and frame by kind |
+| (2 functions) | (`object/batch_sound413.c`) The queue of sound requests served |
+| (5 functions) | (`object/batch_lib414.c`) Library: the frame's text drawn, the screens swapped |
+| (2 functions) | (`object/batch_steps415.c`) A screen's wait for the player |
+| (17 functions) | (`object/batch_seq416.c`) Sound engine: a voice's settings set and read |
+| (11 functions) | (`object/batch_seq417.c`) Sound engine: a note started on a bank's program |
+| (11 functions) | (`object/batch_seq418.c`) Sound engine: a voice found for a new note |
+| (1 functions) | (`object/batch_seq419.c`) Sound engine: a voice given a new note's settings |
+| (5 functions) | (`object/batch_seq420.c`) Sound engine: a sequence's note on and pitch bend |
+| (5 functions) | (`object/batch_seq421.c`) Sound engine: a track's event read and carried out |
+| (8 functions) | (`object/batch_seq422.c`) Sound engine: the tick that plays sequences and moves voices |
+| (3 functions) | (`object/batch_sound423.c`) The sound's thread, memory for sound files |
+| (2 functions) | (`object/batch_engine424.c`) A round's set-up |
+| (3 functions) | (`object/batch_mixed425.c`) A mode's start and first screen, the lobby's cursor pick |
+| (1 functions) | (`object/batch_link426.c`) The lobby's pick screen |
+| (8 functions) | (`object/batch_boot427.c`) The main thread's start and the program's exit |
+| (1 functions) | (`object/batch_link428.c`) The lobby's screen where a match is asked for and agreed |
+| (2 functions) | (`object/batch_link429.c`) The link game's screen before a fight |
+| (3 functions) | (`object/batch_link430.c`) The game made ready once a link match is agreed |
+| (5 functions) | (`object/batch_engine431.c`) What follows a fight, by the kind of game |
+| (4 functions) | (`object/batch_link432.c`) The lobby's screens where the rules are set and shown |
+| (5 functions) | (`object/batch_lib433.c`) Library: a float to a float power, a voice's bend factor |
+| (8 functions) | (`object/batch_lib434.c`) Library: a float's square root, a float scaled, one float's sign given to another |
+| (9 functions) | (`object/batch_float435.c`) Doubles added, subtracted and rounded to a whole number |
 | (286 step dispatchers) | (0.166.0, `object/steps_fighters.c`) the step dispatchers the fighter scenarios reach, most of them characters' own move steps: run_step by a step byte (+3 - +7, +128, ...), half-word or signed byte (+194, +236, ...), and run_step_with (the owner +88 to the handler); one line each, matched to the translations' shape |
 
 **The other dispatcher shapes** (0.62.0, `step.h`): 96 run the step and then one or two fixed routines on the
