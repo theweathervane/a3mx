@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.179.2
+### For players
+- **The S-ISM wipe's S, redrawn with a steeper, cleaner middle:** the S (every S-ISM, each in its colours) keeps its rounded bends, but its middle now slopes as steeply as the Z of the Japanese version's Z-ISM wipe, and its open ends are cut at a slant to points on the 4:3 picture's corners, as the I-ISM's I's serifs reach the sides. The edges step evenly, one row at a time, instead of the big uneven steps of 0.175.1's shallow middle. In WIDE NATIVE the margins stay the wipe's colour.
+
+### Technical
+- `i_ism_display.c`: the S is still a stroke 48 wide with rounded bends, now along (384, 32), (80, 32), (304, 192), (0, 192) in the column's rows from y 16 (the screen's top), so the diagonal runs 7 pixels across for every 5 rows (the Z-ISM's slope, measured from Dan's 4:3 screenshot of the Japanese version: 7 across per 6 rows of the 272-row screen). `in_s` cuts the top bar's right end from x 384 on row 8 and the bottom bar's left end from x 0 on row 215, each slanting 7 per 5 rows (the diagonal's slope mirrored). `make_s` samples every row at its middle (was every 2 rows: steps 9 - 10 pixels across and 2 - 3 screen rows down), each row's open part a quad lengthened while the next row's is the same (118 / 146 / 118 quads in the three columns). The Z-ISM's own shape is not on the US disc (the program's wipe shapes are X, A and V only), so the slope was taken from the screenshot.
+- Checked: compiled with no warnings. Not run in game: the S-ISM wipe needs the Anthology files and an S-ISM chosen, and the parity scenarios run with `anthology` off, so their hashes don't reach this code. The shape's place and scale were read from a run (the shapes' y scale 1, offset 8, the columns' place y -16 at rest): the game's 224 rows are stretched to 272 on the way to the screen, so each row is 4 or 5 pixels tall at scale 4.
+
 ## 0.179.1
 ### For players
 - **Fewer stutters in fights, on every renderer:** the 50 - 300 ms pauses as a fight began (seen in the FILTER preview fight, on OpenGL, Vulkan, Direct3D 12, Metal and the software renderer alike) are gone on Windows (measured on Vulkan, OpenGL and Direct3D 12; the Mac is not checked yet), and so is the 20 - 100 ms one every 10 seconds on Direct3D 12. On the RTX 4070 laptop the preview fight's longest frame went from 219 - 300 ms to 17 ms. Nothing plays differently.

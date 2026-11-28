@@ -124,54 +124,74 @@ static int wipe_sism(void) {    /* the S-ISM transition's switch: S-ISM PRESENTA
     return s >= S_GREEN && s <= S_RED ? s : S_NONE;
 }
 
-/* The S: three columns of quads, 128 x 256 each like the letters', what they leave open the S. Drawn
-   as a stroke 48 wide along a line through these points (a blocky S with rounded corners and a sloping
-   middle (the maintainer's pick, 2026-11-27), its ends cut
-   square at the 4:3 edges, x 0 and 384, where the outsides of its curves also reach (the maintainer,
-   2026-11-27)), and sampled every 2 rows. */
-static const int16_t S_LINE[][2] = { { 384, 48 }, { 54, 48 }, { 24, 78 }, { 24, 92 }, { 360, 164 }, { 360, 178 }, { 330, 208 }, { 0, 208 } };
+/* The S: three columns of quads, 128 x 256 each like the letters', what they leave open the S (the
+   maintainer's pick, 2026-11-28): a stroke 48 wide along a line through these points, so its two bends
+   are rounded, its diagonal as steep as the Japanese version's Z-ISM wipe (measured from its 4:3
+   picture: 7 pixels across for every 6 rows of the 272-row screen, 7 for every 5 of the game's 224
+   rows), and its open ends cut at the diagonal's slope mirrored, to points on the 4:3 picture's
+   corners, as the I's serifs reach the sides: the top bar's right end from x 384 on its top row
+   (row 8) slanting left 7 per 5 rows, the bottom bar's left end from x 0 on its bottom row (215)
+   slanting right likewise. Rows are the column's from y 16 (the screen's top row).
+   Sampled every row at its middle, each row's open part one quad (lengthened down while the next row's
+   is the same), so the diagonal's edges step 7 pixels per 5 rows, whole pixels (0.175.1's middle,
+   sampled every 2 rows, stepped 9 or 10 pixels at a time). */
+#define S_TOP 32                            /* the bars' middles: the S's y 48 and 208 */
+#define S_BOT 192
 #define S_HALF 24
-static uint16_t s_cols[3][4096];
+#define S_RUN 7
+#define S_RISE 5
+#define S_X0 (192 - (S_BOT - S_TOP) * S_RUN / S_RISE / 2)
+static const int16_t S_LINE[][2] = {
+    { 384, S_TOP }, { S_X0, S_TOP }, { S_X0 + (S_BOT - S_TOP) * S_RUN / S_RISE, S_BOT }, { 0, S_BOT } };
+#define S_QUADS 4096
+static uint16_t s_cols[3][S_QUADS];
 static int s_made;
-static int in_s(int x, int y) {
-    if (x < 0 || x > 384) return 0;
+static int in_s(int x, int row) {
+    if (row < S_TOP - S_HALF || row >= S_BOT + S_HALF) return 0;
+    if (row < S_TOP + S_HALF && x >= 384 - (row - (S_TOP - S_HALF)) * S_RUN / S_RISE) return 0;       /* the top bar's end */
+    if (row >= S_BOT - S_HALF && x < ((S_BOT + S_HALF - 1) - row) * S_RUN / S_RISE) return 0;          /* the bottom bar's */
+    float px = (float)x + 0.5f, py = (float)row + 0.5f;
     for (size_t i = 0; i + 1 < sizeof S_LINE / sizeof S_LINE[0]; i++) {
         float ax = S_LINE[i][0], ay = S_LINE[i][1], bx = S_LINE[i + 1][0], by = S_LINE[i + 1][1];
-        float dx = bx - ax, dy = by - ay, t = ((float)x - ax) * dx + ((float)y - ay) * dy, l = dx * dx + dy * dy;
-        t = l > 0 ? t / l : 0; if (t < 0) t = 0; if (t > 1) t = 1;
-        float ex = ax + t * dx - (float)x, ey = ay + t * dy - (float)y;
-        if (ex * ex + ey * ey <= (float)(S_HALF * S_HALF)) return 1;
+        float dx = bx - ax, dy = by - ay;
+        float t = (px - ax) * dx;
+        t = t + (py - ay) * dy;
+        float l = dx * dx;
+        l = l + dy * dy;
+        t = t / l; if (t < 0) t = 0; if (t > 1) t = 1;
+        float ex = ax + t * dx - px, ey = ay + t * dy - py;
+        float d = ex * ex;
+        d = d + ey * ey;
+        if (d <= (float)(S_HALF * S_HALF)) return 1;
     }
     return 0;
 }
 static void make_s(void) {
     for (int col = 0; col < 3; col++) {
-        uint16_t *q = s_cols[col]; int n = 0, prev_from = 0, prev_to = 0;
-        for (int y0 = 0; y0 < 256; y0 += 2) {
+        uint16_t *q = s_cols[col]; int n = 0, prev_to = 0;
+        for (int y0 = 0; y0 < 256; y0++) {
             int runs[16][2], nr = 0, x = 0;
             while (x < 128 && nr < 16) {
-                while (x < 128 && in_s(col * 128 + x, y0 + 1)) x++;
+                while (x < 128 && in_s(col * 128 + x, y0 - 16)) x++;
                 if (x >= 128) break;
                 int a = x;
-                while (x < 128 && !in_s(col * 128 + x, y0 + 1)) x++;
+                while (x < 128 && !in_s(col * 128 + x, y0 - 16)) x++;
                 runs[nr][0] = a; runs[nr][1] = x; nr++;
             }
-            int from = n;
             for (int r = 0; r < nr; r++) {
                 int merged = 0;
-                for (int k = prev_from; k < prev_to; k += 8)     /* the same run in the band above: lengthened */
-                    if (q[k] == runs[r][0] && q[k + 2] == runs[r][1] && q[k + 5] == y0) { q[k + 5] = q[k + 7] = (uint16_t)(y0 + 2); merged = 1; break; }
-                if (merged || n + 8 >= 4095) continue;
+                for (int k = 0; k < prev_to; k += 8)     /* the same run in the row above: lengthened */
+                    if (q[k] == runs[r][0] && q[k + 2] == runs[r][1] && q[k + 5] == y0) { q[k + 5] = q[k + 7] = (uint16_t)(y0 + 1); merged = 1; break; }
+                if (merged || n + 8 >= S_QUADS - 9) continue;
                 uint16_t v[8] = { (uint16_t)runs[r][0], (uint16_t)y0, (uint16_t)runs[r][1], (uint16_t)y0,
-                                  (uint16_t)runs[r][1], (uint16_t)(y0 + 2), (uint16_t)runs[r][0], (uint16_t)(y0 + 2) };
+                                  (uint16_t)runs[r][1], (uint16_t)(y0 + 1), (uint16_t)runs[r][0], (uint16_t)(y0 + 1) };
                 memcpy(q + n, v, sizeof v); n += 8;
             }
-            /* this band's quads, and those just lengthened (the band above's), for the next band */
-            prev_to = n; (void)from;
+            prev_to = n;
         }
-        if (col != 1 && n + 8 < 4095) {     /* WIDE NATIVE: an empty quad on the 4:3 edge, the column's height, so
-                                                shapes.c fills the margin beside it in the colour even where the
-                                                S's ends meet the edge */
+        if (col != 1) {                     /* WIDE NATIVE: an empty quad on the 4:3 edge, the column's height, so
+                                               shapes.c fills the margin beside it in the colour even where the
+                                               S's ends meet the edge */
             uint16_t e = col == 0 ? 0 : 128;
             uint16_t v[8] = { e, 0, e, 0, e, 256, e, 256 };
             memcpy(q + n, v, sizeof v); n += 8;
